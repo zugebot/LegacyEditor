@@ -1,0 +1,120 @@
+#pragma once
+
+#include "LegacyEditor/utils/LZX/XboxCompression.hpp"
+#include "LegacyEditor/utils/RLE/rle.hpp"
+#include "LegacyEditor/utils/data.hpp"
+#include "LegacyEditor/utils/enums.hpp"
+#include "LegacyEditor/utils/processor.hpp"
+#include "LegacyEditor/utils/tinf/tinf.h"
+#include "LegacyEditor/utils/zlib-1.2.12/zlib.h"
+
+
+class Chunk : public Data {
+public:
+    u32 dec_size;
+    u32 location;
+    u32 timestamp;
+    bool isCompressed = true;
+    bool rleFlag = false;
+
+    ND inline uint32_t getOffset() const { return location / 256; }
+    ND inline uint8_t getSectorCount() const { return location & 255; }
+    ND inline uint32_t getSectorEnd() const { return getOffset() + getSectorCount(); }
+    ND inline uint32_t getSectorOffset() const { return getOffset() * 4096; }
+
+    void setDataSize(uint32_t value) {
+        size = value;
+        rleFlag = size >> 31;
+        size &= 0x3FFFFFFF;
+        allocate(size);
+    }
+
+    ND bool isSaved() const {
+        return location != 0;
+    }
+
+    void decompress(CONSOLE console) {
+        if (!isCompressed) {
+            printf("cannot decompress the chunk if its already decompressed\n");
+            return;
+        }
+
+        if (console == CONSOLE::NONE) {
+            printf("passed CONSOLE::NONE to decompress, results will not work\n");
+            return;
+        }
+
+        isCompressed = false;
+
+        u32 dec_size_copy = dec_size;
+
+        Data decompData(dec_size);
+        // auto* decompressedData = new u8[dec_size];
+        switch (console) {
+            case CONSOLE::XBOX360:
+                dec_size_copy = XDecompress(decompData.start(), &decompData.size, data, size);
+                break;
+            case CONSOLE::PS3:
+                tinf_uncompress(decompData.start(), &decompData.size, data, size);
+                break;
+            case CONSOLE::WIIU:
+                tinf_zlib_uncompress(decompData.start(), &decompData.size, data, size);
+                break;
+            default:
+                break;
+        }
+
+        if (data != nullptr) {
+            delete[] data;
+            data = nullptr;
+        }
+
+        if (rleFlag) {
+            Data rle(dec_size);
+            RLE_uncompress(decompData.start(), dec_size_copy, rle.start(), dec_size);
+            // data = rle_ptr;
+            size = dec_size;
+            return;
+        }
+
+        // data = decompData;
+        size = dec_size_copy;
+    }
+
+    MU void compress(CONSOLE console) {
+        dec_size = size;
+
+        if (rleFlag) {
+            u32 rle_size = size;
+            u8* rle_ptr = new u8[rle_size];
+            RLE_compress(rle_ptr, rle_size, data, size);
+            delete[] data;
+            data = nullptr;
+            data = rle_ptr;
+            size = rle_size;
+        }
+
+        // allocate memory and recompress
+        u8* comp_ptr = new u8[size];
+        uint64_t comp_size = size;
+
+        switch (console) {
+            case CONSOLE::XBOX360:
+                // XCompress(comp_ptr, comp_size, data_ptr, data_size);
+                break;
+            case CONSOLE::PS3:
+                // tinf_compress(comp_ptr, comp_size, data_ptr, data_size);
+                break;
+            case CONSOLE::WIIU: {
+                uLongf _comp_size = comp_size;
+                ::compress(comp_ptr, &_comp_size, data, size);
+                break;
+            }
+            default:
+                break;
+        }
+
+
+    }
+
+};

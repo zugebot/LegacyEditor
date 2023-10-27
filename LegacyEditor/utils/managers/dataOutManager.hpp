@@ -21,8 +21,13 @@ public:
 
     DataOutManager() = delete;
 
-    explicit DataOutManager(Data& dataIn): Data(dataIn.getStartPtr(), dataIn.getSize()) {
+    explicit DataOutManager(u8* dataIn, u32 sizeIn): Data(dataIn, sizeIn) {
         setLittleEndian();
+    }
+
+    explicit DataOutManager(Data& dataIn): Data(dataIn.start(), dataIn.getSize()) {
+        setLittleEndian();
+        dataIn.using_memory = false;
     }
 
     explicit DataOutManager(u32 sizeIn): Data(sizeIn) {

@@ -7,19 +7,19 @@ int DataOutManager::saveToFile(const std::string& fileName) {
         printf("Failed to write to output file '%s'", fileName.c_str());
         return 1;
     }
-    fwrite(getStartPtr(), 1, getSize(), f_out);
+    fwrite(start(), 1, getSize(), f_out);
     fclose(f_out);
     return 0;
 }
 
 
 void DataOutManager::seekStart() {
-    ptr = getStartPtr();
+    ptr = start();
 }
 
 
 void DataOutManager::seekEnd() {
-    ptr = getStartPtr() + getSize() - 1;
+    ptr = start() + getSize() - 1;
 }
 
 
@@ -104,17 +104,17 @@ void DataOutManager::write(u8* dataPtrIn, u32 amount) {
 
 
 void DataOutManager::writeData(Data* dataIn) {
-    write(dataIn->getStartPtr(), dataIn->getSize());
+    write(dataIn->start(), dataIn->getSize());
 }
 
 
 void DataOutManager::writeFile(File* fileIn) {
-    write(fileIn->getStartPtr(), fileIn->getSize());
+    write(fileIn->start(), fileIn->getSize());
 }
 
 
 void DataOutManager::writeFile(File& fileIn) {
-    write(fileIn.getStartPtr(), fileIn.getSize());
+    write(fileIn.start(), fileIn.getSize());
 }
 
 
@@ -124,11 +124,11 @@ void DataOutManager::writeWString(const std::string& str, size_t length, bool is
 
     for (size_t i = 0; i < length && i < std::min(str.size(), length); ++i) {
         if (isLittleIn) {
-            writeByte(str[i]);
             write(emptyPtr, 1);
+            writeByte(str[i]);
         } else {
-            write(emptyPtr, 1);
             writeByte(str[i]);
+            write(emptyPtr, 1);
         }
     }
 

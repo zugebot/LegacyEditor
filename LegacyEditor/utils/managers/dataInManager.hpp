@@ -17,7 +17,9 @@ public:
     DataInManager() {}
     explicit DataInManager(u32 sizeIn) : Data(sizeIn) {}
     explicit DataInManager(u8* dataPtrIn, u32 sizeIn) : Data(dataPtrIn, sizeIn) {}
-    explicit DataInManager(Data& dataIn) : Data(dataIn.getStartPtr(), dataIn.getSize()) {}
+    explicit DataInManager(Data& dataIn) : Data(dataIn.start(), dataIn.getSize()) {
+        dataIn.using_memory = false;
+    }
 
     inline void setLittleEndian() { isLittle = true; }
     inline void setBigEndian() { isLittle = false; }
@@ -48,6 +50,8 @@ public:
     u8* readWithOffset(i32 offset, i32 amount);
     u8* readBytes(u32 amount);
     void readOntoData(u32 amount, u8* dataIn);
-    int saveToFile(const std::string& fileName);
     int readFromFile(const std::string& fileStrIn);
+    int saveToFile(const std::string& fileName);
+
+
 };

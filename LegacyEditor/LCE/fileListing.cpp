@@ -16,17 +16,16 @@ inline bool startswith(const std::string& value, const std::string& prefix) {
 
 
 void FileListing::read(DataInManager& managerIn) {
-    // std::cout << "Data Pointer: " << reinterpret_cast<void *>(managerIn.ptr) << std::endl;
-
     u32 indexOffset = managerIn.readInt();
     u32 fileCount = managerIn.readInt();
     oldestVersion = managerIn.readShort();
     currentVersion = managerIn.readShort();
     u32 total_size = 0;
 
+    allFiles.clear();
     allFiles.reserve(fileCount);
-    printf("\nFile Count: %u\n", fileCount);
-    printf("Buffer Size: %u\n", managerIn.size);
+    // printf("\nFile Count: %u\n", fileCount);
+    // printf("Buffer Size: %u\n", managerIn.size);
 
     for (int fileIndex = 0; fileIndex < fileCount; fileIndex++) {
         managerIn.seek(indexOffset + fileIndex * 144);
@@ -41,10 +40,14 @@ void FileListing::read(DataInManager& managerIn) {
         u8* data = nullptr;
         u32 index = managerIn.readInt();
         u64 timestamp = managerIn.readLong();
-        if (fileSize) {
-            managerIn.seek(index);
-            data = managerIn.readBytes(fileSize);
+
+        if (!fileSize) {
+            printf("Skipping empty file \"%s\"\n", fileName.c_str());
+            continue;
         }
+
+        managerIn.seek(index);
+        data = managerIn.readBytes(fileSize);
 
         allFiles.emplace_back(data, fileSize, fileName, timestamp);
 
@@ -52,10 +55,13 @@ void FileListing::read(DataInManager& managerIn) {
 
         if (endswith(fileName, ".mcr")) {
             if (startswith(fileName, "DIM-1")) {
+                /*
                 if (fileName.find_first_of('/') != 5) {
+                    printf("original file name: %s\n", fileName.c_str());
                     fileName = fileName.substr(0, 5) + "/" + fileName.substr(5);
                 }
                 file.name = fileName;
+                 */
                 netherFilePtrs.push_back(&file);
             } else if (startswith(fileName, "DIM1")) {
                 endFilePtrs.push_back(&file);
@@ -82,49 +88,45 @@ void FileListing::read(DataInManager& managerIn) {
         } else {
             printf("Unknown File: %s\n", fileName.c_str());
         }
-        printf("%2u. [%7u] - %s\n", fileIndex + 1, file.size, originalFileName.c_str());
+        // printf("%2u. (@%7u)[%7u]  - %s\n", fileIndex + 1, index, file.size, originalFileName.c_str());
     }
-    printf("Total File Size: %u\n\n", total_size);
+    // printf("Total File Size: %u\n\n", total_size);
 
 }
 
 
 DataOutManager FileListing::write() {
-    std::cout << "SaveFileGroupListing::write()" << std::endl;
 
     // step 1: get the file count and size of all sub-files
-
-    // calculate totals
     u32 fileCount = 0;
     u32 fileDataSize = 0;
     for (const File& file: allFiles) {
         fileCount++;
         fileDataSize += file.getSize();
     }
-    u32 indexOffset = fileDataSize + 12;
+    u32 fileInfoOffset = fileDataSize + 12;
 
-    // debugging
-    printf("\nTotal File Count: %u\n", fileCount);
-    printf("Total File Size: %u\n", fileDataSize);
+    // printf("\nTotal File Count: %u\n", fileCount);
+    // printf("Total File Size: %u\n", fileDataSize);
 
     // step 2: find total binary size and create its data buffer
-    u32 totalFileSize = indexOffset + 144 * fileCount;
+    u32 totalFileSize = fileInfoOffset + 144 * fileCount;
 
     DataOutManager data(totalFileSize);
-    // data.setBigEndian();
 
     // step 3: write start
-    data.writeInt(indexOffset);
+    data.writeInt(fileInfoOffset);
     data.writeInt(fileCount);
     data.writeShort(oldestVersion);
     data.writeShort(currentVersion);
 
+
     // step 4: write each files data
     // I am using additionalData as the offset into the file its data is at
-    u32 index;
+    u32 index = 12;
     for (File& fileIter: allFiles) {
-        index = data.getSize();
         fileIter.additionalData = index;
+        index += fileIter.getSize();
         data.writeFile(fileIter);
     }
 
@@ -132,9 +134,9 @@ DataOutManager FileListing::write() {
     // std::cout << "\nwriting back to file" << std::endl;
     int count = 0;
     for (File& fileIter: allFiles) {
-        printf("%2u. [%7u] - %s\n", count + 1, fileIter.size, fileIter.name.c_str());
+        // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter.additionalData, fileIter.size, fileIter.name.c_str());
 
-        data.writeWString(fileIter.name, 64, false);
+        data.writeWString(fileIter.name, 64, true);
         data.writeInt(fileIter.getSize());
 
         // if (!fileIter.isEmpty()) {
@@ -144,7 +146,7 @@ DataOutManager FileListing::write() {
         count++;
     }
 
-    printf("Buffer Size: %u\n", data.size);
+    // printf("Buffer Size: %u\n", data.size);
 
     return data;
 }

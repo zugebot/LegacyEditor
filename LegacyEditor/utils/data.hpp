@@ -57,7 +57,7 @@ public:
         return true;
     }
 
-    ND u8* getStartPtr() const {
+    ND u8* start() const {
         return data;
     }
 

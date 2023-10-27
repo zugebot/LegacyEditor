@@ -34,10 +34,10 @@ int ConsoleFileParser::loadWiiU(u32 file_size) {
 
     // goto offset 8 for zlib, readBytes data into src
     fseek(f_in, 8, SEEK_SET);
-    fread(src.getStartPtr(), 1, source_binary_size, f_in);
+    fread(src.start(), 1, source_binary_size, f_in);
 
     // decompress src -> data
-    tinf_zlib_uncompress((Bytef*) getStartPtr(), &size, (Bytef*) src.getStartPtr(), source_binary_size);
+    tinf_zlib_uncompress((Bytef*) start(), &size, (Bytef*) src.start(), source_binary_size);
 
     if (getSize() == 0) return printf_err("%s", error3);
 
@@ -64,8 +64,8 @@ int ConsoleFileParser::loadPs3Compressed(u32 dest_size) {
     // decompress src -> data
     fseek(f_in, 12, SEEK_SET);
     src.size -= 12;
-    fread(src.getStartPtr(), 1, src.size, f_in);
-    tinf_uncompress(getStartPtr(), &dest_size, src.getStartPtr(), src.size);
+    fread(src.start(), 1, src.size, f_in);
+    tinf_uncompress(start(), &dest_size, src.start(), src.size);
 
     if (dest_size == 0) return printf_err("%s", error3);
 
@@ -83,7 +83,7 @@ int ConsoleFileParser::loadPs3Uncompressed() {
 
     // readBytes into data
     fseek(f_in, 0, SEEK_SET);
-    fread(getStartPtr(), 1, size, f_in);
+    fread(start(), 1, size, f_in);
     return 0;
 }
 
@@ -102,8 +102,8 @@ int ConsoleFileParser::loadXbox360_DAT() {
     if (status == false) return printf_err(error2, size);
 
     // decompress src -> data
-    fread(src.getStartPtr(), 1, src.size, f_in);
-    size = XDecompress(getStartPtr(), &size, src.getStartPtr(), src.size);
+    fread(src.start(), 1, src.size, f_in);
+    size = XDecompress(start(), &size, src.start(), src.size);
 
     if (size == 0) return printf_err("%s", error3);
 
@@ -121,16 +121,16 @@ int ConsoleFileParser::loadXbox360_BIN() {
     Data  bin;
     int status = bin.allocate(source_binary_size);
     if (status == false) return printf_err(error1, bin.size);
-    fread(bin.getStartPtr(), 1, source_binary_size, f_in);
+    fread(bin.start(), 1, source_binary_size, f_in);
 
-    saveGameInfo = extractSaveGameDat(bin.getStartPtr(), (i64) source_binary_size);
+    saveGameInfo = extractSaveGameDat(bin.start(), (i64) source_binary_size);
 
     u32 src_size = saveGameInfo.saveFileData.readInt() - 8;
 
     size = saveGameInfo.saveFileData.readLong(); // at offset 8
     status = allocate(size);
     if (status == false) return printf_err(error2, size);
-    size = XDecompress(getStartPtr(), &size, saveGameInfo.saveFileData.getStartPtr(), src_size);
+    size = XDecompress(start(), &size, saveGameInfo.saveFileData.start(), src_size);
     return 0;
 }
 
@@ -192,7 +192,7 @@ int ConsoleFileParser::saveWiiU(const std::string& outfileStr, DataOutManager& o
     printf("compressed bound: %lu\n", compressedSize);
 
     std::vector<uint8_t> compressedData(compressedSize);
-    if (compress(compressedData.data(), &compressedSize, outManager.getStartPtr(), outManager.size) != Z_OK) {
+    if (compress(compressedData.data(), &compressedSize, outManager.start(), outManager.size) != Z_OK) {
         return {};
     }
     compressedData.resize(compressedSize);

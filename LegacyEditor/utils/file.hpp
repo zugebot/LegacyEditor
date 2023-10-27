@@ -16,6 +16,12 @@ public:
 
     explicit File(u32 sizeIn) : Data(sizeIn) {}
 
+    explicit File(Data& dataIn) : Data(dataIn.start(), dataIn.size) {
+        using_memory = false;
+    }
+
+    File(u8* dataIn, u32 sizeIn) : Data(dataIn, sizeIn) {}
+
     File(u32 sizeIn, std::string nameIn, u64 timestampIn)
         : Data(sizeIn), name(std::move(nameIn)), timestamp(timestampIn) {}
 

@@ -753,7 +753,7 @@ static FileInfo extractSaveGameDat(u8* inputData, i64 inputSize) {
     DataOutManager out(23456789);
 
     stfsInfo.Extract(entry, out);
-    out.size = out.ptr - out.getStartPtr();
+    out.size = out.ptr - out.start();
 
     FileInfo savegame;
     savegame.createdTime = TimePointFromFatTimestamp(entry->createdTimeStamp);
@@ -765,7 +765,7 @@ static FileInfo extractSaveGameDat(u8* inputData, i64 inputSize) {
     int savefileSize = (int) out.getSize();
     if (savefileSize) {
         u8* savefile = (u8*) malloc(savefileSize);
-        memcpy(savefile, out.getStartPtr(), savefileSize);
+        memcpy(savefile, out.start(), savefileSize);
         savegame.saveFileData = DataInManager(savefile, savefileSize);
     }
 

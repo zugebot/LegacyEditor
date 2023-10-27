@@ -10,7 +10,7 @@ int DataInManager::saveToFile(const std::string& fileName) {
         printf("Failed to write to output file '%s'", fileName.c_str());
         return 1;
     }
-    fwrite(getStartPtr(), 1, getSize(), f_out);
+    fwrite(start(), 1, getSize(), f_out);
     fclose(f_out);
     return 0;
 }
@@ -35,7 +35,7 @@ int DataInManager::readFromFile(const std::string& fileStrIn) {
         return -1;
     }
 
-    fread(getStartPtr(), 1, newSize, file);
+    fread(start(), 1, newSize, file);
 
     fclose(file);
     return 0;
@@ -44,28 +44,28 @@ int DataInManager::readFromFile(const std::string& fileStrIn) {
 
 
 void DataInManager::seekStart() {
-    ptr = getStartPtr();
+    ptr = start();
 }
 
 
 void DataInManager::seekEnd() {
     seekStart();
-    ptr = getStartPtr() + getSize() - 1;
+    ptr = start() + getSize() - 1;
 }
 
 void DataInManager::seek(u32 position) {
-    ptr = getStartPtr();
+    ptr = start();
     incrementPointer(position);
 }
 
 
 bool DataInManager::isEndOfData() {
-    return ptr == getStartPtr() + getSize() - 1;
+    return ptr == start() + getSize() - 1;
 }
 
 
 u32 DataInManager::getPosition() {
-    return ptr - getStartPtr();
+    return ptr - start();
 }
 
 
@@ -267,7 +267,7 @@ double DataInManager::readDouble() {
 u8* DataInManager::readWithOffset(i32 offset, i32 amount) {
     auto* val = new u8[amount];
     incrementPointer(offset);
-    memcpy(val, getStartPtr(), amount);
+    memcpy(val, start(), amount);
     incrementPointer(amount);
     return val;
 }
@@ -275,14 +275,14 @@ u8* DataInManager::readWithOffset(i32 offset, i32 amount) {
 
 u8* DataInManager::readBytes(u32 amount) {
     auto* val = new u8[amount];
-    memcpy(val, getStartPtr(), amount);
+    memcpy(val, getPtr(), amount);
     incrementPointer((i32) amount);
     return val;
 }
 
 
 void DataInManager::readOntoData(u32 amount, u8* dataIn) {
-    memcpy(dataIn, getStartPtr(), amount);
+    memcpy(dataIn, start(), amount);
     incrementPointer(amount);
 }
 
