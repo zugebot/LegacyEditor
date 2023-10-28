@@ -5,8 +5,7 @@
 #include <optional>
 
 #include "LegacyEditor/LCE/FileInfo.hpp"
-#include "LegacyEditor/utils/managers/dataInManager.hpp"
-#include "LegacyEditor/utils/managers/dataOutManager.hpp"
+#include "LegacyEditor/utils/dataManager.hpp"
 
 
 struct StfsFileEntry {
@@ -42,7 +41,7 @@ struct StfsVD {
     uint32_t allocatedBlockCount;
     uint32_t unallocatedBlockCount;
 
-    void readStfsVD(DataInManager& input) {
+    void readStfsVD(DataManager& input) {
         this->size = input.readByte();
         input.readByte();// reserved
         this->blockSeparation = input.readByte();
@@ -80,10 +79,10 @@ public:
     uint32_t headerSize{};
     StfsVD stfsVD{};
     std::wstring displayName;
-    DataInManager thumbnailImage = DataInManager();
+    DataManager thumbnailImage = DataManager();
 
 
-    int readHeader(DataInManager& binFile) {
+    int readHeader(DataManager& binFile) {
 
         binFile.seek(0x340);
         this->headerSize = binFile.readInt();
@@ -116,13 +115,13 @@ public:
         if (thumbnailImageSize) {
             binFile.incrementPointer(4);//readBytes the other size but it will not be used
             uint8_t* thumbnailImageData = binFile.readBytes(thumbnailImageSize);
-            this->thumbnailImage = DataInManager(thumbnailImageData, thumbnailImageSize);
+            this->thumbnailImage = DataManager(thumbnailImageData, thumbnailImageSize);
         } else {
             uint32_t titleThumbnailImageSize = binFile.readInt();
             if (titleThumbnailImageSize) {
                 binFile.seek(0x571A);
                 uint8_t* titleThumbnailImageData = binFile.readBytes(thumbnailImageSize);
-                this->thumbnailImage = DataInManager(titleThumbnailImageData, titleThumbnailImageSize);
+                this->thumbnailImage = DataManager(titleThumbnailImageData, titleThumbnailImageSize);
             }
         }
         return 1;
@@ -133,11 +132,11 @@ public:
 /// extract a file (by FileEntry) to a designated file path
 class StfsPackage {
 public:
-    explicit StfsPackage(DataInManager& input) : data(input) {}
+    explicit StfsPackage(DataManager& input) : data(input) {}
 
     StfsFileListing GetFileListing() { return fileListing; }
 
-    void Extract(StfsFileEntry* entry, DataOutManager& out) {
+    void Extract(StfsFileEntry* entry, DataManager& out) {
         if (entry->nameLen == 0) { entry->name = "default"; }
 
         // get the file size that we are extracting
@@ -274,7 +273,7 @@ private:
 
     StfsFileListing fileListing;
     //StfsFileListing writtenToFile;
-    DataInManager& data;
+    DataManager& data;
 
     uint8_t packageSex{};//0 female, 1 male
     uint32_t blockStep[2]{};
@@ -613,7 +612,7 @@ static int64_t stringToInt64(const std::string& str) {
 }
 
 
-static WorldOptions getTagsInImage(DataInManager& image) {
+static WorldOptions getTagsInImage(DataManager& image) {
     WorldOptions options;
     uint8_t* PNGHeader = image.readBytes(8);
     if (memcmp(PNGHeader, "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A", 8) != 0) {
@@ -742,7 +741,7 @@ static std::optional<std::chrono::system_clock::time_point> TimePointFromFatTime
 }
 
 static FileInfo extractSaveGameDat(u8* inputData, i64 inputSize) {
-    DataInManager binFile(inputData, inputSize);
+    DataManager binFile(inputData, inputSize);
     StfsPackage stfsInfo(binFile);
     stfsInfo.Parse();
     StfsFileListing listing = stfsInfo.GetFileListing();
@@ -750,7 +749,7 @@ static FileInfo extractSaveGameDat(u8* inputData, i64 inputSize) {
     if (!entry) { return {}; }
 
     // TODO IMPORTANT: find upper range of this so it can use a buffer
-    DataOutManager out(23456789);
+    DataManager out(23456789);
 
     stfsInfo.Extract(entry, out);
     out.size = out.ptr - out.start();
@@ -766,7 +765,7 @@ static FileInfo extractSaveGameDat(u8* inputData, i64 inputSize) {
     if (savefileSize) {
         u8* savefile = (u8*) malloc(savefileSize);
         memcpy(savefile, out.start(), savefileSize);
-        savegame.saveFileData = DataInManager(savefile, savefileSize);
+        savegame.saveFileData = DataManager(savefile, savefileSize);
     }
 
     savegame.saveName = stfsInfo.GetMetaData().displayName;

@@ -17,7 +17,7 @@ static int inline printf_err(const char* format, ...) {
 }
 
 
-int ConsoleFileParser::loadWiiU(u32 file_size) {
+int ConsoleParser::loadWiiU(u32 file_size) {
     printf("Detected WiiU savefile, converting\n");
     console = CONSOLE::WIIU;
     bool status;
@@ -47,7 +47,7 @@ int ConsoleFileParser::loadWiiU(u32 file_size) {
 
 /// ps3 save files don't need decompressing\n
 /// TODO: IMPORTANT check from a region file chunk what console it is if it is uncompressed
-int ConsoleFileParser::loadPs3Compressed(u32 dest_size) {
+int ConsoleParser::loadPs3Compressed(u32 dest_size) {
     printf("Detected compressed PS3 savefile, converting\n");
     console = CONSOLE::PS3;
     int status;
@@ -73,7 +73,7 @@ int ConsoleFileParser::loadPs3Compressed(u32 dest_size) {
 }
 
 
-int ConsoleFileParser::loadPs3Uncompressed() {
+int ConsoleParser::loadPs3Uncompressed() {
     printf("Detected uncompressed PS3 savefile, converting\n");
     console = CONSOLE::PS3;
 
@@ -88,7 +88,7 @@ int ConsoleFileParser::loadPs3Uncompressed() {
 }
 
 
-int ConsoleFileParser::loadXbox360_DAT() {
+int ConsoleParser::loadXbox360_DAT() {
     printf("Detected Xbox360 .dat savefile, converting\n");
     console = CONSOLE::XBOX360;
 
@@ -111,7 +111,7 @@ int ConsoleFileParser::loadXbox360_DAT() {
 }
 
 
-int ConsoleFileParser::loadXbox360_BIN() {
+int ConsoleParser::loadXbox360_BIN() {
     console = CONSOLE::XBOX360;
     printf("Detected Xbox360 .bin savefile, converting\n");
 
@@ -135,7 +135,7 @@ int ConsoleFileParser::loadXbox360_BIN() {
 }
 
 
-int ConsoleFileParser::loadConsoleFile(const char* infileStr) {
+int ConsoleParser::loadConsoleFile(const char* infileStr) {
 
     // open file
     f_in = fopen(infileStr, "rb");
@@ -181,8 +181,9 @@ int ConsoleFileParser::loadConsoleFile(const char* infileStr) {
     return result;
 }
 
-int ConsoleFileParser::saveWiiU(const std::string& outfileStr, DataOutManager& outManager) {
-    u64 src_size = outManager.size;
+int ConsoleParser::saveWiiU(const std::string& outfileStr, Data& dataOut) {
+    DataManager managerOut(dataOut);
+    u64 src_size = managerOut.size;
 
     FILE* f_out = fopen(outfileStr.c_str(), "wb");
     if (!f_out) { return -1; }
@@ -192,7 +193,7 @@ int ConsoleFileParser::saveWiiU(const std::string& outfileStr, DataOutManager& o
     printf("compressed bound: %lu\n", compressedSize);
 
     std::vector<uint8_t> compressedData(compressedSize);
-    if (compress(compressedData.data(), &compressedSize, outManager.start(), outManager.size) != Z_OK) {
+    if (compress(compressedData.data(), &compressedSize, managerOut.start(), managerOut.size) != Z_OK) {
         return {};
     }
     compressedData.resize(compressedSize);
@@ -215,16 +216,16 @@ int ConsoleFileParser::saveWiiU(const std::string& outfileStr, DataOutManager& o
 }
 
 
-int ConsoleFileParser::savePS3Uncompressed() { return 0; }
+int ConsoleParser::savePS3Uncompressed() { return 0; }
 
 
-int ConsoleFileParser::savePS3Compressed() { return 0; }
+int ConsoleParser::savePS3Compressed() { return 0; }
 
 
-int ConsoleFileParser::saveXbox360_DAT() { return 0; }
+int ConsoleParser::saveXbox360_DAT() { return 0; }
 
 
-int ConsoleFileParser::saveXbox360_BIN() { return 0; }
+int ConsoleParser::saveXbox360_BIN() { return 0; }
 
 
-int ConsoleFileParser::saveConsoleFile(const char* outfileStr) { return 0; }
+int ConsoleParser::saveConsoleFile(const char* outfileStr) { return 0; }

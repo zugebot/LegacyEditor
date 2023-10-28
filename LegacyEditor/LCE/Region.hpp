@@ -12,7 +12,7 @@ private:
 
 public:
     Chunk chunks[CHUNK_COUNT] = {};
-    u32 sectorCount = 0;
+    u32 totalSectors = 0;
 
     CONSOLE console = CONSOLE::NONE;
 
@@ -20,23 +20,35 @@ public:
         console = consoleIn;
     }
 
-    Chunk* getLoc(int x, int z) {
+    Chunk* getChunk(int x, int z) {
         int index = x + z * 32;
         if (index > CHUNK_COUNT) return nullptr;
-        return &chunks[x + z * 32];
+        return &chunks[index];
     }
 
+    Chunk* getRelativeChunk(int x, int z) {
+        int index = (x + 16) + (z + 16) * 32;
+        if (index > CHUNK_COUNT) return nullptr;
+        return &chunks[index];
+    }
+
+
+    Chunk* getChunk(int index) {
+        if (index > CHUNK_COUNT) return nullptr;
+        return &chunks[index];
+    }
+
+
     void read(File* fileIn) {
+        totalSectors = fileIn->size / SECTOR_SIZE;
+
         // step 0: copying data from file
-        Data dat;
-        dat.allocate(fileIn->size);
-        memcpy(dat.start(), fileIn->start(), fileIn->size);
-        DataInManager managerIn(dat);
+        DataManager managerIn(fileIn);
 
         // step 1: read offsets
         for (Chunk& chunk : chunks) {
-            chunk.location = managerIn.readInt();
-            chunk.data = managerIn.start() + chunk.getOffset();
+            chunk.location = managerIn.readInt24();
+            chunk.sectors = managerIn.readByte();
         }
 
         // step 2: read timestamps
@@ -46,17 +58,22 @@ public:
 
         // step 3: read chunk size, decompressed size
         for (Chunk& chunk : chunks) {
-            if (chunk.getSectorEnd() > sectorCount) {
-                printf("chunk sector end goes outside file, could this file be corrupted?\n");
+            if (chunk.location + chunk.sectors > totalSectors) {
+                printf("[%u] chunk sector[%u, %u] end goes outside file...\n", totalSectors, chunk.location, chunk.sectors);
             }
 
-            if (!chunk.isSaved() ) continue;
+            if (chunk.sectors == 0) continue;
 
             // read chunk info
-            auto offset = chunk.getSectorOffset();
-            managerIn.seek((i64) offset);
-            chunk.setDataSize(managerIn.readInt());
+            managerIn.seek(4096 * chunk.location);
 
+            // allocates memory for the chunk
+            chunk.size = managerIn.readInt();
+            chunk.rleFlag = chunk.size >> 31;
+            chunk.size &= 0x3FFFFFFF;
+            chunk.allocate(chunk.size);
+
+            // set chunk's decompressed size attribute
             switch (console) {
                 case CONSOLE::PS3:
                     chunk.dec_size = managerIn.readInt();
@@ -70,7 +87,8 @@ public:
             }
 
             // each chunk gets its own memory
-            memcpy(chunk.start(), managerIn.start(), chunk.size);
+            memcpy(chunk.start(), managerIn.getPtr(), chunk.size);
+
         }
 
 
@@ -78,50 +96,63 @@ public:
 
 
 
-    File write(CONSOLE consoleIn) {
+    Data write(CONSOLE consoleIn) {
 
         // step 1: make sure all chunks are compressed correctly
         // step 2: recalculate sectorCount of each chunk
         // step 3: calculate chunk offsets for each chunk
-        int sectors = 2;
+        int total_sectors = 2;
         int count = 0;
         for (Chunk& chunk : chunks) {
-            if (chunk.data == nullptr) {
-                // reset chunk data
+            if (chunk.sectors == 0) {
                 chunk.location = 0;
-                chunk.timestamp = 0;
-            } else {
-                chunk.compress(consoleIn);
-                uint8_t chunk_sectors = chunk.size / SECTOR_SIZE;
-                chunk.location = sectors * 256 + chunk_sectors;
-                sectors += chunk_sectors;
+                continue;
             }
+
+            chunk.ensure_compressed(consoleIn);
+            u8 chunk_sectors = (chunk.size + SECTOR_SIZE - 1) / SECTOR_SIZE;
+            chunk.location = total_sectors;
+            total_sectors += chunk_sectors;
+
             count++;
         }
 
         // step 4: allocate memory and create buffer
-        uint32_t data_size = sectors * SECTOR_SIZE;
-        Data out = Data(data_size);
-        DataOutManager managerOut(out);
-        File returnFile(out);
+        u32 data_size = total_sectors * SECTOR_SIZE;
+        Data dataOut = Data(data_size);
+        DataManager managerOut(dataOut);
+        managerOut.setBigEndian();
         // auto* data_ptr = new uint8_t[data_size];
         // DataOutManager dataOut(data_ptr, data_size);
 
         // step 5: write each chunk offset
+        managerOut.seekStart();
         for (const Chunk& chunk : chunks) {
-            managerOut.writeInt(chunk.location);
+            managerOut.writeInt24(chunk.location);
+            managerOut.writeByte(chunk.sectors);
         }
+
+        // return dataOut;
 
         // step 6: write each chunk timestamp
         for (const Chunk& chunk : chunks) {
             managerOut.writeInt(chunk.timestamp);
         }
 
+
         // step 7: seek to each location, write chunk attr's, then chunk data
         // make sure the pointer is a multiple of SECTOR_SIZE
         for (const Chunk& chunk : chunks) {
-            managerOut.seek(chunk.getSectorOffset());
-            managerOut.writeInt(chunk.size);
+            if (chunk.sectors == 0) continue;
+            managerOut.seek(chunk.location * 4096);
+
+            u32 size = chunk.size;
+            if (chunk.rleFlag) {
+                u32 mask = 0x00FFFFFF;
+                size &= mask;
+                size |= (0xC0 << 24);
+            }
+            managerOut.writeInt(size);
 
             switch (console) {
                 case CONSOLE::PS3:
@@ -137,7 +168,7 @@ public:
             managerOut.write(chunk.start(), chunk.size);
         }
 
-        return returnFile;
+        return dataOut;
     }
 
 

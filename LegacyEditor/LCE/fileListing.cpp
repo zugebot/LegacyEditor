@@ -15,7 +15,10 @@ inline bool startswith(const std::string& value, const std::string& prefix) {
 }
 
 
-void FileListing::read(DataInManager& managerIn) {
+void FileListing::read(Data& dataIn) {
+    DataManager managerIn(dataIn);
+    managerIn.setLittleEndian();
+
     u32 indexOffset = managerIn.readInt();
     u32 fileCount = managerIn.readInt();
     oldestVersion = managerIn.readShort();
@@ -95,7 +98,7 @@ void FileListing::read(DataInManager& managerIn) {
 }
 
 
-DataOutManager FileListing::write() {
+Data FileListing::write() {
 
     // step 1: get the file count and size of all sub-files
     u32 fileCount = 0;
@@ -112,13 +115,15 @@ DataOutManager FileListing::write() {
     // step 2: find total binary size and create its data buffer
     u32 totalFileSize = fileInfoOffset + 144 * fileCount;
 
-    DataOutManager data(totalFileSize);
+    Data dataOut(totalFileSize);
+    DataManager managerOut(dataOut);
+    managerOut.setLittleEndian();
 
     // step 3: write start
-    data.writeInt(fileInfoOffset);
-    data.writeInt(fileCount);
-    data.writeShort(oldestVersion);
-    data.writeShort(currentVersion);
+    managerOut.writeInt(fileInfoOffset);
+    managerOut.writeInt(fileCount);
+    managerOut.writeShort(oldestVersion);
+    managerOut.writeShort(currentVersion);
 
 
     // step 4: write each files data
@@ -127,7 +132,7 @@ DataOutManager FileListing::write() {
     for (File& fileIter: allFiles) {
         fileIter.additionalData = index;
         index += fileIter.getSize();
-        data.writeFile(fileIter);
+        managerOut.writeFile(fileIter);
     }
 
     // step 5: write file metadata
@@ -136,17 +141,17 @@ DataOutManager FileListing::write() {
     for (File& fileIter: allFiles) {
         // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter.additionalData, fileIter.size, fileIter.name.c_str());
 
-        data.writeWString(fileIter.name, 64, true);
-        data.writeInt(fileIter.getSize());
+        managerOut.writeWString(fileIter.name, 64, true);
+        managerOut.writeInt(fileIter.getSize());
 
         // if (!fileIter.isEmpty()) {
-            data.writeInt(fileIter.additionalData);
-            data.writeLong(fileIter.timestamp);
+        managerOut.writeInt(fileIter.additionalData);
+        managerOut.writeLong(fileIter.timestamp);
         // }
         count++;
     }
 
     // printf("Buffer Size: %u\n", data.size);
 
-    return data;
+    return dataOut;
 }

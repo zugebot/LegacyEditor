@@ -6,6 +6,9 @@
 #include <cstdlib>
 #include <new>
 
+/**
+ * If a pointer is passed to Data, this object is not responsible for it.
+ */
 class Data {
 public:
     u8* data = nullptr;

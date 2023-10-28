@@ -4,8 +4,7 @@
 #include "LegacyEditor/utils/file.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 
-#include "LegacyEditor/utils/managers/dataInManager.hpp"
-#include "LegacyEditor/utils/managers/dataOutManager.hpp"
+#include "LegacyEditor/utils/dataManager.hpp"
 
 #include <vector>
 
@@ -35,8 +34,12 @@ public:
 
     FileListing() = default;
 
-    void read(DataInManager& managerIn);
-    DataOutManager write();
+    explicit FileListing(Data& dataIn) {
+        read(dataIn);
+    }
+
+    void read(Data& dataIn);
+    Data write();
 
 
 };

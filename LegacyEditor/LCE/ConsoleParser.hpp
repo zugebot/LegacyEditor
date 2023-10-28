@@ -38,7 +38,7 @@ public:
 };
 
 
-class ConsoleFileParser : public Data {
+class ConsoleParser : public Data {
 private:
     static constexpr int CON_MAGIC = 0x434F4E20;
     static constexpr int ZLIB_MAGIC = 0x789C;
@@ -56,7 +56,7 @@ public:
     FILE* f_in{};
     uint64_t source_binary_size{};
 
-    ConsoleFileParser() : Data() {}
+    ConsoleParser() : Data() {}
 
     int loadWiiU(u32 file_size);
     int loadPs3Compressed(u32 dest_size);
@@ -66,7 +66,7 @@ public:
 
     int loadConsoleFile(const char* infileStr);
 
-    int saveWiiU(const std::string& outfileStr, DataOutManager& outManager);
+    static int saveWiiU(const std::string& outfileStr, Data& dataOut);
     int savePS3Uncompressed();
     int savePS3Compressed();
     int saveXbox360_DAT();

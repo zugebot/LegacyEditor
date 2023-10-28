@@ -5,17 +5,16 @@
 #include <string>
 #include <utility>
 
-#include "LegacyEditor/utils/managers/dataInManager.hpp"
-#include "LegacyEditor/utils/managers/dataOutManager.hpp"
+#include "LegacyEditor/utils/dataManager.hpp"
 
 
 struct WorldOptions {
-    int64_t displaySeed = 0;
-    uint32_t numLoads = 0;
-    uint32_t hostOptions = 0;
-    uint32_t texturePack = 0;
-    uint32_t extraData = 0;
-    uint32_t numExploredChunks = 0;
+    i64 displaySeed = 0;
+    u32 numLoads = 0;
+    u32 hostOptions = 0;
+    u32 texturePack = 0;
+    u32 extraData = 0;
+    u32 numExploredChunks = 0;
     std::string baseSaveName;
 };
 
@@ -25,8 +24,8 @@ private:
     typedef std::optional<std::chrono::system_clock::time_point> timePoint_t;
 
 public:
-    DataInManager saveFileData = DataInManager();
-    DataInManager thumbnailImage = DataInManager();
+    DataManager saveFileData{};
+    DataManager thumbnailImage{};
     std::wstring saveName;
     timePoint_t createdTime = std::nullopt;
     WorldOptions options;

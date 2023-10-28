@@ -12,35 +12,28 @@
 class Chunk : public Data {
 public:
     u32 dec_size;
+    u8 sectors;
     u32 location;
     u32 timestamp;
     bool isCompressed = true;
     bool rleFlag = false;
 
-    ND inline uint32_t getOffset() const { return location / 256; }
-    ND inline uint8_t getSectorCount() const { return location & 255; }
-    ND inline uint32_t getSectorEnd() const { return getOffset() + getSectorCount(); }
-    ND inline uint32_t getSectorOffset() const { return getOffset() * 4096; }
+    // ND inline uint32_t getOffset() const { return location; }
+    // ND inline uint8_t getSectorCount() const { return sectors; }
 
-    void setDataSize(uint32_t value) {
-        size = value;
-        rleFlag = size >> 31;
-        size &= 0x3FFFFFFF;
-        allocate(size);
-    }
-
-    ND bool isSaved() const {
-        return location != 0;
-    }
-
-    void decompress(CONSOLE console) {
+    void ensure_decompress(CONSOLE console) {
         if (!isCompressed) {
-            printf("cannot decompress the chunk if its already decompressed\n");
+            printf("cannot Chunk.ensure_decompress the chunk if its already decompressed\n");
             return;
         }
 
         if (console == CONSOLE::NONE) {
-            printf("passed CONSOLE::NONE to decompress, results will not work\n");
+            printf("passed CONSOLE::NONE to Chunk.ensure_decompress, results will not work\n");
+            return;
+        }
+
+        if (data == nullptr) {
+            printf("chunk data is nullptr, cannot Chunk.ensure_decompress nothing\n");
             return;
         }
 
@@ -64,24 +57,39 @@ public:
                 break;
         }
 
-        if (data != nullptr) {
-            delete[] data;
-            data = nullptr;
-        }
+        delete[] data;
+        data = nullptr;
 
         if (rleFlag) {
             Data rle(dec_size);
-            RLE_uncompress(decompData.start(), dec_size_copy, rle.start(), dec_size);
-            // data = rle_ptr;
+            RLE_uncompress(decompData.start(), decompData.size, rle.start(), dec_size);
+            data = rle.data;
+            rle.using_memory = false;
             size = dec_size;
             return;
         }
 
-        // data = decompData;
+        data = decompData.data;
+        decompData.using_memory = false;
         size = dec_size_copy;
     }
 
-    MU void compress(CONSOLE console) {
+    MU void ensure_compressed(CONSOLE console) {
+        if (isCompressed) {
+            // printf("cannot Chunk.ensure_compress if the chunk if its already compressed\n");
+            return;
+        }
+
+        if (console == CONSOLE::NONE) {
+            printf("passed CONSOLE::NONE to Chunk.ensure_compress, results will not work\n");
+            return;
+        }
+
+        if (data == nullptr) {
+            printf("chunk data is nullptr, cannot Chunk.ensure_compress nothing\n");
+            return;
+        }
+
         dec_size = size;
 
         if (rleFlag) {

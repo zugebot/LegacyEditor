@@ -3,8 +3,7 @@
 #include <iostream>
 #include "lzx.h"
 
-#include "LegacyEditor/utils/managers/dataInManager.hpp"
-#include "LegacyEditor/utils/managers/dataOutManager.hpp"
+#include "LegacyEditor/utils/dataManager.hpp"
 
 //the max "amount" here is 0xffff which is only 2^16 - 1, so it won't overflow (0xff < 8) | 0xff
 static int hasOverFlow(int64_t bytesRead, int64_t size, int amount) {
