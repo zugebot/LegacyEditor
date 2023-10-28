@@ -7,6 +7,7 @@
 
 #include "LegacyEditor/utils/dataManager.hpp"
 
+// TODO: I stole this from converter its not being used yet though
 
 struct WorldOptions {
     i64 displaySeed = 0;

@@ -9,39 +9,13 @@
 #include "LegacyEditor/LCE/BINSupport.hpp"
 #include "LegacyEditor/LCE/FileInfo.hpp"
 #include "LegacyEditor/LCE/fileListing.hpp"
-#include "LegacyEditor/utils/endian_swap.hpp"
-
-
-class HeaderUnion {
-public:
-    union {
-        struct {
-            u32 int1;
-            u32 int2;
-        } INT_VIEW;
-        struct {
-            u64 dest_size;
-            u16 zlib_magic;
-        } ZLIB;
-        struct {
-            u32 src_size;
-            u64 file_size;
-        } DAT;
-    };
-
-    ND u32 getInt1() const { return ::isLittleEndian() ? ::swapEndian32(INT_VIEW.int1) : INT_VIEW.int1; }
-    ND u32 getInt2() const { return ::isLittleEndian() ? ::swapEndian32(INT_VIEW.int2) : INT_VIEW.int2; }
-    ND u64 getDestSize() const { return ::isLittleEndian() ? ::swapEndian64(ZLIB.dest_size) : ZLIB.dest_size; }
-    ND u16 getZlibMagic() const { return ::isLittleEndian() ? ::swapEndian16(ZLIB.zlib_magic) : ZLIB.zlib_magic; }
-    ND u32 getSrcSize() const { return ::isLittleEndian() ? ::swapEndian32(DAT.src_size) : DAT.src_size; }
-    ND u64 getFileSize() const { return ::isLittleEndian() ? ::swapEndian64(DAT.file_size) : DAT.file_size; }
-};
+#include "LegacyEditor/LCE/headerUnion.hpp"
 
 
 class ConsoleParser : public Data {
 private:
-    static constexpr int CON_MAGIC = 0x434F4E20;
-    static constexpr int ZLIB_MAGIC = 0x789C;
+    static constexpr u32 CON_MAGIC = 0x434F4E20;
+    static constexpr u32 ZLIB_MAGIC = 0x789C;
 
     const char* error1 = "Could not allocate %d bytes of data for source file buffer, exiting\n";
     const char* error2 = "Could not allocate %d bytes of data for source and decompressed buffer, exiting\n";
@@ -51,7 +25,7 @@ private:
 
 public:
     FileInfo saveGameInfo;
-    uint8_t header[0xc]{};
+    u8 header[0xc]{};
     CONSOLE console = CONSOLE::NONE;
     FILE* f_in{};
     uint64_t source_binary_size{};

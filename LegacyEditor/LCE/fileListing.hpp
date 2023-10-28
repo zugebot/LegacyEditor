@@ -14,9 +14,6 @@ public:
     // TODO IMPORTANT: RESIZING OF VECTORS BREAKS DE_ALLOCATION
     std::vector<File> allFiles;
 
-    /// maybe use this later for creating file dir
-    std::vector<std::string> allFolders;
-
     // files
     std::vector<File*> overworldFilePtrs;
     std::vector<File*> netherFilePtrs;

@@ -181,6 +181,7 @@ int ConsoleParser::loadConsoleFile(const char* infileStr) {
     return result;
 }
 
+
 int ConsoleParser::saveWiiU(const std::string& outfileStr, Data& dataOut) {
     DataManager managerOut(dataOut);
     u64 src_size = managerOut.size;

@@ -9,17 +9,17 @@
 
 
 struct StfsFileEntry {
-    uint32_t entryIndex{};
+    u32 entryIndex{};
     std::string name;
-    uint8_t nameLen{};
-    uint8_t flags{};
+    u8 nameLen{};
+    u8 flags{};
     int blocksForFile{};
     int startingBlockNum{};
-    uint16_t pathIndicator{};
-    uint32_t fileSize{};
-    uint32_t createdTimeStamp{};
-    uint32_t accessTimeStamp{};
-    uint32_t fileEntryAddress{};
+    u16 pathIndicator{};
+    u32 fileSize{};
+    u32 createdTimeStamp{};
+    u32 accessTimeStamp{};
+    u32 fileEntryAddress{};
     std::vector<int> blockChain;
 };
 
@@ -32,14 +32,14 @@ struct StfsFileListing {
 
 
 struct StfsVD {
-    uint8_t size;
-    //uint8_t reserved;
-    uint8_t blockSeparation;
-    uint16_t fileTableBlockCount;
+    u8 size;
+    //u8 reserved;
+    u8 blockSeparation;
+    u16 fileTableBlockCount;
     int fileTableBlockNum;
-    //uint8_t topHashTableHash[0x14];
-    uint32_t allocatedBlockCount;
-    uint32_t unallocatedBlockCount;
+    //u8 topHashTableHash[0x14];
+    u32 allocatedBlockCount;
+    u32 unallocatedBlockCount;
 
     void readStfsVD(DataManager& input) {
         this->size = input.readByte();
@@ -58,25 +58,25 @@ struct StfsVD {
 
 #pragma pack(push, 1)
 struct HashEntry {
-    uint8_t blockHash[0x14];
-    uint8_t status;
-    uint32_t nextBlock;
+    u8 blockHash[0x14];
+    u8 status;
+    u32 nextBlock;
 };
 #pragma pack(pop)
 
 
 struct HashTable {
-    uint8_t level;
-    uint32_t trueBlockNumber;
-    uint32_t entryCount;
+    u8 level;
+    u32 trueBlockNumber;
+    u32 entryCount;
     HashEntry entries[0xAA];
-    uint32_t addressInFile;
+    u32 addressInFile;
 };
 
 
 class BINHeader {
 public:
-    uint32_t headerSize{};
+    u32 headerSize{};
     StfsVD stfsVD{};
     std::wstring displayName;
     DataManager thumbnailImage = DataManager();
@@ -110,17 +110,17 @@ public:
         //skip all the irrelevant data to extract the savegame
         binFile.seek(0x1712);
         //get thumbnail image, if not present, use the title one if present
-        uint8_t* thumbnail = nullptr;
-        uint32_t thumbnailImageSize = binFile.readInt();
+        u8* thumbnail = nullptr;
+        u32 thumbnailImageSize = binFile.readInt();
         if (thumbnailImageSize) {
             binFile.incrementPointer(4);//readBytes the other size but it will not be used
-            uint8_t* thumbnailImageData = binFile.readBytes(thumbnailImageSize);
+            u8* thumbnailImageData = binFile.readBytes(thumbnailImageSize);
             this->thumbnailImage = DataManager(thumbnailImageData, thumbnailImageSize);
         } else {
-            uint32_t titleThumbnailImageSize = binFile.readInt();
+            u32 titleThumbnailImageSize = binFile.readInt();
             if (titleThumbnailImageSize) {
                 binFile.seek(0x571A);
-                uint8_t* titleThumbnailImageData = binFile.readBytes(thumbnailImageSize);
+                u8* titleThumbnailImageData = binFile.readBytes(thumbnailImageSize);
                 this->thumbnailImage = DataManager(titleThumbnailImageData, titleThumbnailImageSize);
             }
         }
@@ -140,24 +140,24 @@ public:
         if (entry->nameLen == 0) { entry->name = "default"; }
 
         // get the file size that we are extracting
-        uint32_t fileSize = entry->fileSize;
+        u32 fileSize = entry->fileSize;
         if (fileSize == 0) { return; }
 
         // check if all the blocks are consecutive
         if (entry->flags & 1) {
             // allocate 0xAA blocks of memory, for maximum efficiency, yo
-            auto* buffer = new uint8_t[0xAA000];
+            auto* buffer = new u8[0xAA000];
 
             // seek to the beginning of the file
-            uint32_t startAddress = BlockToAddress(entry->startingBlockNum);
+            u32 startAddress = BlockToAddress(entry->startingBlockNum);
             data.seek(startAddress);
 
             // calculateOffset the number of blocks to readBytes before we hit a table
-            uint32_t blockCount = (ComputeLevel0BackingHashBlockNumber(entry->startingBlockNum) + blockStep[0]) -
+            u32 blockCount = (ComputeLevel0BackingHashBlockNumber(entry->startingBlockNum) + blockStep[0]) -
                                   ((startAddress - firstHashTableAddress) >> 0xC);
 
             // pick up the change at the beginning, until we hit a hash table
-            if ((uint32_t) entry->blocksForFile <= blockCount) {
+            if ((u32) entry->blocksForFile <= blockCount) {
                 data.readOntoData(entry->fileSize, buffer);
                 out.write(buffer, entry->fileSize);
 
@@ -172,10 +172,10 @@ public:
             }
 
             // extract the blocks in between the tables
-            uint32_t tempSize = (entry->fileSize - (blockCount << 0xC));
+            u32 tempSize = (entry->fileSize - (blockCount << 0xC));
             while (tempSize >= 0xAA000) {
                 // skip past the hash table(s)
-                uint32_t currentPos = data.getPosition();
+                u32 currentPos = data.getPosition();
                 data.seek(currentPos + GetHashTableSkipSize(currentPos));
 
                 // readBytes in the 0xAA blocks between the tables
@@ -191,7 +191,7 @@ public:
             // pick up the change at the end
             if (tempSize != 0) {
                 // skip past the hash table(s)
-                uint32_t currentPos = data.getPosition();
+                u32 currentPos = data.getPosition();
                 data.seek(currentPos + GetHashTableSkipSize(currentPos));
 
                 // readBytes in the extra crap
@@ -205,17 +205,17 @@ public:
             delete[] buffer;
         } else {
             // generate the blockchain which we have to extract
-            uint32_t fullReadCounts = fileSize / 0x1000;
+            u32 fullReadCounts = fileSize / 0x1000;
 
             fileSize -= (fullReadCounts * 0x1000);
 
-            uint32_t block = entry->startingBlockNum;
+            u32 block = entry->startingBlockNum;
 
             // allocate data for the blocks
-            uint8_t block_data[0x1000];
+            u8 block_data[0x1000];
 
             // readBytes all the full blocks the file allocates
-            for (uint32_t i = 0; i < fullReadCounts; i++) {
+            for (u32 i = 0; i < fullReadCounts; i++) {
                 ExtractBlock(block, block_data);
                 out.write(block_data, 0x1000);
 
@@ -231,18 +231,18 @@ public:
     }
 
     /// convert a block into an address in the file
-    uint32_t BlockToAddress(uint32_t blockNum) {
+    u32 BlockToAddress(u32 blockNum) {
         // check for invalid block number
         if (blockNum >= 0xFFFFFF) throw std::runtime_error("STFS: Block number must be less than 0xFFFFFF.\n");
         return (ComputeBackingDataBlockNumber(blockNum) << 0x0C) + firstHashTableAddress;
     }
 
     /// get the address of a hash for a data block
-    uint32_t GetHashAddressOfBlock(uint32_t blockNum) {
+    u32 GetHashAddressOfBlock(u32 blockNum) {
         if (blockNum >= metaData.stfsVD.allocatedBlockCount)
             throw std::runtime_error("STFS: Reference to illegal block number.\n");
 
-        uint32_t hashAddr = (ComputeLevel0BackingHashBlockNumber(blockNum) << 0xC) + firstHashTableAddress;
+        u32 hashAddr = (ComputeLevel0BackingHashBlockNumber(blockNum) << 0xC) + firstHashTableAddress;
         hashAddr += (blockNum % 0xAA) * 0x18;
 
         switch (topLevel) {
@@ -253,8 +253,8 @@ public:
                 hashAddr += ((topTable.entries[blockNum / 0xAA].status & 0x40) << 6);
                 break;
             case 2:
-                uint32_t level1Off = ((topTable.entries[blockNum / 0x70E4].status & 0x40) << 6);
-                uint32_t pos =
+                u32 level1Off = ((topTable.entries[blockNum / 0x70E4].status & 0x40) << 6);
+                u32 pos =
                         ((ComputeLevel1BackingHashBlockNumber(blockNum) << 0xC) + firstHashTableAddress + level1Off) +
                         ((blockNum % 0xAA) * 0x18);
                 data.seek(pos + 0x14);
@@ -275,12 +275,12 @@ private:
     //StfsFileListing writtenToFile;
     DataManager& data;
 
-    uint8_t packageSex{};//0 female, 1 male
-    uint32_t blockStep[2]{};
-    uint32_t firstHashTableAddress{};
-    uint8_t topLevel{};
+    u8 packageSex{};//0 female, 1 male
+    u32 blockStep[2]{};
+    u32 firstHashTableAddress{};
+    u8 topLevel{};
     HashTable topTable{};
-    uint32_t tablesPerLevel[3]{};
+    u32 tablesPerLevel[3]{};
 
     /// readBytes the file listing from the file
     void ReadFileListing() {
@@ -293,15 +293,15 @@ private:
         entry.fileSize = (metaData.stfsVD.fileTableBlockCount * 0x1000);
 
         // generate a blockchain for the full file listing
-        uint32_t block = entry.startingBlockNum;
+        u32 block = entry.startingBlockNum;
 
         StfsFileListing fl;
-        uint32_t currentAddr;
-        for (uint32_t x = 0; x < metaData.stfsVD.fileTableBlockCount; x++) {
+        u32 currentAddr;
+        for (u32 x = 0; x < metaData.stfsVD.fileTableBlockCount; x++) {
             currentAddr = BlockToAddress(block);
             data.seek(currentAddr);
 
-            for (uint32_t i = 0; i < 0x40; i++) {
+            for (u32 i = 0; i < 0x40; i++) {
                 StfsFileEntry fe;
 
                 // set the current position
@@ -351,7 +351,7 @@ private:
     }
 
     /// extract a block's data
-    void ExtractBlock(uint32_t blockNum, uint8_t* inputData, uint32_t length = 0x1000) {
+    void ExtractBlock(u32 blockNum, u8* inputData, u32 length = 0x1000) {
         if (blockNum >= metaData.stfsVD.allocatedBlockCount)
             throw std::runtime_error("STFS: Reference to illegal block number.\n");
 
@@ -366,7 +366,7 @@ private:
     }
 
     /// convert a block number into a true block number, where the first block is the first hash table
-    ND u32 ComputeBackingDataBlockNumber(uint32_t blockNum) const {
+    ND u32 ComputeBackingDataBlockNumber(u32 blockNum) const {
         u32 toReturn = (((blockNum + 0xAA) / 0xAA) << packageSex) + blockNum;
         if (blockNum < 0xAA) return toReturn;
         else if (blockNum < 0x70E4)
@@ -376,7 +376,7 @@ private:
     }
 
     /// get a block's hash entry
-    HashEntry GetBlockHashEntry(uint32_t blockNum) {
+    HashEntry GetBlockHashEntry(u32 blockNum) {
         if (blockNum >= metaData.stfsVD.allocatedBlockCount) {
             throw std::runtime_error("STFS: Reference to illegal block number.\n");
         }
@@ -394,7 +394,7 @@ private:
     }
 
     /// get the true block number for the hash table that hashes the block at the level passed in
-    uint32_t ComputeLevelNBackingHashBlockNumber(uint32_t blockNum, uint8_t level) {
+    u32 ComputeLevelNBackingHashBlockNumber(u32 blockNum, u8 level) {
         switch (level) {
             case 0:
                 return ComputeLevel0BackingHashBlockNumber(blockNum);
@@ -411,25 +411,25 @@ private:
     }
 
     /// get the true block number for the hash table that hashes the block at level 0
-    uint32_t ComputeLevel0BackingHashBlockNumber(uint32_t blockNum) {
+    u32 ComputeLevel0BackingHashBlockNumber(u32 blockNum) {
         if (blockNum < 0xAA) return 0;
 
-        uint32_t num = (blockNum / 0xAA) * blockStep[0];
-        num += ((blockNum / 0x70E4) + 1) << ((uint8_t) packageSex);
+        u32 num = (blockNum / 0xAA) * blockStep[0];
+        num += ((blockNum / 0x70E4) + 1) << ((u8) packageSex);
 
         if (blockNum / 0x70E4 == 0) return num;
 
-        return num + (1 << (uint8_t) packageSex);
+        return num + (1 << (u8) packageSex);
     }
 
     /// get the true block number for the hash table that hashes the block at level 1 (female)
-    uint32_t ComputeLevel1BackingHashBlockNumber(uint32_t blockNum) {
+    u32 ComputeLevel1BackingHashBlockNumber(u32 blockNum) {
         if (blockNum < 0x70E4) return blockStep[0];
-        return (1 << (uint8_t) packageSex) + (blockNum / 0x70E4) * blockStep[1];
+        return (1 << (u8) packageSex) + (blockNum / 0x70E4) * blockStep[1];
     }
 
     /// get the true block number for the hash table that hashes the block at level 2
-    uint32_t ComputeLevel2BackingHashBlockNumber(uint32_t blockNum) { return blockStep[1]; }
+    u32 ComputeLevel2BackingHashBlockNumber(u32 blockNum) { return blockStep[1]; }
 
     /// add the file entry to the file listing
     void AddToListing(StfsFileListing* fullListing, StfsFileListing* out) {
@@ -468,9 +468,9 @@ private:
     }
 
     /// get the number of bytes to skip over the hash table
-    uint32_t GetHashTableSkipSize(uint32_t tableAddress) {
+    u32 GetHashTableSkipSize(u32 tableAddress) {
         // convert the address to a true block number
-        uint32_t trueBlockNumber = (tableAddress - firstHashTableAddress) >> 0xC;
+        u32 trueBlockNumber = (tableAddress - firstHashTableAddress) >> 0xC;
 
         // check if it's the first hash table
         if (trueBlockNumber == 0) return (0x1000 << packageSex);
@@ -529,11 +529,11 @@ public:
         topTable.trueBlockNumber = ComputeLevelNBackingHashBlockNumber(0, topLevel);
         topTable.level = topLevel;
 
-        uint32_t baseAddress = (topTable.trueBlockNumber << 0xC) + firstHashTableAddress;
+        u32 baseAddress = (topTable.trueBlockNumber << 0xC) + firstHashTableAddress;
         topTable.addressInFile = baseAddress + ((metaData.stfsVD.blockSeparation & 2) << 0xB);
         data.seek(topTable.addressInFile);
 
-        uint32_t dataBlocksPerHashTreeLevel[3] = {1, 0xAA, 0x70E4};
+        u32 dataBlocksPerHashTreeLevel[3] = {1, 0xAA, 0x70E4};
 
         // load the information
         topTable.entryCount = metaData.stfsVD.allocatedBlockCount / dataBlocksPerHashTreeLevel[topLevel];
@@ -544,7 +544,7 @@ public:
                  && (metaData.stfsVD.allocatedBlockCount % 0xAA != 0))
             topTable.entryCount++;
 
-        for (uint32_t i = 0; i < topTable.entryCount; i++) {
+        for (u32 i = 0; i < topTable.entryCount; i++) {
             data.readOntoData(0x14, topTable.entries[i].blockHash);
             topTable.entries[i].status = data.readByte();
             topTable.entries[i].nextBlock = data.readInt24();
@@ -579,7 +579,7 @@ static StfsFileEntry* FindSavegameFileEntry(StfsFileListing& listing) {
 }
 
 
-static uint32_t c2n(char c) {
+static u32 c2n(char c) {
     if (c >= '0' && c <= '9') return c - '0';
     if (c >= 'a' && c <= 'f') return c - 'a' + 10;
     if (c >= 'A' && c <= 'F') return c - 'A' + 10;
@@ -587,8 +587,8 @@ static uint32_t c2n(char c) {
 }
 
 
-static int64_t stringToHex(const std::string& str) {
-    int64_t result = 0;
+static i64 stringToHex(const std::string& str) {
+    i64 result = 0;
     size_t i = 0;
     int stringSize = (int)str.size() - 1;//terminating value doesn't count
     for (; i < stringSize; i++) { result = result * 16 + c2n(str[i]); }
@@ -596,8 +596,8 @@ static int64_t stringToHex(const std::string& str) {
 }
 
 
-static int64_t stringToInt64(const std::string& str) {
-    int64_t result = 0;
+static i64 stringToInt64(const std::string& str) {
+    i64 result = 0;
     int sign = 1;
     size_t i = 0;
 
@@ -614,7 +614,7 @@ static int64_t stringToInt64(const std::string& str) {
 
 static WorldOptions getTagsInImage(DataManager& image) {
     WorldOptions options;
-    uint8_t* PNGHeader = image.readBytes(8);
+    u8* PNGHeader = image.readBytes(8);
     if (memcmp(PNGHeader, "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A", 8) != 0) {
         printf("File in thumbnail block is not PNG header, the first 8 bytes are:\n");
         for (size_t i = 0; i < 8; i++) { std::cout << std::hex << (int) (PNGHeader[i]) << " "; }
@@ -628,7 +628,7 @@ static WorldOptions getTagsInImage(DataManager& image) {
         // Check if we've reached the end of the file
         if (image.isEndOfData()) break;
         // Read chunk length
-        uint32_t length = image.readInt();
+        u32 length = image.readInt();
 
         // Read chunk type
         char* type = (char*) image.readBytes(4);
@@ -645,7 +645,7 @@ static WorldOptions getTagsInImage(DataManager& image) {
         }
         free(type);
         // Read keyword
-        int64_t chunkLength = length;
+        i64 chunkLength = length;
         while (chunkLength > 0) {
             std::string keyword;
             u8 c = 0;
@@ -710,13 +710,13 @@ static WorldOptions getTagsInImage(DataManager& image) {
 }
 
 
-static std::optional<std::chrono::system_clock::time_point> TimePointFromFatTimestamp(uint32_t fat) {
-    uint32_t year = (fat >> 25) + 1980;
-    uint32_t month = 0xf & (fat >> 21);
-    uint32_t day = 0x1f & (fat >> 16);
-    uint32_t hour = 0x1f & (fat >> 11);
-    uint32_t minute = 0x3f & (fat >> 5);
-    uint32_t second = (0x1f & fat) * 2;
+static std::optional<std::chrono::system_clock::time_point> TimePointFromFatTimestamp(u32 fat) {
+    u32 year = (fat >> 25) + 1980;
+    u32 month = 0xf & (fat >> 21);
+    u32 day = 0x1f & (fat >> 16);
+    u32 hour = 0x1f & (fat >> 11);
+    u32 minute = 0x3f & (fat >> 5);
+    u32 second = (0x1f & fat) * 2;
 
 #if defined(__GNUC__)
     std::tm tm{};
@@ -749,6 +749,7 @@ static FileInfo extractSaveGameDat(u8* inputData, i64 inputSize) {
     if (!entry) { return {}; }
 
     // TODO IMPORTANT: find upper range of this so it can use a buffer
+    std::cout << "because I removed vector based dataManagers, BINSupport.hpp at line 752 needs better way to allocate memory ahead of time" << std::endl;
     DataManager out(23456789);
 
     stfsInfo.Extract(entry, out);
