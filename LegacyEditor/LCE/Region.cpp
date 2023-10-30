@@ -94,7 +94,7 @@ Data Region::write(CONSOLE consoleIn) {
     u32 data_size = total_sectors * SECTOR_SIZE;
     Data dataOut = Data(data_size);
     DataManager managerOut(dataOut);
-    managerOut.setBigEndian();
+    managerOut.setLittleEndian();
     // auto* data_ptr = new uint8_t[data_size];
     // DataOutManager dataOut(data_ptr, data_size);
 

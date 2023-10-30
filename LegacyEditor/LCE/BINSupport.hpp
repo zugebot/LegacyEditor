@@ -45,11 +45,10 @@ struct StfsVD {
         this->size = input.readByte();
         input.readByte();// reserved
         this->blockSeparation = input.readByte();
-        input.setLittleEndian();
         this->fileTableBlockCount = input.readShort();
         this->fileTableBlockNum = input.readInt24();
         input.incrementPointer(0x14);// skip the hash
-        input.setBigEndian();
+        input.setLittleEndian();
         this->allocatedBlockCount = input.readInt();
         this->unallocatedBlockCount = input.readInt();
     }

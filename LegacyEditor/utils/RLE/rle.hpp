@@ -100,4 +100,5 @@ static void RLE_compress(const u8* ptrIn, u32 sizeIn, u8* ptrOut, u32& sizeOut) 
 
         i += runLength;
     }
+
 }

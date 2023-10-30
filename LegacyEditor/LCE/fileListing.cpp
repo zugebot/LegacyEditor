@@ -17,7 +17,6 @@ inline bool startswith(const std::string& value, const std::string& prefix) {
 
 void FileListing::read(Data& dataIn) {
     DataManager managerIn(dataIn);
-    managerIn.setLittleEndian();
 
     u32 indexOffset = managerIn.readInt();
     u32 fileCount = managerIn.readInt();
@@ -34,7 +33,7 @@ void FileListing::read(Data& dataIn) {
         managerIn.seek(indexOffset + fileIndex * 144);
 
 
-        std::string fileName = managerIn.readWAsString(64, true); // m 128 bytes / 2 per char
+        std::string fileName = managerIn.readWAsString(64); // m 128 bytes / 2 per char
         std::string originalFileName = fileName;
 
         u32 fileSize = managerIn.readInt();
@@ -58,13 +57,6 @@ void FileListing::read(Data& dataIn) {
 
         if (endswith(fileName, ".mcr")) {
             if (startswith(fileName, "DIM-1")) {
-                /*
-                if (fileName.find_first_of('/') != 5) {
-                    printf("original file name: %s\n", fileName.c_str());
-                    fileName = fileName.substr(0, 5) + "/" + fileName.substr(5);
-                }
-                file.name = fileName;
-                 */
                 netherFilePtrs.push_back(&file);
             } else if (startswith(fileName, "DIM1")) {
                 endFilePtrs.push_back(&file);
@@ -117,7 +109,6 @@ Data FileListing::write() {
 
     Data dataOut(totalFileSize);
     DataManager managerOut(dataOut);
-    managerOut.setLittleEndian();
 
     // step 3: write start
     managerOut.writeInt(fileInfoOffset);
@@ -141,7 +132,7 @@ Data FileListing::write() {
     for (File& fileIter: allFiles) {
         // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter.additionalData, fileIter.size, fileIter.name.c_str());
 
-        managerOut.writeWString(fileIter.name, 64, true);
+        managerOut.writeWString(fileIter.name, 64);
         managerOut.writeInt(fileIter.getSize());
 
         // if (!fileIter.isEmpty()) {

@@ -3,17 +3,22 @@
 
 void Chunk::ensure_decompress(CONSOLE console) {
     if (!isCompressed) {
-        printf("cannot Chunk.ensure_decompress the chunk if its already decompressed\n");
+        // printf("cannot Chunk.ensure_decompress the chunk if its already decompressed\n");
         return;
     }
 
     if (console == CONSOLE::NONE) {
-        printf("passed CONSOLE::NONE to Chunk.ensure_decompress, results will not work\n");
+        // printf("passed CONSOLE::NONE to Chunk.ensure_decompress, results will not work\n");
         return;
     }
 
     if (data == nullptr) {
-        printf("chunk data is nullptr, cannot Chunk.ensure_decompress nothing\n");
+        // printf("chunk data is nullptr, cannot Chunk.ensure_decompress nothing\n");
+        return;
+    }
+
+    if (sectors == 0) {
+        // printf("cannot decompress data of chunk that has not been loaded");
         return;
     }
 
@@ -42,7 +47,7 @@ void Chunk::ensure_decompress(CONSOLE console) {
 
     if (rleFlag) {
         Data rle(dec_size);
-        RLE_uncompress(decompData.start(), decompData.size, rle.start(), dec_size);
+        RLE_uncompress(decompData.start(), decompData.size, rle.start(), dec_size_copy);
         data = rle.data;
         rle.using_memory = false;
         size = dec_size;
@@ -61,12 +66,16 @@ void Chunk::ensure_compressed(CONSOLE console) {
     }
 
     if (console == CONSOLE::NONE) {
-        printf("passed CONSOLE::NONE to Chunk.ensure_compress, results will not work\n");
+        // printf("passed CONSOLE::NONE to Chunk.ensure_compress, results will not work\n");
         return;
     }
 
     if (data == nullptr) {
-        printf("chunk data is nullptr, cannot Chunk.ensure_compress nothing\n");
+        // printf("chunk data is nullptr, cannot Chunk.ensure_compress nothing\n");
+        return;
+    }
+
+    if (sectors == 0) {
         return;
     }
 
@@ -77,14 +86,13 @@ void Chunk::ensure_compressed(CONSOLE console) {
         u8* rle_ptr = new u8[rle_size];
         RLE_compress(rle_ptr, rle_size, data, size);
         delete[] data;
-        data = nullptr;
         data = rle_ptr;
         size = rle_size;
     }
 
     // allocate memory and recompress
     u8* comp_ptr = new u8[size];
-    uint64_t comp_size = size;
+    uLongf comp_size = size;
 
     switch (console) {
         case CONSOLE::XBOX360:
@@ -94,8 +102,10 @@ void Chunk::ensure_compressed(CONSOLE console) {
             // tinf_compress(comp_ptr, comp_size, data_ptr, data_size);
             break;
         case CONSOLE::WIIU: {
-            uLongf _comp_size = comp_size;
-            ::compress(comp_ptr, &_comp_size, data, size);
+            ::compress(comp_ptr, &comp_size, data, size);
+            delete[] data;
+            data = comp_ptr;
+            size = comp_size;
             break;
         }
         default:

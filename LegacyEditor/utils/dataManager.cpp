@@ -39,10 +39,10 @@ u8 DataManager::readByte() {
 
 u16 DataManager::readShort() {
     u16 value;
-    if (isLittle) {
-        value = ((ptr[1] << 8) | (ptr[0]));
-    } else {
+    if (isBig) {
         value = ((ptr[0] << 8) | (ptr[1]));
+    } else {
+        value = ((ptr[1] << 8) | (ptr[0]));
     }
     incrementPointer(2);
     return value;
@@ -51,10 +51,10 @@ u16 DataManager::readShort() {
 
 i32 DataManager::readInt24() {
     uint32_t value = readInt();
-    if (isLittle) {
-        value = value & 0x00FFFFFF;
-    } else {
+    if (isBig) {
         value = (value & 0xFFFFFF00) >> 8;
+    } else {
+        value = value & 0x00FFFFFF;
     }
     incrementPointer(-1);
     return (i32) value;
@@ -62,9 +62,10 @@ i32 DataManager::readInt24() {
 }
 
 
+// TODO: remove this function its bad
 i32 DataManager::readInt24(bool isLittleIn) {
-    bool originalEndianType = isLittle;
-    isLittle = isLittleIn;
+    bool originalEndianType = isBig;
+    isBig = isLittleIn;
     uint32_t val = readInt();
     if (isLittleIn) {
         val = val & 0x00FFFFFF;
@@ -72,17 +73,17 @@ i32 DataManager::readInt24(bool isLittleIn) {
         val = (val & 0xFFFFFF00) >> 8;
     }
     incrementPointer(-1); // 3 = 4 - 1
-    isLittle = originalEndianType;
+    isBig = originalEndianType;
     return (int) val;
 }
 
 
 u32 DataManager::readInt() {
-    uint32_t value;
-    if (isLittle) {
-        value = ((ptr[3] << 24) | (ptr[2] << 16) | (ptr[1] << 8) | (ptr[0]));
-    } else {
+    u32 value;
+    if (isBig) {
         value = ((ptr[0] << 24) | (ptr[1] << 16) | (ptr[2] << 8) | (ptr[3]));
+    } else {
+        value = ((ptr[3] << 24) | (ptr[2] << 16) | (ptr[1] << 8) | (ptr[0]));
     }
     incrementPointer(4);
     return value;
@@ -90,18 +91,8 @@ u32 DataManager::readInt() {
 
 
 u64 DataManager::readLong() {
-    int64_t val;
-    if (isLittle) {
-        val = (i64) (
-                ((u64) ptr[7] << 56) |
-                ((u64) ptr[6] << 48) |
-                ((u64) ptr[5] << 40) |
-                ((u64) ptr[4] << 32) |
-                ((u64) ptr[3] << 24) |
-                ((u64) ptr[2] << 16) |
-                ((u64) ptr[1] <<  8) |
-                ((u64) ptr[0]));
-    } else {
+    i64 val;
+    if (isBig) {
         val = (i64) (
                 ((u64) ptr[0] << 56) |
                 ((u64) ptr[1] << 48) |
@@ -111,6 +102,16 @@ u64 DataManager::readLong() {
                 ((u64) ptr[5] << 16) |
                 ((u64) ptr[6] <<  8) |
                 ((u64) ptr[7]));
+    } else {
+        val = (i64) (
+                ((u64) ptr[7] << 56) |
+                ((u64) ptr[6] << 48) |
+                ((u64) ptr[5] << 40) |
+                ((u64) ptr[4] << 32) |
+                ((u64) ptr[3] << 24) |
+                ((u64) ptr[2] << 16) |
+                ((u64) ptr[1] <<  8) |
+                ((u64) ptr[0]));
     }
     incrementPointer(8);
     return val;
@@ -130,14 +131,14 @@ std::string DataManager::readUTF() {
 }
 
 
-std::string DataManager::readString(i32 amount) {
+std::string DataManager::readString(i32 length) {
     std::string returnString;
     std::vector<char> strVec;
-    strVec.resize(amount + 1);
+    strVec.resize(length + 1);
     char* str = strVec.data();
-    str[amount] = 0;
+    str[length] = 0;
 
-    readOntoData(amount, (uint8_t*) str);
+    readOntoData(length, (u8*) str);
     returnString = std::string(str);
     return returnString;
 }
@@ -153,9 +154,9 @@ std::wstring DataManager::readWString() {
 }
 
 
-std::wstring DataManager::readWString(i32 amount) {
+std::wstring DataManager::readWString(u32 length) {
     std::wstring returnString;
-    for (int i = 0; i < amount; i++) {
+    for (u32 i = 0; i < length; i++) {
         auto c = static_cast<wchar_t>(this->readShort());
         if (c != 0) { returnString += c; }
     }
@@ -163,24 +164,21 @@ std::wstring DataManager::readWString(i32 amount) {
 }
 
 
-std::string DataManager::readWAsString(size_t length, bool isLittleIn) {
+std::string DataManager::readWAsString(u32 length) {
     u8 empty = 0;
-    u8 letter1;
-    u8 letter2;
     u8* letters = new u8[length + 1];
     letters[length] = 0;
 
-    size_t i;
+    u32 i;
     for (i = 0; i < length; i++) {
-        if (isLittleIn) {
-            letter2 = readByte();
-            letter1 = readByte();
+        if (isBig) {
+            readByte();
+            letters[i] = readByte();
         } else {
-            letter1 = readByte();
-            letter2 = readByte();
+            letters[i] = readByte();
+            readByte();
         }
-        letters[i] = letter1;
-        if (letter1 == empty) {
+        if (letters[i] == empty) {
             incrementPointer(2 * i64(length - i - 1));
             break;
         }
@@ -206,7 +204,7 @@ double DataManager::readDouble() {
 
 
 u8* DataManager::readWithOffset(i32 offset, i32 amount) {
-    auto* val = new u8[amount];
+    u8* val = new u8[amount];
     incrementPointer(offset);
     memcpy(val, start(), amount);
     incrementPointer(amount);
@@ -214,17 +212,17 @@ u8* DataManager::readWithOffset(i32 offset, i32 amount) {
 }
 
 
-u8* DataManager::readBytes(u32 amount) {
-    auto* val = new u8[amount];
-    memcpy(val, getPtr(), amount);
-    incrementPointer((i32) amount);
+u8* DataManager::readBytes(u32 length) {
+    u8* val = new u8[length];
+    memcpy(val, getPtr(), length);
+    incrementPointer((i32) length);
     return val;
 }
 
 
-void DataManager::readOntoData(u32 amount, u8* dataIn) {
-    memcpy(dataIn, start(), amount);
-    incrementPointer(amount);
+void DataManager::readOntoData(u32 length, u8* dataIn) {
+    memcpy(dataIn, start(), length);
+    incrementPointer(length);
 }
 
 int DataManager::readFromFile(const std::string& fileStrIn) {
@@ -259,12 +257,12 @@ void DataManager::writeByte(u8 byteIn) {
 
 
 void DataManager::writeShort(u16 shortIn) {
-    if (isLittle) {
-        ptr[0] =  shortIn       & 0xff;
-        ptr[1] = (shortIn >> 8) & 0xff;
-    } else {
+    if (isBig) {
         ptr[0] = (shortIn >> 8) & 0xff;
         ptr[1] =  shortIn       & 0xff;
+    } else {
+        ptr[0] =  shortIn       & 0xff;
+        ptr[1] = (shortIn >> 8) & 0xff;
     }
     incrementPointer(2);
 }
@@ -272,16 +270,16 @@ void DataManager::writeShort(u16 shortIn) {
 
 
 void DataManager::writeInt24(u32 intIn) {
-    if (isLittle) {
-        // Write the least significant 3 bytes for little-endian
-        ptr[0] =  intIn        & 0xff;
-        ptr[1] = (intIn >>  8) & 0xff;
-        ptr[2] = (intIn >> 16) & 0xff;
-    } else {
+    if (isBig) {
         // Write the most significant 3 bytes for big-endian
         ptr[0] = (intIn >> 16) & 0xff;
         ptr[1] = (intIn >>  8) & 0xff;
         ptr[2] =  intIn        & 0xff;
+    } else {
+        // Write the least significant 3 bytes for little-endian
+        ptr[0] =  intIn        & 0xff;
+        ptr[1] = (intIn >>  8) & 0xff;
+        ptr[2] = (intIn >> 16) & 0xff;
     }
     incrementPointer(3);
 }
@@ -289,32 +287,23 @@ void DataManager::writeInt24(u32 intIn) {
 
 
 void DataManager::writeInt(u32 intIn) {
-    if (isLittle) {
-        ptr[0] =  intIn        & 0xff;
-        ptr[1] = (intIn >>  8) & 0xff;
-        ptr[2] = (intIn >> 16) & 0xff;
-        ptr[3] = (intIn >> 24) & 0xff;
-    } else {
+    if (isBig) {
         ptr[0] = (intIn >> 24) & 0xff;
         ptr[1] = (intIn >> 16) & 0xff;
         ptr[2] = (intIn >> 8)  & 0xff;
         ptr[3] =  intIn        & 0xff;
+    } else {
+        ptr[0] =  intIn        & 0xff;
+        ptr[1] = (intIn >>  8) & 0xff;
+        ptr[2] = (intIn >> 16) & 0xff;
+        ptr[3] = (intIn >> 24) & 0xff;
     }
     incrementPointer(4);
 }
 
 
 void DataManager::writeLong(u64 longIn) {
-    if (isLittle) {
-        ptr[0] =  longIn        & 0xff;
-        ptr[1] = (longIn >>  8) & 0xff;
-        ptr[2] = (longIn >> 16) & 0xff;
-        ptr[3] = (longIn >> 24) & 0xff;
-        ptr[4] = (longIn >> 32) & 0xff;
-        ptr[5] = (longIn >> 40) & 0xff;
-        ptr[6] = (longIn >> 48) & 0xff;
-        ptr[7] = (longIn >> 56) & 0xff;
-    } else {
+    if (isBig) {
         ptr[0] = (longIn >> 56) & 0xff;
         ptr[1] = (longIn >> 48) & 0xff;
         ptr[2] = (longIn >> 40) & 0xff;
@@ -323,6 +312,15 @@ void DataManager::writeLong(u64 longIn) {
         ptr[5] = (longIn >> 16) & 0xff;
         ptr[6] = (longIn >>  8) & 0xff;
         ptr[7] =  longIn        & 0xff;
+    } else {
+        ptr[0] =  longIn        & 0xff;
+        ptr[1] = (longIn >>  8) & 0xff;
+        ptr[2] = (longIn >> 16) & 0xff;
+        ptr[3] = (longIn >> 24) & 0xff;
+        ptr[4] = (longIn >> 32) & 0xff;
+        ptr[5] = (longIn >> 40) & 0xff;
+        ptr[6] = (longIn >> 48) & 0xff;
+        ptr[7] = (longIn >> 56) & 0xff;
     }
     incrementPointer(8);
 }
@@ -338,9 +336,9 @@ void DataManager::writeDouble(double doubleIn) {
 }
 
 
-void DataManager::write(u8* dataPtrIn, u32 amount) {
-    memcpy(ptr, dataPtrIn, amount);
-    incrementPointer(amount);
+void DataManager::write(u8* dataPtrIn, u32 length) {
+    memcpy(ptr, dataPtrIn, length);
+    incrementPointer(length);
 }
 
 
@@ -359,12 +357,12 @@ void DataManager::writeFile(File& fileIn) {
 }
 
 
-void DataManager::writeWString(const std::string& str, size_t length, bool isLittleIn) {
+void DataManager::writeWString(const std::string& str, u32 length) {
     u8 empty = 0;
     u8* emptyPtr = &empty;
 
-    for (size_t i = 0; i < length && i < std::min(str.size(), length); ++i) {
-        if (isLittleIn) {
+    for (u32 i = 0; i < length && i < std::min((u32)str.size(), length); ++i) {
+        if (isBig) {
             write(emptyPtr, 1);
             writeByte(str[i]);
         } else {

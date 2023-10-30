@@ -15,52 +15,48 @@
  */
 class DataManager : public Data {
 public:
-    bool isLittle = true;
+    bool isBig = true;
 
 
     DataManager() = default;
 
 
     explicit DataManager(u32 sizeIn): Data(sizeIn) {
-        setLittleEndian();
+        setBigEndian();
     }
 
     explicit DataManager(Data& dataIn): Data(dataIn.start(), dataIn.getSize()) {
-        setLittleEndian();
+        setBigEndian();
         using_memory = false;
     }
 
     explicit DataManager(File& fileIn): Data(fileIn.start(), fileIn.getSize()) {
-        setLittleEndian();
+        setBigEndian();
         using_memory = false;
     }
 
     explicit DataManager(File* fileIn): Data(fileIn->start(), fileIn->getSize()) {
-        setLittleEndian();
+        setBigEndian();
         using_memory = false;
     }
 
     explicit DataManager(u8* dataIn, u32 sizeIn): Data(dataIn, sizeIn) {
-        setLittleEndian();
+        setBigEndian();
         using_memory = false;
     }
 
 
     static bool isSystemLittleEndian() {
-        uint32_t num = 1;
-        return (*(uint8_t *)&num == 1);
-    }
-
-    void setLittleEndian() {
-        isLittle = true;
-        if (isSystemLittleEndian())
-            isLittle = false;
+        u32 num = 1;
+        return (*(u8 *)&num == 1);
     }
 
     void setBigEndian() {
-        isLittle = false;
-        if (isSystemLittleEndian())
-            isLittle = true;
+        isBig = true;
+    }
+
+    void setLittleEndian() {
+        isBig = false;
     }
 
 
@@ -83,14 +79,15 @@ public:
     double readDouble();
 
     std::string readUTF();
-    std::string readString(i32 amount);
+    std::string readString(i32 length);
+
     std::wstring readWString();
-    std::wstring readWString(i32 amount);
-    std::string readWAsString(size_t length, bool isLittleIn);
+    std::wstring readWString(u32 length);
+    std::string readWAsString(u32 length);
 
     u8* readWithOffset(i32 offset, i32 amount);
-    u8* readBytes(u32 amount);
-    void readOntoData(u32 amount, u8* dataIn);
+    u8* readBytes(u32 length);
+    void readOntoData(u32 length, u8* dataIn);
     int readFromFile(const std::string& fileStrIn);
 
 
@@ -107,8 +104,9 @@ public:
     void writeData(Data* dataIn);
     void writeFile(File* fileIn);
     void writeFile(File& fileIn);
-    void write(u8* dataPtrIn, u32 amount);
-    void writeWString(const std::string& str, size_t length, bool isLittleIn);
+    void write(u8* dataPtrIn, u32 length);
+
+    void writeWString(const std::string& str, u32 length);
 
     int writeToFile(const std::string& fileName);
 
