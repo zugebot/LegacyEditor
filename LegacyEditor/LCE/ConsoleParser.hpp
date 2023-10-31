@@ -28,7 +28,7 @@ public:
     u8 header[0xc]{};
     CONSOLE console = CONSOLE::NONE;
     FILE* f_in{};
-    uint64_t source_binary_size{};
+    u64 source_binary_size{};
 
     ConsoleParser() : Data() {}
 

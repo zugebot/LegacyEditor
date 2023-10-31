@@ -32,6 +32,7 @@ void Region::read(File* fileIn) {
     }
 
     // step 3: read chunk size, decompressed size
+    int count = 0;
     for (Chunk& chunk : chunks) {
         if (chunk.location + chunk.sectors > totalSectors) {
             printf("[%u] chunk sector[%u, %u] end goes outside file...\n", totalSectors, chunk.location, chunk.sectors);
@@ -41,6 +42,7 @@ void Region::read(File* fileIn) {
 
         // read chunk info
         managerIn.seek(4096 * chunk.location);
+        count++;
 
         // allocates memory for the chunk
         chunk.size = managerIn.readInt();

@@ -8,8 +8,6 @@
 #include "LegacyEditor/LCE/fileListing.hpp"
 #include "LegacyEditor/utils/time.hpp"
 
-std::string dir_path = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\)";
-std::string test_path = R"(C:\Users\Jerrin\CLionProjects\LegacyConverter\build\tests\)";
 
 /*
 class DataManagerTest {
@@ -141,8 +139,17 @@ int main() {
     FileListing fileListing(parser);
 
     Region region(CONSOLE::WIIU);
-    Chunk* chunk;
+    region.read(fileListing.overworldFilePtrs[0]);
+    Chunk* chunk = region.getChunk(171);
 
+    for (int i = 0; i < 1024; i++) {
+        if (chunk->sectors) {
+            chunk->ensure_decompress(CONSOLE::WIIU);
+            chunk->ensure_compressed(CONSOLE::WIIU);
+        }
+    }
+
+    /*
     printf("hi");
     for (auto* regionFilePtr : fileListing.overworldFilePtrs) {
         region.read(regionFilePtr);
@@ -204,10 +211,8 @@ int main() {
 
 
 
+     */
     Data dataOut = fileListing.write();
-
-
-
     // */
     /*
     // compare decompressed FileListing
@@ -257,8 +262,8 @@ int main() {
     // DataManager(data).writeToFile(dir_path + "out_" + filePtr->name);
     */
     // /*
-    std::string out_file = dir_path + "230918230206_out.wii";
-    ConsoleParser::saveWiiU(out_file, dataOut);
+    // std::string out_file = dir_path + "230918230206_out.wii";
+    // ConsoleParser::saveWiiU(out_file, dataOut);
 
     auto diff = getMilliseconds() - start;
     std::cout << "time: " << diff << "ms" << std::endl;

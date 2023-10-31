@@ -1,6 +1,8 @@
 #pragma once
 
+#include <cstdarg>
 #include <cstdint>
+#include <string>
 
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -12,6 +14,8 @@ typedef int16_t i16;
 typedef int32_t i32;
 typedef int64_t i64;
 
+static std::string dir_path = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\)";
+
 #define ND [[nodiscard]]
 #define MU [[maybe_unused]]
 
@@ -19,3 +23,10 @@ typedef int64_t i64;
 #define EXPECT_TRUE(COND) (__builtin_expect((COND), 1)) // [[likely]]
 
 
+static int inline printf_err(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+    return -1;
+}

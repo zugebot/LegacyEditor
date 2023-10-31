@@ -1,20 +1,12 @@
-#include <cstdarg>
+
 #include <cstdio>
 
 #include "ConsoleParser.hpp"
 
 #include "LegacyEditor/utils/LZX/XboxCompression.hpp"
 #include "LegacyEditor/utils/tinf/tinf.h"
+#include "LegacyEditor/utils/processor.hpp"
 #include <LegacyEditor/utils/zlib-1.2.12/zlib.h>
-
-
-static int inline printf_err(const char* format, ...) {
-    va_list args;
-    va_start(args, format);
-    vprintf(format, args);
-    va_end(args);
-    return -1;
-}
 
 
 int ConsoleParser::loadWiiU(u32 file_size) {
@@ -25,19 +17,16 @@ int ConsoleParser::loadWiiU(u32 file_size) {
     // total size of file
     source_binary_size -= 8;
 
-    Data src = Data();
-    status = src.allocate(source_binary_size);
-    if (!status) return printf_err(error2, source_binary_size);
+    Data src = Data(source_binary_size);
 
-    status = allocate(file_size);
-    if (!status) return printf_err(error2, file_size);
+    allocate(file_size);
 
     // goto offset 8 for zlib, readBytes data into src
     fseek(f_in, 8, SEEK_SET);
     fread(src.start(), 1, source_binary_size, f_in);
 
     // decompress src -> data
-    tinf_zlib_uncompress((Bytef*) start(), &size, (Bytef*) src.start(), source_binary_size);
+    tinf_zlib_uncompress((Bytef*) start(), &getSize(), (Bytef*) src.start(), source_binary_size);
 
     if (getSize() == 0) return printf_err("%s", error3);
 
@@ -53,19 +42,16 @@ int ConsoleParser::loadPs3Compressed(u32 dest_size) {
     int status;
 
     // source
-    Data src = Data();
-    status = src.allocate(source_binary_size);
-    if (status == false) return printf_err(error2, size);
+    Data src = Data(source_binary_size);
 
     // destination
-    status = allocate(dest_size);
-    if (status == false) return printf_err(error2, dest_size);
+    allocate(dest_size);
 
     // decompress src -> data
     fseek(f_in, 12, SEEK_SET);
     src.size -= 12;
     fread(src.start(), 1, src.size, f_in);
-    tinf_uncompress(start(), &dest_size, src.start(), src.size);
+    tinf_uncompress(start(), &dest_size, src.start(), src.getSize());
 
     if (dest_size == 0) return printf_err("%s", error3);
 
@@ -78,8 +64,7 @@ int ConsoleParser::loadPs3Uncompressed() {
     console = CONSOLE::PS3;
 
     // allocate memory
-    int status = allocate(source_binary_size);
-    if (status == false) return printf_err(error1, size);
+    allocate(source_binary_size);
 
     // readBytes into data
     fseek(f_in, 0, SEEK_SET);
@@ -93,17 +78,14 @@ int ConsoleParser::loadXbox360_DAT() {
     console = CONSOLE::XBOX360;
 
     // allocate source memory
-    Data src;
-    int status = src.allocate(headerUnion.getSrcSize() - 8);
-    if (status == false) return printf_err(error2, src.size);
+    Data src(headerUnion.getSrcSize() - 8);
 
     // allocate destination memory
-    status = allocate(headerUnion.getFileSize());
-    if (status == false) return printf_err(error2, size);
+    allocate(headerUnion.getFileSize());
 
     // decompress src -> data
     fread(src.start(), 1, src.size, f_in);
-    size = XDecompress(start(), &size, src.start(), src.size);
+    size = XDecompress(start(), &getSize(), src.start(), src.getSize());
 
     if (size == 0) return printf_err("%s", error3);
 
@@ -118,9 +100,7 @@ int ConsoleParser::loadXbox360_BIN() {
     fseek(f_in, 0, SEEK_SET);
 
 
-    Data  bin;
-    int status = bin.allocate(source_binary_size);
-    if (status == false) return printf_err(error1, bin.size);
+    Data bin(source_binary_size);
     fread(bin.start(), 1, source_binary_size, f_in);
 
     saveGameInfo = extractSaveGameDat(bin.start(), (i64) source_binary_size);
@@ -128,9 +108,8 @@ int ConsoleParser::loadXbox360_BIN() {
     u32 src_size = saveGameInfo.saveFileData.readInt() - 8;
 
     size = saveGameInfo.saveFileData.readLong(); // at offset 8
-    status = allocate(size);
-    if (status == false) return printf_err(error2, size);
-    size = XDecompress(start(), &size, saveGameInfo.saveFileData.start(), src_size);
+    allocate(size);
+    size = XDecompress(start(), &getSize(), saveGameInfo.saveFileData.start(), src_size);
     return 0;
 }
 
@@ -151,8 +130,8 @@ int ConsoleParser::loadConsoleFile(const char* infileStr) {
 
     int result;
 
-    std::cout << headerUnion.getInt1() << std::endl;
-    std::cout << headerUnion.getInt2() << std::endl;
+    // std::cout << headerUnion.getInt1() << std::endl;
+    // std::cout << headerUnion.getInt2() << std::endl;
 
     if (headerUnion.getInt1() <= 2) {
         u32 file_size = headerUnion.getDestSize();
