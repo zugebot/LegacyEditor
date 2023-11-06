@@ -8,7 +8,7 @@
    |-----------------------------------------------
 +00|00 0C 00 00 00 01 00 00 00 05 00 00 00 00 00 00
    |^^^^^ ^^^^^^^^^^^ ^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^
-   |Ver.  Chunk X-Pos Chunk Z-Pos LastUpdate...
+   |Ver.  ChunkManager X-Pos ChunkManager Z-Pos LastUpdate...
 +10|00 00 00 00 00 00 00 00 00 00 ?? ?? ?? ?? ?? ??
    |^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^
    |...   InhabitedTime
@@ -17,8 +17,8 @@
 > **\*** "Sections" are vertically-aligned cubes of 16×16×16 blocks (4096), and there are 16 of them in each chunk. Starting from 0 (y0) up to 15 (y255)  
   
 • The first 0x2 `[0x1A..0x1B]` bytes define how large the block data is (multiply by `0x100` to get the actual size)  
-• The next 0x20 bytes `[0x1C..0x3B]` contain 16 shorts defining offsets of where sections start. If an offset matches the block data length (shown above), then there should be no more sections to parse.  
-• The next 0x10 bytes `[0x3C..0x4B]` are the sizes of sections. Multiply by `0x100` to get the actual size. If a size is `0`, then there's probably no more sections to parse.  
+• The next 0x20 bytes `[0x1C..0x3B]` contain 16 shorts defining offsets of where sections start. If an offset matches the block data length (shown above), then there should be no more sections to read.  
+• The next 0x10 bytes `[0x3C..0x4B]` are the sizes of sections. Multiply by `0x100` to get the actual size. If a size is `0`, then there's probably no more sections to read.  
 # __**3. Section Data `[0x4C..(*X+0x4C)]`**__  
 ## ⚠️ **WARNING:** Data may be inaccurate! ⚠️  
 > **\*** X is defined in the Section Header as the "block data size" `[0x1A..0x1B]`  

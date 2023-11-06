@@ -66,4 +66,5 @@ static void RLE_compress(const u8* dataIn, u32 sizeIn, u8* dataOut, u32& sizeOut
 
         dataIndex += count;
     }
+
 }

@@ -2,6 +2,7 @@
 
 #include "LegacyEditor/utils/data.hpp"
 #include "LegacyEditor/utils/file.hpp"
+#include "LegacyEditor/utils/processor.hpp"
 
 #include <bit>
 #include <string>
@@ -26,6 +27,11 @@ public:
     }
 
     explicit DataManager(Data& dataIn): Data(dataIn.start(), dataIn.getSize()) {
+        setBigEndian();
+        using_memory = false;
+    }
+
+    explicit DataManager(Data* dataIn): Data(dataIn->start(), dataIn->getSize()) {
         setBigEndian();
         using_memory = false;
     }
@@ -69,11 +75,11 @@ public:
     // READING SECTION
 
     u8 readByte();
-    u16 readShort();
+    u16 readInt16();
     i32 readInt24();
     i32 readInt24(bool isLittleIn);
-    u32 readInt();
-    u64 readLong();
+    u32 readInt32();
+    u64 readInt64();
     bool readBool();
     float readFloat();
     double readDouble();
@@ -85,6 +91,8 @@ public:
     std::wstring readWString(u32 length);
     std::string readWAsString(u32 length);
 
+    u8_vec readIntoVector(i32 amount);
+
     u8* readWithOffset(i32 offset, i32 amount);
     u8* readBytes(u32 length);
     void readOntoData(u32 length, u8* dataIn);
@@ -94,10 +102,10 @@ public:
     // WRITING SECTION
 
     void writeByte(u8 byteIn);
-    void writeShort(u16 shortIn);
+    void writeInt16(u16 shortIn);
     void writeInt24(u32 intIn);
-    void writeInt(u32 intIn);
-    void writeLong(u64 longIn);
+    void writeInt32(u32 intIn);
+    void writeInt64(u64 longIn);
     void writeFloat(float floatIn);
     void writeDouble(double doubleIn);
 
@@ -106,6 +114,7 @@ public:
     void writeFile(File& fileIn);
     void write(u8* dataPtrIn, u32 length);
 
+    void writeUTF(std::string str);
     void writeWString(const std::string& str, u32 length);
 
     int writeToFile(const std::string& fileName);

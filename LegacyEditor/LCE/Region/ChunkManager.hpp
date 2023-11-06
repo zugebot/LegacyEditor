@@ -10,7 +10,7 @@
 
 
 
-class Chunk : public Data {
+class ChunkManager : public Data {
 public:
     u32 dec_size;
     u8 sectors;

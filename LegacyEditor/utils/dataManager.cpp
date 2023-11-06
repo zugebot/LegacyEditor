@@ -1,5 +1,5 @@
 #include "dataManager.hpp"
-#include <vector>
+
 
 // SEEK
 
@@ -37,7 +37,7 @@ u8 DataManager::readByte() {
 }
 
 
-u16 DataManager::readShort() {
+u16 DataManager::readInt16() {
     u16 value;
     if (isBig) {
         value = ((ptr[0] << 8) | (ptr[1]));
@@ -50,7 +50,7 @@ u16 DataManager::readShort() {
 
 
 i32 DataManager::readInt24() {
-    uint32_t value = readInt();
+    uint32_t value = readInt32();
     if (isBig) {
         value = (value & 0xFFFFFF00) >> 8;
     } else {
@@ -66,7 +66,7 @@ i32 DataManager::readInt24() {
 i32 DataManager::readInt24(bool isLittleIn) {
     bool originalEndianType = isBig;
     isBig = isLittleIn;
-    uint32_t val = readInt();
+    uint32_t val = readInt32();
     if (isLittleIn) {
         val = val & 0x00FFFFFF;
     } else {
@@ -78,7 +78,7 @@ i32 DataManager::readInt24(bool isLittleIn) {
 }
 
 
-u32 DataManager::readInt() {
+u32 DataManager::readInt32() {
     u32 value;
     if (isBig) {
         value = ((ptr[0] << 24) | (ptr[1] << 16) | (ptr[2] << 8) | (ptr[3]));
@@ -90,7 +90,7 @@ u32 DataManager::readInt() {
 }
 
 
-u64 DataManager::readLong() {
+u64 DataManager::readInt64() {
     i64 val;
     if (isBig) {
         val = (i64) (
@@ -124,7 +124,7 @@ bool DataManager::readBool() {
 
 
 std::string DataManager::readUTF() {
-    u8 length = readShort();
+    u8 length = readInt16();
     std::string return_string((char*) ptr, length);
     incrementPointer(length);
     return return_string;
@@ -147,7 +147,7 @@ std::string DataManager::readString(i32 length) {
 std::wstring DataManager::readWString() {
     std::wstring returnString;
     wchar_t nextChar;
-    while ((nextChar = readShort()) != 0) {
+    while ((nextChar = readInt16()) != 0) {
         returnString += nextChar;
     }
     return returnString;
@@ -157,7 +157,7 @@ std::wstring DataManager::readWString() {
 std::wstring DataManager::readWString(u32 length) {
     std::wstring returnString;
     for (u32 i = 0; i < length; i++) {
-        auto c = static_cast<wchar_t>(this->readShort());
+        auto c = static_cast<wchar_t>(this->readInt16());
         if (c != 0) { returnString += c; }
     }
     return returnString;
@@ -191,14 +191,25 @@ std::string DataManager::readWAsString(u32 length) {
 
 
 
+u8_vec DataManager::readIntoVector(i32 amount) {
+    if EXPECT_FALSE(getPosition() + amount > size) {
+        return u8_vec(amount, 0);
+    }
+    u8_vec returnVector(ptr, ptr + amount);
+    incrementPointer(amount);
+    return returnVector;
+}
+
+
+
 float DataManager::readFloat() {
-    u32 val = readInt();
+    u32 val = readInt32();
     return *(float*) &val;
 }
 
 
 double DataManager::readDouble() {
-    u64 val = readLong();
+    u64 val = readInt64();
     return *(double*) &val;
 }
 
@@ -256,7 +267,7 @@ void DataManager::writeByte(u8 byteIn) {
 }
 
 
-void DataManager::writeShort(u16 shortIn) {
+void DataManager::writeInt16(u16 shortIn) {
     if (isBig) {
         ptr[0] = (shortIn >> 8) & 0xff;
         ptr[1] =  shortIn       & 0xff;
@@ -286,7 +297,7 @@ void DataManager::writeInt24(u32 intIn) {
 
 
 
-void DataManager::writeInt(u32 intIn) {
+void DataManager::writeInt32(u32 intIn) {
     if (isBig) {
         ptr[0] = (intIn >> 24) & 0xff;
         ptr[1] = (intIn >> 16) & 0xff;
@@ -302,7 +313,7 @@ void DataManager::writeInt(u32 intIn) {
 }
 
 
-void DataManager::writeLong(u64 longIn) {
+void DataManager::writeInt64(u64 longIn) {
     if (isBig) {
         ptr[0] = (longIn >> 56) & 0xff;
         ptr[1] = (longIn >> 48) & 0xff;
@@ -327,12 +338,12 @@ void DataManager::writeLong(u64 longIn) {
 
 
 void DataManager::writeFloat(float floatIn) {
-    writeInt(*(u32*) &floatIn);
+    writeInt32(*(u32*) &floatIn);
 }
 
 
 void DataManager::writeDouble(double doubleIn) {
-    writeLong(*(u64*) &doubleIn);
+    writeInt64(*(u64*) &doubleIn);
 }
 
 
@@ -354,6 +365,15 @@ void DataManager::writeFile(File* fileIn) {
 
 void DataManager::writeFile(File& fileIn) {
     write(fileIn.start(), fileIn.getSize());
+}
+
+
+void DataManager::writeUTF(std::string str) {
+    u32 size = str.size();
+    writeInt16(size);
+    write((u8*)str.data(), str.size());
+    incrementPointer(size);
+
 }
 
 

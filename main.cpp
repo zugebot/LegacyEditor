@@ -3,107 +3,16 @@
 
 #include "LegacyEditor/utils/dataManager.hpp"
 
-#include "LegacyEditor/LCE/ConsoleParser.hpp"
-#include "LegacyEditor/LCE/Region.hpp"
-#include "LegacyEditor/LCE/fileListing.hpp"
+#include "LegacyEditor/LCE/Chunk/include.h"
+#include "LegacyEditor/LCE/Region/ChunkManager.hpp"
+#include "LegacyEditor/LCE/Region/RegionManager.hpp"
+#include "LegacyEditor/LCE/SaveFile/ConsoleParser.hpp"
+#include "LegacyEditor/LCE/SaveFile/fileListing.hpp"
+#include "LegacyEditor/utils/NBT.hpp"
 #include "LegacyEditor/utils/time.hpp"
 
 
-/*
-class DataManagerTest {
-public:
-    static void runTests() {
-        testBigEndian();
-        testLittleEndian();
-        std::cout << "All tests passed!" << std::endl;
-    }
-
-private:
-    static void testBigEndian() {
-        std::string filename = "temp_big_endian.dat";
-        DataManager dataManager(1000);
-        dataManager.setBigEndian();
-
-        // Write test data
-        writeTestData(dataManager);
-
-        // Write to file
-        assert(dataManager.writeToFile(filename) == 0);
-
-        // Read from file
-        DataManager readManager;
-        readManager.setBigEndian();
-        assert(readManager.readFromFile(filename) == 0);
-
-        // Verify the data
-        verifyTestData(readManager);
-
-        // std::remove(filename.c_str()); // Clean up the temporary file
-        std::cout << "Big endian tests passed." << std::endl;
-    }
-
-    static void testLittleEndian() {
-        std::string filename = "temp_little_endian.dat";
-        DataManager dataManager(1000);
-        dataManager.setLittleEndian();
-
-        // Write test data
-        writeTestData(dataManager);
-
-        // Write to file
-        assert(dataManager.writeToFile(filename) == 0);
-
-        // Read from file
-        DataManager readManager;
-        readManager.setLittleEndian();
-        assert(readManager.readFromFile(filename) == 0);
-
-        // Verify the data
-        verifyTestData(readManager);
-
-        // std::remove(filename.c_str()); // Clean up the temporary file
-        std::cout << "Little endian tests passed." << std::endl;
-    }
-
-    static void writeTestData(DataManager& dataManager) {
-        dataManager.writeByte(0x12);
-        dataManager.writeShort(0x1234);
-        dataManager.writeInt(0x12345678);
-        dataManager.writeLong(0x123456789ABCDEF0);
-        dataManager.writeFloat(123.456f);
-        dataManager.writeDouble(123.456789);
-
-        std::string testWString = "Hello World"; // Assuming ASCII characters only
-        dataManager.writeWString(testWString, testWString.length());
-    }
-
-    static void verifyTestData(DataManager& dataManager) {
-        assert(dataManager.readByte() == 0x12);
-        assert(dataManager.readShort() == 0x1234);
-        assert(dataManager.readInt() == 0x12345678);
-        assert(dataManager.readLong() == 0x123456789ABCDEF0);
-        assert(dataManager.readFloat() == 123.456f);
-        assert(dataManager.readDouble() == 123.456789);
-
-        std::string expectedWString = "Hello World"; // Assuming ASCII characters only
-        std::string readWString = dataManager.readWAsString(expectedWString.length());
-        assert(readWString == expectedWString);
-    }
-};
-
 int main() {
-    DataManagerTest::runTests();
-    return 0;
-}
-*/
-
-
-
-
-
-
-int main() {
-
     /*
     {
         DataManager managerOut(14);
@@ -129,6 +38,30 @@ int main() {
     }
      */
     // /*
+
+
+    // Data data;
+    // DataManager manager(data);
+    // manager.readFromFile(dir_path + "bytes.bin");
+
+    // Data out = Data(1000000);
+    // memset(out.start(), 0, 1000000);
+
+    // u32 size = 1000000;
+    // int status = tinf_zlib_uncompress((Bytef*)out.start(),
+    //                      &size,
+    //                      (Bytef*)manager.start(),
+    //                      manager.getSize());
+    // std::cout << "status: " << status << std::endl;
+    // std::cout << "out size: " << size << std::endl;
+
+    // int y; std::cin >> y;
+
+
+
+
+
+
     std::string fileInPath = dir_path + "230918230206_in.wii";
 
     auto start = getMilliseconds();
@@ -138,18 +71,75 @@ int main() {
 
     FileListing fileListing(parser);
 
-    Region region(CONSOLE::WIIU);
-    region.read(fileListing.overworldFilePtrs[0]);
-    Chunk* chunk = region.getChunk(171);
+    fileListing.saveToFolder(dir_path + "dump\\");
 
-    for (int i = 0; i < 1024; i++) {
-        if (chunk->sectors) {
-            chunk->ensure_decompress(CONSOLE::WIIU);
-            chunk->ensure_compressed(CONSOLE::WIIU);
+    File* levelFilePtr = fileListing.levelFilePtr;
+
+    // NBT::readTag(levelFilePtr);
+
+
+    RegionManager region(CONSOLE::WIIU);
+    region.read(fileListing.overworldFilePtrs[0]);
+    // ChunkManager* chunk = region.getChunk(171);
+
+    ChunkManager& chunk = region.chunks[0];
+    for (int i = 1; i < 1024; i++) {
+        if (region.chunks[i].size > chunk.size) {
+            chunk = region.chunks[i];
+            std::cout << "switched chosen chunk to " << i << std::endl;
         }
     }
 
+
+    chunk.ensure_decompress(CONSOLE::WIIU);
+    DataManager chunkOut(chunk);
+    u16 version = chunkOut.readInt16();
+
+    auto chunkParser = universal::V12Chunk();
+    chunkParser.readChunk(chunkOut, DIM::OVERWORLD);
+
+    // auto* compound = static_cast<NBTTagCompound*>(chunkParser.chunkData.NBTData->data);
+    auto* compound = chunkParser.chunkData.NBTData->toType<NBTTagCompound>();
+    for (const auto& pair : compound->tagMap) {
+        printf("Key: %s, Type: %d\n", pair.first.c_str(), pair.second.type);
+    }
+    int x; std::cin >> x;
+
+    chunk.ensure_compressed(CONSOLE::WIIU);
+
+
+    DataManager chunkIn(chunk);
+    chunkIn.writeToFile(dir_path + "chunk_in_0.bin");
+    std::cout << chunk.size << std::endl;
+
+
+
+
     /*
+    DataManager levelOut(fileListing.levelFilePtr);
+    auto* levelData = NBT::readTag(levelOut);
+    auto* root = static_cast<NBTTagCompound*>(levelData->data);
+    NBTTagCompound* levelDataIn = root->getCompoundTag("Data");
+    for (const auto& pair : levelDataIn->tagMap) {
+        printf("Key: %s, Type: %d\n", pair.first.c_str(), pair.second.type);
+    }
+    levelOut.writeToFile(dir_path + "chunk_out.bin");
+     */
+
+
+    chunk.ensure_compressed(CONSOLE::WIIU);
+
+    /*
+    for (int i = 0; i < 1024; i++) {
+        chunk->ensure_decompress(CONSOLE::WIIU);
+        chunk->ensure_compressed(CONSOLE::WIIU);
+
+    }
+
+    DataManager chunkOut(chunk);
+    chunkOut.writeToFile(dir_path + "chunk_out_0.bin");
+    std::cout << chunk->size << std::endl;
+
     printf("hi");
     for (auto* regionFilePtr : fileListing.overworldFilePtrs) {
         region.read(regionFilePtr);
@@ -197,20 +187,6 @@ int main() {
 
         printf("Recompressed all chunks in '%s'\n", regionFilePtr->name.c_str());
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
      */
     Data dataOut = fileListing.write();
     // */
@@ -262,8 +238,9 @@ int main() {
     // DataManager(data).writeToFile(dir_path + "out_" + filePtr->name);
     */
     // /*
-    // std::string out_file = dir_path + "230918230206_out.wii";
-    // ConsoleParser::saveWiiU(out_file, dataOut);
+
+    std::string out_file = dir_path + "230918230206_out.wii";
+    ConsoleParser::saveWiiU(out_file, dataOut);
 
     auto diff = getMilliseconds() - start;
     std::cout << "time: " << diff << "ms" << std::endl;
@@ -271,13 +248,3 @@ int main() {
     return status;
      // */
 }
-
-
-// worldIn.seekStart();
-// worldOut.seekStart();
-// printf("\nin: %u | out: %u\n", worldIn.size, worldOut.size);
-// std::string file_path_dec_in = dir_path + "test_dec_in.wii_d";
-// std::string file_path_dec_out = dir_path + "test_dec_out.wii_d";
-// worldIn.saveToFile(file_path_dec_in);
-// worldOut.saveToFile(file_path_dec_out);
-// std::cout << "waiting..." << std::endl;

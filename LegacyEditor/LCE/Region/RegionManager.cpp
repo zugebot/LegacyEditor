@@ -1,39 +1,39 @@
-#include "Region.hpp"
+#include "RegionManager.hpp"
 
 
-Chunk* Region::getChunk(int x, int z) {
+ChunkManager* RegionManager::getChunk(int x, int z) {
     int index = x + z * 32;
     if (index > CHUNK_COUNT) return nullptr;
     return &chunks[index];
 }
 
 
-Chunk* Region::getChunk(int index) {
+ChunkManager* RegionManager::getChunk(int index) {
     if (index > CHUNK_COUNT) return nullptr;
     return &chunks[index];
 }
 
 
-void Region::read(File* fileIn) {
+void RegionManager::read(File* fileIn) {
     totalSectors = fileIn->size / SECTOR_SIZE;
 
     // step 0: copying data from file
     DataManager managerIn(fileIn);
 
     // step 1: read offsets
-    for (Chunk& chunk : chunks) {
+    for (ChunkManager& chunk : chunks) {
         chunk.location = managerIn.readInt24();
         chunk.sectors = managerIn.readByte();
     }
 
     // step 2: read timestamps
-    for (Chunk& chunk : chunks) {
-        chunk.timestamp = managerIn.readInt();
+    for (ChunkManager& chunk : chunks) {
+        chunk.timestamp = managerIn.readInt32();
     }
 
     // step 3: read chunk size, decompressed size
     int count = 0;
-    for (Chunk& chunk : chunks) {
+    for (ChunkManager& chunk : chunks) {
         if (chunk.location + chunk.sectors > totalSectors) {
             printf("[%u] chunk sector[%u, %u] end goes outside file...\n", totalSectors, chunk.location, chunk.sectors);
         }
@@ -45,7 +45,7 @@ void Region::read(File* fileIn) {
         count++;
 
         // allocates memory for the chunk
-        chunk.size = managerIn.readInt();
+        chunk.size = managerIn.readInt32();
         chunk.rleFlag = chunk.size >> 31;
         chunk.size &= 0x3FFFFFFF;
         chunk.allocate(chunk.size);
@@ -53,13 +53,13 @@ void Region::read(File* fileIn) {
         // set chunk's decompressed size attribute
         switch (console) {
             case CONSOLE::PS3:
-                chunk.dec_size = managerIn.readInt();
-                chunk.dec_size = managerIn.readInt();
+                chunk.dec_size = managerIn.readInt32();
+                chunk.dec_size = managerIn.readInt32();
                 break;
             case CONSOLE::XBOX360:
             case CONSOLE::WIIU:
             default:
-                chunk.dec_size = managerIn.readInt();
+                chunk.dec_size = managerIn.readInt32();
                 break;
         }
 
@@ -72,13 +72,13 @@ void Region::read(File* fileIn) {
 }
 
 
-Data Region::write(CONSOLE consoleIn) {
+Data RegionManager::write(CONSOLE consoleIn) {
     // step 1: make sure all chunks are compressed correctly
     // step 2: recalculate sectorCount of each chunk
     // step 3: calculate chunk offsets for each chunk
     int total_sectors = 2;
     int count = 0;
-    for (Chunk& chunk : chunks) {
+    for (ChunkManager& chunk : chunks) {
         if (chunk.sectors == 0) {
             chunk.location = 0;
             continue;
@@ -102,7 +102,7 @@ Data Region::write(CONSOLE consoleIn) {
 
     // step 5: write each chunk offset
     managerOut.seekStart();
-    for (const Chunk& chunk : chunks) {
+    for (const ChunkManager& chunk : chunks) {
         managerOut.writeInt24(chunk.location);
         managerOut.writeByte(chunk.sectors);
     }
@@ -110,13 +110,13 @@ Data Region::write(CONSOLE consoleIn) {
     // return dataOut;
 
     // step 6: write each chunk timestamp
-    for (const Chunk& chunk : chunks) {
-        managerOut.writeInt(chunk.timestamp);
+    for (const ChunkManager& chunk : chunks) {
+        managerOut.writeInt32(chunk.timestamp);
     }
 
     // step 7: seek to each location, write chunk attr's, then chunk data
     // make sure the pointer is a multiple of SECTOR_SIZE
-    for (const Chunk& chunk : chunks) {
+    for (const ChunkManager& chunk : chunks) {
         if (chunk.sectors == 0) continue;
         managerOut.seek(chunk.location * 4096);
 
@@ -126,17 +126,17 @@ Data Region::write(CONSOLE consoleIn) {
             size &= mask;
             size |= (0xC0 << 24);
         }
-        managerOut.writeInt(size);
+        managerOut.writeInt32(size);
 
         switch (console) {
             case CONSOLE::PS3:
-                managerOut.writeInt(chunk.dec_size);
-                managerOut.writeInt(chunk.dec_size);
+                managerOut.writeInt32(chunk.dec_size);
+                managerOut.writeInt32(chunk.dec_size);
                 break;
             case CONSOLE::XBOX360:
             case CONSOLE::WIIU:
             default:
-                managerOut.writeInt(chunk.dec_size);
+                managerOut.writeInt32(chunk.dec_size);
                 break;
         }
         managerOut.write(chunk.start(), chunk.size);

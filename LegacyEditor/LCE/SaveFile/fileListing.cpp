@@ -1,5 +1,6 @@
 #include "fileListing.hpp"
 
+#include <filesystem>
 #include <iostream>
 
 
@@ -18,10 +19,10 @@ inline bool startswith(const std::string& value, const std::string& prefix) {
 void FileListing::read(Data& dataIn) {
     DataManager managerIn(dataIn);
 
-    u32 indexOffset = managerIn.readInt();
-    u32 fileCount = managerIn.readInt();
-    oldestVersion = managerIn.readShort();
-    currentVersion = managerIn.readShort();
+    u32 indexOffset = managerIn.readInt32();
+    u32 fileCount = managerIn.readInt32();
+    oldestVersion = managerIn.readInt16();
+    currentVersion = managerIn.readInt16();
     u32 total_size = 0;
 
     allFiles.clear();
@@ -36,12 +37,12 @@ void FileListing::read(Data& dataIn) {
         std::string fileName = managerIn.readWAsString(64); // m 128 bytes / 2 per char
         std::string originalFileName = fileName;
 
-        u32 fileSize = managerIn.readInt();
+        u32 fileSize = managerIn.readInt32();
         total_size += fileSize;
 
         u8* data = nullptr;
-        u32 index = managerIn.readInt();
-        u64 timestamp = managerIn.readLong();
+        u32 index = managerIn.readInt32();
+        u64 timestamp = managerIn.readInt64();
 
         if (!fileSize) {
             printf("Skipping empty file \"%s\"\n", fileName.c_str());
@@ -90,8 +91,27 @@ void FileListing::read(Data& dataIn) {
 }
 
 
-Data FileListing::write() {
+void FileListing::saveToFolder(const std::string& folder) {
+    for (const File& file : allFiles) {
+        std::string fullPath = folder + "/" + file.name;
+        std::filesystem::path path(fullPath);
 
+        // Check if the parent path exists, and create it if it doesn't
+        if (!std::filesystem::exists(path.parent_path())) {
+            std::filesystem::create_directories(path.parent_path());
+        }
+    }
+
+    // step 2: write files to correct locations
+    for (File& file : allFiles) {
+        std::string fullPath = folder + "/" + file.name;
+        DataManager fileOut(file);
+        fileOut.writeToFile(fullPath);
+    }
+}
+
+
+Data FileListing::write() {
     // step 1: get the file count and size of all sub-files
     u32 fileCount = 0;
     u32 fileDataSize = 0;
@@ -111,10 +131,10 @@ Data FileListing::write() {
     DataManager managerOut(dataOut);
 
     // step 3: write start
-    managerOut.writeInt(fileInfoOffset);
-    managerOut.writeInt(fileCount);
-    managerOut.writeShort(oldestVersion);
-    managerOut.writeShort(currentVersion);
+    managerOut.writeInt32(fileInfoOffset);
+    managerOut.writeInt32(fileCount);
+    managerOut.writeInt16(oldestVersion);
+    managerOut.writeInt16(currentVersion);
 
 
     // step 4: write each files data
@@ -133,11 +153,11 @@ Data FileListing::write() {
         // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter.additionalData, fileIter.size, fileIter.name.c_str());
 
         managerOut.writeWString(fileIter.name, 64);
-        managerOut.writeInt(fileIter.getSize());
+        managerOut.writeInt32(fileIter.getSize());
 
         // if (!fileIter.isEmpty()) {
-        managerOut.writeInt(fileIter.additionalData);
-        managerOut.writeLong(fileIter.timestamp);
+        managerOut.writeInt32(fileIter.additionalData);
+        managerOut.writeInt64(fileIter.timestamp);
         // }
         count++;
     }

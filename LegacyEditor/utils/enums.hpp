@@ -9,3 +9,11 @@ enum class CONSOLE : i8 {
     PS3 = 1,
     WIIU = 2
 };
+
+
+enum class DIM : i8 {
+    NETHER = -1,
+    HELL = -1,
+    OVERWORLD = 0,
+    END = 1,
+};

@@ -1,27 +1,14 @@
-#include "Chunk.hpp"
+#include "ChunkManager.hpp"
 
 
-void Chunk::ensure_decompress(CONSOLE console) {
-    if (!isCompressed) {
+void ChunkManager::ensure_decompress(CONSOLE console) {
+    if (!isCompressed || console == CONSOLE::NONE || data == nullptr || sectors == 0) {
         // printf("cannot Chunk.ensure_decompress the chunk if its already decompressed\n");
-        return;
-    }
-
-    if (console == CONSOLE::NONE) {
         // printf("passed CONSOLE::NONE to Chunk.ensure_decompress, results will not work\n");
-        return;
-    }
-
-    if (data == nullptr) {
         // printf("chunk data is nullptr, cannot Chunk.ensure_decompress nothing\n");
-        return;
-    }
-
-    if (sectors == 0) {
         // printf("cannot decompress data of chunk that has not been loaded");
         return;
     }
-
     isCompressed = false;
 
     u32 dec_size_copy = dec_size;
@@ -47,7 +34,7 @@ void Chunk::ensure_decompress(CONSOLE console) {
 
     if (rleFlag) {
         Data rle(dec_size);
-        RLE_uncompress(decompData.start(), decompData.size, rle.start(), dec_size_copy);
+        RLE_decompress(decompData.start(), decompData.size, rle.start(), dec_size_copy);
         data = rle.data;
         rle.using_memory = false;
         size = dec_size;
@@ -59,32 +46,21 @@ void Chunk::ensure_decompress(CONSOLE console) {
     size = dec_size_copy;
 }
 
-void Chunk::ensure_compressed(CONSOLE console) {
-    if (isCompressed) {
-        // printf("cannot Chunk.ensure_compress if the chunk if its already compressed\n");
-        return;
-    }
-
-    if (console == CONSOLE::NONE) {
+void ChunkManager::ensure_compressed(CONSOLE console) {
+    if (isCompressed || console == CONSOLE::NONE || data == nullptr || sectors == 0) {
+        // printf("cannot Chunk.ensure_compress if the chunk is already compressed\n");
         // printf("passed CONSOLE::NONE to Chunk.ensure_compress, results will not work\n");
-        return;
-    }
-
-    if (data == nullptr) {
         // printf("chunk data is nullptr, cannot Chunk.ensure_compress nothing\n");
         return;
     }
-
-    if (sectors == 0) {
-        return;
-    }
+    isCompressed = true;
 
     dec_size = size;
 
     if (rleFlag) {
         u32 rle_size = size;
         u8* rle_ptr = new u8[rle_size];
-        RLE_compress(rle_ptr, rle_size, data, size);
+        RLE_compress(data, size, rle_ptr, rle_size);
         delete[] data;
         data = rle_ptr;
         size = rle_size;

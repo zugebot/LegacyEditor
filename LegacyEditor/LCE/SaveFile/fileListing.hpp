@@ -36,6 +36,9 @@ public:
     }
 
     void read(Data& dataIn);
+
+    void saveToFolder(const std::string& folder);
+
     Data write();
 
 

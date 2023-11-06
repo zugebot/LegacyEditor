@@ -4,9 +4,9 @@
 #include "ConsoleParser.hpp"
 
 #include "LegacyEditor/utils/LZX/XboxCompression.hpp"
-#include "LegacyEditor/utils/tinf/tinf.h"
 #include "LegacyEditor/utils/processor.hpp"
-#include <LegacyEditor/utils/zlib-1.2.12/zlib.h>
+#include "LegacyEditor/utils/tinf/tinf.h"
+#include "LegacyEditor/utils/zlib-1.2.12/zlib.h"
 
 
 int ConsoleParser::loadWiiU(u32 file_size) {
@@ -26,7 +26,7 @@ int ConsoleParser::loadWiiU(u32 file_size) {
     fread(src.start(), 1, source_binary_size, f_in);
 
     // decompress src -> data
-    tinf_zlib_uncompress((Bytef*) start(), &getSize(), (Bytef*) src.start(), source_binary_size);
+    tinf_zlib_uncompress((Bytef*) start(), &size, (Bytef*) src.start(), source_binary_size);
 
     if (getSize() == 0) return printf_err("%s", error3);
 
@@ -85,7 +85,7 @@ int ConsoleParser::loadXbox360_DAT() {
 
     // decompress src -> data
     fread(src.start(), 1, src.size, f_in);
-    size = XDecompress(start(), &getSize(), src.start(), src.getSize());
+    size = XDecompress(start(), &size, src.start(), src.getSize());
 
     if (size == 0) return printf_err("%s", error3);
 
@@ -105,11 +105,11 @@ int ConsoleParser::loadXbox360_BIN() {
 
     saveGameInfo = extractSaveGameDat(bin.start(), (i64) source_binary_size);
 
-    u32 src_size = saveGameInfo.saveFileData.readInt() - 8;
+    u32 src_size = saveGameInfo.saveFileData.readInt32() - 8;
 
-    size = saveGameInfo.saveFileData.readLong(); // at offset 8
+    size = saveGameInfo.saveFileData.readInt64(); // at offset 8
     allocate(size);
-    size = XDecompress(start(), &getSize(), saveGameInfo.saveFileData.start(), src_size);
+    size = XDecompress(start(), &size, saveGameInfo.saveFileData.start(), src_size);
     return 0;
 }
 

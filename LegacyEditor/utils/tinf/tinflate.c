@@ -495,6 +495,8 @@ static int tinf_inflate_uncompressed_block(struct tinf_data *d)
 	invlength = read_le16(d->source + 2);
 
 	/* Check length */
+    unsigned int invLengthNeg = ~invlength;
+    unsigned int invLengthNegMask = invLengthNeg & 0x0000FFFF;
 	if (length != (~invlength & 0x0000FFFF)) {
 		return TINF_DATA_ERROR;
 	}

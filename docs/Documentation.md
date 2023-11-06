@@ -35,11 +35,11 @@ The following Table gives you Important information the structure of a legacy ed
 | PSVita | Vita RLE | None | Zlib (+ RLE)
 | Switch | Zlib | Switch RLE | Zlib (+ RLE)
 
-### Chunk Structure
+### ChunkManager Structure
 The chunks on LCE utilize a different format to Java's MCR Chunks, this is the header information:
 | Name | Size (in bytes) | Description |
 | :-:|:-:|:-:|
-| [FlagAndBuffer](./Documentation.md#Chunk-header-flag) | 0x04 | Bit flag for RLE and an unknown value, plus 30 bits to specify the compressed buffer size
+| [FlagAndBuffer](./Documentation.md#ChunkManager-header-flag) | 0x04 | Bit flag for RLE and an unknown value, plus 30 bits to specify the compressed buffer size
 | RLEUncompressedBuffer(Int) | 0x04 | Size of the buffer after RLE is performed
 | UncompressedBuffer(Int) | 0x04 | Size of the buffer before RLE is performed(only occurs on PS3)
 | Format | 0x02 | chunk format version (0xC is aquatic)
@@ -49,7 +49,7 @@ The chunks on LCE utilize a different format to Java's MCR Chunks, this is the h
 | Inhabited  | 0x08 | chunk Inhabited Time(Only on chunk version 8 and higher)
 
 
-### Chunk header flag
+### ChunkManager header flag
 Within the chunk header lies a 4-byte portion of data that dictates 2 flags and the compressed chunk size.
 | Name | Size (in bits) | Description |
 | :-:|:-:|:-:|

@@ -4,7 +4,7 @@
 #include <iostream>
 #include <optional>
 
-#include "LegacyEditor/LCE/FileInfo.hpp"
+#include "FileInfo.hpp"
 #include "LegacyEditor/utils/dataManager.hpp"
 
 
@@ -45,12 +45,12 @@ struct StfsVD {
         this->size = input.readByte();
         input.readByte();// reserved
         this->blockSeparation = input.readByte();
-        this->fileTableBlockCount = input.readShort();
+        this->fileTableBlockCount = input.readInt16();
         this->fileTableBlockNum = input.readInt24();
         input.incrementPointer(0x14);// skip the hash
         input.setLittleEndian();
-        this->allocatedBlockCount = input.readInt();
-        this->unallocatedBlockCount = input.readInt();
+        this->allocatedBlockCount = input.readInt32();
+        this->unallocatedBlockCount = input.readInt32();
     }
 };
 
@@ -84,17 +84,17 @@ public:
     int readHeader(DataManager& binFile) {
 
         binFile.seek(0x340);
-        this->headerSize = binFile.readInt();
+        this->headerSize = binFile.readInt32();
 
         //content type, 1 is savegame
-        if (binFile.readInt() != 1) {
+        if (binFile.readInt32() != 1) {
             printf(".bin file is not a savegame, exiting\n");
             return 0;
         }
 
         //file system
         binFile.seek(0x3A9);
-        if (binFile.readInt()) {
+        if (binFile.readInt32()) {
             printf(".bin file is not in STFS format, exiting\n");
             return 0;
         }
@@ -110,13 +110,13 @@ public:
         binFile.seek(0x1712);
         //get thumbnail image, if not present, use the title one if present
         u8* thumbnail = nullptr;
-        u32 thumbnailImageSize = binFile.readInt();
+        u32 thumbnailImageSize = binFile.readInt32();
         if (thumbnailImageSize) {
             binFile.incrementPointer(4);//readBytes the other size but it will not be used
             u8* thumbnailImageData = binFile.readBytes(thumbnailImageSize);
             this->thumbnailImage = DataManager(thumbnailImageData, thumbnailImageSize);
         } else {
-            u32 titleThumbnailImageSize = binFile.readInt();
+            u32 titleThumbnailImageSize = binFile.readInt32();
             if (titleThumbnailImageSize) {
                 binFile.seek(0x571A);
                 u8* titleThumbnailImageData = binFile.readBytes(thumbnailImageSize);
@@ -327,10 +327,10 @@ private:
 
                 // readBytes more information
                 fe.startingBlockNum = data.readInt24(true);
-                fe.pathIndicator = data.readShort();
-                fe.fileSize = data.readInt();
-                fe.createdTimeStamp = data.readInt();
-                fe.accessTimeStamp = data.readInt();
+                fe.pathIndicator = data.readInt16();
+                fe.fileSize = data.readInt32();
+                fe.createdTimeStamp = data.readInt32();
+                fe.accessTimeStamp = data.readInt32();
 
                 // get the flags
                 fe.flags = fe.nameLen >> 6;
@@ -489,7 +489,7 @@ private:
     }
 
 public:
-    /// parse the file
+    /// read the file
     void Parse() {
         BINHeader header;
         int result = header.readHeader(data);
@@ -627,7 +627,7 @@ static WorldOptions getTagsInImage(DataManager& image) {
         // Check if we've reached the end of the file
         if (image.isEndOfData()) break;
         // Read chunk length
-        u32 length = image.readInt();
+        u32 length = image.readInt32();
 
         // Read chunk type
         char* type = (char*) image.readBytes(4);
@@ -682,7 +682,7 @@ static WorldOptions getTagsInImage(DataManager& image) {
         }
 
         // Read chunk CRC
-        image.readInt();
+        image.readInt32();
     }
 
 

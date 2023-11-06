@@ -6,10 +6,10 @@
 #include <cstdlib>
 #include <zconf.h>
 
-#include "LegacyEditor/LCE/BINSupport.hpp"
-#include "LegacyEditor/LCE/FileInfo.hpp"
-#include "LegacyEditor/LCE/fileListing.hpp"
-#include "LegacyEditor/LCE/headerUnion.hpp"
+#include "BINSupport.hpp"
+#include "FileInfo.hpp"
+#include "fileListing.hpp"
+#include "headerUnion.hpp"
 
 
 class ConsoleParser : public Data {
