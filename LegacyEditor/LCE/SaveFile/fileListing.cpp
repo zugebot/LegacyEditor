@@ -19,6 +19,10 @@ inline bool startswith(const std::string& value, const std::string& prefix) {
 void FileListing::read(Data& dataIn) {
     DataManager managerIn(dataIn);
 
+    if (console == CONSOLE::VITA) {
+        managerIn.setLittleEndian();
+    }
+
     u32 indexOffset = managerIn.readInt32();
     u32 fileCount = managerIn.readInt32();
     oldestVersion = managerIn.readInt16();
@@ -105,19 +109,19 @@ void FileListing::saveToFolder(const std::string& folder) {
     // step 2: write files to correct locations
     for (File& file : allFiles) {
         std::string fullPath = folder + "/" + file.name;
-        DataManager fileOut(file);
+        DataManager fileOut(file.data);
         fileOut.writeToFile(fullPath);
     }
 }
 
 
-Data FileListing::write() {
+Data FileListing::write(CONSOLE consoleOut) {
     // step 1: get the file count and size of all sub-files
     u32 fileCount = 0;
     u32 fileDataSize = 0;
     for (const File& file: allFiles) {
         fileCount++;
-        fileDataSize += file.getSize();
+        fileDataSize += file.data.getSize();
     }
     u32 fileInfoOffset = fileDataSize + 12;
 
@@ -129,6 +133,10 @@ Data FileListing::write() {
 
     Data dataOut(totalFileSize);
     DataManager managerOut(dataOut);
+
+    if (console == CONSOLE::VITA) {
+        managerOut.setLittleEndian();
+    }
 
     // step 3: write start
     managerOut.writeInt32(fileInfoOffset);
@@ -142,7 +150,7 @@ Data FileListing::write() {
     u32 index = 12;
     for (File& fileIter: allFiles) {
         fileIter.additionalData = index;
-        index += fileIter.getSize();
+        index += fileIter.data.getSize();
         managerOut.writeFile(fileIter);
     }
 
@@ -153,7 +161,7 @@ Data FileListing::write() {
         // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter.additionalData, fileIter.size, fileIter.name.c_str());
 
         managerOut.writeWString(fileIter.name, 64);
-        managerOut.writeInt32(fileIter.getSize());
+        managerOut.writeInt32(fileIter.data.getSize());
 
         // if (!fileIter.isEmpty()) {
         managerOut.writeInt32(fileIter.additionalData);

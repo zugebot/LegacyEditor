@@ -4,18 +4,16 @@
 #include <unordered_map>
 #include <vector>
 
+#include "LegacyEditor/utils/processor.hpp"
+
 // #include "Block.hpp"
 #include "DataManager.hpp"
 // #include "UUID.hpp"
 #include "deflateUsage.hpp"
 
-class JerrinNetWorth {
-    int jerrinsMoney : 31;
-    int jerrinAlive : 1;
-};
 
 
-enum NBTType : uint8_t {
+enum NBTType : u8 {
     NBT_NONE = 0,
     NBT_INT8 = 1,
     NBT_INT16 = 2,
@@ -33,12 +31,27 @@ enum NBTType : uint8_t {
 };
 
 
-class NBTTagByteArray;
+template<class classType>
+class NBTTagTypeArray {
+public:
+    classType* array = nullptr;
+    int size = 0;
+
+    NBTTagTypeArray(classType* dataIn, int sizeIn) : array(dataIn), size(sizeIn) {}
+    NBTTagTypeArray() = default;
+
+    MU ND inline classType* getArray() const { return array; }
+};
+
+
+using NBTTagByteArray = NBTTagTypeArray<u8>;
+using NBTTagIntArray = NBTTagTypeArray<i32>;
+using NBTTagLongArray = NBTTagTypeArray<i64>;
+
+
 class NBTTagString;
 class NBTTagList;
 class NBTTagCompound;
-class NBTTagIntArray;
-class NBTTagLongArray;
 
 template<typename T>
 concept NBT_TAG_TYPE = std::is_same_v<T, NBTTagByteArray> ||
@@ -110,41 +123,6 @@ public:
 };
 
 
-class NBTTagByteArray {
-public:
-    u8* dataOfArray;
-    int sizeOfData;
-
-    NBTTagByteArray(u8* dataIn, int sizeIn) : dataOfArray(dataIn), sizeOfData(sizeIn) {}
-    NBTTagByteArray() : NBTTagByteArray(nullptr, 0) {}
-
-    ND inline u8* getByteArray() const { return dataOfArray; }
-};
-
-
-class NBTTagIntArray {
-public:
-    int* array;
-    int size;
-
-    NBTTagIntArray() : array(nullptr), size(0) {}
-    NBTTagIntArray(int* dataIn, int sizeIn) : array(dataIn), size(sizeIn) {}
-
-    ND inline int* getIntArray() const { return array; }
-};
-
-
-class NBTTagLongArray {
-public:
-    i64* array;
-    i64 size;
-
-    NBTTagLongArray() : array(nullptr), size(0) {}
-    NBTTagLongArray(i64* longArrayIn, i64 size) : array(longArrayIn), size(size) {}
-
-    ND inline i64* getLongArray() const { return array; }
-};
-
 
 class NBTTagString {
 public:
@@ -153,10 +131,9 @@ public:
     NBTTagString() : data(nullptr), size(0) {}
 
     explicit NBTTagString(const std::string& dataIn) {
-        int size = (int) dataIn.size();
+        size = (int) dataIn.size();
         data = (char*) malloc(size);
         memcpy(data, dataIn.c_str(), size);
-        size = size;
     }
 
     ND inline bool hasNoTags() const { return size; }

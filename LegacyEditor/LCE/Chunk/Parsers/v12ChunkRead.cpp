@@ -1,4 +1,5 @@
 #include "v12Chunk.hpp"
+#include <algorithm>
 
 
 namespace universal {
@@ -29,7 +30,6 @@ namespace universal {
     }
 
 
-    // TODO: idk proper logic
     void V12Chunk::readNBTData() {
         if (*dataManager.ptr == 0xA) {
             chunkData.NBTData = NBT::readTag(dataManager); 

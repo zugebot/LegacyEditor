@@ -7,7 +7,8 @@ enum class CONSOLE : i8 {
     NONE = -1,
     XBOX360 = 0,
     PS3 = 1,
-    WIIU = 2
+    WIIU = 2,
+    VITA = 3
 };
 
 

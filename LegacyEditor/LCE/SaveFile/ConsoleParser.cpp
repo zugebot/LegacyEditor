@@ -3,6 +3,7 @@
 
 #include "ConsoleParser.hpp"
 
+#include "LegacyEditor/utils/RLEVITA/rlevita.hpp"
 #include "LegacyEditor/utils/LZX/XboxCompression.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 #include "LegacyEditor/utils/tinf/tinf.h"
@@ -109,7 +110,45 @@ int ConsoleParser::loadXbox360_BIN() {
 
     size = saveGameInfo.saveFileData.readInt64(); // at offset 8
     allocate(size);
-    size = XDecompress(start(), &size, saveGameInfo.saveFileData.start(), src_size);
+    size = XDecompress(start(), &size, saveGameInfo.saveFileData.data, src_size);
+    return 0;
+}
+
+
+
+int ConsoleParser::loadVita() {
+    printf("Detected Vita savefile, converting\n");
+    console = CONSOLE::VITA;
+
+    // total size of file
+    source_binary_size -= 8;
+    size = headerUnion.getVitaFileSize();
+    std::cout << size << std::endl;
+
+    // allocate memory
+    Data src(source_binary_size);
+
+    data = new (std::nothrow) u8[size];
+    if (data == nullptr) return printf_err(error2, size);
+
+    // goto offset 8 for the data, read data into src
+    fseek(f_in, 8, SEEK_SET);
+    fread(src.data, 1, source_binary_size, f_in);
+
+
+    RLEVITA_DECOMPRESS(src.data, src.size, data, size);
+
+    delete[] src.data;
+
+    FILE* f_out = fopen("tests/vitaUncompressed.bin", "wb");
+    if (f_out != nullptr) {
+        fwrite(data, 1, size, f_out);
+        fclose(f_out);
+    } else {
+        printf("Cannot open outfile \"tests/vitaUncompressed.bin\"");
+    }
+
+
     return 0;
 }
 
@@ -135,9 +174,14 @@ int ConsoleParser::loadConsoleFile(const char* infileStr) {
 
     if (headerUnion.getInt1() <= 2) {
         u32 file_size = headerUnion.getDestSize();
+        int indexFromSaveFile;
         /// if (int1 == 0) it is a WiiU savefile unless it's a massive file
         if (headerUnion.getZlibMagic() == ZLIB_MAGIC) {
             result = loadWiiU(file_size);
+        /// idk utter coded it
+        } else if (indexFromSaveFile = headerUnion.getVitaFileSize() - headerUnion.getVitaFileListing(),
+                   indexFromSaveFile > 0 && indexFromSaveFile < 65536) {
+            result = loadVita();
         } else {
             result = loadPs3Compressed(file_size);
         }
@@ -172,8 +216,8 @@ int ConsoleParser::saveWiiU(const std::string& outfileStr, Data& dataOut) {
     uLong compressedSize = compressBound(src_size);
     printf("compressed bound: %lu\n", compressedSize);
 
-    std::vector<uint8_t> compressedData(compressedSize);
-    if (compress(compressedData.data(), &compressedSize, managerOut.start(), managerOut.size) != Z_OK) {
+    u8_vec compressedData(compressedSize);
+    if (compress(compressedData.data(), &compressedSize, managerOut.data, managerOut.size) != Z_OK) {
         return {};
     }
     compressedData.resize(compressedSize);

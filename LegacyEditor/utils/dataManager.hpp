@@ -6,51 +6,38 @@
 
 #include <bit>
 #include <string>
-
+#include <memory>
 
 
 
 /**
- * Starts writing in "Little Endian".
- * This class is NOT responsible for the de-allocation of memory PASSED to it.
+ * Starts writing in "Big Endian".
  */
-class DataManager : public Data {
+class DataManager {
 public:
     bool isBig = true;
-
+    u8* data = nullptr;
+    u8* ptr = nullptr;
+    u32 size = 0;
 
     DataManager() = default;
 
-
-    explicit DataManager(u32 sizeIn): Data(sizeIn) {
-        setBigEndian();
+    explicit DataManager(Data& dataIn) {
+        data = dataIn.start();
+        ptr = data;
     }
 
-    explicit DataManager(Data& dataIn): Data(dataIn.start(), dataIn.getSize()) {
-        setBigEndian();
-        using_memory = false;
+    explicit DataManager(Data* dataIn) {
+        data = dataIn->start();
+        ptr = data;
     }
 
-    explicit DataManager(Data* dataIn): Data(dataIn->start(), dataIn->getSize()) {
-        setBigEndian();
-        using_memory = false;
-    }
 
-    explicit DataManager(File& fileIn): Data(fileIn.start(), fileIn.getSize()) {
-        setBigEndian();
-        using_memory = false;
-    }
+    explicit DataManager(u8* dataIn, u32 sizeIn) {
+        data = dataIn;
+        size = sizeIn;
 
-    explicit DataManager(File* fileIn): Data(fileIn->start(), fileIn->getSize()) {
-        setBigEndian();
-        using_memory = false;
     }
-
-    explicit DataManager(u8* dataIn, u32 sizeIn): Data(dataIn, sizeIn) {
-        setBigEndian();
-        using_memory = false;
-    }
-
 
     static bool isSystemLittleEndian() {
         u32 num = 1;
@@ -65,12 +52,16 @@ public:
         isBig = false;
     }
 
+    inline u8* start() { return data; }
+
 
     void seekStart();
     void seekEnd();
     void seek(i64 position);
     bool isEndOfData();
     u32 getPosition();
+    u8 peekNextByte();
+    void incrementPointer(i32 amount);
 
     // READING SECTION
 

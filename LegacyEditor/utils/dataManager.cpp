@@ -4,12 +4,12 @@
 // SEEK
 
 void DataManager::seekStart() {
-    ptr = start();
+    ptr = data;
 }
 
 
 void DataManager::seekEnd() {
-    ptr = start() + getSize() - 1;
+    ptr = data + size - 1;
 }
 
 
@@ -19,11 +19,21 @@ void DataManager::seek(i64 position) {
 }
 
 bool DataManager::isEndOfData() {
-    return ptr == start() + getSize() - 1;
+    return ptr == data + size - 1;
 }
 
 u32 DataManager::getPosition() {
-    return ptr - start();
+    return ptr - data;
+}
+
+
+u8 DataManager::peekNextByte() {
+    return ptr[1];
+}
+
+
+void DataManager::incrementPointer(i32 amount) {
+    ptr += amount;
 }
 
 
@@ -217,7 +227,7 @@ double DataManager::readDouble() {
 u8* DataManager::readWithOffset(i32 offset, i32 amount) {
     u8* val = new u8[amount];
     incrementPointer(offset);
-    memcpy(val, start(), amount);
+    memcpy(val, data, amount);
     incrementPointer(amount);
     return val;
 }
@@ -225,14 +235,14 @@ u8* DataManager::readWithOffset(i32 offset, i32 amount) {
 
 u8* DataManager::readBytes(u32 length) {
     u8* val = new u8[length];
-    memcpy(val, getPtr(), length);
+    memcpy(val, ptr, length);
     incrementPointer((i32) length);
     return val;
 }
 
 
 void DataManager::readOntoData(u32 length, u8* dataIn) {
-    memcpy(dataIn, start(), length);
+    memcpy(dataIn, data, length);
     incrementPointer(length);
 }
 
@@ -247,14 +257,18 @@ int DataManager::readFromFile(const std::string& fileStrIn) {
     u64 newSize = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    bool status = allocate(newSize);
+    data = new u8[newSize];
+    size = newSize;
+
+    /*
     if (!status) {
         printf("failed to allocate %llu bytes of memory", newSize);
         fclose(file);
         return -1;
     }
+     */
 
-    fread(start(), 1, newSize, file);
+    fread(data, 1, newSize, file);
 
     fclose(file);
     return 0;
@@ -354,17 +368,17 @@ void DataManager::write(u8* dataPtrIn, u32 length) {
 
 
 void DataManager::writeData(Data* dataIn) {
-    write(dataIn->start(), dataIn->getSize());
+    write(dataIn->start(), dataIn->size);
 }
 
 
 void DataManager::writeFile(File* fileIn) {
-    write(fileIn->start(), fileIn->getSize());
+    write(fileIn->data.start(), fileIn->data.size);
 }
 
 
 void DataManager::writeFile(File& fileIn) {
-    write(fileIn.start(), fileIn.getSize());
+    write(fileIn.data.start(), fileIn.data.size);
 }
 
 
@@ -404,7 +418,7 @@ int DataManager::writeToFile(const std::string& fileName) {
         printf("Failed to write to output file '%s'", fileName.c_str());
         return 1;
     }
-    fwrite(start(), 1, getSize(), f_out);
+    fwrite(data, 1, size, f_out);
     fclose(f_out);
     return 0;
 }

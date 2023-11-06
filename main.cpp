@@ -62,14 +62,15 @@ int main() {
 
 
 
-    std::string fileInPath = dir_path + "230918230206_in.wii";
+    // std::string fileInPath = dir_path + "230918230206_in.wii";
+    std::string fileInPath = dir_path + "GAMEDATA_VITA.bin";
 
     auto start = getMilliseconds();
 
     ConsoleParser parser;
     int status = parser.loadConsoleFile(fileInPath.c_str());
 
-    FileListing fileListing(parser);
+    FileListing fileListing(parser.console, parser);
 
     fileListing.saveToFolder(dir_path + "dump\\");
 
@@ -188,7 +189,7 @@ int main() {
         printf("Recompressed all chunks in '%s'\n", regionFilePtr->name.c_str());
     }
      */
-    Data dataOut = fileListing.write();
+    Data dataOut = fileListing.write(CONSOLE::WIIU);
     // */
     /*
     // compare decompressed FileListing

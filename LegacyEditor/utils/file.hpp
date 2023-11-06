@@ -6,34 +6,31 @@
 #include <string>
 #include <utility>
 
-struct File : public Data {
+struct File {
 public:
+    Data data;
     std::string name;
     u64 timestamp = 0;
     u32 additionalData = 0;
 
     File() = default;
 
-    explicit File(u32 sizeIn) : Data(sizeIn) {}
-
-    explicit File(Data& dataIn) : Data(dataIn.start(), dataIn.size) {
-        using_memory = false;
+    explicit File(u32 sizeIn) {
+        data = Data(sizeIn);
     }
 
-    File(u8* dataIn, u32 sizeIn) : Data(dataIn, sizeIn) {
-        using_memory = false;
-    }
+    // File(u8* dataIn, u32 sizeIn) : Data(dataIn, sizeIn) {}
 
     File(u32 sizeIn, std::string nameIn, u64 timestampIn)
-        : Data(sizeIn), name(std::move(nameIn)), timestamp(timestampIn) {}
-
-    File(u8* dataIn, u32 sizeIn, std::string nameIn, u64 timestampIn)
-        : Data(dataIn, sizeIn), name(std::move(nameIn)), timestamp(timestampIn) {
-        using_memory = false;
+        : name(std::move(nameIn)), timestamp(timestampIn) {
+        data = Data(sizeIn);
     }
 
-    bool isEmpty() {
-        return size != 0;
+    File(u8* dataIn, u32 sizeIn, std::string nameIn, u64 timestampIn)
+        : data(dataIn, sizeIn), name(std::move(nameIn)), timestamp(timestampIn) {}
+
+    ND bool isEmpty() const {
+        return data.size != 0;
     }
 };
 

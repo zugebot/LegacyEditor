@@ -12,9 +12,8 @@ void ChunkManager::ensure_decompress(CONSOLE console) {
     isCompressed = false;
 
     u32 dec_size_copy = dec_size;
-
     Data decompData(dec_size);
-    // auto* decompressedData = new u8[dec_size];
+
     switch (console) {
         case CONSOLE::XBOX360:
             dec_size_copy = XDecompress(decompData.start(), &decompData.size, data, size);
@@ -29,21 +28,23 @@ void ChunkManager::ensure_decompress(CONSOLE console) {
             break;
     }
 
-    delete[] data;
-    data = nullptr;
+    if (data != nullptr) {
+        delete[] data;
+        data = nullptr;
+        size = 0;
+    }
 
     if (rleFlag) {
         Data rle(dec_size);
         RLE_decompress(decompData.start(), decompData.size, rle.start(), dec_size_copy);
         data = rle.data;
-        rle.using_memory = false;
         size = dec_size;
         return;
-    }
 
-    data = decompData.data;
-    decompData.using_memory = false;
-    size = dec_size_copy;
+    } else {
+        data = decompData.data;
+        size = dec_size_copy;
+    }
 }
 
 void ChunkManager::ensure_compressed(CONSOLE console) {
@@ -58,12 +59,17 @@ void ChunkManager::ensure_compressed(CONSOLE console) {
     dec_size = size;
 
     if (rleFlag) {
-        u32 rle_size = size;
-        u8* rle_ptr = new u8[rle_size];
-        RLE_compress(data, size, rle_ptr, rle_size);
-        delete[] data;
-        data = rle_ptr;
-        size = rle_size;
+        Data rle(size);
+        RLE_compress(data, size, rle.data, rle.size);
+
+        if (data != nullptr) {
+            delete[] data;
+            data = nullptr;
+            size = 0;
+        }
+
+        data = rle.data;
+        size = rle.size;
     }
 
     // allocate memory and recompress
@@ -79,7 +85,13 @@ void ChunkManager::ensure_compressed(CONSOLE console) {
             break;
         case CONSOLE::WIIU: {
             ::compress(comp_ptr, &comp_size, data, size);
-            delete[] data;
+
+            if (data != nullptr) {
+                delete[] data;
+                data = nullptr;
+                size = 0;
+            }
+
             data = comp_ptr;
             size = comp_size;
             break;

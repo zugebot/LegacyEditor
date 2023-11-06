@@ -4,19 +4,19 @@
 void NBTBase::write(DataManager& output) const {
     switch (type) {
         case NBT_INT8: {
-            uint8_t writeVal = 0;
+            u8 writeVal = 0;
             memcpy(&writeVal, data, 1);
             output.writeByte(writeVal);
             return;
         }
         case NBT_INT16: {
-            int writeVal = 0;
+            i16 writeVal = 0;
             memcpy(&writeVal, data, 2);
             output.writeInt16(writeVal);
             return;
         }
         case NBT_INT32: {
-            int writeVal = 0;
+            i32 writeVal = 0;
             memcpy(&writeVal, data, 4);
             output.writeInt32(writeVal);
             return;
@@ -40,10 +40,9 @@ void NBTBase::write(DataManager& output) const {
             return;
         }
         case TAG_BYTE_ARRAY: {
-            // auto* vai = toType<NBTTagByteArray>(this);
             auto* val = toType<NBTTagByteArray>();
-            output.writeInt32(val->sizeOfData);
-            output.write(val->dataOfArray, val->sizeOfData);
+            output.writeInt32(val->size);
+            output.write(val->array, val->size);
             return;
         }
         case TAG_STRING: {
@@ -73,7 +72,6 @@ void NBTBase::write(DataManager& output) const {
         case TAG_INT_ARRAY: {
             auto* val = toType<NBTTagIntArray>();
             output.writeInt32(val->size);
-
             for (int x = 0; x < val->size; x++) { output.writeInt32(val->array[x]); }
             return;
         }
@@ -102,7 +100,7 @@ void NBTBase::NbtFree() const {
             return;
         case TAG_BYTE_ARRAY: {
             auto* val = toType<NBTTagByteArray>();
-            free(val->dataOfArray);
+            free(val->array);
             delete val;
             return;
         }
@@ -180,9 +178,9 @@ std::string NBTBase::toString() const {
             auto* val = toType<NBTTagByteArray>();
             std::string stringBuilder = "[B;";
 
-            for (int i = 0; i < val->sizeOfData; ++i) {
+            for (int i = 0; i < val->size; ++i) {
                 if (i != 0) { stringBuilder.append(", "); }
-                stringBuilder.append(std::to_string(val->dataOfArray[i]));
+                stringBuilder.append(std::to_string(val->array[i]));
             }
             stringBuilder.push_back(']');
             return stringBuilder;
@@ -255,46 +253,46 @@ std::string NBTBase::toString() const {
 void NBTBase::read(DataManager& input) {
     switch (type) {
         case NBT_INT8: {
-            uint8_t readData = input.readByte();
-            this->data = malloc(1);
-            memcpy(this->data, &readData, 1);
+            u8 readData = input.readByte();
+            data = malloc(1);
+            memcpy(data, &readData, 1);
             return;
         }
         case NBT_INT16: {
             auto readData = (i16) input.readInt16();
-            this->data = malloc(2);
-            memcpy(this->data, &readData, 2);
+            data = malloc(2);
+            memcpy(data, &readData, 2);
             return;
         }
         case NBT_INT32: {
             auto readData = (i32) input.readInt32();
-            this->data = malloc(4);
-            memcpy(this->data, &readData, 4);
+            data = malloc(4);
+            memcpy(data, &readData, 4);
             return;
         }
         case NBT_INT64: {
             auto readData = (i64) input.readInt64();
-            this->data = malloc(8);
-            memcpy(this->data, &readData, 8);
+            data = malloc(8);
+            memcpy(data, &readData, 8);
             return;
         }
         case NBT_FLOAT: {
             float readData = input.readFloat();
-            this->data = malloc(4);
-            memcpy(this->data, &readData, 4);
+            data = malloc(4);
+            memcpy(data, &readData, 4);
             return;
         }
         case NBT_DOUBLE: {
             double readData = input.readDouble();
-            this->data = malloc(8);
-            memcpy(this->data, &readData, 8);
+            data = malloc(8);
+            memcpy(data, &readData, 8);
             return;
         }
         case TAG_BYTE_ARRAY: {
             auto* val = toType<NBTTagByteArray>();
             auto i = (int) input.readInt32();
-            val->dataOfArray = input.readBytes(i);
-            val->sizeOfData = i;
+            val->array = input.readBytes(i);
+            val->size = i;
             return;
         }
         case TAG_STRING: {
@@ -369,39 +367,39 @@ NBTBase NBTBase::copy() const {
     switch (type) {
         case NBT_INT8: {
             auto* copyData = (uint8_t*) malloc(1);
-            memcpy(copyData, this->data, 1);
-            return {copyData, this->type};
+            memcpy(copyData, data, 1);
+            return {copyData, type};
         }
         case NBT_INT16: {
             auto* copyData = (int16_t*) malloc(2);
-            memcpy(copyData, this->data, 2);
-            return {copyData, this->type};
+            memcpy(copyData, data, 2);
+            return {copyData, type};
         }
         case NBT_INT32: {
             int* copyData = (int*) malloc(4);
-            memcpy(copyData, this->data, 4);
-            return {copyData, this->type};
+            memcpy(copyData, data, 4);
+            return {copyData, type};
         }
         case NBT_INT64: {
             auto* copyData = (i64*) malloc(8);
-            memcpy(copyData, this->data, 8);
-            return {copyData, this->type};
+            memcpy(copyData, data, 8);
+            return {copyData, type};
         }
         case NBT_FLOAT: {
             auto* copyData = (float*) malloc(4);
-            memcpy(copyData, this->data, 4);
-            return {copyData, this->type};
+            memcpy(copyData, data, 4);
+            return {copyData, type};
         }
         case NBT_DOUBLE: {
             auto* copyData = (double*) malloc(8);
-            memcpy(copyData, this->data, 8);
-            return {copyData, this->type};
+            memcpy(copyData, data, 8);
+            return {copyData, type};
         }
         case TAG_BYTE_ARRAY: {
             auto* val = toType<NBTTagByteArray>();
-            int size = val->sizeOfData;
+            int size = val->size;
             auto* aByte = (uint8_t*) malloc(size);
-            memcpy(aByte, val->dataOfArray, size);
+            memcpy(aByte, val->array, size);
             return {new NBTTagByteArray(aByte, size), NBTType::TAG_BYTE_ARRAY};
         }
         case TAG_STRING: {
@@ -675,7 +673,7 @@ NBTTagLongArray* NBTTagCompound::getLongArray(const std::string& key) {
 
 NBTTagCompound* NBTTagCompound::getCompoundTag(const std::string& key) {
     if (hasKey(key, NBTType::TAG_COMPOUND)) {
-        NBTBase base = this->tagMap.at(key);
+        NBTBase base = tagMap.at(key);
         return NBTBase::toType<NBTTagCompound>(base);
     }
     return nullptr;

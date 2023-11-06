@@ -10,8 +10,9 @@
 
 
 class FileListing {
+private:
+    CONSOLE console;
 public:
-    // TODO IMPORTANT: RESIZING OF VECTORS BREAKS DE_ALLOCATION
     std::vector<File> allFiles;
 
     // files
@@ -31,7 +32,7 @@ public:
 
     FileListing() = default;
 
-    explicit FileListing(Data& dataIn) {
+    explicit FileListing(CONSOLE consoleIn, Data& dataIn) : console(consoleIn) {
         read(dataIn);
     }
 
@@ -39,7 +40,7 @@ public:
 
     void saveToFolder(const std::string& folder);
 
-    Data write();
+    Data write(CONSOLE consoleOut);
 
 
 };

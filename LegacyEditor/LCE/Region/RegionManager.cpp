@@ -15,10 +15,14 @@ ChunkManager* RegionManager::getChunk(int index) {
 
 
 void RegionManager::read(File* fileIn) {
-    totalSectors = fileIn->size / SECTOR_SIZE;
+    totalSectors = fileIn->data.size / SECTOR_SIZE;
 
     // step 0: copying data from file
-    DataManager managerIn(fileIn);
+    DataManager managerIn(fileIn->data);
+
+    if (console == CONSOLE::VITA) {
+        managerIn.setLittleEndian();
+    }
 
     // step 1: read offsets
     for (ChunkManager& chunk : chunks) {
@@ -64,7 +68,7 @@ void RegionManager::read(File* fileIn) {
         }
 
         // each chunk gets its own memory
-        memcpy(chunk.start(), managerIn.getPtr(), chunk.size);
+        memcpy(chunk.start(), managerIn.ptr, chunk.size);
 
     }
 
@@ -96,9 +100,10 @@ Data RegionManager::write(CONSOLE consoleIn) {
     u32 data_size = total_sectors * SECTOR_SIZE;
     Data dataOut = Data(data_size);
     DataManager managerOut(dataOut);
-    managerOut.setLittleEndian();
-    // auto* data_ptr = new uint8_t[data_size];
-    // DataOutManager dataOut(data_ptr, data_size);
+
+    if (console == CONSOLE::VITA) {
+        managerOut.setLittleEndian();
+    }
 
     // step 5: write each chunk offset
     managerOut.seekStart();

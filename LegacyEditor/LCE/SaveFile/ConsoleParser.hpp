@@ -32,11 +32,17 @@ public:
 
     ConsoleParser() : Data() {}
 
+    ~ConsoleParser() {
+        delete[] data;
+    }
+
     int loadWiiU(u32 file_size);
     int loadPs3Compressed(u32 dest_size);
     int loadPs3Uncompressed();
     int loadXbox360_DAT();
     int loadXbox360_BIN();
+
+    int loadVita();
 
     int loadConsoleFile(const char* infileStr);
 

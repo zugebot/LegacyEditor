@@ -749,10 +749,11 @@ static FileInfo extractSaveGameDat(u8* inputData, i64 inputSize) {
 
     // TODO IMPORTANT: find upper range of this so it can use a buffer
     std::cout << "because I removed vector based dataManagers, BINSupport.hpp at line 752 needs better way to allocate memory ahead of time" << std::endl;
-    DataManager out(23456789);
+    Data data(23456789);
+    DataManager out(data);
 
     stfsInfo.Extract(entry, out);
-    out.size = out.ptr - out.start();
+    out.size = out.ptr - out.data;
 
     FileInfo savegame;
     savegame.createdTime = TimePointFromFatTimestamp(entry->createdTimeStamp);
@@ -761,15 +762,17 @@ static FileInfo extractSaveGameDat(u8* inputData, i64 inputSize) {
         savegame.thumbnailImage = meta.thumbnailImage;
     }
 
-    int savefileSize = (int) out.getSize();
+    int savefileSize = (int) out.size;
     if (savefileSize) {
         u8* savefile = (u8*) malloc(savefileSize);
-        memcpy(savefile, out.start(), savefileSize);
+        memcpy(savefile, out.data, savefileSize);
         savegame.saveFileData = DataManager(savefile, savefileSize);
     }
 
     savegame.saveName = stfsInfo.GetMetaData().displayName;
     savegame.options = getTagsInImage(savegame.thumbnailImage);
     free(inputData);
+
+    delete[] data.data;
     return savegame;
 }
