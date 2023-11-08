@@ -9,7 +9,7 @@
 #include "LegacyEditor/utils/dataManager.hpp"
 #include "LegacyEditor/utils/enums.hpp"
 
-#include "FileInfo.hpp"
+#include "LegacyEditor/LCE/BinFile/FileInfo.hpp"
 #include "headerUnion.hpp"
 
 

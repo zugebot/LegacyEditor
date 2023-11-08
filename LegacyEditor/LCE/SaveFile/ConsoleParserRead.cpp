@@ -7,8 +7,7 @@
 #include "LegacyEditor/utils/tinf/tinf.h"
 #include "LegacyEditor/utils/zlib-1.2.12/zlib.h"
 
-#include "BINSupport.hpp"
-
+#include "LegacyEditor/LCE/BinFile/BINSupport.hpp"
 
 
 int ConsoleParser::readConsoleFile(const std::string& inFileStr) {

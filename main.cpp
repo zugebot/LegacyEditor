@@ -1,4 +1,5 @@
 #include <cassert>
+#include <filesystem>
 #include <iostream>
 
 #include "LegacyEditor/utils/dataManager.hpp"
@@ -11,6 +12,7 @@
 #include "LegacyEditor/utils/NBT/include.hpp"
 #include "LegacyEditor/utils/picture.hpp"
 #include "LegacyEditor/utils/time.hpp"
+#include "LegacyEditor/utils/mapcolors.hpp"
 
 
 void compareNBT(NBTBase* first, NBTBase* second) {
@@ -37,6 +39,10 @@ void compareNBT(NBTBase* first, NBTBase* second) {
 
 
 int main() {
+    std::cout << "goto 'LegacyEditor/utils/processor.hpp' and change 'dir_path' to be the path of the src'" << std::endl;
+
+
+
     auto start = getMilliseconds();
 
     std::string wiiuFilePath = dir_path + "tests/Pirates.wii";
@@ -47,28 +53,26 @@ int main() {
     FileListing fileListingWiiU(parserWiiU.console, parserWiiU);
     fileListingWiiU.saveToFolder(dir_path + "dump_wiiu");
 
-
     auto* filewiiu = fileListingWiiU.levelFilePtr;
     DataManager playerDatawiiu(filewiiu->data);
     auto datawiiu = NBT::readTag(playerDatawiiu);
     std::string playerNBTStringwiiu = datawiiu->toString();
 
+    // auto* filevita = fileListingVita.levelFilePtr;
+    // DataManager playerDatavita(filevita->data);
+    // auto datavita = NBT::readTag(playerDatavita);
+    // std::string playerNBTStringvita = datavita->toString();
+
+
+    // std::cout << playerNBTStringwiiu << std::endl;
+    // std::cout << "\n\n\n" << std::endl;
+    // std::cout << playerNBTStringvita << std::endl;
+    // compareNBT(datawiiu, datavita);
+
     ConsoleParser parserVita;
     int status2 = parserVita.readConsoleFile(vitaFilePath);
     FileListing fileListingVita(parserVita.console, parserVita);
     fileListingVita.saveToFolder(dir_path + "dump_vita");
-
-    auto* filevita = fileListingVita.levelFilePtr;
-    DataManager playerDatavita(filevita->data);
-    auto datavita = NBT::readTag(playerDatavita);
-    std::string playerNBTStringvita = datavita->toString();
-
-
-    //std::cout << playerNBTStringwiiu << std::endl;
-    // std::cout << "\n\n\n" << std::endl;
-    // std::cout << playerNBTStringvita << std::endl;
-    compareNBT(datawiiu, datavita);
-
 
     auto* map = fileListingVita.mapFilePtrs[0];
     DataManager mapManager(map->data);
@@ -81,9 +85,10 @@ int main() {
     Picture picture(128, 128);
     int count = 0;
     for (int i = 0; i < 16384; i++) {
-        picture.data[count++] = byteArray->array[i];
-        picture.data[count++] = byteArray->array[i];
-        picture.data[count++] = byteArray->array[i];
+        RGB rgb = getRGB(byteArray->array[i]);
+        picture.data[count++] = rgb.r;
+        picture.data[count++] = rgb.g;
+        picture.data[count++] = rgb.b;
     }
 
 

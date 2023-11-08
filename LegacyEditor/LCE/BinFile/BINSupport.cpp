@@ -3,12 +3,12 @@
 
 void StfsVD::readStfsVD(DataManager& input) {
     size = input.readByte();
-    input.readByte();// reserved
+    input.readByte(); // reserved
     blockSeparation = input.readByte();
     input.setLittleEndian();
     fileTableBlockCount = input.readInt16();
     fileTableBlockNum = input.readInt24();
-    input.incrementPointer(0x14);// skip the hash
+    input.incrementPointer(0x14); // skip the hash
     input.setBigEndian();
     allocatedBlockCount = input.readInt32();
     unallocatedBlockCount = input.readInt32();
@@ -16,9 +16,8 @@ void StfsVD::readStfsVD(DataManager& input) {
 
 
 int BINHeader::readHeader(DataManager& binFile) {
-
     binFile.seek(0x340);
-    this->headerSize = binFile.readInt32();
+    headerSize = binFile.readInt32();
 
     //content type, 1 is savegame
     if (binFile.readInt32() != 1) {
@@ -32,8 +31,9 @@ int BINHeader::readHeader(DataManager& binFile) {
         printf(".bin file is not in STFS format, exiting\n");
         return 0;
     }
+
     binFile.seek(0x0379);
-    this->stfsVD.readStfsVD(binFile);
+    stfsVD.readStfsVD(binFile);
     binFile.seek(0x0411);
 
     //read the savegame name
@@ -46,17 +46,119 @@ int BINHeader::readHeader(DataManager& binFile) {
     if (thumbnailImageSize) {
         binFile.incrementPointer(4);//read the other size but it will not be used
         u8* thumbnailImageData = binFile.readBytes(thumbnailImageSize);
-        this->thumbnailImage = DataManager(thumbnailImageData, thumbnailImageSize);
+        thumbnailImage = DataManager(thumbnailImageData, thumbnailImageSize);
     } else {
         u32 titleThumbnailImageSize = binFile.readInt32();
         if (titleThumbnailImageSize) {
             binFile.seek(0x571A);
             u8* titleThumbnailImageData = binFile.readBytes(thumbnailImageSize);
-            this->thumbnailImage = DataManager(titleThumbnailImageData, titleThumbnailImageSize);
+            thumbnailImage = DataManager(titleThumbnailImageData, titleThumbnailImageSize);
         }
     }
     return 1;
 }
+
+
+
+void StfsPackage::extract(StfsFileEntry* entry, DataManager& out) {
+    if (entry->nameLen == 0) { entry->name = "default"; }
+
+    // get the file size that we are extracting
+    u32 fileSize = entry->fileSize;
+    if (fileSize == 0) { return; }
+
+    // check if all the blocks are consecutive
+    if (entry->flags & 1) {
+        // allocate 0xAA blocks of memory, for maximum efficiency, yo
+        auto* buffer = new u8[0xAA000];
+
+        // seek to the beginning of the file
+        u32 startAddress = blockToAddress(entry->startingBlockNum);
+        data.seek(startAddress);
+
+        // calculateOffset the number of blocks to read before we hit a table
+        u32 blockCount = (computeLevel0BackingHashBlockNumber(entry->startingBlockNum) + blockStep[0]) -
+                         ((startAddress - firstHashTableAddress) >> 0xC);
+
+        // pick up the change at the beginning, until we hit a hash table
+        if ((u32) entry->blocksForFile <= blockCount) {
+            data.readOntoData(entry->fileSize, buffer);
+            out.write(buffer, entry->fileSize);
+
+            // free the temp buffer
+            delete[] buffer;
+            return;
+        } else {
+            data.readOntoData(blockCount << 0xC, buffer);
+            out.write(buffer, blockCount << 0xC);
+        }
+
+        // extract the blocks in between the tables
+        u32 tempSize = (entry->fileSize - (blockCount << 0xC));
+        while (tempSize >= 0xAA000) {
+            // skip past the hash table(s)
+            u32 currentPos = data.getPosition();
+            data.seek(currentPos + GetHashTableSkipSize(currentPos));
+
+            // read in the 0xAA blocks between the tables
+            data.readOntoData(0xAA000, buffer);
+
+            // Write the bytes to the out file
+            out.write(buffer, 0xAA000);
+
+            tempSize -= 0xAA000;
+            blockCount += 0xAA;
+        }
+
+        // pick up the change at the end
+        if (tempSize != 0) {
+            // skip past the hash table(s)
+            u32 currentPos = data.getPosition();
+            data.seek(currentPos + GetHashTableSkipSize(currentPos));
+
+            // read in the extra crap
+            data.readOntoData(tempSize, buffer);
+
+            // Write it to the out file
+            out.write(buffer, tempSize);
+        }
+
+        // free the temp buffer
+        delete[] buffer;
+    } else {
+        // generate the blockchain which we have to extract
+        u32 fullReadCounts = fileSize / 0x1000;
+
+        fileSize -= (fullReadCounts * 0x1000);
+
+        u32 block = entry->startingBlockNum;
+
+        // allocate data for the blocks
+        u8 buffer[0x1000];
+
+        // read all the full blocks the file allocates
+        for (u32 i = 0; i < fullReadCounts; i++) {
+            extractBlock(block, buffer);
+            out.write(buffer, 0x1000);
+
+            block = getBlockHashEntry(block).nextBlock;
+        }
+
+        // read the remaining data
+        if (fileSize != 0) {
+            extractBlock(block, buffer, fileSize);
+            out.write(buffer, (int) fileSize);
+        }
+    }
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -219,7 +321,7 @@ ND u32 StfsPackage::computeLevelNBackingHashBlockNumber(u32 blockNum, u8 level) 
         case 1:
             return computeLevel1BackingHashBlockNumber(blockNum);
         case 2:
-            return computeLevel2BackingHashBlockNumber(blockNum);
+            return computeLevel2BackingHashBlockNumber();
         default:
             throw std::runtime_error("STFS: Invalid level.\n");
     }
@@ -229,12 +331,9 @@ ND u32 StfsPackage::computeLevelNBackingHashBlockNumber(u32 blockNum, u8 level) 
 /// get the true block number for the hash table that hashes the block at level 0
 ND u32 StfsPackage::computeLevel0BackingHashBlockNumber(u32 blockNum) {
     if (blockNum < 0xAA) return 0;
-    
     u32 num = (blockNum / 0xAA) * blockStep[0];
     num += ((blockNum / 0x70E4) + 1) << ((u8) packageSex);
-
     if (blockNum / 0x70E4 == 0) return num;
-
     return num + (1 << (u8) packageSex);
 }
 
@@ -246,7 +345,7 @@ ND u32 StfsPackage::computeLevel1BackingHashBlockNumber(u32 blockNum) {
 }
 
 /// get the true block number for the hash table that hashes the block at level 2
-ND u32 StfsPackage::computeLevel2BackingHashBlockNumber(u32 blockNum) { 
+ND u32 StfsPackage::computeLevel2BackingHashBlockNumber() {
     return blockStep[1]; 
 }
 
@@ -315,16 +414,16 @@ void StfsPackage::parse() {
     BINHeader header;
     int result = header.readHeader(data);
     if (!result) {
-        //free(inputData);
-        return;//SaveFileInfo();
+        // free(inputData);
+        return; // SaveFileInfo();
     }
     metaData = header;
     packageSex = ((~metaData.stfsVD.blockSeparation) & 1);
     
-    if (packageSex == 0) {//female
+    if (packageSex == 0) { // female
         blockStep[0] = 0xAB;
         blockStep[1] = 0x718F;
-    } else {//male
+    } else { // male
         blockStep[0] = 0xAC;
         blockStep[1] = 0x723A;
     }
@@ -423,8 +522,8 @@ i64 stringToInt64(const std::string& str) {
 
 WorldOptions getTagsInImage(DataManager& image) {
     WorldOptions options;
-    std::vector<u8> PNGHeader = image.readIntoVector(8);
-    if (PNGHeader != std::vector<u8>{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}) {
+    u8_vec PNGHeader = image.readIntoVector(8);
+    if (PNGHeader != u8_vec{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}) {
         printf("File in thumbnail block is not PNG header, the first 8 bytes are:\n");
         for (const u8& byte: PNGHeader) { std::cout << std::hex << byte << " "; }
         std::cout << std::endl;
@@ -449,7 +548,7 @@ WorldOptions getTagsInImage(DataManager& image) {
         }
         // Read keyword
         auto chunkLength = (int) length;
-        std::vector<u8> chunkData = image.readIntoVector(chunkLength);
+        u8_vec chunkData = image.readIntoVector(chunkLength);
         chunkData.push_back(0); // add a null byte for the last text
         while (chunkLength > 0) {
             std::string keyword(reinterpret_cast<char*>(chunkData.data() + (length - chunkLength)));
