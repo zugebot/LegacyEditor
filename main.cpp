@@ -5,14 +5,15 @@
 #include "LegacyEditor/utils/dataManager.hpp"
 
 #include "LegacyEditor/LCE/Chunk/include.h"
+#include "LegacyEditor/LCE/Map/Map.hpp"
 #include "LegacyEditor/LCE/Region/ChunkManager.hpp"
 #include "LegacyEditor/LCE/Region/RegionManager.hpp"
 #include "LegacyEditor/LCE/SaveFile/ConsoleParser.hpp"
 #include "LegacyEditor/LCE/SaveFile/fileListing.hpp"
 #include "LegacyEditor/utils/NBT/include.hpp"
+#include "LegacyEditor/utils/mapcolors.hpp"
 #include "LegacyEditor/utils/picture.hpp"
 #include "LegacyEditor/utils/time.hpp"
-#include "LegacyEditor/utils/mapcolors.hpp"
 
 
 void compareNBT(NBTBase* first, NBTBase* second) {
@@ -75,24 +76,9 @@ int main() {
     fileListingVita.saveToFolder(dir_path + "dump_vita");
 
     auto* map = fileListingVita.mapFilePtrs[0];
-    DataManager mapManager(map->data);
-    auto data = NBT::readTag(mapManager);
-    // std::cout << data->toString() << std::endl;
-    auto* mapCompound = NBTBase::toType<NBTTagCompound>(data)->getCompoundTag("data");
-    auto* byteArray = mapCompound->getByteArray("colors");
-    std::cout << byteArray->size << std::endl;
 
-    Picture picture(128, 128);
-    int count = 0;
-    for (int i = 0; i < 16384; i++) {
-        RGB rgb = getRGB(byteArray->array[i]);
-        picture.data[count++] = rgb.r;
-        picture.data[count++] = rgb.g;
-        picture.data[count++] = rgb.b;
-    }
+    saveMapToPng(map, dir_path);
 
-
-    picture.saveWithName("map_0.png", dir_path);
 
 
 
