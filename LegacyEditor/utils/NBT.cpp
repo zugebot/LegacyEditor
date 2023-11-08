@@ -145,17 +145,17 @@ std::string NBTBase::toString() const {
         case NBT_NONE:
             return "END";
         case NBT_INT8: {
-            uint8_t val = 0;
+            u8 val = 0;
             memcpy(&val, this->data, 1);
             return std::to_string(val) + "b";
         }
         case NBT_INT16: {
-            int16_t val = 0;
+            i16 val = 0;
             memcpy(&val, this->data, 2);
             return std::to_string(val) + "s";
         }
         case NBT_INT32: {
-            int val = 0;
+            i32 val = 0;
             memcpy(&val, this->data, 4);
             return std::to_string(val);
         }
@@ -542,7 +542,7 @@ void NBTTagCompound::setString(const std::string& key, const std::string& value)
 
 void NBTTagCompound::setByteArray(const std::string& key, uint8_t* value, int size) {
     if (tagMap.find(key) != tagMap.end()) tagMap[key].NbtFree();
-    auto* data = (uint8_t*) malloc(size);//so the original can be safely deleted
+    auto* data = (u8*) malloc(size);//so the original can be safely deleted
     memcpy(data, value, size);
     tagMap[key] = NBTBase(new NBTTagByteArray(data, size), NBTType::TAG_BYTE_ARRAY);
 }
