@@ -2,7 +2,7 @@
 
 #include "LegacyEditor/utils/processor.hpp"
 
-#include "NBTTagCompound.hpp"
+#include "LegacyEditor/utils/dataManager.hpp"
 #include "NBTTagList.hpp"
 #include "NBTTagString.hpp"
 #include "NBTTagTypeArray.hpp"

@@ -8,7 +8,7 @@
 #include "LegacyEditor/LCE/Region/RegionManager.hpp"
 #include "LegacyEditor/LCE/SaveFile/ConsoleParser.hpp"
 #include "LegacyEditor/LCE/SaveFile/fileListing.hpp"
-#include "LegacyEditor/utils/NBT/NBT.hpp"
+#include "LegacyEditor/utils/NBT/include.hpp"
 #include "LegacyEditor/utils/picture.hpp"
 #include "LegacyEditor/utils/time.hpp"
 

@@ -155,8 +155,6 @@ void FileListing::saveToFolder(const std::string &folder) {
                 std::cerr << "Filesystem error: " << e.what() << '\n';
             }
         }
-    } else {
-        std::cerr << "Error: Path does not exist or is not a directory.\n";
     }
 
 

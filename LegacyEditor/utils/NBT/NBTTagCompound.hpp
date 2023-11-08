@@ -4,11 +4,11 @@
 
 #include "LegacyEditor/utils/processor.hpp"
 
-#include "NBTType.hpp"
+#include "NBTBase.hpp"
 #include "NBTTagTypeArray.hpp"
+#include "NBTType.hpp"
 
 class DataManager;
-class NBTBase;
 class NBTTagList;
 
 

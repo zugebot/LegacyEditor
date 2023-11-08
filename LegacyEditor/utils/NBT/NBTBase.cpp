@@ -1,7 +1,8 @@
 #include "NBTBase.hpp"
-#include "NBT.hpp"
 
 #include "LegacyEditor/utils/dataManager.hpp"
+#include "NBTTagCompound.hpp"
+#include "NBT.hpp"
 
 
 void NBTBase::write(DataManager& output) const {

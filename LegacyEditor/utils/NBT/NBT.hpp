@@ -9,10 +9,6 @@
 // #include "Block.hpp"
 // #include "UUID.hpp"
 
-#include "NBTTagString.hpp"
-#include "NBTTagList.hpp"
-#include "NBTTagCompound.hpp"
-#include "NBTTagTypeArray.hpp"
 #include "NBTType.hpp"
 
 class NBTBase;
