@@ -11,6 +11,7 @@ public:
     Data data;
     std::string name;
     u64 timestamp = 0;
+    u32 index = 0;
     u32 additionalData = 0;
 
     File() = default;

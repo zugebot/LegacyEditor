@@ -37,7 +37,7 @@ int main() {
         // std::cout << stringOut << ", " << stringOut.size() << std::endl;
     }
      */
-    // /*
+    /*
 
 
     // Data data;
@@ -54,26 +54,38 @@ int main() {
     //                      manager.getSize());
     // std::cout << "status: " << status << std::endl;
     // std::cout << "out size: " << size << std::endl;
-
     // int y; std::cin >> y;
-
-
-
-
-
-
     // std::string fileInPath = dir_path + "230918230206_in.wii";
-    std::string fileInPath = dir_path + "GAMEDATA_VITA.bin";
-
+    */
     auto start = getMilliseconds();
 
+    std::string fileInPath = dir_path + "tests/GAMEDATA_VITA.bin"; //"tests/Pirates.wii"; //
+
     ConsoleParser parser;
-    int status = parser.loadConsoleFile(fileInPath.c_str());
-
+    int status = parser.readConsoleFile(fileInPath);
     FileListing fileListing(parser.console, parser);
+    /*
 
-    fileListing.saveToFolder(dir_path + "dump\\");
+    auto* player = fileListing.structureFilePtrs[0]; // playerFilePtrs[0];
+    DataManager playerData(player->data);
+    auto data = NBT::readTag(playerData);
+    std::string playerNBTString = data->toString();
+    std::cout << playerNBTString << std::endl;
+    */
 
+    fileListing.structureFilePtrs.clear();
+    fileListing.playerFilePtrs.pop_back();
+
+    fileListing.deleteAllChunks();
+
+    fileListing.saveToFolder(dir_path + "dump_vita");
+
+    Data dataOutVita = fileListing.write(CONSOLE::WIIU);
+    parser.saveWiiU(dir_path + "tests/230918230206", dataOutVita);
+
+    int z; std::cin >> z;
+
+    /*
     File* levelFilePtr = fileListing.levelFilePtr;
 
     // NBT::readTag(levelFilePtr);
@@ -112,10 +124,7 @@ int main() {
     DataManager chunkIn(chunk);
     chunkIn.writeToFile(dir_path + "chunk_in_0.bin");
     std::cout << chunk.size << std::endl;
-
-
-
-
+    */
     /*
     DataManager levelOut(fileListing.levelFilePtr);
     auto* levelData = NBT::readTag(levelOut);
@@ -126,10 +135,7 @@ int main() {
     }
     levelOut.writeToFile(dir_path + "chunk_out.bin");
      */
-
-
-    chunk.ensure_compressed(CONSOLE::WIIU);
-
+    // chunk.ensure_compressed(CONSOLE::WIIU);
     /*
     for (int i = 0; i < 1024; i++) {
         chunk->ensure_decompress(CONSOLE::WIIU);
@@ -189,8 +195,7 @@ int main() {
         printf("Recompressed all chunks in '%s'\n", regionFilePtr->name.c_str());
     }
      */
-    Data dataOut = fileListing.write(CONSOLE::WIIU);
-    // */
+    // Data dataOut = fileListing.write(CONSOLE::WIIU);
     /*
     // compare decompressed FileListing
     // DataManager(parser).writeToFile(dir_path + "in_" + "file_listing");
@@ -238,7 +243,7 @@ int main() {
     // DataManager(filePtr).writeToFile(dir_path + "in_" + filePtr->name);
     // DataManager(data).writeToFile(dir_path + "out_" + filePtr->name);
     */
-    // /*
+    /*
 
     std::string out_file = dir_path + "230918230206_out.wii";
     ConsoleParser::saveWiiU(out_file, dataOut);
@@ -246,6 +251,6 @@ int main() {
     auto diff = getMilliseconds() - start;
     std::cout << "time: " << diff << "ms" << std::endl;
 
+     */
     return status;
-     // */
 }

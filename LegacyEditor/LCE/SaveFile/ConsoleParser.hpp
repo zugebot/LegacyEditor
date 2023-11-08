@@ -6,9 +6,10 @@
 #include <cstdlib>
 #include <zconf.h>
 
-#include "BINSupport.hpp"
+#include "LegacyEditor/utils/dataManager.hpp"
+#include "LegacyEditor/utils/enums.hpp"
+
 #include "FileInfo.hpp"
-#include "fileListing.hpp"
 #include "headerUnion.hpp"
 
 
@@ -36,20 +37,23 @@ public:
         delete[] data;
     }
 
-    int loadWiiU(u32 file_size);
-    int loadPs3Compressed(u32 dest_size);
-    int loadPs3Uncompressed();
-    int loadXbox360_DAT();
-    int loadXbox360_BIN();
+    /// READ
 
-    int loadVita();
+    int readConsoleFile(const std::string& inFileStr);
+    int readWiiU(u32 file_size);
+    int readVita();
+    int readPs3Compressed(u32 dest_size);
+    int readPs3Uncompressed();
+    int readXbox360_DAT();
+    int readXbox360_BIN();
 
-    int loadConsoleFile(const char* infileStr);
+    /// SAVE
 
-    static int saveWiiU(const std::string& outfileStr, Data& dataOut);
+    int saveConsoleFile(std::string outfileStr);
+    int saveWiiU(const std::string& outfileStr, Data& dataOut);
+    int saveVita(const std::string& outfileStr, Data& dataOut);
     int savePS3Uncompressed();
     int savePS3Compressed();
     int saveXbox360_DAT();
     int saveXbox360_BIN();
-    int saveConsoleFile(const char* outfileStr);
 };

@@ -16,6 +16,8 @@ public:
     std::vector<File> allFiles;
 
     // files
+    std::vector<File*> dimensionFilePtrs;
+
     std::vector<File*> overworldFilePtrs;
     std::vector<File*> netherFilePtrs;
     std::vector<File*> endFilePtrs;
@@ -31,12 +33,17 @@ public:
     i32 currentVersion{};
 
     FileListing() = default;
+    explicit FileListing(CONSOLE consoleIn, Data& dataIn) : console(consoleIn) { read(dataIn); }
 
-    explicit FileListing(CONSOLE consoleIn, Data& dataIn) : console(consoleIn) {
-        read(dataIn);
-    }
+
+
+
 
     void read(Data& dataIn);
+
+    void convertRegions(CONSOLE consoleOut);
+
+    void deleteAllChunks();
 
     void saveToFolder(const std::string& folder);
 

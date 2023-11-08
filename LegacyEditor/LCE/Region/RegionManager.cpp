@@ -20,17 +20,26 @@ void RegionManager::read(File* fileIn) {
     // step 0: copying data from file
     DataManager managerIn(fileIn->data);
 
+    return;
+
     if (console == CONSOLE::VITA) {
         managerIn.setLittleEndian();
     }
 
-    // step 1: read offsets
-    for (ChunkManager& chunk : chunks) {
-        chunk.location = managerIn.readInt24();
-        chunk.sectors = managerIn.readByte();
+    // step 1: read offsets [1024]
+    if (console == CONSOLE::VITA) {
+        for (ChunkManager &chunk: chunks) {
+            chunk.sectors = managerIn.readByte();
+            chunk.location = managerIn.readInt24();
+        }
+    } else {
+        for (ChunkManager &chunk: chunks) {
+            chunk.location = managerIn.readInt24();
+            chunk.sectors = managerIn.readByte();
+        }
     }
 
-    // step 2: read timestamps
+    // step 2: read timestamps [1024]
     for (ChunkManager& chunk : chunks) {
         chunk.timestamp = managerIn.readInt32();
     }

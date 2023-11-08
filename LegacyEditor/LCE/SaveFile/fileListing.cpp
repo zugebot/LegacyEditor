@@ -3,20 +3,23 @@
 #include <filesystem>
 #include <iostream>
 
+#include "LegacyEditor/utils/endian.hpp"
+#include "LegacyEditor/LCE/Region/RegionManager.hpp"
 
-inline bool endswith(const std::string& value, const std::string& ending) {
+
+inline bool endswith(const std::string &value, const std::string &ending) {
     if (ending.size() > value.size()) return false;
     return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 }
 
 
-inline bool startswith(const std::string& value, const std::string& prefix) {
+inline bool startswith(const std::string &value, const std::string &prefix) {
     if (prefix.size() > value.size()) return false;
     return std::equal(prefix.begin(), prefix.end(), value.begin());
 }
 
 
-void FileListing::read(Data& dataIn) {
+void FileListing::read(Data &dataIn) {
     DataManager managerIn(dataIn);
 
     if (console == CONSOLE::VITA) {
@@ -44,7 +47,7 @@ void FileListing::read(Data& dataIn) {
         u32 fileSize = managerIn.readInt32();
         total_size += fileSize;
 
-        u8* data = nullptr;
+        u8 *data = nullptr;
         u32 index = managerIn.readInt32();
         u64 timestamp = managerIn.readInt64();
 
@@ -58,14 +61,17 @@ void FileListing::read(Data& dataIn) {
 
         allFiles.emplace_back(data, fileSize, fileName, timestamp);
 
-        File& file = allFiles.back();
+        File &file = allFiles.back();
 
         if (endswith(fileName, ".mcr")) {
             if (startswith(fileName, "DIM-1")) {
+                dimensionFilePtrs.push_back(&file);
                 netherFilePtrs.push_back(&file);
             } else if (startswith(fileName, "DIM1")) {
+                dimensionFilePtrs.push_back(&file);
                 endFilePtrs.push_back(&file);
             } else if (startswith(fileName, "r")) {
+                dimensionFilePtrs.push_back(&file);
                 overworldFilePtrs.push_back(&file);
             } else {
                 printf("File '%s' is not from any dimension!\n", fileName.c_str());
@@ -95,20 +101,74 @@ void FileListing::read(Data& dataIn) {
 }
 
 
-void FileListing::saveToFolder(const std::string& folder) {
-    for (const File& file : allFiles) {
-        std::string fullPath = folder + "/" + file.name;
-        std::filesystem::path path(fullPath);
+void swapInt32(u8* ptr) {
+    u32 value;
+    memcpy(&value, ptr, sizeof(u32));
+    value = (value >> 24) |
+            ((value << 8) & 0x00FF0000) |
+            ((value >> 8) & 0x0000FF00) |
+            (value << 24);
+    memcpy(ptr, &value, sizeof(u32));
+}
 
-        // Check if the parent path exists, and create it if it doesn't
-        if (!std::filesystem::exists(path.parent_path())) {
-            std::filesystem::create_directories(path.parent_path());
+
+void FileListing::convertRegions(CONSOLE consoleOut) {
+    for (File* file : dimensionFilePtrs) {
+        RegionManager region(console);
+        region.read(file);
+        Data data = region.write(consoleOut);
+        delete[] file->data.data;
+        file->data = data;
+    }
+}
+
+
+void FileListing::deleteAllChunks() {
+    RegionManager region(console);
+    for (File* file : dimensionFilePtrs) {
+        region.read(file);
+        for (auto& chunk : region.chunks) {
+            chunk.sectors = 0;
+        }
+        Data data = region.write(console);
+        delete[] file->data.data;
+        file->data = data;
+    }
+}
+
+
+void FileListing::saveToFolder(const std::string &folder) {
+
+    namespace fs = std::filesystem;
+    if (folder.length() < 10) {
+        printf("tried to delete short directory, will not risk");
+    }
+
+    fs::path _dir_path{folder};
+    if (fs::exists(_dir_path) && fs::is_directory(_dir_path)) {
+        for (const auto &entry: fs::directory_iterator(_dir_path)) {
+            try {
+                fs::remove_all(entry.path());
+            } catch (const fs::filesystem_error &e) {
+                std::cerr << "Filesystem error: " << e.what() << '\n';
+            }
+        }
+    } else {
+        std::cerr << "Error: Path does not exist or is not a directory.\n";
+    }
+
+
+    for (const File &file: allFiles) {
+        std::string fullPath = folder + "\\" + file.name;
+        fs::path path(fullPath);
+        if (!fs::exists(path.parent_path())) {
+            fs::create_directories(path.parent_path());
         }
     }
 
     // step 2: write files to correct locations
-    for (File& file : allFiles) {
-        std::string fullPath = folder + "/" + file.name;
+    for (File &file: allFiles) {
+        std::string fullPath = folder + "\\" + file.name;
         DataManager fileOut(file.data);
         fileOut.writeToFile(fullPath);
     }
@@ -119,7 +179,7 @@ Data FileListing::write(CONSOLE consoleOut) {
     // step 1: get the file count and size of all sub-files
     u32 fileCount = 0;
     u32 fileDataSize = 0;
-    for (const File& file: allFiles) {
+    for (const File &file: allFiles) {
         fileCount++;
         fileDataSize += file.data.getSize();
     }
@@ -134,7 +194,7 @@ Data FileListing::write(CONSOLE consoleOut) {
     Data dataOut(totalFileSize);
     DataManager managerOut(dataOut);
 
-    if (console == CONSOLE::VITA) {
+    if (consoleOut == CONSOLE::VITA) {
         managerOut.setLittleEndian();
     }
 
@@ -148,7 +208,7 @@ Data FileListing::write(CONSOLE consoleOut) {
     // step 4: write each files data
     // I am using additionalData as the offset into the file its data is at
     u32 index = 12;
-    for (File& fileIter: allFiles) {
+    for (File &fileIter: allFiles) {
         fileIter.additionalData = index;
         index += fileIter.data.getSize();
         managerOut.writeFile(fileIter);
@@ -157,7 +217,7 @@ Data FileListing::write(CONSOLE consoleOut) {
     // step 5: write file metadata
     // std::cout << "\nwriting back to file" << std::endl;
     int count = 0;
-    for (File& fileIter: allFiles) {
+    for (File &fileIter: allFiles) {
         // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter.additionalData, fileIter.size, fileIter.name.c_str());
 
         managerOut.writeWString(fileIter.name, 64);

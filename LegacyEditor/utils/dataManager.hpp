@@ -24,18 +24,22 @@ public:
 
     explicit DataManager(Data& dataIn) {
         data = dataIn.start();
+        size = dataIn.size;
         ptr = data;
     }
 
     explicit DataManager(Data* dataIn) {
         data = dataIn->start();
+        size = dataIn->size;
         ptr = data;
+
     }
 
 
     explicit DataManager(u8* dataIn, u32 sizeIn) {
         data = dataIn;
         size = sizeIn;
+        ptr = dataIn;
 
     }
 
@@ -61,6 +65,7 @@ public:
     bool isEndOfData();
     u32 getPosition();
     u8 peekNextByte();
+    ND u8 peekPreviousByte() const;
     void incrementPointer(i32 amount);
 
     // READING SECTION

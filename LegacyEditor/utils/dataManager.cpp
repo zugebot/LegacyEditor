@@ -31,6 +31,10 @@ u8 DataManager::peekNextByte() {
     return ptr[1];
 }
 
+u8 DataManager::peekPreviousByte() const {
+    return ptr[-1];
+}
+
 
 void DataManager::incrementPointer(i32 amount) {
     ptr += amount;
