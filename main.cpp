@@ -8,11 +8,99 @@
 #include "LegacyEditor/LCE/Region/RegionManager.hpp"
 #include "LegacyEditor/LCE/SaveFile/ConsoleParser.hpp"
 #include "LegacyEditor/LCE/SaveFile/fileListing.hpp"
-#include "LegacyEditor/utils/NBT.hpp"
+#include "LegacyEditor/utils/NBT/NBT.hpp"
+#include "LegacyEditor/utils/picture.hpp"
 #include "LegacyEditor/utils/time.hpp"
 
 
+void compareNBT(NBTBase* first, NBTBase* second) {
+    auto* firstNBT = NBTBase::toType<NBTTagCompound>(first)->getCompoundTag("Data");
+    auto* secondNBT = NBTBase::toType<NBTTagCompound>(second)->getCompoundTag("Data");;
+
+    for (const auto& tag : firstNBT->tagMap) {
+        if (!secondNBT->hasKey(tag.first)) {
+            printf("second does not contain tag '%s'\n", tag.first.c_str());
+        }
+    }
+
+    for (const auto& tag : secondNBT->tagMap) {
+        if (!firstNBT->hasKey(tag.first)) {
+            printf("first does not contain tag '%s'\n", tag.first.c_str());
+        }
+    }
+
+
+
+}
+
+
+
+
 int main() {
+    auto start = getMilliseconds();
+
+    std::string wiiuFilePath = dir_path + "tests/Pirates.wii";
+    std::string vitaFilePath = dir_path + "tests/GAMEDATA_VITA.bin";
+
+    ConsoleParser parserWiiU;
+    int status1 = parserWiiU.readConsoleFile(wiiuFilePath);
+    FileListing fileListingWiiU(parserWiiU.console, parserWiiU);
+    fileListingWiiU.saveToFolder(dir_path + "dump_wiiu");
+
+
+    auto* filewiiu = fileListingWiiU.levelFilePtr;
+    DataManager playerDatawiiu(filewiiu->data);
+    auto datawiiu = NBT::readTag(playerDatawiiu);
+    std::string playerNBTStringwiiu = datawiiu->toString();
+
+    ConsoleParser parserVita;
+    int status2 = parserVita.readConsoleFile(vitaFilePath);
+    FileListing fileListingVita(parserVita.console, parserVita);
+    fileListingVita.saveToFolder(dir_path + "dump_vita");
+
+    auto* filevita = fileListingVita.levelFilePtr;
+    DataManager playerDatavita(filevita->data);
+    auto datavita = NBT::readTag(playerDatavita);
+    std::string playerNBTStringvita = datavita->toString();
+
+
+    //std::cout << playerNBTStringwiiu << std::endl;
+    // std::cout << "\n\n\n" << std::endl;
+    // std::cout << playerNBTStringvita << std::endl;
+    compareNBT(datawiiu, datavita);
+
+
+    auto* map = fileListingVita.mapFilePtrs[0];
+    DataManager mapManager(map->data);
+    auto data = NBT::readTag(mapManager);
+    // std::cout << data->toString() << std::endl;
+    auto* mapCompound = NBTBase::toType<NBTTagCompound>(data)->getCompoundTag("data");
+    auto* byteArray = mapCompound->getByteArray("colors");
+    std::cout << byteArray->size << std::endl;
+
+    Picture picture(128, 128);
+    int count = 0;
+    for (int i = 0; i < 16384; i++) {
+        picture.data[count++] = byteArray->array[i];
+        picture.data[count++] = byteArray->array[i];
+        picture.data[count++] = byteArray->array[i];
+    }
+
+
+    picture.saveWithName("map_0.png", dir_path);
+
+
+
+
+    // fileListingWiiU.deleteAllChunks();
+
+
+    // Data dataOutVita = fileListingWiiU.write(CONSOLE::WIIU);
+    // parser.saveWiiU(dir_path + "tests/230918230206", dataOutVita);
+
+    int z; std::cin >> z;
+
+
     /*
     {
         DataManager managerOut(14);
@@ -55,44 +143,26 @@ int main() {
     // std::cout << "status: " << status << std::endl;
     // std::cout << "out size: " << size << std::endl;
     // int y; std::cin >> y;
-    // std::string fileInPath = dir_path + "230918230206_in.wii";
+    // std::string fileInPath = dir_path + "230918230206.wii";
     */
-    auto start = getMilliseconds();
 
-    std::string fileInPath = dir_path + "tests/GAMEDATA_VITA.bin"; //"tests/Pirates.wii"; //
-
-    ConsoleParser parser;
-    int status = parser.readConsoleFile(fileInPath);
-    FileListing fileListing(parser.console, parser);
     /*
 
-    auto* player = fileListing.structureFilePtrs[0]; // playerFilePtrs[0];
+    auto* player = fileListingWiiU.structureFilePtrs[0]; // playerFilePtrs[0];
     DataManager playerData(player->data);
     auto data = NBT::readTag(playerData);
     std::string playerNBTString = data->toString();
     std::cout << playerNBTString << std::endl;
     */
 
-    fileListing.structureFilePtrs.clear();
-    fileListing.playerFilePtrs.pop_back();
-
-    fileListing.deleteAllChunks();
-
-    fileListing.saveToFolder(dir_path + "dump_vita");
-
-    Data dataOutVita = fileListing.write(CONSOLE::WIIU);
-    parser.saveWiiU(dir_path + "tests/230918230206", dataOutVita);
-
-    int z; std::cin >> z;
-
     /*
-    File* levelFilePtr = fileListing.levelFilePtr;
+    File* levelFilePtr = fileListingWiiU.levelFilePtr;
 
     // NBT::readTag(levelFilePtr);
 
 
     RegionManager region(CONSOLE::WIIU);
-    region.read(fileListing.overworldFilePtrs[0]);
+    region.read(fileListingWiiU.overworldFilePtrs[0]);
     // ChunkManager* chunk = region.getChunk(171);
 
     ChunkManager& chunk = region.chunks[0];
@@ -126,7 +196,7 @@ int main() {
     std::cout << chunk.size << std::endl;
     */
     /*
-    DataManager levelOut(fileListing.levelFilePtr);
+    DataManager levelOut(fileListingWiiU.levelFilePtr);
     auto* levelData = NBT::readTag(levelOut);
     auto* root = static_cast<NBTTagCompound*>(levelData->data);
     NBTTagCompound* levelDataIn = root->getCompoundTag("Data");
@@ -148,7 +218,7 @@ int main() {
     std::cout << chunk->size << std::endl;
 
     printf("hi");
-    for (auto* regionFilePtr : fileListing.overworldFilePtrs) {
+    for (auto* regionFilePtr : fileListingWiiU.overworldFilePtrs) {
         region.read(regionFilePtr);
         for (int i = 0; i < 1024; i++) {
             chunk = region.getChunk(i);
@@ -164,7 +234,7 @@ int main() {
         data.using_memory = false;
         printf("Recompressed all chunks in '%s'\n", regionFilePtr->name.c_str());
     }
-    for (auto* regionFilePtr : fileListing.netherFilePtrs) {
+    for (auto* regionFilePtr : fileListingWiiU.netherFilePtrs) {
         region.read(regionFilePtr);
         for (int i = 0; i < 1024; i++) {
             chunk = region.getChunk(i);
@@ -179,7 +249,7 @@ int main() {
 
         printf("Recompressed all chunks in '%s'\n", regionFilePtr->name.c_str());
     }
-    for (auto* regionFilePtr : fileListing.endFilePtrs) {
+    for (auto* regionFilePtr : fileListingWiiU.endFilePtrs) {
         region.read(regionFilePtr);
         for (int i = 0; i < 1024; i++) {
             chunk = region.getChunk(i);
@@ -195,7 +265,7 @@ int main() {
         printf("Recompressed all chunks in '%s'\n", regionFilePtr->name.c_str());
     }
      */
-    // Data dataOut = fileListing.write(CONSOLE::WIIU);
+    // Data dataOut = fileListingWiiU.write(CONSOLE::WIIU);
     /*
     // compare decompressed FileListing
     // DataManager(parser).writeToFile(dir_path + "in_" + "file_listing");
@@ -211,7 +281,7 @@ int main() {
     // }
 
     // int reg = 1;
-    // File* filePtr = fileListing.overworldFilePtrs[reg];
+    // File* filePtr = fileListingWiiU.overworldFilePtrs[reg];
     // std::cout << filePtr->name << std::endl;
 
     // Region region(CONSOLE::WIIU);
@@ -237,8 +307,8 @@ int main() {
     // }
 
     // Data data = region.write(CONSOLE::WIIU);
-    // fileListing.overworldFilePtrs[reg]->data = data.data;
-    // fileListing.overworldFilePtrs[reg]->size = data.size;
+    // fileListingWiiU.overworldFilePtrs[reg]->data = data.data;
+    // fileListingWiiU.overworldFilePtrs[reg]->size = data.size;
 
     // DataManager(filePtr).writeToFile(dir_path + "in_" + filePtr->name);
     // DataManager(data).writeToFile(dir_path + "out_" + filePtr->name);
@@ -252,5 +322,5 @@ int main() {
     std::cout << "time: " << diff << "ms" << std::endl;
 
      */
-    return status;
+    return 0;
 }

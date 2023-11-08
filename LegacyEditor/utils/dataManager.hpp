@@ -1,13 +1,12 @@
 #pragma once
 
-#include "LegacyEditor/utils/data.hpp"
-#include "LegacyEditor/utils/file.hpp"
-#include "LegacyEditor/utils/processor.hpp"
-
 #include <bit>
 #include <string>
 #include <memory>
 
+#include "LegacyEditor/utils/data.hpp"
+#include "LegacyEditor/utils/file.hpp"
+#include "LegacyEditor/utils/processor.hpp"
 
 
 /**
@@ -15,7 +14,7 @@
  */
 class DataManager {
 public:
-    bool isBig = true;
+    mutable bool isBig = true;
     u8* data = nullptr;
     u8* ptr = nullptr;
     u32 size = 0;
@@ -35,7 +34,6 @@ public:
 
     }
 
-
     explicit DataManager(u8* dataIn, u32 sizeIn) {
         data = dataIn;
         size = sizeIn;
@@ -43,28 +41,18 @@ public:
 
     }
 
-    static bool isSystemLittleEndian() {
-        u32 num = 1;
-        return (*(u8 *)&num == 1);
-    }
+    inline void setBigEndian() { isBig = true; }
+    inline void setLittleEndian() { isBig = false; }
 
-    void setBigEndian() {
-        isBig = true;
-    }
-
-    void setLittleEndian() {
-        isBig = false;
-    }
-
-    inline u8* start() { return data; }
+    ND inline u8* start() const { return data; }
 
 
     void seekStart();
     void seekEnd();
     void seek(i64 position);
-    bool isEndOfData();
-    u32 getPosition();
-    u8 peekNextByte();
+    bool isEndOfData() const;
+    u32 getPosition() const;
+    u8 peekNextByte() const;
     ND u8 peekPreviousByte() const;
     void incrementPointer(i32 amount);
 
@@ -113,10 +101,5 @@ public:
     void writeUTF(std::string str);
     void writeWString(const std::string& str, u32 length);
 
-    int writeToFile(const std::string& fileName);
-
-
-
-
-
+    int writeToFile(const std::string& fileName) const;
 };

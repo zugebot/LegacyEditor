@@ -7,8 +7,8 @@
 
 #include "LegacyEditor/utils/dataManager.hpp"
 
-// TODO: I stole this from converter its not being used yet though
 
+// this works with the .ext file in cemu / vita, and in xbox .bin
 struct WorldOptions {
     i64 displaySeed = 0;
     u32 numLoads = 0;

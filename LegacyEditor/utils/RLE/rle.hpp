@@ -3,8 +3,6 @@
 #include "LegacyEditor/utils/processor.hpp"
 
 
-
-
 static void RLE_decompress(u8* dataIn, u32 sizeIn, u8* dataOut, u32& sizeOut) {
     DataManager in(dataIn, sizeIn);
     DataManager out(dataOut, sizeOut);

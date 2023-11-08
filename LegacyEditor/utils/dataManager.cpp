@@ -15,19 +15,19 @@ void DataManager::seekEnd() {
 
 void DataManager::seek(i64 position) {
     seekStart();
-    incrementPointer(position);
+    incrementPointer((i32)position);
 }
 
-bool DataManager::isEndOfData() {
+bool DataManager::isEndOfData() const {
     return ptr == data + size - 1;
 }
 
-u32 DataManager::getPosition() {
+u32 DataManager::getPosition() const {
     return ptr - data;
 }
 
 
-u8 DataManager::peekNextByte() {
+u8 DataManager::peekNextByte() const {
     return ptr[1];
 }
 
@@ -64,7 +64,7 @@ u16 DataManager::readInt16() {
 
 
 i32 DataManager::readInt24() {
-    uint32_t value = readInt32();
+    u32 value = readInt32();
     if (isBig) {
         value = (value & 0xFFFFFF00) >> 8;
     } else {
@@ -80,7 +80,7 @@ i32 DataManager::readInt24() {
 i32 DataManager::readInt24(bool isLittleIn) {
     bool originalEndianType = isBig;
     isBig = isLittleIn;
-    uint32_t val = readInt32();
+    u32 val = readInt32();
     if (isLittleIn) {
         val = val & 0x00FFFFFF;
     } else {
@@ -193,7 +193,7 @@ std::string DataManager::readWAsString(u32 length) {
             readByte();
         }
         if (letters[i] == empty) {
-            incrementPointer(2 * i64(length - i - 1));
+            incrementPointer(i32(2 * (length - i - 1)));
             break;
         }
     }
@@ -247,7 +247,7 @@ u8* DataManager::readBytes(u32 length) {
 
 void DataManager::readOntoData(u32 length, u8* dataIn) {
     memcpy(dataIn, data, length);
-    incrementPointer(length);
+    incrementPointer((i32)length);
 }
 
 int DataManager::readFromFile(const std::string& fileStrIn) {
@@ -367,7 +367,7 @@ void DataManager::writeDouble(double doubleIn) {
 
 void DataManager::write(u8* dataPtrIn, u32 length) {
     memcpy(ptr, dataPtrIn, length);
-    incrementPointer(length);
+    incrementPointer((i32)length);
 }
 
 
@@ -387,10 +387,10 @@ void DataManager::writeFile(File& fileIn) {
 
 
 void DataManager::writeUTF(std::string str) {
-    u32 size = str.size();
-    writeInt16(size);
+    u32 str_size = str.size();
+    writeInt16(str_size);
     write((u8*)str.data(), str.size());
-    incrementPointer(size);
+    incrementPointer((i32)str_size);
 
 }
 
@@ -416,7 +416,7 @@ void DataManager::writeWString(const std::string& str, u32 length) {
     }
 }
 
-int DataManager::writeToFile(const std::string& fileName) {
+int DataManager::writeToFile(const std::string& fileName) const {
     FILE* f_out = fopen(fileName.c_str(), "wb");
     if (f_out == nullptr) {
         printf("Failed to write to output file '%s'", fileName.c_str());

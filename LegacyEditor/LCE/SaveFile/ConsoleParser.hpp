@@ -39,21 +39,21 @@ public:
 
     /// READ
 
-    int readConsoleFile(const std::string& inFileStr);
-    int readWiiU(u32 file_size);
-    int readVita();
-    int readPs3Compressed(u32 dest_size);
-    int readPs3Uncompressed();
-    int readXbox360_DAT();
-    int readXbox360_BIN();
+    MU ND int readConsoleFile(const std::string& inFileStr);
+    MU ND int readWiiU(u32 file_size);
+    MU ND int readVita();
+    MU ND int readPs3Compressed(u32 dest_size);
+    MU ND int readPs3Uncompressed();
+    MU ND int readXbox360_DAT();
+    MU ND int readXbox360_BIN();
 
     /// SAVE
 
-    int saveConsoleFile(std::string outfileStr);
-    int saveWiiU(const std::string& outfileStr, Data& dataOut);
-    int saveVita(const std::string& outfileStr, Data& dataOut);
-    int savePS3Uncompressed();
-    int savePS3Compressed();
-    int saveXbox360_DAT();
-    int saveXbox360_BIN();
+    MU ND int saveConsoleFile(const std::string& outfileStr);
+    MU ND int saveWiiU(const std::string& outfileStr, Data& dataOut);
+    MU ND int saveVita(const std::string& outfileStr, Data& dataOut);
+    MU ND int savePS3Uncompressed();
+    MU ND int savePS3Compressed();
+    MU ND int saveXbox360_DAT();
+    MU ND int saveXbox360_BIN();
 };

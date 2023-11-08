@@ -20,8 +20,6 @@ public:
         data = Data(sizeIn);
     }
 
-    // File(u8* dataIn, u32 sizeIn) : Data(dataIn, sizeIn) {}
-
     File(u32 sizeIn, std::string nameIn, u64 timestampIn)
         : name(std::move(nameIn)), timestamp(timestampIn) {
         data = Data(sizeIn);

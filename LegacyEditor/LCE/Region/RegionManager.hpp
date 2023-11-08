@@ -17,8 +17,8 @@ public:
 
     explicit RegionManager(CONSOLE consoleIn) : console(consoleIn) {}
 
-    ChunkManager* getChunk(int x, int z);
-    ChunkManager* getChunk(int index);
+    MU ChunkManager* getChunk(int x, int z);
+    MU ChunkManager* getChunk(int index);
 
     void read(File* fileIn);
     Data write(CONSOLE consoleIn);

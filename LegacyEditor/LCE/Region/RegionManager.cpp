@@ -20,8 +20,6 @@ void RegionManager::read(File* fileIn) {
     // step 0: copying data from file
     DataManager managerIn(fileIn->data);
 
-    return;
-
     if (console == CONSOLE::VITA) {
         managerIn.setLittleEndian();
     }

@@ -5,25 +5,34 @@
 #include <string>
 #include <vector>
 
+// unsigned
 typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
-
 typedef std::vector<uint8_t> u8_vec;
 typedef std::vector<uint16_t> u16_vec;
 typedef std::vector<uint32_t> u32_vec;
 typedef std::vector<uint64_t> u64_vec;
+typedef std::vector<std::vector<uint8_t>> u8_vec_vec;
+typedef std::vector<std::vector<uint16_t>> u16_vec_vec;
+typedef std::vector<std::vector<uint32_t>> u32_vec_vec;
+typedef std::vector<std::vector<uint64_t>> u64_vec_vec;
 
+// signed
 typedef int8_t i8;
 typedef int16_t i16;
 typedef int32_t i32;
 typedef int64_t i64;
-
 typedef std::vector<int8_t> i8_vec;
 typedef std::vector<int16_t> i16_vec;
 typedef std::vector<int32_t> i32_vec;
 typedef std::vector<int64_t> i64_vec;
+typedef std::vector<std::vector<int8_t>> i8_vec_vec;
+typedef std::vector<std::vector<int16_t>> i16_vec_vec;
+typedef std::vector<std::vector<int32_t>> i32_vec_vec;
+typedef std::vector<std::vector<int64_t>> i64_vec_vec;
+
 
 static std::string dir_path = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\)";
 

@@ -25,6 +25,7 @@ public:
     File* grfFilePtr{};
     std::vector<File*> mapFilePtrs;
     std::vector<File*> structureFilePtrs;
+    File* largeMapDataMappingsFilePtr{};
     File* villageFilePtr{};
     std::vector<File*> playerFilePtrs;
 

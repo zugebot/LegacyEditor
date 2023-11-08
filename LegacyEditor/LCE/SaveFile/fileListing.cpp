@@ -83,6 +83,8 @@ void FileListing::read(Data &dataIn) {
             mapFilePtrs.push_back(&file);
         } else if (fileName == "data/villages.dat") {
             villageFilePtr = &file;
+        } else if (fileName == "largeMapDataMappings.dat") {
+            largeMapDataMappingsFilePtr = &file;
         } else if (startswith(fileName, "data/")) {
             structureFilePtrs.push_back(&file);
         } else if (endswith(fileName, ".grf")) {

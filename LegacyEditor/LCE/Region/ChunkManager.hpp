@@ -19,6 +19,10 @@ public:
     bool isCompressed = true;
     bool rleFlag = false;
 
+    ~ChunkManager() {
+        delete[] data;
+    }
+
     void ensure_decompress(CONSOLE console);
     void ensure_compressed(CONSOLE console);
 };

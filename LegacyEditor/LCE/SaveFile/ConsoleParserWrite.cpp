@@ -10,7 +10,7 @@
 #include "LegacyEditor/utils/endian.hpp"
 
 
-int ConsoleParser::saveConsoleFile(std::string outfileStr) {
+int ConsoleParser::saveConsoleFile(const std::string& outfileStr) {
     return 0;
 }
 

@@ -1,4 +1,6 @@
 #pragma once
 
-#include "LegacyEditor/LCE/Chunk/Parsers/ChunkParserData.hpp"
-#include "Parsers/v12Chunk.hpp"
+#include "LegacyEditor/LCE/Chunk/ChunkData.hpp"
+
+#include "v11Chunk.hpp"
+#include "v12Chunk.hpp"

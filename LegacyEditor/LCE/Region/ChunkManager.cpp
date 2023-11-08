@@ -76,11 +76,14 @@ void ChunkManager::ensure_compressed(CONSOLE console) {
     u8* comp_ptr = new u8[size];
     uLongf comp_size = size;
 
+    // TODO: Does it work for vita?
     switch (console) {
         case CONSOLE::XBOX360:
+            // TODO: leaks memory
             // XCompress(comp_ptr, comp_size, data_ptr, data_size);
             break;
         case CONSOLE::PS3:
+            // TODO: leaks memory
             // tinf_compress(comp_ptr, comp_size, data_ptr, data_size);
             break;
         case CONSOLE::WIIU: {
