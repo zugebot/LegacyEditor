@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include <algorithm>
@@ -37,6 +38,12 @@ public:
         delete[] data;
     }
 
+    /// FUNCTIONS
+
+    MU ND int convertTo(const std::string& inFileStr, const std::string& outFileStr, CONSOLE consoleOut);
+    MU ND int convertAndReplaceRegions(const std::string& inFileStr, const std::string& inFileRegionReplacementStr,
+                                                      const std::string& outFileStr, CONSOLE consoleOut);
+
     /// READ
 
     MU ND int readConsoleFile(const std::string& inFileStr);
@@ -50,7 +57,7 @@ public:
     /// SAVE
 
     MU ND int saveConsoleFile(const std::string& outfileStr);
-    MU ND int saveWiiU(const std::string& outfileStr, Data& dataOut);
+    MU ND static int saveWiiU(const std::string& outfileStr, Data& dataOut);
     MU ND int saveVita(const std::string& outfileStr, Data& dataOut);
     MU ND int savePS3Uncompressed();
     MU ND int savePS3Compressed();

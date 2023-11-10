@@ -7,7 +7,8 @@ namespace universal {
 
     void V12Chunk::readChunk(DataManager& managerIn, DIM dim) {
         dataManager = managerIn;
-        
+
+
         chunkData.chunkX = (i32) dataManager.readInt32();
         chunkData.chunkZ = (i32) dataManager.readInt32();
         chunkData.lastUpdate = (i64) dataManager.readInt64();

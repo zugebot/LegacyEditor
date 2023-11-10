@@ -45,11 +45,12 @@ void RegionManager::read(File* fileIn) {
     // step 3: read chunk size, decompressed size
     int count = 0;
     for (ChunkManager& chunk : chunks) {
+        if (chunk.sectors == 0) continue;
+
         if (chunk.location + chunk.sectors > totalSectors) {
             printf("[%u] chunk sector[%u, %u] end goes outside file...\n", totalSectors, chunk.location, chunk.sectors);
         }
 
-        if (chunk.sectors == 0) continue;
 
         // read chunk info
         managerIn.seek(4096 * chunk.location);
@@ -69,6 +70,7 @@ void RegionManager::read(File* fileIn) {
                 break;
             case CONSOLE::XBOX360:
             case CONSOLE::WIIU:
+            case CONSOLE::VITA:
             default:
                 chunk.dec_size = managerIn.readInt32();
                 break;
@@ -114,10 +116,19 @@ Data RegionManager::write(CONSOLE consoleIn) {
 
     // step 5: write each chunk offset
     managerOut.seekStart();
-    for (const ChunkManager& chunk : chunks) {
-        managerOut.writeInt24(chunk.location);
-        managerOut.writeByte(chunk.sectors);
+    if (console == CONSOLE::VITA) {
+        for (const ChunkManager& chunk : chunks) {
+            managerOut.writeByte(chunk.sectors);
+            managerOut.writeInt24(chunk.location);
+        }
+    } else {
+        for (const ChunkManager& chunk : chunks) {
+            managerOut.writeInt24(chunk.location);
+            managerOut.writeByte(chunk.sectors);
+        }
     }
+
+
 
     // return dataOut;
 
@@ -147,6 +158,7 @@ Data RegionManager::write(CONSOLE consoleIn) {
                 break;
             case CONSOLE::XBOX360:
             case CONSOLE::WIIU:
+            case CONSOLE::VITA:
             default:
                 managerOut.writeInt32(chunk.dec_size);
                 break;

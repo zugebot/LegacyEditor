@@ -22,6 +22,7 @@ void ChunkManager::ensure_decompress(CONSOLE console) {
             tinf_uncompress(decompData.start(), &decompData.size, data, size);
             break;
         case CONSOLE::WIIU:
+        case CONSOLE::VITA:
             tinf_zlib_uncompress(decompData.start(), &decompData.size, data, size);
             break;
         default:
@@ -86,7 +87,8 @@ void ChunkManager::ensure_compressed(CONSOLE console) {
             // TODO: leaks memory
             // tinf_compress(comp_ptr, comp_size, data_ptr, data_size);
             break;
-        case CONSOLE::WIIU: {
+        case CONSOLE::WIIU:
+        case CONSOLE::VITA: {
             ::compress(comp_ptr, &comp_size, data, size);
 
             if (data != nullptr) {

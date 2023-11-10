@@ -45,41 +45,66 @@ int main() {
 
 
     auto start = getMilliseconds();
+    std::string inFilePath1 = dir_path + R"(tests\230918230206.wii)";
+    std::string inFilePath2 = dir_path + R"(tests\Vita Save\PCSB00560-231005063840\GAMEDATA.bin)";
+    // std::string inFilePathReplace = dir_path + R"(tests\WiiU Save\231008144148)";
+    std::string outFilePath = dir_path + R"(tests\230918230206)";
 
-    std::string wiiuFilePath = dir_path + "tests/Pirates.wii";
-    std::string vitaFilePath = dir_path + "tests/GAMEDATA_VITA.bin";
+    int status = ConsoleParser().convertAndReplaceRegions(inFilePath1, inFilePath2, outFilePath, CONSOLE::WIIU);
+    if (status == 0) {
+        std::cout << "Converted!" << std::endl;
+    } else {
+        std::cout << "Failed to convert..." << std::endl;
+    }
 
-    ConsoleParser parserWiiU;
-    int status1 = parserWiiU.readConsoleFile(wiiuFilePath);
-    FileListing fileListingWiiU(parserWiiU.console, parserWiiU);
-    fileListingWiiU.saveToFolder(dir_path + "dump_wiiu");
+    // ConsoleParser parserWiiU;
+    // int status1 = parserWiiU.readConsoleFile(wiiuFilePath);
+    // FileListing fileListingWiiU(parserWiiU.console, parserWiiU);
+    // fileListingWiiU.saveToFolder(dir_path + "dump_wiiu");
+    // auto* filewiiu = fileListingWiiU.levelFilePtr;
+    // DataManager playerDatawiiu(filewiiu->data);
+    // auto datawiiu = NBT::readTag(playerDatawiiu);
+    // std::string playerNBTStringwiiu = datawiiu->toString();
 
-    auto* filewiiu = fileListingWiiU.levelFilePtr;
-    DataManager playerDatawiiu(filewiiu->data);
-    auto datawiiu = NBT::readTag(playerDatawiiu);
-    std::string playerNBTStringwiiu = datawiiu->toString();
+    // ConsoleParser parserVita;
+    // int status2 = parserVita.readConsoleFile(vitaFilePath);
+    // FileListing fileListingVita(parserVita.console, parserVita);
+    // fileListingVita.removeAllPlayers();
+    // // fileListingVita.deleteAllChunks();
+    // fileListingVita.removeAllStructures();
+    // fileListingVita.saveToFolder(dir_path + "dump_vita");
+    // RegionManager region(CONSOLE::VITA);
+    // region.read(fileListingVita.overworldFilePtrs[0]);
+    // auto chunk = region.chunks[602];
+    // chunk.ensure_decompress(CONSOLE::WIIU);
+    // DataManager chunkOut(chunk);
+    // u16 version = chunkOut.readInt16();
+    //universal::V12Chunk readChunk;
+    //readChunk.readChunk(chunkOut, DIM::OVERWORLD);
+    //chunkOut.writeToFile(dir_path + "chunk_out_dec.bin");
+
 
     // auto* filevita = fileListingVita.levelFilePtr;
     // DataManager playerDatavita(filevita->data);
     // auto datavita = NBT::readTag(playerDatavita);
     // std::string playerNBTStringvita = datavita->toString();
-
-
     // std::cout << playerNBTStringwiiu << std::endl;
     // std::cout << "\n\n\n" << std::endl;
     // std::cout << playerNBTStringvita << std::endl;
     // compareNBT(datawiiu, datavita);
 
-    ConsoleParser parserVita;
-    int status2 = parserVita.readConsoleFile(vitaFilePath);
-    FileListing fileListingVita(parserVita.console, parserVita);
-    fileListingVita.saveToFolder(dir_path + "dump_vita");
 
-    auto* map = fileListingVita.mapFilePtrs[0];
+    /*
+    saveMapToPng(fileListingVita.mapFilePtrs[0], dir_path);
 
-    saveMapToPng(map, dir_path);
-
-
+    for (File* file : fileListingVita.dimensionFilePtrs) {
+        RegionManager regionIter(CONSOLE::VITA);
+        regionIter.read(file);
+        Data data = regionIter.write(CONSOLE::WIIU);
+        delete[] file->data.data;
+        file->data = data;
+    }
+     */
 
 
 

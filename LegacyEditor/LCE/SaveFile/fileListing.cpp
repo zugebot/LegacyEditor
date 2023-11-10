@@ -2,21 +2,12 @@
 
 #include <filesystem>
 #include <iostream>
+#include <algorithm>
 
 #include "LegacyEditor/utils/endian.hpp"
 #include "LegacyEditor/LCE/Region/RegionManager.hpp"
 
 
-inline bool endswith(const std::string &value, const std::string &ending) {
-    if (ending.size() > value.size()) return false;
-    return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
-}
-
-
-inline bool startswith(const std::string &value, const std::string &prefix) {
-    if (prefix.size() > value.size()) return false;
-    return std::equal(prefix.begin(), prefix.end(), value.begin());
-}
 
 
 void FileListing::read(Data &dataIn) {
@@ -34,15 +25,11 @@ void FileListing::read(Data &dataIn) {
 
     allFiles.clear();
     allFiles.reserve(fileCount);
-    // printf("\nFile Count: %u\n", fileCount);
-    // printf("Buffer Size: %u\n", managerIn.size);
 
     for (int fileIndex = 0; fileIndex < fileCount; fileIndex++) {
         managerIn.seek(indexOffset + fileIndex * 144);
 
-
-        std::string fileName = managerIn.readWAsString(64); // m 128 bytes / 2 per char
-        std::string originalFileName = fileName;
+        std::string fileName = managerIn.readWAsString(64);
 
         u32 fileSize = managerIn.readInt32();
         total_size += fileSize;
@@ -63,78 +50,64 @@ void FileListing::read(Data &dataIn) {
 
         File &file = allFiles.back();
 
-        if (endswith(fileName, ".mcr")) {
-            if (startswith(fileName, "DIM-1")) {
-                dimensionFilePtrs.push_back(&file);
-                netherFilePtrs.push_back(&file);
-            } else if (startswith(fileName, "DIM1")) {
-                dimensionFilePtrs.push_back(&file);
-                endFilePtrs.push_back(&file);
-            } else if (startswith(fileName, "r")) {
-                dimensionFilePtrs.push_back(&file);
-                overworldFilePtrs.push_back(&file);
+        if (fileName.ends_with(".mcr")) {
+            if (fileName.starts_with("DIM-1")) {
+                file.fileType = FileType::REGION_NETHER;
+            } else if (fileName.starts_with("DIM1")) {
+                file.fileType = FileType::REGION_END;
+            } else if (fileName.starts_with("r")) {
+                file.fileType = FileType::REGION_OVERWORLD;
             } else {
                 printf("File '%s' is not from any dimension!\n", fileName.c_str());
-                continue;
             }
         } else if (fileName == "level.dat") {
-            levelFilePtr = &file;
-        } else if (startswith(fileName, "data/map_")) {
-            mapFilePtrs.push_back(&file);
+            file.fileType = FileType::LEVEL;
+        } else if (fileName.starts_with("data/map_")) {
+            file.fileType = FileType::MAP;
         } else if (fileName == "data/villages.dat") {
-            villageFilePtr = &file;
-        } else if (fileName == "largeMapDataMappings.dat") {
-            largeMapDataMappingsFilePtr = &file;
-        } else if (startswith(fileName, "data/")) {
-            structureFilePtrs.push_back(&file);
-        } else if (endswith(fileName, ".grf")) {
-            grfFilePtr = &file;
-        } else if (startswith(fileName, "players/")) {
-            playerFilePtrs.push_back(&file);
-        } else if (fileName.find('/') == -1) {
-            playerFilePtrs.push_back(&file);
+            file.fileType = FileType::VILLAGE;
+        } else if (fileName == "data/largeMapDataMappings.dat") {
+            file.fileType = FileType::DATA_MAPPING;
+        } else if (fileName.starts_with("data/")) {
+            file.fileType = FileType::STRUCTURE;
+        } else if (fileName.ends_with(".grf")) {
+            file.fileType = FileType::GRF;
+        } else if (fileName.starts_with("players/") || fileName.find('/') == -1) {
+            file.fileType = FileType::PLAYER;
         } else {
             printf("Unknown File: %s\n", fileName.c_str());
         }
-        // printf("%2u. (@%7u)[%7u]  - %s\n", fileIndex + 1, index, file.size, originalFileName.c_str());
     }
-    // printf("Total File Size: %u\n\n", total_size);
-
-}
-
-
-void swapInt32(u8* ptr) {
-    u32 value;
-    memcpy(&value, ptr, sizeof(u32));
-    value = (value >> 24) |
-            ((value << 8) & 0x00FF0000) |
-            ((value >> 8) & 0x0000FF00) |
-            (value << 24);
-    memcpy(ptr, &value, sizeof(u32));
+    updatePointers();
 }
 
 
 void FileListing::convertRegions(CONSOLE consoleOut) {
-    for (File* file : dimensionFilePtrs) {
-        RegionManager region(console);
-        region.read(file);
-        Data data = region.write(consoleOut);
-        delete[] file->data.data;
-        file->data = data;
+    for (FileList* fileList : dimFileLists) {
+        for (File* file : *fileList) {
+            RegionManager region(console);
+            region.read(file);
+            Data data = region.write(consoleOut);
+            delete[] file->data.data;
+            file->data = data;
+        }
     }
 }
 
 
+
 void FileListing::deleteAllChunks() {
     RegionManager region(console);
-    for (File* file : dimensionFilePtrs) {
-        region.read(file);
-        for (auto& chunk : region.chunks) {
-            chunk.sectors = 0;
+    for (FileList* fileList : dimFileLists) {
+        for (File* file: *fileList) {
+            region.read(file);
+            for (auto& chunk: region.chunks) {
+                chunk.sectors = 0;
+            }
+            Data data = region.write(console);
+            delete[] file->data.data;
+            file->data = data;
         }
-        Data data = region.write(console);
-        delete[] file->data.data;
-        file->data = data;
     }
 }
 
@@ -144,6 +117,7 @@ void FileListing::saveToFolder(const std::string &folder) {
     namespace fs = std::filesystem;
     if (folder.length() < 10) {
         printf("tried to delete short directory, will not risk");
+        return;
     }
 
     fs::path _dir_path{folder};
@@ -176,17 +150,14 @@ void FileListing::saveToFolder(const std::string &folder) {
 
 
 Data FileListing::write(CONSOLE consoleOut) {
+
     // step 1: get the file count and size of all sub-files
-    u32 fileCount = 0;
-    u32 fileDataSize = 0;
+    u32 fileCount = 0, fileDataSize = 0;
     for (const File &file: allFiles) {
         fileCount++;
         fileDataSize += file.data.getSize();
     }
     u32 fileInfoOffset = fileDataSize + 12;
-
-    // printf("\nTotal File Count: %u\n", fileCount);
-    // printf("Total File Size: %u\n", fileDataSize);
 
     // step 2: find total binary size and create its data buffer
     u32 totalFileSize = fileInfoOffset + 144 * fileCount;
@@ -215,22 +186,127 @@ Data FileListing::write(CONSOLE consoleOut) {
     }
 
     // step 5: write file metadata
-    // std::cout << "\nwriting back to file" << std::endl;
     int count = 0;
     for (File &fileIter: allFiles) {
-        // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter.additionalData, fileIter.size, fileIter.name.c_str());
+        // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter.
+        // additionalData, fileIter.size, fileIter.name.c_str());
 
         managerOut.writeWString(fileIter.name, 64);
         managerOut.writeInt32(fileIter.data.getSize());
-
-        // if (!fileIter.isEmpty()) {
         managerOut.writeInt32(fileIter.additionalData);
         managerOut.writeInt64(fileIter.timestamp);
-        // }
+
         count++;
     }
 
-    // printf("Buffer Size: %u\n", data.size);
-
     return dataOut;
 }
+
+
+
+
+std::vector<File> FileListing::collectFiles(FileType fileType) {
+    std::vector<File> collectedFiles;
+    allFiles.erase(
+            std::remove_if(
+                    allFiles.begin(),
+                    allFiles.end(),
+                    [&collectedFiles, &fileType](const File& file) {
+                        bool isType = file.fileType == fileType;
+                        if (isType) {
+                            collectedFiles.push_back(file);
+
+                        }
+                        return isType;
+                    }
+                    ),
+            allFiles.end()
+    );
+    clearActions[fileType]();
+    return collectedFiles;
+}
+
+
+
+
+void FileListing::clear() {
+    for (File& file : allFiles) {
+        delete[] file.data.data;
+    }
+    clearPointers();
+    allFiles.clear();
+    oldestVersion = 0;
+    currentVersion = 0;
+
+}
+
+
+void FileListing::clearPointers() {
+    overworldFilePtrs.clear();
+    netherFilePtrs.clear();
+    endFilePtrs.clear();
+    mapFilePtrs.clear();
+    structureFilePtrs.clear();
+    playerFilePtrs.clear();
+    largeMapDataMappingsFilePtr = nullptr;
+    levelFilePtr = nullptr;
+    grfFilePtr = nullptr;
+    villageFilePtr = nullptr;
+}
+
+void FileListing::updatePointers() {
+    clearPointers();
+    for (File& file : allFiles) {
+        switch(file.fileType) {
+            case FileType::STRUCTURE:
+                structureFilePtrs.push_back(&file);
+                break;
+            case FileType::VILLAGE:
+                villageFilePtr = &file;
+                break;
+            case FileType::DATA_MAPPING:
+                largeMapDataMappingsFilePtr = &file;
+                break;
+            case FileType::MAP:
+                mapFilePtrs.push_back(&file);
+                break;
+            case FileType::REGION_NETHER:
+                netherFilePtrs.push_back(&file);
+                break;
+            case FileType::REGION_OVERWORLD:
+                overworldFilePtrs.push_back(&file);
+                break;
+            case FileType::REGION_END:
+                endFilePtrs.push_back(&file);
+                break;
+            case FileType::PLAYER:
+                playerFilePtrs.push_back(&file);
+                break;
+            case FileType::LEVEL:
+                levelFilePtr = &file;
+                break;
+            case FileType::GRF:
+                grfFilePtr = &file;
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
