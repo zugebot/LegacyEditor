@@ -30,7 +30,6 @@ public:
     std::string name;
     FileType fileType = FileType::NONE;
     u64 timestamp = 0;
-    u32 index = 0;
     u32 additionalData = 0;
 
     File() = default;

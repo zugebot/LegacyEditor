@@ -15,27 +15,19 @@ ChunkManager* RegionManager::getChunk(int index) {
 
 
 void RegionManager::read(File* fileIn) {
-    totalSectors = fileIn->data.size / SECTOR_SIZE;
+    totalSectors = (fileIn->data.size + SECTOR_SIZE - 1) / SECTOR_SIZE;
 
     // step 0: copying data from file
     DataManager managerIn(fileIn->data);
-
-    if (console == CONSOLE::VITA) {
+    if (console == CONSOLE::VITA)
         managerIn.setLittleEndian();
+
+    for (ChunkManager &chunk: chunks) {
+        u32 val = managerIn.readInt32();
+        chunk.sectors = val & 0xff;
+        chunk.location = val >> 8;
     }
 
-    // step 1: read offsets [1024]
-    if (console == CONSOLE::VITA) {
-        for (ChunkManager &chunk: chunks) {
-            chunk.sectors = managerIn.readByte();
-            chunk.location = managerIn.readInt24();
-        }
-    } else {
-        for (ChunkManager &chunk: chunks) {
-            chunk.location = managerIn.readInt24();
-            chunk.sectors = managerIn.readByte();
-        }
-    }
 
     // step 2: read timestamps [1024]
     for (ChunkManager& chunk : chunks) {
@@ -49,11 +41,12 @@ void RegionManager::read(File* fileIn) {
 
         if (chunk.location + chunk.sectors > totalSectors) {
             printf("[%u] chunk sector[%u, %u] end goes outside file...\n", totalSectors, chunk.location, chunk.sectors);
+            throw std::runtime_error("debug here");
         }
 
 
         // read chunk info
-        managerIn.seek(4096 * chunk.location);
+        managerIn.seek(SECTOR_SIZE * chunk.location);
         count++;
 
         // allocates memory for the chunk
@@ -90,47 +83,30 @@ Data RegionManager::write(CONSOLE consoleIn) {
     // step 2: recalculate sectorCount of each chunk
     // step 3: calculate chunk offsets for each chunk
     int total_sectors = 2;
-    int count = 0;
     for (ChunkManager& chunk : chunks) {
         if (chunk.sectors == 0) {
             chunk.location = 0;
-            continue;
+        } else {
+            chunk.ensure_compressed(consoleIn);
+            u8 chunk_sectors = (chunk.size + SECTOR_SIZE - 1) / SECTOR_SIZE + 1;
+            chunk.location = total_sectors;
+            total_sectors += chunk_sectors;
         }
-
-        chunk.ensure_compressed(consoleIn);
-        u8 chunk_sectors = (chunk.size + SECTOR_SIZE - 1) / SECTOR_SIZE;
-        chunk.location = total_sectors;
-        total_sectors += chunk_sectors;
-
-        count++;
     }
 
     // step 4: allocate memory and create buffer
     u32 data_size = total_sectors * SECTOR_SIZE;
     Data dataOut = Data(data_size);
     DataManager managerOut(dataOut);
-
-    if (console == CONSOLE::VITA) {
+    if (consoleIn == CONSOLE::VITA) {
         managerOut.setLittleEndian();
     }
 
     // step 5: write each chunk offset
-    managerOut.seekStart();
-    if (console == CONSOLE::VITA) {
-        for (const ChunkManager& chunk : chunks) {
-            managerOut.writeByte(chunk.sectors);
-            managerOut.writeInt24(chunk.location);
-        }
-    } else {
-        for (const ChunkManager& chunk : chunks) {
-            managerOut.writeInt24(chunk.location);
-            managerOut.writeByte(chunk.sectors);
-        }
+    for (ChunkManager &chunk: chunks) {
+        u32 val = chunk.sectors | chunk.location << 8;
+        managerOut.writeInt32(val);
     }
-
-
-
-    // return dataOut;
 
     // step 6: write each chunk timestamp
     for (const ChunkManager& chunk : chunks) {
@@ -141,7 +117,8 @@ Data RegionManager::write(CONSOLE consoleIn) {
     // make sure the pointer is a multiple of SECTOR_SIZE
     for (const ChunkManager& chunk : chunks) {
         if (chunk.sectors == 0) continue;
-        managerOut.seek(chunk.location * 4096);
+
+        managerOut.seek(chunk.location * SECTOR_SIZE);
 
         u32 size = chunk.size;
         if (chunk.rleFlag) {

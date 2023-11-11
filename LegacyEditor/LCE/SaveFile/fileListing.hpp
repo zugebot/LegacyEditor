@@ -18,9 +18,9 @@
 
 class FileList : public std::vector<File*> {
 public:
-    ~FileList() {
-        removeAll();
-    }
+    // ~FileList() {
+    //     removeAll();
+    // }
 
     void removeAll() {
         for (File* file : *this) {
@@ -32,25 +32,24 @@ public:
 
 
 class FileListing {
-private:
-    std::vector<FileList*> dimFileLists = {&netherFilePtrs, &overworldFilePtrs, &endFilePtrs};
 public:
+    std::vector<FileList*> dimFileLists = {&nether, &overworld, &endFilePtrs};
     CONSOLE console = CONSOLE::NONE;
     std::vector<File> allFiles;
 
     // pointers
-    FileList overworldFilePtrs;
-    FileList netherFilePtrs;
+    FileList overworld;
+    FileList nether;
     FileList endFilePtrs;
 
-    FileList mapFilePtrs;
-    FileList structureFilePtrs;
-    FileList playerFilePtrs;
+    FileList maps;
+    FileList structures;
+    FileList players;
 
-    File* largeMapDataMappingsFilePtr{};
-    File* levelFilePtr{};
-    File* grfFilePtr{};
-    File* villageFilePtr{};
+    File* largeMapDataMappings{};
+    File* level{};
+    File* grf{};
+    File* village{};
 
     // data
     i32 oldestVersion{};
@@ -61,9 +60,6 @@ public:
         : console(consoleParser.console) { read(consoleParser); }
     explicit FileListing(ConsoleParser* consoleParser)
         : console(consoleParser->console) { read(*consoleParser); }
-    ~FileListing() {
-        clear();
-    }
 
     void read(Data& dataIn);
     Data write(CONSOLE consoleOut);
@@ -74,7 +70,7 @@ public:
     void deleteAllChunks();
 
 
-    void clear();
+    void deallocate();
 
     void clearPointers();
     void updatePointers();
@@ -82,22 +78,25 @@ public:
 
 
 
-    template <typename... FileTypes>
-    void removeFileTypes(FileTypes... fileTypes) {
-        std::set<FileType> typesToRemove{fileTypes...};
+    void removeFileTypes(std::set<FileType> typesToRemove) {
         allFiles.erase(
                 std::remove_if(
                         allFiles.begin(),
                         allFiles.end(),
-                        [&typesToRemove](const File& file) {
-                            return typesToRemove.count(file.fileType) > 0;
+                        [&typesToRemove](File& file) {
+                            bool to_del = typesToRemove.count(file.fileType) > 0;
+                            if (to_del) {
+                                delete[] file.data.data;
+                                file.data.data = nullptr;
+                            }
+                            return to_del;
                         }
                         ),
                 allFiles.end()
         );
         for (const auto& fileType : typesToRemove) {
-            if (clearActionsDelete.count(fileType)) {
-                clearActionsDelete[fileType]();
+            if (clearActionsRemove.count(fileType)) {
+                clearActionsRemove[fileType]();
             }
         }
     }
@@ -116,48 +115,47 @@ public:
 
 private:
     /// For use in removeFileTypes
-    std::map<FileType, std::function<void()>> clearActions = {
-        {FileType::STRUCTURE, [this]() { structureFilePtrs.removeAll(); }},
-        {FileType::MAP, [this]() { mapFilePtrs.removeAll(); }},
-        {FileType::PLAYER, [this]() { playerFilePtrs.removeAll(); }},
-        {FileType::REGION_NETHER, [this]() { netherFilePtrs.removeAll(); }},
-        {FileType::REGION_OVERWORLD, [this]() { overworldFilePtrs.removeAll(); }},
+    std::map<FileType, std::function<void()>> clearActionsDelete = {
+        {FileType::STRUCTURE, [this]() { structures.removeAll(); }},
+        {FileType::MAP, [this]() { maps.removeAll(); }},
+        {FileType::PLAYER, [this]() { players.removeAll(); }},
+        {FileType::REGION_NETHER, [this]() { nether.removeAll(); }},
+        {FileType::REGION_OVERWORLD, [this]() { overworld.removeAll(); }},
         {FileType::REGION_END, [this]() { endFilePtrs.removeAll(); }},
         {FileType::VILLAGE, [this]() {
-                 delete[] villageFilePtr->data.data;
-                 villageFilePtr = nullptr; }},
+                 delete[] village->data.data;
+                 village = nullptr; }},
         {FileType::DATA_MAPPING, [this]() {
-                 delete[] largeMapDataMappingsFilePtr->data.data;
-             largeMapDataMappingsFilePtr = nullptr;
+                 delete[] largeMapDataMappings->data.data;
+                 largeMapDataMappings = nullptr;
          }},
         {FileType::LEVEL, [this]() {
-             delete[] levelFilePtr->data.data;
-             levelFilePtr = nullptr;
+             delete[] level->data.data;
+             level = nullptr;
          }},
         {FileType::GRF, [this]() {
-             delete[] grfFilePtr->data.data;
-             grfFilePtr = nullptr;
+             delete[] grf->data.data;
+             grf = nullptr;
          }},
     };
 
 
-    std::map<FileType, std::function<void()>> clearActionsDelete = {
-            {FileType::STRUCTURE, [this]() { structureFilePtrs.clear(); }},
-            {FileType::MAP, [this]() { mapFilePtrs.clear(); }},
-            {FileType::PLAYER, [this]() { playerFilePtrs.clear(); }},
-            {FileType::REGION_NETHER, [this]() { netherFilePtrs.clear(); }},
-            {FileType::REGION_OVERWORLD, [this]() { overworldFilePtrs.clear(); }},
+    std::map<FileType, std::function<void()>> clearActionsRemove = {
+            {FileType::STRUCTURE, [this]() { structures.clear(); }},
+            {FileType::MAP, [this]() { maps.clear(); }},
+            {FileType::PLAYER, [this]() { players.clear(); }},
+            {FileType::REGION_NETHER, [this]() { nether.clear(); }},
+            {FileType::REGION_OVERWORLD, [this]() { overworld.clear(); }},
             {FileType::REGION_END, [this]() { endFilePtrs.clear(); }},
-            {FileType::VILLAGE, [this]() {
-                 villageFilePtr = nullptr; }},
+            {FileType::VILLAGE, [this]() { village = nullptr; }},
             {FileType::DATA_MAPPING, [this]() {
-                 largeMapDataMappingsFilePtr = nullptr;
+                 largeMapDataMappings = nullptr;
              }},
             {FileType::LEVEL, [this]() {
-                 levelFilePtr = nullptr;
+                 level = nullptr;
              }},
             {FileType::GRF, [this]() {
-                 grfFilePtr = nullptr;
+                 grf = nullptr;
              }},
     };
 };

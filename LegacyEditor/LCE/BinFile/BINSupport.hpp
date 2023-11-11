@@ -68,7 +68,7 @@ public:
     u32 headerSize{};
     StfsVD stfsVD{};
     std::wstring displayName;
-    DataManager thumbnailImage = DataManager(nullptr, 0); // TODO: lol
+    DataManager thumbnailImage = DataManager(nullptr, 0, true); // TODO: lol
 
     int readHeader(DataManager& binFile);
 };

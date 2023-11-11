@@ -12,10 +12,10 @@
 
 class ChunkManager : public Data {
 public:
-    u32 dec_size;
-    u8 sectors;
-    u32 location;
-    u32 timestamp;
+    u32 dec_size = 0;
+    u8 sectors = 0;
+    u32 location = 0;
+    u32 timestamp = 0;
     bool isCompressed = true;
     bool rleFlag = false;
 

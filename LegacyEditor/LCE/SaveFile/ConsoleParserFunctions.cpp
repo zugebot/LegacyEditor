@@ -1,6 +1,7 @@
 #include "ConsoleParser.hpp"
+#include "LegacyEditor/LCE/Chunk/v12Chunk.hpp"
+#include "LegacyEditor/LCE/Region/RegionManager.hpp"
 #include "fileListing.hpp"
-
 
 
 MU ND int ConsoleParser::convertTo(const std::string& inFileStr, const std::string& outFileStr, CONSOLE consoleOut) {
@@ -8,7 +9,20 @@ MU ND int ConsoleParser::convertTo(const std::string& inFileStr, const std::stri
     if (status != 0) return status;
 
     FileListing fileListing(this); // read  file listing
+    fileListing.removeFileTypes({FileType::PLAYER, FileType::DATA_MAPPING});
+
+    for (auto* fileList : fileListing.dimFileLists) {
+        for (File* file: *fileList) {
+            RegionManager region(this->console);
+            region.read(file);
+            Data data = region.write(consoleOut);
+            delete[] file->data.data;
+            file->data = data;
+        }
+    }
+
     Data dataOut = fileListing.write(consoleOut); // write file listing
+    fileListing.deallocate();
 
     switch (consoleOut) {
         case CONSOLE::WIIU:
@@ -40,13 +54,28 @@ MU ND int ConsoleParser::convertAndReplaceRegions(const std::string& inFileStr,
     if (status2 != 0) return status2;
     FileListing fLR(replace);
 
-    fL.removeFileTypes(FileType::REGION_NETHER, FileType::REGION_OVERWORLD, FileType::REGION_END);
+    fL.removeFileTypes({FileType::REGION_NETHER,
+                        FileType::REGION_OVERWORLD,
+                        FileType::REGION_END});
+
     fL.addFiles(fLR.collectFiles(FileType::REGION_NETHER));
     fL.addFiles(fLR.collectFiles(FileType::REGION_OVERWORLD));
     fL.addFiles(fLR.collectFiles(FileType::REGION_END));
 
+    for (auto* fileList : fL.dimFileLists) {
+        for (File* file: *fileList) {
+            RegionManager region(fLR.console);
+            region.read(file);
+            Data data = region.write(consoleOut);
+            delete[] file->data.data;
+            file->data = data;
+        }
+    }
 
     Data dataOut = fL.write(consoleOut); // write file listing
+
+    fL.deallocate();
+    fLR.deallocate();
 
     switch (consoleOut) {
         case CONSOLE::WIIU:

@@ -21,17 +21,17 @@ namespace universal {
 
 
     void V12Chunk::writeBlocks() {
-        return;
+
     }
 
 
     void V12Chunk::writeLights() {
-        return;
+
     }
 
 
     void V12Chunk::writeNBTData() {
-        return;
+
     }
 
 

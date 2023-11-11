@@ -21,25 +21,14 @@ public:
 
     DataManager() = default;
 
-    explicit DataManager(Data& dataIn) {
-        data = dataIn.start();
-        size = dataIn.size;
-        ptr = data;
-    }
+    explicit DataManager(Data& dataIn) : data(dataIn.start()), size(dataIn.size), ptr(data) {}
+    explicit DataManager(Data& dataIn, bool isBig) : data(dataIn.start()), size(dataIn.size), ptr(data), isBig(isBig) {}
 
-    explicit DataManager(Data* dataIn) {
-        data = dataIn->start();
-        size = dataIn->size;
-        ptr = data;
+    explicit DataManager(Data* dataIn) : data(dataIn->start()), size(dataIn->size), ptr(data) {}
+    explicit DataManager(Data* dataIn, bool isBig) : data(dataIn->start()), size(dataIn->size), ptr(data), isBig(isBig) {}
 
-    }
-
-    explicit DataManager(u8* dataIn, u32 sizeIn) {
-        data = dataIn;
-        size = sizeIn;
-        ptr = dataIn;
-
-    }
+    explicit DataManager(u8* dataIn, u32 sizeIn) : data(dataIn), size(sizeIn), ptr(dataIn) {}
+    explicit DataManager(u8* dataIn, u32 sizeIn, bool isBig) : data(dataIn), size(sizeIn), ptr(dataIn), isBig(isBig) {}
 
     inline void setBigEndian() { isBig = true; }
     inline void setLittleEndian() { isBig = false; }

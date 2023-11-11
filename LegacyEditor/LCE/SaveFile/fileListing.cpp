@@ -47,6 +47,7 @@ void FileListing::read(Data &dataIn) {
         data = managerIn.readBytes(fileSize);
 
         allFiles.emplace_back(data, fileSize, fileName, timestamp);
+        printf("%s\n", fileName.c_str());
 
         File &file = allFiles.back();
 
@@ -79,6 +80,7 @@ void FileListing::read(Data &dataIn) {
         }
     }
     updatePointers();
+    printf("\n");
 }
 
 
@@ -222,16 +224,17 @@ std::vector<File> FileListing::collectFiles(FileType fileType) {
                     ),
             allFiles.end()
     );
-    clearActions[fileType]();
+    clearActionsRemove[fileType]();
     return collectedFiles;
 }
 
 
 
 
-void FileListing::clear() {
+void FileListing::deallocate() {
     for (File& file : allFiles) {
         delete[] file.data.data;
+        file.data.data = nullptr;
     }
     clearPointers();
     allFiles.clear();
@@ -242,16 +245,16 @@ void FileListing::clear() {
 
 
 void FileListing::clearPointers() {
-    overworldFilePtrs.clear();
-    netherFilePtrs.clear();
+    overworld.clear();
+    nether.clear();
     endFilePtrs.clear();
-    mapFilePtrs.clear();
-    structureFilePtrs.clear();
-    playerFilePtrs.clear();
-    largeMapDataMappingsFilePtr = nullptr;
-    levelFilePtr = nullptr;
-    grfFilePtr = nullptr;
-    villageFilePtr = nullptr;
+    maps.clear();
+    structures.clear();
+    players.clear();
+    largeMapDataMappings = nullptr;
+    level = nullptr;
+    grf = nullptr;
+    village = nullptr;
 }
 
 void FileListing::updatePointers() {
@@ -259,34 +262,34 @@ void FileListing::updatePointers() {
     for (File& file : allFiles) {
         switch(file.fileType) {
             case FileType::STRUCTURE:
-                structureFilePtrs.push_back(&file);
+                structures.push_back(&file);
                 break;
             case FileType::VILLAGE:
-                villageFilePtr = &file;
+                village = &file;
                 break;
             case FileType::DATA_MAPPING:
-                largeMapDataMappingsFilePtr = &file;
+                largeMapDataMappings = &file;
                 break;
             case FileType::MAP:
-                mapFilePtrs.push_back(&file);
+                maps.push_back(&file);
                 break;
             case FileType::REGION_NETHER:
-                netherFilePtrs.push_back(&file);
+                nether.push_back(&file);
                 break;
             case FileType::REGION_OVERWORLD:
-                overworldFilePtrs.push_back(&file);
+                overworld.push_back(&file);
                 break;
             case FileType::REGION_END:
                 endFilePtrs.push_back(&file);
                 break;
             case FileType::PLAYER:
-                playerFilePtrs.push_back(&file);
+                players.push_back(&file);
                 break;
             case FileType::LEVEL:
-                levelFilePtr = &file;
+                level = &file;
                 break;
             case FileType::GRF:
-                grfFilePtr = &file;
+                grf = &file;
                 break;
             default:
                 break;

@@ -50,12 +50,19 @@ int main() {
     // std::string inFilePathReplace = dir_path + R"(tests\WiiU Save\231008144148)";
     std::string outFilePath = dir_path + R"(tests\230918230206)";
 
-    int status = ConsoleParser().convertAndReplaceRegions(inFilePath1, inFilePath2, outFilePath, CONSOLE::WIIU);
+    // int status = ConsoleParser().convertAndReplaceRegions(inFilePath1, inFilePath2, outFilePath, CONSOLE::WIIU);
+    int status = ConsoleParser().convertTo(inFilePath2, outFilePath, CONSOLE::WIIU);
     if (status == 0) {
         std::cout << "Converted!" << std::endl;
     } else {
         std::cout << "Failed to convert..." << std::endl;
     }
+
+    ConsoleParser out;
+    out.readConsoleFile(outFilePath);
+    FileListing files(out);
+    files.saveToFolder(dir_path + "dump_vita_wiiu");
+
 
     // ConsoleParser parserWiiU;
     // int status1 = parserWiiU.readConsoleFile(wiiuFilePath);
