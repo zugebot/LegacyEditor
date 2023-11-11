@@ -14,11 +14,11 @@ ChunkManager* RegionManager::getChunk(int index) {
 }
 
 
-void RegionManager::read(File* fileIn) {
-    totalSectors = (fileIn->data.size + SECTOR_SIZE - 1) / SECTOR_SIZE;
+void RegionManager::read(Data* dataIn) {
+    totalSectors = (dataIn->size + SECTOR_SIZE - 1) / SECTOR_SIZE;
 
     // step 0: copying data from file
-    DataManager managerIn(fileIn->data);
+    DataManager managerIn(dataIn);
     if (console == CONSOLE::VITA)
         managerIn.setLittleEndian();
 
@@ -75,6 +75,11 @@ void RegionManager::read(File* fileIn) {
     }
 
 
+}
+
+
+void RegionManager::read(File* fileIn) {
+    read(&fileIn->data);
 }
 
 

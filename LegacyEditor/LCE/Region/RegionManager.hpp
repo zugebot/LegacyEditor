@@ -21,5 +21,7 @@ public:
     MU ChunkManager* getChunk(int index);
 
     void read(File* fileIn);
+    void read(Data* dataIn);
+
     Data write(CONSOLE consoleIn);
 };

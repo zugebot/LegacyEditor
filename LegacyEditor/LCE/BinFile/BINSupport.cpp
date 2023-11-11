@@ -633,7 +633,6 @@ FileInfo extractSaveGameDat(u8* inputData, i64 inputSize) {
     BINHeader meta = stfsInfo.getMetaData();
     if (meta.thumbnailImage.size) { savegame.thumbnailImage = meta.thumbnailImage; }
 
-
     int savefileSize = (int) out.size;
     if (savefileSize) {
         auto* savefile = (u8*) malloc(savefileSize);
@@ -646,45 +645,3 @@ FileInfo extractSaveGameDat(u8* inputData, i64 inputSize) {
     free(inputData);
     return savegame;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

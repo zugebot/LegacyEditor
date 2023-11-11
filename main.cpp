@@ -39,6 +39,8 @@ void compareNBT(NBTBase* first, NBTBase* second) {
 
 
 
+
+
 int main() {
     std::cout << "goto 'LegacyEditor/utils/processor.hpp' and change 'dir_path' to be the path of the src'" << std::endl;
 
@@ -62,6 +64,36 @@ int main() {
     out.readConsoleFile(outFilePath);
     FileListing files(out);
     files.saveToFolder(dir_path + "dump_vita_wiiu");
+
+
+    RegionManager region(CONSOLE::WIIU);
+    DataManager regionIn;
+    regionIn.readFromFile(dir_path + R"(dump_vita_wiiu\r.0.0.mcr)");
+    auto LOL = Data(regionIn.data, regionIn.size);
+    region.read(&LOL);
+    ChunkManager* chunk = region.getChunk(13, 16);
+    chunk->ensure_decompress(CONSOLE::WIIU);
+
+    universal::V12Chunk chunkParser;
+    auto real = DataManager(chunk);
+    u16 chunkVersion = real.readInt16();
+    chunkParser.readChunk(real, DIM::OVERWORLD);
+
+    int x = chunkParser.chunkData.blocks.size();
+    for (int i = 0; i < chunkParser.chunkData.blocks.size(); i++) {
+        u16 block = chunkParser.chunkData.blocks[i];
+        if (block != 0) {
+            std::cout << "Found a block at " << i << std::endl;
+            std::cin >> x;
+        }
+    }
+    std::cout << "finished reading" << std::endl;
+
+
+
+    x = 1;
+
+
 
 
     // ConsoleParser parserWiiU;

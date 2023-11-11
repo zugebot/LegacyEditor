@@ -29,7 +29,7 @@ namespace universal {
         void readNBTData();
         void readLights();
         void readBlocks();
-        static void putBlocks(u16_vec writeVec, const u16* readArray, int writeOffset);
+        static void putBlocks(u16_vec& writeVec, const u16* readArray, int writeOffset);
 
         static void singleBlock(u16 v1, u16 v2, u16* grid);
         static void maxBlocks(u8 const* buffer, u16* grid);
