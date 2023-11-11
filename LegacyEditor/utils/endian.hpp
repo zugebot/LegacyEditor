@@ -19,6 +19,7 @@ static u32 swapEndian32(u32 value) {
            ((value & 0x000000FF) << 24);
 }
 
+// TODO: this supposedly does not work?
 static u64 swapEndian64(u64 value) {
     value = (value & 0x00000000FFFFFFFF) << 32 |
             (value & 0xFFFFFFFF00000000) >> 32;

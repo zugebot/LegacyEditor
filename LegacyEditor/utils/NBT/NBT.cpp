@@ -1,7 +1,7 @@
 #include "NBT.hpp"
 
+#include "LegacyEditor/utils/PS3_DEFLATE/deflateUsage.hpp"
 #include "LegacyEditor/utils/dataManager.hpp"
-#include "LegacyEditor/utils/deflateUsage.hpp"
 
 #include "NBTBase.hpp"
 

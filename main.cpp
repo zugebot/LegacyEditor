@@ -48,7 +48,8 @@ int main() {
 
     auto start = getMilliseconds();
     std::string inFilePath1 = dir_path + R"(tests\230918230206.wii)";
-    std::string inFilePath2 = dir_path + R"(tests\Vita Save\PCSB00560-231005063840\GAMEDATA.bin)";
+    // std::string inFilePath2 = dir_path + R"(tests\Vita Save\PCSB00560-231005063840\GAMEDATA.bin)";
+    std::string inFilePath2 = dir_path + R"(tests\GAMEDATA)";
     // std::string inFilePathReplace = dir_path + R"(tests\WiiU Save\231008144148)";
     std::string outFilePath = dir_path + R"(tests\230918230206)";
 
@@ -60,6 +61,7 @@ int main() {
         std::cout << "Failed to convert..." << std::endl;
     }
 
+    /*
     ConsoleParser out;
     out.readConsoleFile(outFilePath);
     FileListing files(out);
@@ -88,12 +90,7 @@ int main() {
         }
     }
     std::cout << "finished reading" << std::endl;
-
-
-
-    x = 1;
-
-
+    */
 
 
     // ConsoleParser parserWiiU;

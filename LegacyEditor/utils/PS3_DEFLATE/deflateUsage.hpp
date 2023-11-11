@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 
-#include "zlib-1.2.12/zlib.h"
+#include "LegacyEditor/utils/zlib-1.2.12/zlib.h"
 
 #define ZIPCHUNK_SIZE 32768
 

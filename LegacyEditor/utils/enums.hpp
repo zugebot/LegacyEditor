@@ -17,3 +17,20 @@ enum class DIM : i8 {
     OVERWORLD = 0,
     END = 1,
 };
+
+
+static std::string consoleToStr(CONSOLE console) {
+    switch (console) {
+        case CONSOLE::XBOX360:
+            return "xbox360";
+        case CONSOLE::PS3:
+            return "ps3";
+        case CONSOLE::WIIU:
+            return "wiiu";
+        case CONSOLE::VITA:
+            return "vita";
+        case CONSOLE::NONE:
+        default:
+            return "NONE";
+    }
+}
