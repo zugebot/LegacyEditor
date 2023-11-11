@@ -11,7 +11,6 @@
 void saveMapToPng(File* map, const std::string& path, const std::string& filename = "map_0.png") {
     DataManager mapManager(map->data);
     auto data = NBT::readTag(mapManager);
-    // std::cout << data->toString() << std::endl;
     auto* mapCompound = NBTBase::toType<NBTTagCompound>(data)->getCompoundTag("data");
     auto* byteArray = mapCompound->getByteArray("colors");
     std::cout << byteArray->size << std::endl;
