@@ -19,6 +19,7 @@ public:
 
     MU ChunkManager* getChunk(int x, int z);
     MU ChunkManager* getChunk(int index);
+    MU ChunkManager* getNonEmptyChunk();
 
     void read(File* fileIn);
     void read(Data* dataIn);

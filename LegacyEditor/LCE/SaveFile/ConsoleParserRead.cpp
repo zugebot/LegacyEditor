@@ -39,7 +39,7 @@ int ConsoleParser::readConsoleFile(const std::string& inFileStr) {
             std::cout << indexFromSaveFile << std::endl;
             result = readVita();
         } else {
-            result = readPs3Compressed(file_size);
+            result = readPs3(file_size);
         }
     } else if (headerUnion.getInt2() <= 2) {
         /// if (int2 == 0) it is an xbox savefile unless it's a massive
@@ -48,7 +48,7 @@ int ConsoleParser::readConsoleFile(const std::string& inFileStr) {
     } else if (headerUnion.getInt2() < 100) {
         /// otherwise if (int2) > 50 then it is a random file
         /// because likely ps3 won't have more than 50 files
-        result = readPs3Uncompressed();
+        result = readRpcs3();
     } else if (headerUnion.getInt1() == CON_MAGIC) {
         result = readXbox360_BIN();
     } else {
@@ -130,7 +130,7 @@ int ConsoleParser::readWiiU(u32 file_size) {
 
 /// ps3 save files don't need decompressing\n
 /// TODO: IMPORTANT check from a region file chunk what console it is if it is uncompressed
-int ConsoleParser::readPs3Compressed(u32 dest_size) {
+int ConsoleParser::readPs3(u32 dest_size) {
     printf("Detected compressed PS3 savefile, converting\n");
     console = CONSOLE::PS3;
     int status;
@@ -153,9 +153,9 @@ int ConsoleParser::readPs3Compressed(u32 dest_size) {
 }
 
 
-int ConsoleParser::readPs3Uncompressed() {
-    printf("Detected uncompressed PS3 savefile, converting\n");
-    console = CONSOLE::PS3;
+int ConsoleParser::readRpcs3() {
+    printf("Detected uncompressed PS3 / RPCS3 savefile, converting\n");
+    console = CONSOLE::RPCS3;
     allocate(source_binary_size);
     fseek(f_in, 0, SEEK_SET);
     fread(start(), 1, size, f_in);

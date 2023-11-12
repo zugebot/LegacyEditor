@@ -49,8 +49,8 @@ public:
     MU ND int readConsoleFile(const std::string& inFileStr);
     MU ND int readWiiU(u32 file_size);
     MU ND int readVita();
-    MU ND int readPs3Compressed(u32 dest_size);
-    MU ND int readPs3Uncompressed();
+    MU ND int readPs3(u32 dest_size);
+    MU ND int readRpcs3();
     MU ND int readXbox360_DAT();
     MU ND int readXbox360_BIN();
 

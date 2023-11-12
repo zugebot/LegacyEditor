@@ -1,5 +1,7 @@
 #include "ChunkManager.hpp"
 
+#include "LegacyEditor/utils/PS3_DEFLATE/deflateUsage.hpp"
+
 
 void ChunkManager::ensure_decompress(CONSOLE console) {
     if (!isCompressed || console == CONSOLE::NONE || data == nullptr || sectors == 0) {
@@ -87,6 +89,26 @@ void ChunkManager::ensure_compressed(CONSOLE console) {
             // TODO: leaks memory
             // tinf_compress(comp_ptr, comp_size, data_ptr, data_size);
             break;
+
+        case CONSOLE::RPCS3: {
+            printf("decompressing rpcs3\n");
+            int status = ::def(data, comp_ptr, size, (uLongf*)&comp_size, -15);
+            if (status != 0) {
+                printf("error has occurred\n");
+            }
+
+
+            if (data != nullptr) {
+                delete[] data;
+                data = nullptr;
+                size = 0;
+            }
+            data = comp_ptr;
+            size = comp_size;
+            break;
+        }
+
+
         case CONSOLE::WIIU:
         case CONSOLE::VITA: {
             ::compress(comp_ptr, &comp_size, data, size);

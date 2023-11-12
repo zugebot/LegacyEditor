@@ -8,7 +8,8 @@ enum class CONSOLE : i8 {
     XBOX360 = 0,
     PS3 = 1,
     WIIU = 2,
-    VITA = 3
+    VITA = 3,
+    RPCS3 = 4
 };
 
 
@@ -25,6 +26,8 @@ static std::string consoleToStr(CONSOLE console) {
             return "xbox360";
         case CONSOLE::PS3:
             return "ps3";
+        case CONSOLE::RPCS3:
+            return "rpcs3";
         case CONSOLE::WIIU:
             return "wiiu";
         case CONSOLE::VITA:

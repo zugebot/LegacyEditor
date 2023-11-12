@@ -45,6 +45,7 @@ MU ND int ConsoleParser::convertTo(const std::string& inFileStr, const std::stri
         case CONSOLE::VITA:
             return ConsoleParser::saveVita(outFileStr, dataOut);
         case CONSOLE::XBOX360:
+        case CONSOLE::RPCS3:
         case CONSOLE::PS3:
         default:
             return -1;
@@ -98,6 +99,7 @@ MU ND int ConsoleParser::convertAndReplaceRegions(const std::string& inFileStr,
         case CONSOLE::VITA:
             return ConsoleParser::saveVita(outFileStr, dataOut);
         case CONSOLE::XBOX360:
+        case CONSOLE::RPCS3:
         case CONSOLE::PS3:
         default:
             return -1;

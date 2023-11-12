@@ -44,14 +44,14 @@ void compareNBT(NBTBase* first, NBTBase* second) {
 int main() {
     std::cout << "goto 'LegacyEditor/utils/processor.hpp' and change 'dir_path' to be the path of the src'" << std::endl;
 
-
-
     auto start = getMilliseconds();
     std::string inFilePath1 = dir_path + R"(tests\230918230206.wii)";
     // std::string inFilePath2 = dir_path + R"(tests\Vita Save\PCSB00560-231005063840\GAMEDATA.bin)";
     std::string inFilePath2 = dir_path + R"(tests\GAMEDATA)";
     // std::string inFilePathReplace = dir_path + R"(tests\WiiU Save\231008144148)";
     std::string outFilePath = dir_path + R"(tests\230918230206)";
+
+    /*
 
     // int status = ConsoleParser().convertAndReplaceRegions(inFilePath1, inFilePath2, outFilePath, CONSOLE::WIIU);
     int status = ConsoleParser().convertTo(inFilePath2, outFilePath, CONSOLE::WIIU);
@@ -60,6 +60,28 @@ int main() {
     } else {
         std::cout << "Failed to convert..." << std::endl;
     }
+     */
+
+    ConsoleParser parser;
+    int status = parser.readConsoleFile(inFilePath2);
+    if (status != 0) return status;
+    FileListing fileListing(parser); // read  file listing
+    fileListing.saveToFolder(dir_path + "dump_" + consoleToStr(CONSOLE::RPCS3));
+
+    RegionManager region(CONSOLE::RPCS3);
+    DataManager regionIn;
+    regionIn.readFromFile(dir_path + R"(dump_rpcs3\r.0.0.mcr)");
+    auto LOL = Data(regionIn.data, regionIn.size);
+    region.read(&LOL);
+    ChunkManager* chunk = region.getNonEmptyChunk();
+    chunk->ensure_decompress(CONSOLE::RPCS3);
+    DataManager chunkOut(chunk);
+    chunkOut.writeToFile(dir_path + "rpcs3_chunk_dec.bin");
+
+
+
+
+
 
     /*
     ConsoleParser out;

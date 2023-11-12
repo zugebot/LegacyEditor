@@ -14,6 +14,17 @@ ChunkManager* RegionManager::getChunk(int index) {
 }
 
 
+ChunkManager* RegionManager::getNonEmptyChunk() {
+    for (auto & chunk : chunks) {
+       if (chunk.size != 0) {
+           return &chunk;
+       }
+    }
+    return nullptr;
+}
+
+
+
 void RegionManager::read(Data* dataIn) {
     totalSectors = (dataIn->size + SECTOR_SIZE - 1) / SECTOR_SIZE;
 
@@ -58,6 +69,7 @@ void RegionManager::read(Data* dataIn) {
         // set chunk's decompressed size attribute
         switch (console) {
             case CONSOLE::PS3:
+            case CONSOLE::RPCS3:
                 chunk.dec_size = managerIn.readInt32();
                 chunk.dec_size = managerIn.readInt32();
                 break;
@@ -103,6 +115,7 @@ Data RegionManager::write(CONSOLE consoleIn) {
     u32 data_size = total_sectors * SECTOR_SIZE;
     Data dataOut = Data(data_size);
     DataManager managerOut(dataOut);
+
     if (consoleIn == CONSOLE::VITA) {
         managerOut.setLittleEndian();
     }
@@ -135,6 +148,7 @@ Data RegionManager::write(CONSOLE consoleIn) {
 
         switch (console) {
             case CONSOLE::PS3:
+            case CONSOLE::RPCS3:
                 managerOut.writeInt32(chunk.dec_size);
                 managerOut.writeInt32(chunk.dec_size);
                 break;
