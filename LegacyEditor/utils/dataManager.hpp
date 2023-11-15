@@ -52,7 +52,7 @@ public:
 
     // READING SECTION
 
-    u8 readByte();
+    u8 readInt8();
     u16 readInt16();
     i32 readInt24();
     i32 readInt24(bool isLittleIn);
@@ -61,6 +61,15 @@ public:
     bool readBool();
     float readFloat();
     double readDouble();
+
+    /// reads at offset from .data, not .ptr! Does not increment .ptr.
+    u8 readInt8AtOffset(u32 offset);
+    /// reads at offset from .data, not .ptr! Does not increment .ptr.
+    u16 readInt16AtOffset(u32 offset);
+    /// reads at offset from .data, not .ptr! Does not increment .ptr.
+    u32 readInt32AtOffset(u32 offset);
+    /// reads at offset from .data, not .ptr! Does not increment .ptr.
+    u64 readInt64AtOffset(u32 offset);
 
     std::string readUTF();
     std::string readString(i32 length);
@@ -79,13 +88,22 @@ public:
 
     // WRITING SECTION
 
-    void writeByte(u8 byteIn);
+    void writeInt8(u8 byteIn);
     void writeInt16(u16 shortIn);
     void writeInt24(u32 intIn);
     void writeInt32(u32 intIn);
     void writeInt64(u64 longIn);
     void writeFloat(float floatIn);
     void writeDouble(double doubleIn);
+
+    /// writes at offset from .data, not .ptr! Does not increment .ptr.
+    void writeInt8AtOffset(u32 offset, u8 byteIn);
+    /// writes at offset from .data, not .ptr! Does not increment .ptr.
+    void writeInt16AtOffset(u32 offset, u16 shortIn);
+    /// writes at offset from .data, not .ptr! Does not increment .ptr.
+    void writeInt32AtOffset(u32 offset, u32 intIn);
+    /// writes at offset from .data, not .ptr! Does not increment .ptr.
+    void writeInt64AtOffset(u32 offset, u64 longIn);
 
     void writeData(Data* dataIn);
     void writeFile(File* fileIn);

@@ -7,7 +7,7 @@
 
 
 void NBT::writeTag(NBTBase* tag, DataManager& output) {
-    output.writeByte(tag->getId());
+    output.writeInt8(tag->getId());
 
     if (tag->getId() != NBTType::NBT_NONE) {
         output.writeUTF("");
@@ -18,7 +18,7 @@ void NBT::writeTag(NBTBase* tag, DataManager& output) {
 
 NBTBase* NBT::readTag(DataManager& input) {
     NBTBase* returnValue = nullptr;
-    int id = input.readByte();
+    int id = input.readInt8();
     if (id != 0) {
         std::string key = input.readUTF();
         returnValue = readNBT(static_cast<NBTType>(id), key, input);

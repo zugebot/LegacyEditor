@@ -2,9 +2,9 @@
 
 
 void StfsVD::readStfsVD(DataManager& input) {
-    size = input.readByte();
-    input.readByte(); // reserved
-    blockSeparation = input.readByte();
+    size = input.readInt8();
+    input.readInt8(); // reserved
+    blockSeparation = input.readInt8();
     input.setLittleEndian();
     fileTableBlockCount = input.readInt16();
     fileTableBlockNum = input.readInt24();
@@ -191,7 +191,7 @@ ND u32 StfsPackage::getHashAddressOfBlock(u32 blockNum) {
                     ((computeLevel1BackingHashBlockNumber(blockNum) << 0xC) + firstHashTableAddress + level1Off) +
                     ((blockNum % 0xAA) * 0x18);
             data.seek(pos + 0x14);
-            hashAddr += ((data.readByte() & 0x40) << 6);
+            hashAddr += ((data.readInt8() & 0x40) << 6);
             break;
     }
     return hashAddr;
@@ -230,7 +230,7 @@ void StfsPackage::readFileListing() {
             fe.name = data.readString(0x28);
 
             // read the name length
-            fe.nameLen = data.readByte();
+            fe.nameLen = data.readInt8();
             if ((fe.nameLen & 0x3F) == 0) {
                 data.seek(currentAddr + ((i + 1) * 0x40));
                 continue;
@@ -306,7 +306,7 @@ HashEntry StfsPackage::getBlockHashEntry(u32 blockNum) {
     // read the hash entry
     HashEntry he{};
     data.readOntoData(0x14, he.blockHash);
-    he.status = data.readByte();
+    he.status = data.readInt8();
     he.nextBlock = data.readInt24();
 
     return he;
@@ -461,7 +461,7 @@ void StfsPackage::parse() {
 
     for (u32 i = 0; i < topTable.entryCount; i++) {
         data.readOntoData(0x14, topTable.entries[i].blockHash);
-        topTable.entries[i].status = data.readByte();
+        topTable.entries[i].status = data.readInt8();
         topTable.entries[i].nextBlock = data.readInt24();
     }
 

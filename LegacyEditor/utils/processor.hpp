@@ -41,6 +41,9 @@ static std::string dir_path = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\)";
 #define ND [[nodiscard]]
 #define MU [[maybe_unused]]
 
+#define BREAK_CASE break; case
+#define BREAK_DEFAULT break; default
+
 #define EXPECT_FALSE(COND) (__builtin_expect((COND), 0)) // [[unlikely]]
 #define EXPECT_TRUE(COND) (__builtin_expect((COND), 1))  // [[likely]]
 

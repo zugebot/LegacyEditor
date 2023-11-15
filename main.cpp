@@ -38,9 +38,6 @@ void compareNBT(NBTBase* first, NBTBase* second) {
 
 
 
-
-
-
 int main() {
     std::cout << "goto 'LegacyEditor/utils/processor.hpp' and change 'dir_path' to be the path of the src'" << std::endl;
 
@@ -53,7 +50,12 @@ int main() {
 
     ConsoleParser parser;
      // parser.readConsoleFile(dir_path + "tests/GAMEDATA_VITA.bin");
-    parser.readConsoleFile(dir_path + "GAMEDATA (1)");
+    int status = parser.readConsoleFile(dir_path + "tests/GAMEDATA_VITA.bin");
+    if (status) {
+        printf("failed to load file\n");
+        return 1;
+    }
+
     FileListing fileListing(parser);
     fileListing.saveToFolder(dir_path + "dump_ps3");
 

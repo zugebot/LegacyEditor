@@ -7,7 +7,7 @@
 
 void NBTTagCompound::writeEntry(const std::string& name, NBTBase data, DataManager& output) {
     int id = data.getId();
-    output.writeByte(id);
+    output.writeInt8(id);
     if (id != 0) {
         output.writeUTF(name);
         data.write(output);

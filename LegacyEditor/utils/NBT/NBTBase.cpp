@@ -10,7 +10,7 @@ void NBTBase::write(DataManager& output) const {
         case NBT_INT8: {
             u8 writeVal = 0;
             memcpy(&writeVal, data, 1);
-            output.writeByte(writeVal);
+            output.writeInt8(writeVal);
             return;
         }
         case NBT_INT16: {
@@ -56,7 +56,7 @@ void NBTBase::write(DataManager& output) const {
         }
         case TAG_LIST: {
             auto* val = toType<NBTTagList>();
-            output.writeByte(static_cast<int>(val->tagType));
+            output.writeInt8(static_cast<int>(val->tagType));
             output.writeInt32(val->tagList.size());
             for (auto& i: val->tagList) { i.write(output); }
             return;
@@ -69,7 +69,7 @@ void NBTBase::write(DataManager& output) const {
                 it++;
             }
 
-            output.writeByte(0);
+            output.writeInt8(0);
             return;
         }
 
@@ -258,7 +258,7 @@ std::string NBTBase::toString() const {
 void NBTBase::read(DataManager& input) {
     switch (type) {
         case NBT_INT8: {
-            u8 readData = input.readByte();
+            u8 readData = input.readInt8();
             data = malloc(1);
             memcpy(data, &readData, 1);
             return;
@@ -311,7 +311,7 @@ void NBTBase::read(DataManager& input) {
         }
         case TAG_LIST: {
             auto* val = toType<NBTTagList>();
-            val->tagType = static_cast<NBTType>(input.readByte());
+            val->tagType = static_cast<NBTType>(input.readInt8());
             auto size = (int) input.readInt32();
             if (!size) {
                 //this prevents the old NBT style where empty list tags would be of type 1 (byte)
@@ -337,7 +337,7 @@ void NBTBase::read(DataManager& input) {
             auto* val = toType<NBTTagCompound>();
             uint8_t b0;
 
-            while (b0 = input.readByte(), b0 != 0) {
+            while (b0 = input.readInt8(), b0 != 0) {
                 std::string s = input.readUTF();
                 NBTBase* nbtBase = NBT::readNBT((NBTType) b0, s, input);
                 val->tagMap[s] = *nbtBase;

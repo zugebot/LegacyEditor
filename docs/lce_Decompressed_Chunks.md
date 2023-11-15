@@ -41,7 +41,7 @@ By using this document, you agree to abide by these terms. Your use of the docum
 - Example2: `[0x0...0x11/0x19]` would be from offset 0 going to byte 0x11 (17) or 0x19 (25)
 depending on the circumstances
 
-## Every value is read in big endian format unless specified
+## Every value is parseLayer in big endian format unless specified
 
 ### `Liquid data` was introduced in the Aquatic update
 
@@ -99,7 +99,7 @@ Inhabited Time = 74775
 
 ## 2.1 Sections' Size `[0x1a..0x1b]`
 - The first two bytes of the section header as a `(short/int16_t)` represent the chunk's sections' size (not in bytes)
-- The sections' size in bytes is obtained by multiplying the read value by 0x100 (256)
+- The sections' size in bytes is obtained by multiplying the parseLayer value by 0x100 (256)
 ## 2.2 Section Jump Table `[0x1c...0x3b]`
 - The following is an array of 16 `short/int16_t` values that represent the sections' jump table
 - The section table is used to jump a certain section
@@ -109,7 +109,7 @@ index 15 will be the last section `(Y240->Y256)`)
 ## 2.3 Section Size Table `[0x3c...0x4b]`
 - The following is an array of 16 `byte/int8_t` values that represent the sections' size table
 - The size table can be used to pre-allocate enough space for the chunk
-- The read value must be multiplied by 0x100 (256) in order to get the size in bytes, this will be discussed later why
+- The parseLayer value must be multiplied by 0x100 (256) in order to get the size in bytes, this will be discussed later why
 - If the size is `0` that does NOT mean it's the last chunk to parse,
 there could be sections above it that are not empty
 
@@ -153,7 +153,7 @@ the sections' size in bytes `(see 2.1 point 2)`
 - The following 11 significant bits are the ID of the block
 - The last 4 significant bits is the data of the block
 - Keep in mind that this is little endian format, reading in big endian will be this instead:
-  - The 4 most significant bits of the read value is the 4 least significant bits of the block ID
+  - The 4 most significant bits of the parseLayer value is the 4 least significant bits of the block ID
   - The following 4 significant bits is the data of the block
   - The following bit determines if the block is waterlogged
   - The last 7 bits are the most significant bits of the block ID
@@ -197,7 +197,7 @@ an oak-wood stairs block facing west and upside down and waterlogged
 
 ## 3.1.1 A Grid Index
 - Each grid index in the table is 2 bytes as a `short/int16_t` <span style="color:red"> in little endian format </span>
-- The 4 most significant bits of the read value is the format ID
+- The 4 most significant bits of the parseLayer value is the format ID
 - The following 8 bits is the offset where the grid is stored (multiplied by 4)
 - The formats are as follows:
 
@@ -254,7 +254,7 @@ by bit shifting left 1 by the number of bits per block (1 << `bits per block`)
 - Each bit in additional `segments` appends onto the palette index in any given index of `segment`
 
 ### 3.2.2.3 How are Palettes Parsed?
-- First step is to read the `palette` into an array by getting the size of the palette with (1 << `bits per block`)
+- First step is to parseLayer the `palette` into an array by getting the size of the palette with (1 << `bits per block`)
   - Each `palette` entry is a `short/int16_t` type
 - Second step is to create a loop for each `bits per block`
 - Third step is to loop 64 times (for each bit) inside the `bits per block` loop
@@ -343,12 +343,12 @@ the bits per block for this format ID is 2 (see 3.1 format table)
 
 The segments will be used to get indexes
 Lets break down segments into bits:
-Segment[0]:
+Segment[0] (each number represents 2 bits: 0-3):
 0 0 0 1 0 0 1 1 0 0 0 1 0 0 0 0
 0 0 1 1 0 0 0 1 0 0 1 1 0 0 0 0
 0 0 0 1 0 0 1 1 0 0 1 1 0 0 0 0
 0 0 0 1 0 0 1 1 0 0 0 0 0 0 0 0
-Segment[1]:
+Segment[1] (each number represents 2 bits: 0-3):
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1
 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 1
@@ -474,9 +474,9 @@ which can be seen that no index in the indexes array is 5 to 7
 
 ## 4.1 Light Section size `[*+0x4c...*+0x4f]`
 - The first 4 bytes of a light section header as a `(int/int32_t)` represent the light section's size (not in bytes)
-- The light section's size in bytes is obtained by multiplying the read value by 0x80 (128) and then adding 128
+- The light section's size in bytes is obtained by multiplying the parseLayer value by 0x80 (128) and then adding 128
 (which is the size of the light section header)
-- If the size read value is 0, that means the light values are all in the header
+- If the size parseLayer value is 0, that means the light values are all in the header
 
 ## 4.2 Light Section's Header `[*+X+0x50...*+X+Y+0x4f]`
 - `X` is the size of the previous light sections sizes added together `(see 4.1 point 2 for size and 4 for the different sections)`
@@ -484,8 +484,8 @@ which can be seen that no index in the indexes array is 5 to 7
 - The following 0x80 (128) bytes is the header for the lights in the section
 - Each byte in the header points to the start of the light data
 - Each byte in the header is an offset the light data with 2 exceptions:
-  - If the read byte is `0x80 (128)` then the 128 bytes is filled with `0` values
-  - If the read byte is `0x81 (129)` then the 128 bytes is filled with `0xf (15)` values
+  - If the parseLayer byte is `0x80 (128)` then the 128 bytes is filled with `0` values
+  - If the parseLayer byte is `0x81 (129)` then the 128 bytes is filled with `0xf (15)` values
 - Each offset is multiplied by 128 plus 128 to get the actual offset from the start of the light header `(start of 4.2)`
 
 - The next 0x80 bytes `[X+0x4..X+0x83]` is the light data header. Every byte is an offset pointing to where the light data should be retrieved from (each offset points to somewhere in the light data section, each taking up 0x80 bytes). Multiply the offset by `0x80` to get the actual offset in the light data.
