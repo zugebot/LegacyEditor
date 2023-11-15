@@ -15,7 +15,10 @@ public:
     i16 terrainPopulated;
     i64 lastUpdate;
     i64 inhabitedTime;
+
+    /// Used to skip the lights in the chunk
     i32 DataGroupCount;
+
     i32 chunkX;
     i32 chunkZ;
     u16_vec submerged;

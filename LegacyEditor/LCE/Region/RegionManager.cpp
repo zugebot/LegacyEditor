@@ -159,7 +159,7 @@ Data RegionManager::write(CONSOLE consoleIn) {
                 managerOut.writeInt32(chunk.dec_size);
                 break;
         }
-        managerOut.write(chunk.start(), chunk.size);
+        managerOut.writeBytes(chunk.start(), chunk.size);
     }
 
     return dataOut;

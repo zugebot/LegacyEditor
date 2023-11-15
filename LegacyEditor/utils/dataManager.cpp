@@ -46,7 +46,7 @@ void DataManager::incrementPointer(i32 amount) {
 
 u8 DataManager::readByte() {
     u8 value = ptr[0];
-    incrementPointer(1);
+    incrementPointer1();
     return value;
 }
 
@@ -58,7 +58,7 @@ u16 DataManager::readInt16() {
     } else {
         value = ((ptr[1] << 8) | (ptr[0]));
     }
-    incrementPointer(2);
+    incrementPointer2();
     return value;
 }
 
@@ -99,7 +99,7 @@ u32 DataManager::readInt32() {
     } else {
         value = ((ptr[3] << 24) | (ptr[2] << 16) | (ptr[1] << 8) | (ptr[0]));
     }
-    incrementPointer(4);
+    incrementPointer4();
     return value;
 }
 
@@ -127,7 +127,7 @@ u64 DataManager::readInt64() {
                 ((u64) ptr[1] <<  8) |
                 ((u64) ptr[0]));
     }
-    incrementPointer(8);
+    incrementPointer8();
     return val;
 }
 
@@ -262,6 +262,7 @@ int DataManager::readFromFile(const std::string& fileStrIn) {
     fseek(file, 0, SEEK_SET);
 
     data = new u8[newSize];
+    ptr = data;
     size = newSize;
 
     /*
@@ -281,7 +282,7 @@ int DataManager::readFromFile(const std::string& fileStrIn) {
 
 void DataManager::writeByte(u8 byteIn) {
     ptr[0] = byteIn;
-    incrementPointer(1);
+    incrementPointer1();
 }
 
 
@@ -293,7 +294,7 @@ void DataManager::writeInt16(u16 shortIn) {
         ptr[0] =  shortIn       & 0xff;
         ptr[1] = (shortIn >> 8) & 0xff;
     }
-    incrementPointer(2);
+    incrementPointer2();
 }
 
 
@@ -327,7 +328,7 @@ void DataManager::writeInt32(u32 intIn) {
         ptr[2] = (intIn >> 16) & 0xff;
         ptr[3] = (intIn >> 24) & 0xff;
     }
-    incrementPointer(4);
+    incrementPointer4();
 }
 
 
@@ -351,7 +352,7 @@ void DataManager::writeInt64(u64 longIn) {
         ptr[6] = (longIn >> 48) & 0xff;
         ptr[7] = (longIn >> 56) & 0xff;
     }
-    incrementPointer(8);
+    incrementPointer8();
 }
 
 
@@ -365,31 +366,31 @@ void DataManager::writeDouble(double doubleIn) {
 }
 
 
-void DataManager::write(u8* dataPtrIn, u32 length) {
+void DataManager::writeBytes(u8* dataPtrIn, u32 length) {
     memcpy(ptr, dataPtrIn, length);
     incrementPointer((i32)length);
 }
 
 
 void DataManager::writeData(Data* dataIn) {
-    write(dataIn->start(), dataIn->size);
+    writeBytes(dataIn->start(), dataIn->size);
 }
 
 
 void DataManager::writeFile(File* fileIn) {
-    write(fileIn->data.start(), fileIn->data.size);
+    writeBytes(fileIn->data.start(), fileIn->data.size);
 }
 
 
 void DataManager::writeFile(File& fileIn) {
-    write(fileIn.data.start(), fileIn.data.size);
+    writeBytes(fileIn.data.start(), fileIn.data.size);
 }
 
 
 void DataManager::writeUTF(std::string str) {
     u32 str_size = str.size();
     writeInt16(str_size);
-    write((u8*)str.data(), str.size());
+    writeBytes((u8*) str.data(), str.size());
     incrementPointer((i32)str_size);
 
 }
@@ -401,30 +402,67 @@ void DataManager::writeWString(const std::string& str, u32 length) {
 
     for (u32 i = 0; i < length && i < std::min((u32)str.size(), length); ++i) {
         if (isBig) {
-            write(emptyPtr, 1);
+            writeBytes(emptyPtr, 1);
             writeByte(str[i]);
         } else {
             writeByte(str[i]);
-            write(emptyPtr, 1);
+            writeBytes(emptyPtr, 1);
         }
     }
 
     // If the given length is greater than the string size, add padding
     for (size_t i = str.size(); i < length; ++i) {
-        write(emptyPtr, 1);
-        write(emptyPtr, 1);
+        writeBytes(emptyPtr, 1);
+        writeBytes(emptyPtr, 1);
     }
 }
 
 int DataManager::writeToFile(const std::string& fileName) const {
     FILE* f_out = fopen(fileName.c_str(), "wb");
     if (f_out == nullptr) {
-        printf("Failed to write to output file '%s'", fileName.c_str());
+        printf("Failed to writeBytes to output file '%s'", fileName.c_str());
         return 1;
     }
     fwrite(data, 1, size, f_out);
     fclose(f_out);
     return 0;
 }
+
+
+int DataManager::writeToFile(u8* ptrIn, u32 sizeIn, const std::string& fileName) const {
+    FILE* f_out = fopen(fileName.c_str(), "wb");
+    if (f_out == nullptr) {
+        printf("Failed to writeBytes to output file '%s'", fileName.c_str());
+        return 1;
+    }
+    if (ptrIn < data || ptrIn + sizeIn > data + size) {
+        printf("Tried to writeBytes data from out of bounds '%s'", fileName.c_str());
+        return 1;
+    }
+
+    fwrite(ptrIn, 1, sizeIn, f_out);
+    fclose(f_out);
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

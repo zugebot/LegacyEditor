@@ -1,3 +1,4 @@
+#include "LegacyEditor/utils/time.hpp"
 #include "v12Chunk.hpp"
 #include <algorithm>
 
@@ -16,7 +17,7 @@ namespace universal {
         readBlocks();
         readLights();
         chunkData.heightMap = read256(dataManager);
-        chunkData.terrainPopulated = (short) dataManager.readInt16();
+        chunkData.terrainPopulated = (i16) dataManager.readInt16();
         chunkData.biomes = read256(dataManager);
         readNBTData();
         // return convertLCE1_13RegionToUniversal(chunkData, dim);
@@ -37,42 +38,47 @@ namespace universal {
     }
 
 
+    /**
+     * 0b10000000 = 128
+     * 0b10000001 = 129
+     * 0b11111111 = 255
+     *
+     * toIndex(num) = return num * 128 + 128;
+     * java and lce supposedly store light data in the same way
+     */
     void V12Chunk::readLights() {
-        u8_vec_vec dataArray;
+        chunkData.skyLight = u8_vec(32768);
+        chunkData.blockLight = u8_vec(32768);
+        int writeOffset = 0;
 
+        chunkData.DataGroupCount = 0;
+        u8_vec_vec dataArray(4);
         for (int i = 0; i < 4; i++) {
-            u8_vec item = read128(dataManager);
-            dataArray.push_back(item);
+            i32 num = (i32) dataManager.readInt32();
+            int index = toIndex(num);
+            dataArray[i] = dataManager.readIntoVector(index);
+            chunkData.DataGroupCount += (i32)dataArray[i].size();
         }
 
-        chunkData.DataGroupCount = (i32)(dataArray[0].size() + dataArray[1].size() + dataArray[2].size() + dataArray[3].size());
-        
-        int segments[4] = {0, 0, 1, 1};
-        int offsets[4] = {0, 16384, 0, 16384};
-        u8_vec_vec lightsData = {u8_vec(32768), u8_vec(32768)};
-
-        for (int j = 0; j < 4; j++) {
-            int startingIndex = offsets[j];
-            int currentLightSegment = segments[j];
-            u8_vec data = dataArray[j];
-
+        auto processLightData = [](const u8_vec& data, u8_vec& lightData, int& offset) {
             for (int k = 0; k < 128; k++) {
-                u8 headerValue = data[k];
-                if (headerValue == 128 || headerValue == 0x81) {
-                    copyByte128(lightsData[currentLightSegment],
-                                k * 128 + startingIndex,
-                                (headerValue == (u8) 0x80) ? (u8) 0 : (u8) 255);
+                if (data[k] == 128) {
+                    memset(&lightData[offset], 0, 128);
+                } else if (data[k] == 129) {
+                    memset(&lightData[offset], 255, 128);
                 } else {
-                    copyArray128(data,
-                                 (int) ((headerValue + 1) * 128),
-                                 lightsData[currentLightSegment], k * 128 + startingIndex);
+                    std::memcpy(&lightData[offset], &data[toIndex(data[k])], 128);
                 }
+                offset += 128;
             }
-        }
+        };
 
-        // java stores skylight (and block-light?) the same way LCE does, it does not need to be converted
-        chunkData.skyLight = lightsData[0];
-        chunkData.blockLight = lightsData[1];
+        // Process light data
+        processLightData(dataArray[0], chunkData.skyLight, writeOffset);
+        processLightData(dataArray[1], chunkData.skyLight, writeOffset);
+        writeOffset = 0; // Reset offset for block light
+        processLightData(dataArray[2], chunkData.blockLight, writeOffset);
+        processLightData(dataArray[3], chunkData.blockLight, writeOffset);
     }
 
 
@@ -108,9 +114,6 @@ namespace universal {
 
                         u16 offset = ((0x0f & v2) << 8 | v1) * 4;
                         u16 format = (v2 >> 4);
-
-
-
 
                         u16 grid[128];
                         u16 submergedData[128];
@@ -250,8 +253,7 @@ namespace universal {
         return true;
     }
     
-    
-    
+
     template<size_t BitsPerBlock>
     bool V12Chunk::parseWithLayers(u8 const* buffer, u16* grid, u16* submergedGrid) {
         int size = (1 << BitsPerBlock) * 2;
@@ -289,9 +291,6 @@ namespace universal {
         }
         return true;
     }
-    
-    
-    
-    
+
 }
 

@@ -83,14 +83,14 @@ void StfsPackage::extract(StfsFileEntry* entry, DataManager& out) {
         // pick up the change at the beginning, until we hit a hash table
         if ((u32) entry->blocksForFile <= blockCount) {
             data.readOntoData(entry->fileSize, buffer);
-            out.write(buffer, entry->fileSize);
+            out.writeBytes(buffer, entry->fileSize);
 
             // free the temp buffer
             delete[] buffer;
             return;
         } else {
             data.readOntoData(blockCount << 0xC, buffer);
-            out.write(buffer, blockCount << 0xC);
+            out.writeBytes(buffer, blockCount << 0xC);
         }
 
         // extract the blocks in between the tables
@@ -104,7 +104,7 @@ void StfsPackage::extract(StfsFileEntry* entry, DataManager& out) {
             data.readOntoData(0xAA000, buffer);
 
             // Write the bytes to the out file
-            out.write(buffer, 0xAA000);
+            out.writeBytes(buffer, 0xAA000);
 
             tempSize -= 0xAA000;
             blockCount += 0xAA;
@@ -120,7 +120,7 @@ void StfsPackage::extract(StfsFileEntry* entry, DataManager& out) {
             data.readOntoData(tempSize, buffer);
 
             // Write it to the out file
-            out.write(buffer, tempSize);
+            out.writeBytes(buffer, tempSize);
         }
 
         // free the temp buffer
@@ -139,7 +139,7 @@ void StfsPackage::extract(StfsFileEntry* entry, DataManager& out) {
         // read all the full blocks the file allocates
         for (u32 i = 0; i < fullReadCounts; i++) {
             extractBlock(block, buffer);
-            out.write(buffer, 0x1000);
+            out.writeBytes(buffer, 0x1000);
 
             block = getBlockHashEntry(block).nextBlock;
         }
@@ -147,7 +147,7 @@ void StfsPackage::extract(StfsFileEntry* entry, DataManager& out) {
         // read the remaining data
         if (fileSize != 0) {
             extractBlock(block, buffer, fileSize);
-            out.write(buffer, (int) fileSize);
+            out.writeBytes(buffer, (int) fileSize);
         }
     }
 }

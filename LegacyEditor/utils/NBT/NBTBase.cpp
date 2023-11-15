@@ -46,7 +46,7 @@ void NBTBase::write(DataManager& output) const {
         case TAG_BYTE_ARRAY: {
             auto* val = toType<NBTTagByteArray>();
             output.writeInt32(val->size);
-            output.write(val->array, val->size);
+            output.writeBytes(val->array, val->size);
             return;
         }
         case TAG_STRING: {

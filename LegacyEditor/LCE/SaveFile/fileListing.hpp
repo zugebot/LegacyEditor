@@ -56,10 +56,12 @@ public:
     i32 currentVersion{};
 
     FileListing() = default;
-    explicit FileListing(ConsoleParser& consoleParser)
-        : console(consoleParser.console) { read(consoleParser); }
-    explicit FileListing(ConsoleParser* consoleParser)
-        : console(consoleParser->console) { read(*consoleParser); }
+    explicit FileListing(ConsoleParser& consoleParser) : console(consoleParser.console) {
+        read(consoleParser);
+    }
+    explicit FileListing(ConsoleParser* consoleParser) : console(consoleParser->console) {
+        read(*consoleParser);
+    }
 
     void read(Data& dataIn);
     Data write(CONSOLE consoleOut);

@@ -3,19 +3,22 @@
 #include "LegacyEditor/utils/dataManager.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 
+#include <cstring>
+
 
 namespace universal {
 
 
 class ChunkParserBase {
-private:
-    static constexpr u8 MAGIC_128 = 0x80;
 public:
+
+    static i32 toIndex(i32 num) {
+        return (num + 1) * 128;
+    }
 
     static u8_vec read128(DataManager& inputData) {
         i32 num = (i32) inputData.readInt32();
-        u8_vec array1;
-        array1 = inputData.readIntoVector((num + 1) * MAGIC_128);
+        u8_vec array1 = inputData.readIntoVector(toIndex(num));
         return array1;
     }
 
@@ -26,16 +29,24 @@ public:
 
     /// TODO: can probably use memfill or whatever its called
     static void copyByte128(u8_vec& writeVector, int writeOffset, u8 value) {
-        for (int i = 0; i < MAGIC_128; i++) {
+        for (int i = 0; i < 128; i++) {
             writeVector[writeOffset + i] = value;
         }
     }
 
-    static void copyArray128(u8_vec& readVector, int readOffset, u8_vec& writeVector, int writeOffset) {
-        for (int i = 0; i < MAGIC_128; i++) {
-            writeVector[writeOffset + i] = readVector[readOffset + i];
-        }
+    static void copy0Byte128(u8_vec& writeVector, int writeOffset) {
+        memset(&writeVector[writeOffset], 0, 128);
     }
+
+    static void copy255Byte128(u8_vec& writeVector, int writeOffset) {
+        memset(&writeVector[writeOffset], 255, 128);
+
+    }
+
+    static void copyArray128(const u8_vec& srcVector, int srcOffset, u8_vec& destVector, int destOffset) {
+        std::memcpy(&destVector[destOffset], &srcVector[srcOffset], 128);
+    }
+
 
 };
 

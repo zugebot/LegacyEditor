@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <zconf.h>
 
 #include "LegacyEditor/utils/dataManager.hpp"
 #include "LegacyEditor/utils/enums.hpp"

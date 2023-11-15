@@ -45,6 +45,11 @@ public:
     ND u8 peekPreviousByte() const;
     void incrementPointer(i32 amount);
 
+    inline void incrementPointer1() { ptr += 1; }
+    inline void incrementPointer2() { ptr += 2; }
+    inline void incrementPointer4() { ptr += 4; }
+    inline void incrementPointer8() { ptr += 8; }
+
     // READING SECTION
 
     u8 readByte();
@@ -85,10 +90,11 @@ public:
     void writeData(Data* dataIn);
     void writeFile(File* fileIn);
     void writeFile(File& fileIn);
-    void write(u8* dataPtrIn, u32 length);
+    void writeBytes(u8* dataPtrIn, u32 length);
 
     void writeUTF(std::string str);
     void writeWString(const std::string& str, u32 length);
 
     int writeToFile(const std::string& fileName) const;
+    int writeToFile(u8* ptrIn, u32 sizeIn, const std::string& fileName) const;
 };

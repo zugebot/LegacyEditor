@@ -45,7 +45,11 @@ namespace universal {
         // #####################################################
 
         void writeBlocks();
-        void writeLights();
+
+        void writeLightSection(u8_vec& light, int& readOffset);
+        void writeLight(int& readOffset, u8_vec& light);
+        void writeLightData();
+
         void writeNBTData();
     };
 }
