@@ -1,0 +1,82 @@
+# SAVEFILE
+
+- [Icon]()
+- [Stats]()
+- [Settings]()
+    - [int8]
+    - allowCommands          (lce) (java)
+    - difficulty             (lce) (java)
+    - difficultyLocked       (lce) (java)
+    - hardcore               (lce) (java)
+    - initialized            (lce) (java)
+    - mapFeatures            (lce) (java)
+    - hasBeenInCreative      (lce)
+    - hasStronghold          (lce)
+    - hasStrongholdEndPortal (lce)
+    - newSeaLevel            (lce)
+    - spawnBonusChest        (lce)
+    - raining                (lce) (java)
+    - thundering             (lce) (java)
+    - [int16]
+      - 
+    - [int32]
+        - clearWeatherTime     (lce)
+        - gameType             (lce)
+        - generatorVersion     (lce)
+        - hellScale            (lce)
+        - rainTime             (lce)
+        - spawnX               (lce)
+        - spawnY               (lce)
+        - spawnZ               (lce)
+        - strongholdEndPortalX (lce)
+        - strongholdEndPortalZ (lce)
+        - strongholdX          (lce)
+        - strongholdY          (lce)
+        - strongholdZ          (lce)
+        - thunderTime          (lce)
+        - version              (lce)
+        - xzSize               (lce)
+    - [long]
+        - dayTime              (lce)
+        - lastPlayed           (lce)
+        - randomSeed           (lce)
+        - sizeOnDisk           (lce)
+        - time                 (lce)
+        - generatorName        (lce)
+        - levelName            (lce)
+    - [double]
+      - 
+
+
+- [Overworld]()
+    - [END]
+        - [Regions]
+            - [Chunks]
+                - Blocks
+                - Block Light
+                - SkyLight
+                - Entities
+                - Tile Entities
+- [Nether]()
+    - [Regions]
+        - [Chunks]
+            - Blocks
+            - Block Light
+            - SkyLight
+            - Entities
+            - Tile Entities
+- [End]()
+    - [Regions]
+        - [Chunks]
+            - Blocks
+            - Block Light
+            - SkyLight
+            - Entities
+            - Tile Entities
+- [Players]()
+  - 
+- [Maps]()
+
+
+
+
