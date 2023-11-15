@@ -48,6 +48,7 @@ namespace universal {
      * write the chunk's block data.
      */
     void V12Chunk::writeBlockData() {
+        // TODO: make sure every write uses the correct endianness, especially the section grid headers.
 
         std::vector<u16> blockVector;
         blockVector.reserve(64);
@@ -144,20 +145,20 @@ namespace universal {
                          */
                         u8 blockCount = blockVector.size();
                         /// grid format
-                        u8 format;
+                        u16 format;
                         /// find the correct format of the chunk
                         if (blockCount == 1) {
-                            format = 0x00;
+                            format = 0x0000;
                         } else if (blockCount == 2) {
-                            format = 0x02;
+                            format = 0x0002;
                         } else if (blockCount <= 4) {
-                            format = 0x04;
+                            format = 0x0004;
                         } else if (blockCount <= 8) {
-                            format = 0x06;
+                            format = 0x0006;
                         } else if (blockCount <= 16) {
-                            format = 0x08;
+                            format = 0x0008;
                         } else {
-                            format = 0x0e;
+                            format = 0x000e;
                         }
 
                         /*
@@ -166,52 +167,53 @@ namespace universal {
                         }
                          */
 
-                        u32 gridSize = GRID_SIZES[format];
+                        u16 gridSize = GRID_SIZES[format];
                         switch(format) {
-                            case 0x00: // data is stored as grid index?
+                            case 0x0000: // data is stored as grid index?
                                 // figure out from v12Chunk::readBlockData
                                 break;
-                            case 0x01: // NOT_USED
+                            case 0x0001: // NOT_USED
                                 printf("something went wrong... format=%d", format);
                                 break;
-                            case 0x02: // 1 bit
+                            case 0x0002: // 1 bit
                                 writeLayer<1>(blockVector, blockLocations);
                                 break;
-                            case 0x03: // 1 bit + submerged
+                            case 0x0003: // 1 bit + submerged
                                 writeLayers<1>();
                                 break;
-                            case 0x04: // 2 bit
+                            case 0x0004: // 2 bit
                                 writeLayer<2>(blockVector, blockLocations);
                                 break;
-                            case 0x05: // 2 bit + submerged
+                            case 0x0005: // 2 bit + submerged
                                 writeLayers<2>();
                                 break;
-                            case 0x06: // 3 bit
+                            case 0x0006: // 3 bit
                                 writeLayer<3>(blockVector, blockLocations);
                                 break;
-                            case 0x07: // 3 bit + submerged
+                            case 0x0007: // 3 bit + submerged
                                 writeLayers<3>();
                                 break;
-                            case 0x08: // 4 bit
+                            case 0x0008: // 4 bit
                                 writeLayer<4>(blockVector, blockLocations);
                                 break;
-                            case 0x09: // 4 bit + submerged
+                            case 0x0009: // 4 bit + submerged
                                 writeLayers<4>();
                                 break;
-                            case 0x0e: // write blocks in place [128]
+                            case 0x000e: // write blocks in place [128]
                                 writeWithMaxBlocks();
                                 break;
-                            case 0x0f: // write blocks and liquid in place [256]
+                            case 0x000f: // write blocks and liquid in place [256]
                                 writeWithMaxBlocks(); // write block data
                                 writeWithMaxBlocks(); // write liquid data
                                 break;
                             default:
                                 printf("something went wrong... format=%d", format);
                                 break;
-                        }
+                        } // end of switch (format)
 
                         /// write correct header data
-                        u16 gridID = 0; // do calculations... (format and offset where stored / 4)
+                        // TODO: This is probably wrong
+                        u16 gridID = format | gridSize << 2; // [(size / 4) << 4 == size << 2]
                         dataManager.writeInt16AtOffset(H_SECT_START + 2 * gridIndex, gridID);
 
                         /// increment a size value of the buffer size of the section
@@ -225,7 +227,7 @@ namespace universal {
             /// step 1: write section jump to section jump table
             dataManager.writeInt16AtOffset(H_SECT_JUMP_TABLE + 2 * sectionIndex, H_SECT_START);
             /// step 2: write section size to section size table
-            u8 sectionReducedSize = 0; // calculate...
+            u8 sectionReducedSize = 0; /// TODO: calculate...
             dataManager.writeInt8AtOffset(H_SECT_SIZE_TABLE + sectionIndex, sectionReducedSize);
             /// step 3: add section size to total section size
             V_sectionTotalSize += V_sectionSize;
@@ -285,6 +287,7 @@ namespace universal {
 
     }
 
+    /// make this copy all u16 blocks from the grid location or whatnot
     void V12Chunk::writeWithMaxBlocks() {
 
     }
