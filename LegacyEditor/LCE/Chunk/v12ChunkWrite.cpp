@@ -2,10 +2,20 @@
 
 
 
-bool isZero128(u8* ptr) {
+bool is0_128(u8* ptr) {
     u64* ptr64 = reinterpret_cast<u64*>(ptr);
     for (int i = 0; i < 16; ++i) {
         if (ptr64[i] != 0x0000000000000000) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool is255_128(u8* ptr) {
+    u64* ptr64 = reinterpret_cast<u64*>(ptr);
+    for (int i = 0; i < 16; ++i) {
+        if (ptr64[i] != 0xFFFFFFFFFFFFFFFF) {
             return false;
         }
     }
@@ -19,20 +29,20 @@ namespace universal {
     void V12Chunk::writeChunk(DataManager& managerOut, DIM) {
         dataManager = managerOut;
 
-        dataManager.writeInt32(chunkData.chunkX);
-        dataManager.writeInt32(chunkData.chunkZ);
-        dataManager.writeInt64(chunkData.lastUpdate);
-        dataManager.writeInt64(chunkData.inhabitedTime);
-        writeBlocks();
+        // dataManager.writeInt32(chunkData.chunkX);
+        // dataManager.writeInt32(chunkData.chunkZ);
+        // dataManager.writeInt64(chunkData.lastUpdate);
+        // dataManager.writeInt64(chunkData.inhabitedTime);
+        // writeBlocks();
         writeLightData();
-        dataManager.writeBytes(chunkData.heightMap.data(), 256);
-        dataManager.writeInt16(chunkData.terrainPopulated);
-        dataManager.writeBytes(chunkData.biomes.data(), 256);
-        writeNBTData();
+        // dataManager.writeBytes(chunkData.heightMap.data(), 256);
+        // dataManager.writeInt16(chunkData.terrainPopulated);
+        // dataManager.writeBytes(chunkData.biomes.data(), 256);
+        // writeNBTData();
     }
 
 
-    void V12Chunk::writeBlocks() {
+    void V12Chunk::writeBlockData() {
 
     }
 
@@ -43,9 +53,11 @@ namespace universal {
         u8* ptr = light.data() + readOffset;
 
         for (int i = 0; i < 128; i++) {
-            if (std::all_of(ptr, ptr + 128, [](u8 v) { return v == 0; })) {
+            if (is0_128(ptr)) {
+                // if (std::all_of(ptr, ptr + 128, [](u8 v) { return v == 0; })) {
                 dataManager.writeByte(128);
-            } else if (std::all_of(ptr, ptr + 128, [](u8 v) { return v == 255; })) {
+                // } else if (std::all_of(ptr, ptr + 128, [](u8 v) { return v == 255; })) {
+            } else if (is255_128(ptr)) {
                 dataManager.writeByte(129);
             } else {
                 sectionOffsets.push_back(readOffset);
