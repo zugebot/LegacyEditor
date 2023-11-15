@@ -1,6 +1,18 @@
 #include "v12Chunk.hpp"
 
 
+
+bool isZero128(u8* ptr) {
+    u64* ptr64 = reinterpret_cast<u64*>(ptr);
+    for (int i = 0; i < 16; ++i) {
+        if (ptr64[i] != 0x0000000000000000) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
 namespace universal {
 
 
@@ -28,17 +40,18 @@ namespace universal {
         std::vector<int> sectionOffsets; // To store offsets of sections
 
         // Write headers
+        u8* ptr = light.data() + readOffset;
+
         for (int i = 0; i < 128; i++) {
-            auto begin = light.begin() + readOffset;
-            auto end = begin + 128;
-            if (std::all_of(begin, end, [](u8 v) { return v == 0; })) {
+            if (std::all_of(ptr, ptr + 128, [](u8 v) { return v == 0; })) {
                 dataManager.writeByte(128);
-            } else if (std::all_of(begin, end, [](u8 v) { return v == 255; })) {
+            } else if (std::all_of(ptr, ptr + 128, [](u8 v) { return v == 255; })) {
                 dataManager.writeByte(129);
             } else {
                 sectionOffsets.push_back(readOffset);
                 dataManager.writeByte(sectionOffsets.size() - 1); // Use index as header
             }
+            ptr += 128;
             readOffset += 128;
         }
 
@@ -61,6 +74,7 @@ namespace universal {
         dataManager.writeInt32(static_cast<int>(size));
         dataManager.ptr = endPtr;
 
+        printf("%d: size=%d\n", index, dataManager.getPosition());
         dataManager.writeToFile(dataManager.data, dataManager.getPosition(), dir_path + "light_" + std::to_string(index) + ".bin");
     }
 
