@@ -28,6 +28,7 @@ namespace universal {
 
         void readNBTData();
         void readLights();
+        void readLights2();
         void readBlocks();
         static void putBlocks(u16_vec& writeVec, const u16* readArray, int writeOffset);
 
@@ -47,7 +48,7 @@ namespace universal {
         void writeBlocks();
 
         void writeLightSection(u8_vec& light, int& readOffset);
-        void writeLight(int& readOffset, u8_vec& light);
+        void writeLight(int index, int& readOffset, u8_vec& light);
         void writeLightData();
 
         void writeNBTData();

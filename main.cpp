@@ -64,8 +64,8 @@ int main() {
     auto real = DataManager(chunkManager);
     u16 chunkVersion = real.readInt16();
 
-    // auto _start = getNanoSeconds();
     chunkParser.readChunk(real, DIM::OVERWORLD);
+    // auto _start = getNanoSeconds();
     // auto diff = getNanoSeconds() - _start;
     // printf("time: %llu\n", diff);
 

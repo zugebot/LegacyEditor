@@ -25,14 +25,15 @@ namespace universal {
     }
 
     void V12Chunk::writeLightSection(u8_vec& light, int& readOffset) {
-        std::vector<int> sectionOffsets;  // To store offsets of sections
+        std::vector<int> sectionOffsets; // To store offsets of sections
 
         // Write headers
-        u8* ptr = light.data() + readOffset;
         for (int i = 0; i < 128; i++) {
-            if (std::all_of(ptr, ptr + 128, [](u8 v) { return v == 0; })) {
+            auto begin = light.begin() + readOffset;
+            auto end = begin + 128;
+            if (std::all_of(begin, end, [](u8 v) { return v == 0; })) {
                 dataManager.writeByte(128);
-            } else if (std::all_of(ptr, ptr + 128, [](u8 v) { return v == 255; })) {
+            } else if (std::all_of(begin, end, [](u8 v) { return v == 255; })) {
                 dataManager.writeByte(129);
             } else {
                 sectionOffsets.push_back(readOffset);
@@ -47,35 +48,45 @@ namespace universal {
         }
     }
 
-    void V12Chunk::writeLight(int& readOffset, u8_vec& light) {
+    void V12Chunk::writeLight(int index, int& readOffset, u8_vec& light) {
         u8* startPtr = dataManager.ptr;
-        dataManager.incrementPointer4(); // Placeholder for size
+        dataManager.writeInt32(0); // Placeholder for size
 
         writeLightSection(light, readOffset);
 
         // Calculate and write the size
         u8* endPtr = dataManager.ptr;
-        i64 size = (endPtr - startPtr - 4 - 128) / 128;  // -4 to exclude the size field itself
+        i64 size = (endPtr - startPtr - 4) / 128;  // -4 to exclude the size field itself
         dataManager.ptr = startPtr;
         dataManager.writeInt32(static_cast<int>(size));
         dataManager.ptr = endPtr;
+
+        dataManager.writeToFile(dataManager.data, dataManager.getPosition(), dir_path + "light_" + std::to_string(index) + ".bin");
     }
 
     void V12Chunk::writeLightData() {
+        Data _data(123456);
+        DataManager data(_data);
+
         int readOffset = 0;
-        writeLight(readOffset, chunkData.skyLight);
-        writeLight(readOffset, chunkData.skyLight);
+        writeLight(0, readOffset, chunkData.skyLight);
+        writeLight(1, readOffset, chunkData.skyLight);
         readOffset = 0;
-        writeLight(readOffset, chunkData.blockLight);
-        writeLight(readOffset, chunkData.blockLight);
+        writeLight(2, readOffset, chunkData.blockLight);
+        writeLight(3, readOffset, chunkData.blockLight);
+
+        delete[] _data.data;
     }
+
 
 
     void V12Chunk::writeNBTData() {
-        if (chunkData.NBTData != nullptr) {
-            NBT::writeTag(chunkData.NBTData, dataManager);
-        }
+
     }
+
+
+
+
 
 
 }
