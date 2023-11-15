@@ -54,9 +54,7 @@ namespace universal {
 
         for (int i = 0; i < 128; i++) {
             if (is0_128(ptr)) {
-                // if (std::all_of(ptr, ptr + 128, [](u8 v) { return v == 0; })) {
                 dataManager.writeByte(128);
-                // } else if (std::all_of(ptr, ptr + 128, [](u8 v) { return v == 255; })) {
             } else if (is255_128(ptr)) {
                 dataManager.writeByte(129);
             } else {
@@ -81,7 +79,7 @@ namespace universal {
 
         // Calculate and write the size
         u8* endPtr = dataManager.ptr;
-        i64 size = (endPtr - startPtr - 4) / 128;  // -4 to exclude the size field itself
+        i64 size = (endPtr - startPtr - 4 - 128) / 128;  // -4 to exclude the size field itself
         dataManager.ptr = startPtr;
         dataManager.writeInt32(static_cast<int>(size));
         dataManager.ptr = endPtr;
