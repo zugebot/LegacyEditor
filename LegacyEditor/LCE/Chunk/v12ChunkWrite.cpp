@@ -51,7 +51,6 @@ namespace universal {
 
         // Write headers
         u8* ptr = light.data() + readOffset;
-
         for (int i = 0; i < 128; i++) {
             if (is0_128(ptr)) {
                 dataManager.writeByte(128);
@@ -59,7 +58,7 @@ namespace universal {
                 dataManager.writeByte(129);
             } else {
                 sectionOffsets.push_back(readOffset);
-                dataManager.writeByte(sectionOffsets.size() - 1); // Use index as header
+                dataManager.writeByte(sectionOffsets.size() - 1);
             }
             ptr += 128;
             readOffset += 128;

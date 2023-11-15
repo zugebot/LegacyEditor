@@ -52,8 +52,10 @@ int main() {
     std::string outFilePath = dir_path + R"(tests\230918230206)";
 
     ConsoleParser parser;
-    parser.readConsoleFile(dir_path + "tests/GAMEDATA_VITA.bin");
+     // parser.readConsoleFile(dir_path + "tests/GAMEDATA_VITA.bin");
+    parser.readConsoleFile(dir_path + "GAMEDATA (1)");
     FileListing fileListing(parser);
+    fileListing.saveToFolder(dir_path + "dump_ps3");
 
     RegionManager region(fileListing.console);
     region.read(fileListing.overworld[2]);
