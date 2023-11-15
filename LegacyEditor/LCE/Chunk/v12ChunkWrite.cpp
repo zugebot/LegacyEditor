@@ -107,7 +107,12 @@ namespace universal {
 
                                     // get block
                                     u32 blockIndex = offsetInBlock + blockZ * 8192 + blockX * 512 + blockY * 2;
+
                                     u16 block = chunkData.blocks[blockIndex];
+
+                                    // IDK what the point of this is
+                                    u16 submerged = chunkData.submerged[blockIndex];
+
                                     // count it, evaluate it etc.
                                     if (!blockMap.contains(block)) {
                                         blockMap[block] = blockVector.size();
@@ -155,10 +160,11 @@ namespace universal {
                             format = 0x0e;
                         }
 
-
+                        /*
                         if (hasLiquidData) {
                             format++;
                         }
+                         */
 
                         u32 gridSize = GRID_SIZES[format];
                         switch(format) {
@@ -169,25 +175,25 @@ namespace universal {
                                 printf("something went wrong... format=%d", format);
                                 break;
                             case 0x02: // 1 bit
-                                writeLayer<1>();
+                                writeLayer<1>(blockVector, blockLocations);
                                 break;
                             case 0x03: // 1 bit + submerged
                                 writeLayers<1>();
                                 break;
                             case 0x04: // 2 bit
-                                writeLayer<2>();
+                                writeLayer<2>(blockVector, blockLocations);
                                 break;
                             case 0x05: // 2 bit + submerged
                                 writeLayers<2>();
                                 break;
                             case 0x06: // 3 bit
-                                writeLayer<3>();
+                                writeLayer<3>(blockVector, blockLocations);
                                 break;
                             case 0x07: // 3 bit + submerged
                                 writeLayers<3>();
                                 break;
                             case 0x08: // 4 bit
-                                writeLayer<4>();
+                                writeLayer<4>(blockVector, blockLocations);
                                 break;
                             case 0x09: // 4 bit + submerged
                                 writeLayers<4>();
@@ -203,11 +209,6 @@ namespace universal {
                                 printf("something went wrong... format=%d", format);
                                 break;
                         }
-
-
-
-
-
 
                         /// write correct header data
                         u16 gridID = 0; // do calculations... (format and offset where stored / 4)
@@ -238,11 +239,47 @@ namespace universal {
     }
 
 
+    /**
+     * 2: 1 |  2 | [_4] palette, [_8] positions
+     * 4: 2 |  4 | [_8] palette, [16] positions
+     * 6: 3 |  8 | [16] palette, [24] positions
+     * 8: 4 | 16 | [32] palette, [32] positions
+     * @tparam BitsPerBlock
+     */
     template<size_t BitsPerBlock>
-    void V12Chunk::writeLayer() {
+    void V12Chunk::writeLayer(u16_vec& blocks, u16_vec& positions) {
+        u32 palette_size = (1 << BitsPerBlock) * 2;
 
+        // write the block data
+        for (u16 block : blocks) {
+            dataManager.writeInt16(block);
+        }
+        // fill rest of empty palette with FF's
+        for (u64 rest = 0; rest < palette_size - blocks.size(); rest++) {
+            dataManager.writeInt16(0xffff);
+        }
+
+        /**
+         * write the position data
+         *
+         * so, write the first bit of each position, as a single u64,
+         * then the second, third etc. N times,
+         * where N is BitsPerBlock
+         */
+         for (u64 bitIndex = 0; bitIndex < BitsPerBlock; bitIndex++) {
+            u64 position = 0;
+            for (i32 locIndex = 0; locIndex < 64; locIndex++) {
+                u64 pos = positions[locIndex];
+                position &= ((pos >> bitIndex) & 1) << (63 - locIndex);
+            }
+            dataManager.writeInt64(position);
+         }
     }
 
+    /**
+     *
+     * @tparam BitsPerBlock
+     */
     template<size_t BitsPerBlock>
     void V12Chunk::writeLayers() {
 

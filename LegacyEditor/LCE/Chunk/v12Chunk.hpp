@@ -54,7 +54,7 @@ namespace universal {
         void writeBlockData();
         /// used to write only the palette and positions.\nDoes not write the liquid data!
         template<size_t BitsPerBlock>
-        void writeLayer();
+        void writeLayer(u16_vec& blocks, u16_vec& positions);
         /// used to write the palette, positions and liquid data.
         template<size_t BitsPerBlock>
         void writeLayers();

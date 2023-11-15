@@ -3,6 +3,12 @@
 #include <algorithm>
 
 
+
+static u32 nextHighestPower(u32 num) {
+
+}
+
+
 namespace universal {
 
 
@@ -129,33 +135,44 @@ namespace universal {
                         switch(format) {
                             case 0x00: // literally just fill the grid
                                 singleBlock(v1, v2, grid);
-                            BREAK_CASE 0x02: // 1 bit
+                                break;
+                            case 0x02: // 1 bit
                                 if EXPECT_FALSE (!parseLayer<1>(bufferPtr, grid)) { return; }
-                            BREAK_CASE 0x03: // 1 bit + submerged
+                                break;
+                            case 0x03: // 1 bit + submerged
                                 if EXPECT_FALSE (!parseWithLayers<1>(bufferPtr, grid, submergedData)) { return; }
                                 putBlocks(chunkData.submerged, submergedData, offsetInBlockWrite);
-                            BREAK_CASE 0x04: // 2 bit
+                                break;
+                            case 0x04: // 2 bit
                                 if EXPECT_FALSE (!parseLayer<2>(bufferPtr, grid)) { return; }
-                            BREAK_CASE 0x05: // 2 bit + submerged
+                                break;
+                            case 0x05: // 2 bit + submerged
                                 if EXPECT_FALSE (!parseWithLayers<2>(bufferPtr, grid, submergedData)) { return; }
                                 putBlocks(chunkData.submerged, submergedData, offsetInBlockWrite);
-                            BREAK_CASE 0x06: // 3 bit
+                                break;
+                            case 0x06: // 3 bit
                                 if EXPECT_FALSE (!parseLayer<3>(bufferPtr, grid)) { return; }
-                            BREAK_CASE 0x07: // 3 bit + submerged
+                                break;
+                            case 0x07: // 3 bit + submerged
                                 if EXPECT_FALSE (!parseWithLayers<3>(bufferPtr, grid, submergedData)) { return; }
                                 putBlocks(chunkData.submerged, submergedData, offsetInBlockWrite);
-                            BREAK_CASE 0x08: // 4 bit
+                                break;
+                            case 0x08: // 4 bit
                                 if EXPECT_FALSE (!parseLayer<4>(bufferPtr, grid)) { return; }
-                            BREAK_CASE 0x09: // 4bit + submerged
+                                break;
+                            case 0x09: // 4bit + submerged
                                 if EXPECT_FALSE (!parseWithLayers<4>(bufferPtr, grid, submergedData)) { return; }
                                 putBlocks(chunkData.submerged, submergedData, offsetInBlockWrite);
-                            BREAK_CASE 0x0e: // read 128 bytes for normal blocks
+                                break;
+                            case 0x0e: // read 128 bytes for normal blocks
                                 fillWithMaxBlocks(bufferPtr, grid);
-                            BREAK_CASE 0x0f:
+                                break;
+                            case 0x0f:
                                 fillWithMaxBlocks(bufferPtr, grid);
                                 fillWithMaxBlocks(bufferPtr + 128, submergedData);
                                 putBlocks(chunkData.submerged, submergedData, offsetInBlockWrite);
-                            BREAK_DEFAULT: // this should never occur
+                                break;
+                            default: // this should never occur
                                 return;
                         }
 
