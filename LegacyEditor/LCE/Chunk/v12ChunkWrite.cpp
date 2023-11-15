@@ -89,28 +89,19 @@ namespace universal {
     }
 
     void V12Chunk::writeLightData() {
-        Data _data(123456);
-        DataManager data(_data);
-
         int readOffset = 0;
         writeLight(0, readOffset, chunkData.skyLight);
         writeLight(1, readOffset, chunkData.skyLight);
         readOffset = 0;
         writeLight(2, readOffset, chunkData.blockLight);
         writeLight(3, readOffset, chunkData.blockLight);
-
-        delete[] _data.data;
     }
 
 
 
     void V12Chunk::writeNBTData() {
-
+        if (chunkData.NBTData != nullptr) {
+            NBT::writeTag(chunkData.NBTData, dataManager);
+        }
     }
-
-
-
-
-
-
 }
