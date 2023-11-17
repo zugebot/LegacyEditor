@@ -1,7 +1,3 @@
-#include "NBTBase.hpp"
-
-#include "LegacyEditor/utils/dataManager.hpp"
-#include "NBTTagCompound.hpp"
 #include "NBT.hpp"
 
 
@@ -91,7 +87,6 @@ void NBTBase::write(DataManager& output) const {
             return;
     }
 }
-
 
 void NBTBase::NbtFree() const {
     switch (type) {
@@ -368,7 +363,6 @@ void NBTBase::read(DataManager& input) {
     }
 }
 
-
 NBTBase NBTBase::copy() const {
     switch (type) {
         case NBT_INT8: {
@@ -458,60 +452,480 @@ NBTBase NBTBase::copy() const {
 MU bool NBTBase::equals(NBTBase check) { return false; }
 
 
-NBTBase convertType(NBTBase baseData, NBTType toType) {
-    switch (toType) {
-        case NBT_INT8: {
-            auto valueB = baseData.toPrimitiveType<u8>();
-            return {&valueB, 1, NBT_INT8};
-        }
-        case NBT_INT16: {
-            auto valueS = baseData.toPrimitiveType<i16>();
-            return {&valueS, 2, NBT_INT16};
-        }
-        case NBT_INT32: {
-            int value = baseData.toPrimitiveType<i32>();
-            return {&value, 4, NBT_INT32};
-        }
-        case NBT_INT64: {
-            auto valueL = baseData.toPrimitiveType<i64>();
-            return {&valueL, 8, NBT_INT64};
-        }
-        case NBT_FLOAT: {
-            auto valueF = baseData.toPrimitiveType<float>();
-            return {&valueF, 4, NBT_FLOAT};
-        }
-        case NBT_DOUBLE: {
-            auto valueD = baseData.toPrimitiveType<double>();
-            return {&valueD, 8, NBT_DOUBLE};
-        }
-        default:
-            return baseData.copy();
+void NBTTagCompound::writeEntry(const std::string& name, NBTBase data, DataManager& output) {
+    int id = data.getId();
+    output.writeInt8(id);
+    if (id != 0) {
+        output.writeUTF(name);
+        data.write(output);
     }
 }
 
 
-NBTBase* createNewByType(NBTType id) {
-    switch (id) {
-        case NBTType::NBT_NONE:
-        case NBTType::NBT_INT8:
-        case NBTType::NBT_INT16:
-        case NBTType::NBT_INT32:
-        case NBTType::NBT_INT64:
-        case NBTType::NBT_FLOAT:
-        case NBTType::NBT_DOUBLE:
-        default:
-            return new NBTBase(nullptr, id);
-        case NBTType::TAG_BYTE_ARRAY:
-            return new NBTBase(new NBTTagByteArray(), id);
-        case NBTType::TAG_STRING:
-            return new NBTBase(new NBTTagString(), id);
-        case NBTType::TAG_LIST:
-            return new NBTBase(new NBTTagList(), id);
-        case NBTType::TAG_COMPOUND:
-            return new NBTBase(new NBTTagCompound(), id);
-        case NBTType::TAG_INT_ARRAY:
-            return new NBTBase(new NBTTagIntArray(), id);
-        case NBTType::TAG_LONG_ARRAY:
-            return new NBTBase(new NBTTagLongArray(), id);
+std::vector<std::string> NBTTagCompound::getKeySet() {
+    std::vector<std::string> keySet;
+    auto it = tagMap.begin();
+    int size = (int) tagMap.size();
+    for (int x = 0; x < size; x++) {
+        keySet.push_back(it->first);
+        it++;
+    }
+    return keySet;
+}
+
+
+int NBTTagCompound::getSize() const { return (int) tagMap.size(); }
+
+
+void NBTTagCompound::setTag(const std::string& key, NBTBase value) {
+    if (tagMap.find(key) != tagMap.end()) tagMap[key].NbtFree();
+    tagMap[key] = value;
+}
+
+
+void NBTTagCompound::setByte(const std::string& key, uint8_t value) {
+    if (tagMap.find(key) != tagMap.end()) tagMap[key].NbtFree();
+    tagMap[key] = NBTBase(&value, 1, NBTType::NBT_INT8);
+}
+
+
+void NBTTagCompound::setShort(const std::string& key, short value) {
+    if (tagMap.find(key) != tagMap.end()) tagMap[key].NbtFree();
+    tagMap[key] = NBTBase(&value, 2, NBTType::NBT_INT16);
+}
+
+
+void NBTTagCompound::setInteger(const std::string& key, int value) {
+    if (tagMap.find(key) != tagMap.end()) tagMap[key].NbtFree();
+    tagMap[key] = NBTBase(&value, 4, NBTType::NBT_INT32);
+}
+
+
+void NBTTagCompound::setLong(const std::string& key, i64 value) {
+    if (tagMap.find(key) != tagMap.end()) tagMap[key].NbtFree();
+    tagMap[key] = NBTBase(&value, 8, NBTType::NBT_INT64);
+}
+
+/*
+void NBTTagCompound::setUniqueId(const std::string& key, UUIDJava value) {
+    setLong(key + "Most", value.getMostSignificantBits());
+    setLong(key + "Least", value.getLeastSignificantBits());
+}
+
+
+UUIDJava NBTTagCompound::getUniqueId(const std::string& key) {
+    return {getPrimitive<i64>(key + "Most"), getPrimitive<i64>(key + "Least")};
+}
+*/
+
+bool NBTTagCompound::hasUniqueId(const std::string& key) {
+    return hasKey(key + "Most", NBTType::TAG_PRIMITIVE) && hasKey(key + "Least", NBTType::TAG_PRIMITIVE);
+}
+
+
+void NBTTagCompound::setFloat(const std::string& key, float value) {
+    if (tagMap.find(key) != tagMap.end()) tagMap[key].NbtFree();
+    tagMap[key] = NBTBase(&value, 4, NBTType::NBT_FLOAT);
+}
+
+
+void NBTTagCompound::setDouble(const std::string& key, double value) {
+    if (tagMap.find(key) != tagMap.end()) tagMap[key].NbtFree();
+    tagMap[key] = NBTBase(&value, 8, NBTType::NBT_DOUBLE);
+}
+
+
+void NBTTagCompound::setString(const std::string& key, const std::string& value) {
+    if (tagMap.find(key) != tagMap.end()) tagMap[key].NbtFree();
+    tagMap[key] = NBTBase(new NBTTagString(value), NBTType::TAG_STRING);
+}
+
+void NBTTagCompound::setByteArray(const std::string& key, uint8_t* value, int size) {
+    if (tagMap.find(key) != tagMap.end()) tagMap[key].NbtFree();
+    auto* data = (u8*) malloc(size);//so the original can be safely deleted
+    memcpy(data, value, size);
+    tagMap[key] = NBTBase(new NBTTagByteArray(data, size), NBTType::TAG_BYTE_ARRAY);
+}
+
+
+void NBTTagCompound::setIntArray(const std::string& key, int* value, int size) {
+    if (tagMap.find(key) != tagMap.end()) tagMap[key].NbtFree();
+    int* data = (int*) malloc(size * 4); // so the original can be safely deleted
+    memcpy((void*) data, value, size * 4);
+    tagMap[key] = NBTBase(new NBTTagIntArray(data, size), NBTType::TAG_INT_ARRAY);
+}
+
+
+void NBTTagCompound::setLongArray(const std::string& key, i64* value, int size) {
+    if (tagMap.find(key) != tagMap.end()) tagMap[key].NbtFree();
+    auto* data = (i64*) malloc(size * 8);//so the original can be safely deleted
+    memcpy((void*) data, value, size * 8);   //the endianness is maintained because it is copied raw
+    tagMap[key] = NBTBase(new NBTTagLongArray(data, size), NBTType::TAG_LONG_ARRAY);
+}
+
+
+void NBTTagCompound::setCompoundTag(const std::string& key, NBTTagCompound* compoundTag) {
+    if (tagMap.find(key) != tagMap.end()) tagMap[key].NbtFree();
+    tagMap[key] = NBTBase(compoundTag, NBTType::TAG_COMPOUND);
+}
+
+
+void NBTTagCompound::setListTag(const std::string& key, NBTTagList* listTag) {
+    if (tagMap.find(key) != tagMap.end()) tagMap[key].NbtFree();
+    tagMap[key] = NBTBase(listTag, NBTType::TAG_LIST);
+}
+
+
+void NBTTagCompound::setBool(const std::string& key, uint8_t value) {
+    if (tagMap.find(key) != tagMap.end()) tagMap[key].NbtFree();
+    value = value ? 1 : 0;
+    tagMap[key] = NBTBase(&value, 1, NBTType::NBT_INT8);
+}
+
+
+NBTBase NBTTagCompound::getTag(const std::string& key) {
+    auto it = tagMap.find(key);
+    if (it != tagMap.end()) return it->second;
+    return {};
+}
+
+
+NBTType NBTTagCompound::getTagId(const std::string& key) {
+    NBTBase nbtBase = getTag(key);
+    return nbtBase.getId();
+}
+
+
+void NBTTagCompound::deleteAll() {
+    for (auto& pair: tagMap) { pair.second.NbtFree(); }
+    tagMap.clear();
+}
+
+
+bool NBTTagCompound::hasKey(const std::string& key) {
+    if (tagMap.find(key) != tagMap.end()) return true;
+    return false;
+}
+
+
+bool NBTTagCompound::hasKey(const std::string& key, int type) {
+    if (hasKey(key)) {
+        int i = getTagId(key);
+        if (i == type) {
+            return true;
+        } else if (type != NBTType::TAG_PRIMITIVE) {
+            return false;
+        }
+        return i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 6;
+    }
+    return false;
+}
+
+
+bool NBTTagCompound::hasKey(const std::string& key, NBTType type) {
+    if (hasKey(key)) {
+        int i = getTagId(key);
+        if (i == type) {
+            return true;
+        } else if (type != NBTType::TAG_PRIMITIVE) {
+            return false;
+        }
+        return i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 6;
+    }
+    return false;
+}
+
+
+std::string NBTTagCompound::getString(const std::string& key) {
+    if (hasKey(key, NBTType::TAG_STRING)) {
+        return NBTBase::toType<NBTTagString>(tagMap.at(key))->getString();
+    }
+    return "";
+}
+
+
+NBTTagByteArray* NBTTagCompound::getByteArray(const std::string& key) {
+    if (hasKey(key, NBTType::TAG_BYTE_ARRAY)) {
+        NBTBase byteArrayBase = tagMap.at(key);
+        return NBTBase::toType<NBTTagByteArray>(byteArrayBase);
+    }
+    return nullptr;
+}
+
+
+NBTTagIntArray* NBTTagCompound::getIntArray(const std::string& key) {
+    if (hasKey(key, NBTType::TAG_INT_ARRAY)) {
+        NBTBase intArrayBase = tagMap.at(key);
+        return NBTBase::toType<NBTTagIntArray>(intArrayBase);
+    }
+    return nullptr;
+}
+
+
+NBTTagLongArray* NBTTagCompound::getLongArray(const std::string& key) {
+    if (hasKey(key, NBTType::TAG_LONG_ARRAY)) {
+        NBTBase longArrayBase = tagMap.at(key);
+        return NBTBase::toType<NBTTagLongArray>(longArrayBase);
+    }
+    return nullptr;
+}
+
+
+NBTTagCompound* NBTTagCompound::getCompoundTag(const std::string& key) {
+    if (hasKey(key, NBTType::TAG_COMPOUND)) {
+        NBTBase base = tagMap.at(key);
+        return NBTBase::toType<NBTTagCompound>(base);
+    }
+    return nullptr;
+}
+
+
+NBTTagList* NBTTagCompound::getListTag(const std::string& key) {
+    if (hasKey(key, NBTType::TAG_LIST)) {
+        return NBTBase::toType<NBTTagList>(tagMap.at(key));
+    }
+    return nullptr;
+}
+
+
+bool NBTTagCompound::getBool(const std::string& key) { return getPrimitive<bool>(key); }
+
+
+void NBTTagCompound::removeTag(const std::string& key) {
+    if (!hasKey(key)) return;
+    tagMap.at(key).NbtFree();
+    tagMap.erase(key);
+}
+
+
+bool NBTTagCompound::hasNoTags() const { return tagMap.empty(); }
+
+void NBTTagCompound::merge(NBTTagCompound* other) {
+    auto it = other->tagMap.begin();
+    int size = (int) other->tagMap.size();
+    for (int x = 0; x < size; x++) {
+        std::string key = it->first;
+        NBTBase nbtBase = it->second;
+        if (nbtBase.getId() == NBTType::TAG_COMPOUND) {
+            if (hasKey(key, NBTType::TAG_COMPOUND)) {
+                NBTTagCompound* pNbtTagCompound = getCompoundTag(key);
+                pNbtTagCompound->merge(NBTBase::toType<NBTTagCompound>(nbtBase));
+            } else {
+                setTag(key, nbtBase.copy());
+            }
+        } else {
+            setTag(key, nbtBase.copy());
+        }
+        it++;
     }
 }
+
+
+void NBTTagList::appendTag(NBTBase nbt) {
+    if (tagType == NBTType::NBT_NONE) {
+        tagType = nbt.getId();
+    } else if (tagType != nbt.getId()) {
+        nbt.NbtFree();
+        return;
+    }
+    tagList.push_back(nbt);
+}
+
+
+void NBTTagList::set(int index, NBTBase nbt) {
+    if (index >= 0 && index < tagList.size()) {
+        tagList[index].NbtFree();
+        tagList[index] = nbt;
+    } else {
+        nbt.NbtFree();
+    }
+}
+
+
+void NBTTagList::insert(int index, NBTBase nbt) {
+    if (index >= 0 && index < tagList.size()) {
+        tagList.insert(tagList.begin() + index, nbt);
+    } else {
+        nbt.NbtFree();
+    }
+}
+
+
+void NBTTagList::removeTag(int index) {
+    if (index >= 0 && index < tagList.size()) {
+        tagList[index].NbtFree();
+        tagList.erase(tagList.begin() + index);
+    }
+}
+
+
+void NBTTagList::deleteAll() {
+    for (auto& pair: tagList) { pair.NbtFree(); }
+    tagList.clear();
+}
+
+
+bool NBTTagList::hasNoTags() const { return tagList.empty(); }
+
+
+NBTBase NBTTagList::get(int index) {
+    return (index >= 0 && index < tagList.size() ? tagList[index] : NBTBase(nullptr, NBTType::NBT_NONE));
+}
+
+
+NBTTagByteArray* NBTTagList::getByteArrayAt(int index) {
+    if (tagType == NBTType::TAG_BYTE_ARRAY) {
+        if (index >= 0 && index < tagList.size()) {
+            NBTBase nbtBase = tagList.at(index);
+            return NBTBase::toType<NBTTagByteArray>(nbtBase);
+        }
+    }
+    return nullptr;
+}
+
+
+std::string NBTTagList::getStringTagAt(int index) {
+    if (tagType == NBTType::TAG_STRING) {
+        if (index >= 0 && index < tagList.size()) {
+            NBTBase nbtBase = tagList.at(index);
+            return NBTBase::toType<NBTTagString>(nbtBase)->getString();
+        }
+    }
+    return "";
+}
+
+
+NBTTagList* NBTTagList::getListTagAt(int index) {
+    if (tagType == NBTType::TAG_LIST) {
+        if (index >= 0 && index < tagList.size()) {
+            NBTBase nbtBase = tagList.at(index);
+            return NBTBase::toType<NBTTagList>(nbtBase);
+        }
+    }
+    return nullptr;
+}
+
+
+NBTTagCompound* NBTTagList::getCompoundTagAt(int index) {
+    if (tagType == NBTType::TAG_COMPOUND) {
+        if (index >= 0 && index < tagList.size()) {
+            NBTBase nbtBase = tagList.at(index);
+            return NBTBase::toType<NBTTagCompound>(nbtBase);
+        }
+    }
+    return nullptr;
+}
+
+
+NBTTagIntArray* NBTTagList::getIntArrayAt(int index) {
+    if (tagType == NBTType::TAG_INT_ARRAY) {
+        if (index >= 0 && index < tagList.size()) {
+            NBTBase nbtBase = tagList.at(index);
+            return NBTBase::toType<NBTTagIntArray>(nbtBase);
+        }
+    }
+    return nullptr;
+}
+
+
+NBTTagLongArray* NBTTagList::getLongArrayAt(int index) {
+    if (tagType == NBTType::TAG_LONG_ARRAY) {
+        if (index >= 0 && index < tagList.size()) {
+            NBTBase nbtBase = tagList.at(index);
+            return NBTBase::toType<NBTTagLongArray>(nbtBase);
+        }
+    }
+    return nullptr;
+}
+
+
+int NBTTagList::tagCount() const {
+    return (int) tagList.size();
+}
+
+
+NBTType NBTTagList::getTagType() const {
+    return tagType;
+}
+
+/*
+UUIDJava NBTUtil::getUUIDFromTag(NBTTagCompound* tag) {
+    return {tag->getPrimitive<i64>("M"), tag->getPrimitive<i64>("L")};
+}
+
+
+NBTTagCompound* NBTUtil::createUUIDTag(UUIDJava uuid) {
+    auto* pNbtTagCompound = new NBTTagCompound();
+    pNbtTagCompound->setLong("M", uuid.getMostSignificantBits());
+    pNbtTagCompound->setLong("L", uuid.getLeastSignificantBits());
+    return pNbtTagCompound;
+}
+
+
+BlockPos NBTUtil::getPosFromTag(NBTTagCompound* tag) {
+    auto pos = BlockPos(tag->getPrimitive<int>("X"), tag->getPrimitive<int>("Y"), tag->getPrimitive<int>("Z"));
+    return pos;
+}
+
+
+NBTTagCompound* NBTUtil::createPosTag(BlockPos pos) {
+    auto* pNbtTagCompound = new NBTTagCompound();
+    pNbtTagCompound->setInteger("X", pos.x);
+    pNbtTagCompound->setInteger("Y", pos.y);
+    pNbtTagCompound->setInteger("Z", pos.z);
+    return pNbtTagCompound;
+}
+*/
+
+void NBT::writeTag(NBTBase* tag, DataManager& output) {
+    output.writeInt8(tag->getId());
+
+    if (tag->getId() != NBTType::NBT_NONE) {
+        output.writeUTF("");
+        tag->write(output);
+    }
+}
+
+
+NBTBase* NBT::readTag(DataManager& input) {
+    NBTBase* returnValue = nullptr;
+    int id = input.readInt8();
+    if (id != 0) {
+        std::string key = input.readUTF();
+        returnValue = readNBT(static_cast<NBTType>(id), key, input);
+    }
+    return returnValue;
+}
+
+
+NBTBase* NBT::readNBT(NBTType id, const std::string& key, DataManager& input) {
+    NBTBase* pNbtBase = createNewByType(id);
+    pNbtBase->read(input);
+    return pNbtBase;
+}
+
+/*
+uint8_t* NBT::writeCompressedTag(NBTBase* rootData, i64* outSize) {
+    DataOutputManager output;
+    writeTag(rootData, output);
+    // compress the data
+    uLong size = output.data.size();
+    auto* compressedData = (Bytef*) malloc(size);
+    uLongf compressedSize = size;
+    compress(compressedData, &compressedSize, output.data.data(), size);
+    *outSize = compressedSize;
+    return compressedData;
+}
+
+
+uint8_t* NBT::writeGZIPCompressedTag(NBTBase* rootData, i64* outSize) {
+    DataOutputManager output;
+    writeTag(rootData, output);
+    int sizeOfUncompressed = (int) output.data.size();
+    uLongf sizeOfCompressed = sizeOfUncompressed + 18;
+    auto* compressedData = (uint8_t*) malloc(sizeOfCompressed);
+    def(output.data.data(), compressedData, sizeOfUncompressed, &sizeOfCompressed, 31);
+    *outSize = sizeOfCompressed;
+    return compressedData;
+}
+*/

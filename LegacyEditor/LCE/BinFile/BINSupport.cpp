@@ -42,7 +42,7 @@ int BINHeader::readHeader(DataManager& binFile) {
     //skip all the irrelevant data to extract the savegame
     binFile.seek(0x1712);
     //get thumbnail image, if not present, use the title one if present
-    i32 thumbnailImageSize = (i32)binFile.readInt32();
+    u32 thumbnailImageSize = (u32)binFile.readInt32();
     if (thumbnailImageSize) {
         binFile.incrementPointer(4);//read the other size but it will not be used
         u8* thumbnailImageData = binFile.readBytes(thumbnailImageSize);
@@ -543,7 +543,7 @@ WorldOptions getTagsInImage(DataManager& image) {
         }
         // Check if the chunk is a tEXt chunk
         if (type != "tEXt") {
-            image.incrementPointer(i32(length + 4)); //the extra 4 is the crc
+            image.incrementPointer(u32(length + 4)); //the extra 4 is the crc
             continue;
         }
         // Read keyword

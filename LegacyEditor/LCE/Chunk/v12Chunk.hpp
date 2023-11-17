@@ -11,6 +11,9 @@ namespace universal {
      * "Aquatic" chunks.
      */
     class V12Chunk : public ChunkParserBase {
+    private:
+        /// used for making writeLights faster
+        std::vector<int> sectionOffsets;
     public:
         ChunkData chunkData;
         DataManager dataManager;
@@ -19,6 +22,10 @@ namespace universal {
         MU void readChunkForAccess(DataManager& managerIn, DIM dim);
 
         MU void writeChunk(DataManager& managerOut, DIM);
+
+        V12Chunk() {
+            sectionOffsets.reserve(64);
+        }
 
     private:
         /**
@@ -34,11 +41,10 @@ namespace universal {
 
         void readNBTData();
         void readLights();
-        void readLights2();
         void readBlocks();
         static void putBlocks(u16_vec& writeVec, const u16* readArray, int writeOffset);
 
-        static void singleBlock(u16 v1, u16 v2, u16* grid);
+        static void singleBlock(u8 v1, u8 v2, u16* grid);
         static void fillWithMaxBlocks(const u8* buffer, u16* grid);
 
         template<size_t BitsPerBlock>
@@ -52,14 +58,11 @@ namespace universal {
         // #####################################################
 
         void writeBlockData();
-        /// used to write only the palette and positions.\nDoes not write the liquid data!
+        /// used to write only the palette and positions.\nIt does not write liquid data, because I have been told that that is unnecessary.
         template<size_t BitsPerBlock>
         void writeLayer(u16_vec& blocks, u16_vec& positions);
-        /// used to write the palette, positions and liquid data.
-        template<size_t BitsPerBlock>
-        void writeLayers();
         /// used to write full block data, instead of using palette.
-        void writeWithMaxBlocks();
+        void writeWithMaxBlocks(u16_vec& blocks, u16_vec& positions);
 
         void writeLightSection(u8_vec& light, int& readOffset);
         void writeLight(int index, int& readOffset, u8_vec& light);

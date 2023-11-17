@@ -1,8 +1,7 @@
 #pragma once
 
 
-#include "LegacyEditor/utils/NBT/NBT.hpp"
-#include "LegacyEditor/utils/NBT/NBTTagCompound.hpp"
+#include "LegacyEditor/utils/NBT.hpp"
 #include "LegacyEditor/utils/mapcolors.hpp"
 #include "LegacyEditor/utils/picture.hpp"
 #include <iostream>

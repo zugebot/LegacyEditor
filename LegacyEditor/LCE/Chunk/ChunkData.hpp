@@ -1,6 +1,6 @@
 #pragma once
 
-#include "LegacyEditor/utils/NBT/include.hpp"
+#include "LegacyEditor/utils/NBT.hpp"
 #include "LegacyEditor/utils/enums.hpp"
 
 

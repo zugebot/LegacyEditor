@@ -17,7 +17,7 @@ public:
 
 
 inline RGB getRGB(int mapRgb) {
-    static std::vector<RGB> mapColors {
+    static const std::vector<RGB> mapColors {
             {0, 0, 0},
             {0, 0, 0},
             {0, 0, 0},
