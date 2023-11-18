@@ -510,9 +510,7 @@ void DataManager::writeFile(File& fileIn) {
 void DataManager::writeUTF(std::string str) {
     u32 str_size = str.size();
     writeInt16(str_size);
-    writeBytes((u8*) str.data(), str.size());
-    incrementPointer((i32)str_size);
-
+    writeBytes((u8*) str.data(), str_size);
 }
 
 

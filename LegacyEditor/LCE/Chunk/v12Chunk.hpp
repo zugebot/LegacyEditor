@@ -27,6 +27,16 @@ namespace universal {
             sectionOffsets.reserve(64);
         }
 
+        void placeBlock(int x, int y, int z, u16 block, u16 data = 0, bool waterlogged = false) {
+            int offset = y + 256 * z + 4096 * x;
+            u16 value = block << 4 | data;
+            if (waterlogged) {
+                value |= 0b1000000000000000;
+            }
+            chunkData.blocks[offset] = value;
+        }
+
+
     private:
         /**
          * key: grid format\n
@@ -42,16 +52,14 @@ namespace universal {
         void readNBTData();
         void readLights();
         void readBlocks();
-        static void putBlocks(u16_vec& writeVec, const u16* readArray, int writeOffset);
-
-        static void singleBlock(u8 v1, u8 v2, u16* grid);
-        static void fillWithMaxBlocks(const u8* buffer, u16* grid);
+        static void placeBlocks(u16_vec& writeVec, const u8* grid, int writeOffset);
+        static void fillWithMaxBlocks(const u8* buffer, u8* grid);
 
         template<size_t BitsPerBlock>
-        bool parseLayer(const u8* buffer, u16* grid);
+        bool parseLayer(const u8* buffer, u8* grid);
 
         template<size_t BitsPerBlock>
-        bool parseWithLayers(u8 const* buffer, u16* grid, u16* submergedGrid);
+        bool parseWithLayers(u8 const* buffer, u8* grid, u8* submergedGrid);
 
         // #####################################################
         // #               Write Section

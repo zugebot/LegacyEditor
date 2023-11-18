@@ -37,6 +37,10 @@ void compareNBT(NBTBase* first, NBTBase* second) {
 }
 
 
+int toBlock(int x, int y, int z) {
+    return y + 256 * z + 4096 * x;
+}
+
 
 int main() {
     std::cout << "goto 'LegacyEditor/utils/processor.hpp' and change 'dir_path' to be the path of the src'" << std::endl;
@@ -45,8 +49,8 @@ int main() {
     std::string inFilePath1 = dir_path + R"(tests\fortnite_world)";
     // std::string inFilePath2 = dir_path + R"(tests\Vita Save\PCSB00560-231005063840\GAMEDATA.bin)";
     // std::string inFilePath2 = dir_path + R"(tests\GAMEDATA_RPCS3)";
-    // std::string inFilePathReplace = dir_path + R"(tests\WiiU Save\231008144148)";
-    std::string outFilePath = dir_path + R"(tests\230918230206)";
+    std::string inFilePath2 = dir_path + R"(tests\WiiU Save\231008144148)";
+    std::string outFilePath = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\230918230206)";
 
     ConsoleParser parser;
     int status = parser.readConsoleFile(inFilePath1);
@@ -61,7 +65,7 @@ int main() {
 
     RegionManager region(fileListing.console);
     region.read(fileListing.overworld[1]);
-    ChunkManager* chunkManager = region.getChunk(1, 17);
+    ChunkManager* chunkManager = region.getChunk(0, 17);
     chunkManager->ensure_decompress(CONSOLE::WIIU);
 
 
@@ -72,20 +76,68 @@ int main() {
 
     chunkParser.readChunk(real, DIM::OVERWORLD);
 
+    /*
     int x = 4;
-    int y = 74;
     int z = 4;
-    int offset = y + z * 256 + x * 4096;
-    chunkParser.chunkData.blocks[offset] = 4;
-    chunkParser.chunkData.blocks[offset + 1] = 4;
-    // auto _start = getNanoSeconds();
-    // auto diff = getNanoSeconds() - _start;
-    // printf("time: %llu\n", diff);
+    for (int y = 74; y < 80; y++) {
+        int offset = y + 256 * z + 4096 * x;
+        // 56 is diamond ore
+        chunkParser.chunkData.blocks[offset] = 56 << 4;
+    }
+     */
+
+
+    /*
+    u16 block;
+    u16 data;
+    for (int x = 0; x < 16; x++) {
+        for (int z = 0; z < 16; z++) {
+            for (int y = 0; y < 240; y++) {
+                block = 264;
+                data = (y + x + z) % 16;
+                chunkParser.placeBlock(x, y, z, block, data);
+            }
+        }
+    }
+    */
+    u16 block;
+    for (int x = 0; x < 16; x++) {
+        for (int z = 0; z < 16; z++) {
+            block = 46;
+            chunkParser.placeBlock(x, 74, z, 1, 1, true);
+
+        }
+    }
+    // chunkParser.placeBlock(0, 74, 0, 300, 0);
+    // chunkParser.placeBlock(1, 74, 1, 265, 0);
+    // chunkParser.placeBlock(2, 74, 2, 266, 0);
+    // chunkParser.placeBlock(3, 74, 3, 267, 0);
+    // chunkParser.placeBlock(4, 74, 4, 268, 0);
+    // chunkParser.placeBlock(5, 74, 5, 269, 0);
+
+    /*
+    u16 block;
+    for (int z = 0; z <= 1; z++) {
+        for (int y = 70; y <= 78; y++) {
+            for (int x = 0; x <= 5; x++) {
+                if (x != 3 && x != 2 && y < 72) {
+                    int offset = y + 256 * z + 4096 * x;
+                    chunkParser.chunkData.blocks[offset] = 57 << 4;
+                }
+
+                if (y >= 71 && x == 3 || x == 2) {
+                    int offset = y + 256 * z + 4096 * x;
+                    chunkParser.chunkData.blocks[offset] = 1 << 4;
+                }
+            }
+        }
+    }
+     */
+
 
     Data out_lol(123456);
 
     auto out = DataManager(out_lol);
-    out.writeInt16(chunkVersion);
 
     chunkParser.writeChunk(out, DIM::OVERWORLD);
     auto* compound = chunkParser.chunkData.NBTData->toType<NBTTagCompound>();
@@ -129,9 +181,9 @@ int main() {
         for (File* file: *fileList) {
             RegionManager reg(CONSOLE::WIIU);
             reg.read(file);
-            Data data = reg.write(consoleOut);
+            Data _data = reg.write(consoleOut);
             delete[] file->data.data;
-            file->data = data;
+            file->data = _data;
         }
     }
 

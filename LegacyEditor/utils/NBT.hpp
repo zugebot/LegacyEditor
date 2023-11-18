@@ -164,16 +164,13 @@ public:
 
     static void writeEntry(STR name, NBTBase data, DataManager& output);
     int getSize() const;
+
+    // set tags
     void setTag(STR key, NBTBase value);
     void setByte(STR key, u8 value);
     void setShort(STR key, i16 value);
     void setInteger(STR key, i32 value);
     void setLong(STR key, i64 value);
-
-    // void setUniqueId(STR key, UUIDJava value);
-    // UUIDJava getUniqueId(STR key);
-
-    bool hasUniqueId(STR key);
     void setFloat(STR key, float value);
     void setDouble(STR key, double value);
     void setString(STR key, STR value);
@@ -183,6 +180,8 @@ public:
     void setCompoundTag(STR key, NBTTagCompound* compoundTag);
     void setListTag(STR key, NBTTagList* listTag);
     void setBool(STR key, u8 value);
+
+    bool hasUniqueId(STR key);
     NBTBase getTag(STR key);
     NBTType getTagId(STR key);
 
@@ -268,8 +267,6 @@ public:
     static void writeTag(NBTBase* tag, DataManager& output);
     static NBTBase* readTag(DataManager& input);
     static NBTBase* readNBT(NBTType id, const std::string& key, DataManager& input);
-    // static u8* writeCompressedTag(NBTBase* rootData, i64* outSize);
-    // static u8* writeGZIPCompressedTag(NBTBase* rootData, i64* outSize);
 };
 
 
