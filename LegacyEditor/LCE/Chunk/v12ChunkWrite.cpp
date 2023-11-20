@@ -68,7 +68,12 @@ namespace universal {
         dataManager.writeInt32(chunkData.chunkZ);
         dataManager.writeInt64(chunkData.lastUpdate);
         dataManager.writeInt64(chunkData.inhabitedTime);
+
+        auto t_start = getNanoSeconds();
         writeBlockData();
+        auto t_end = getNanoSeconds();
+        auto diff = t_end - t_start;
+        printf("Block Write Time: %llu (%llums)\n\n", diff, diff / 1000000);
 
         u8* start = dataManager.ptr;
         writeLightData();
@@ -119,7 +124,7 @@ namespace universal {
 
         std::vector<u16> blockVector;
         std::vector<u16> blockLocations;
-        std::unordered_map<u16, u8> blockMap;
+        u8 blockMap[65536] = {0};
 
         blockVector.reserve(64);
         blockLocations.reserve(64);
@@ -149,17 +154,16 @@ namespace universal {
             }
 
             // serialize grid to buffer
-            u16 gridFormats[64];
-            u16 gridOffsets[64];
-            u32 gridFormatIndex = 0;
-            u32 gridOffsetIndex = 0;
+            // u16 gridFormats[64];
+            // u16 gridOffsets[64];A
+            // u32 gridFormatIndex = 0;
+            // u32 gridOffsetIndex = 0;
             for (u32 gridX = 0; gridX < 4; gridX++) {
                 for (u32 gridZ = 0; gridZ < 4; gridZ++) {
                     for (u32 gridY = 0; gridY < 4; gridY++) {
                         u32 gridIndex = gridY + 4 * gridZ + 16 * gridX;
                         blockVector.clear();
                         blockLocations.clear();
-                        blockMap.clear();
 
                         dataManager.ptr = dataManager.data + H_SECT_SIZE_TOTAL + 50 + 128 + last_section_jump * 256 + sectionSize;
 
@@ -171,6 +175,15 @@ namespace universal {
                                 for (u32 blockY = 0; blockY < 4; blockY++) {
                                     u32 blockIndex = offsetInBlock + blockY + blockZ * 256 + blockX * 4096;
                                     u16 block = chunkData.blocks[blockIndex];
+                                    if (blockMap[block]) {
+                                        blockLocations.push_back(blockMap[block] - 1);
+                                    } else {
+                                        blockMap[block] = blockVector.size() + 1;
+                                        u16 location = blockVector.size();
+                                        blockVector.push_back(block);
+                                        blockLocations.push_back(location);
+                                    }
+                                    /*
                                     if (blockMap.contains(block)) {
                                         blockLocations.push_back(blockMap[block]);
                                     } else {
@@ -179,6 +192,7 @@ namespace universal {
                                         blockVector.push_back(block);
                                         blockLocations.push_back(location);
                                     }
+                                     */
                                 }
                             }
                         }
@@ -215,9 +229,13 @@ namespace universal {
                             gridID = sectionSize >> 2 | gridFormat << 12;
                         }
 
+                        for (u16 block : blockVector) {
+                            blockMap[block] = 0;
+                        }
+
                         // debugging
-                        gridFormats[gridFormatIndex++] = gridFormat;
-                        gridOffsets[gridOffsetIndex++] = dataManager.getPosition();
+                        // gridFormats[gridFormatIndex++] = gridFormat;
+                        // gridOffsets[gridOffsetIndex++] = dataManager.getPosition();
 
                         // write correct grid header
                         dataManager.setLittleEndian();

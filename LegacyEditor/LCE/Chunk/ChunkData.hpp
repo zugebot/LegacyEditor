@@ -21,5 +21,7 @@ public:
 
     i32 chunkX;
     i32 chunkZ;
+
+    /// Aquatic only
     u16_vec submerged;
 };

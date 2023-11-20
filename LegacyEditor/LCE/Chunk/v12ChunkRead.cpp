@@ -6,29 +6,24 @@
 
 namespace universal {
 
-    enum GRID_STATE {
-        _0_SINGLE_BLOCK = 0,
-        _1_BIT = 2,
-        _1_BIT_SUBMERGED = 3,
-        _2_BIT = 4,
-        _2_BIT_SUBMERGED = 5,
-        _3_BIT = 6,
-        _3_BIT_SUBMERGED = 7,
-        _4_BIT = 8,
-        _4_BIT_SUBMERGED = 9,
-        _8_FULL_BLOCKS = 0x0e,
-        _8_FULL_BLOCKS_SUBMERGED = 0x0f
-    };
-
 
     void V12Chunk::readChunk(DataManager& managerIn, DIM dim) {
         dataManager = managerIn;
+        chunkData.skyLight = u8_vec(32768);
+        chunkData.blockLight = u8_vec(32768);
+        chunkData.blocks = u16_vec(65536);
+        chunkData.submerged = u16_vec(65536);
 
         chunkData.chunkX = (i32) dataManager.readInt32();
         chunkData.chunkZ = (i32) dataManager.readInt32();
         chunkData.lastUpdate = (i64) dataManager.readInt64();
         chunkData.inhabitedTime = (i64) dataManager.readInt64();
+
+        auto t_start = getNanoSeconds();
         readBlocks();
+        auto t_end = getNanoSeconds();
+        auto diff = t_end - t_start;
+        printf("Block Read Time: %llu (%llums)\n", diff, diff / 1000);
 
 
         u8* start = dataManager.ptr;
@@ -39,7 +34,6 @@ namespace universal {
         chunkData.heightMap = read256(dataManager);
         chunkData.terrainPopulated = (i16) dataManager.readInt16();
         chunkData.biomes = read256(dataManager);
-
 
         readNBTData();
     }
@@ -52,65 +46,8 @@ namespace universal {
     }
 
 
-    void V12Chunk::readNBTData() {
-        if (*dataManager.ptr == 0xA) {
-            chunkData.NBTData = NBT::readTag(dataManager); 
-        }
-    }
-
-
-    /**
-     * 0b10000000 = 128
-     * 0b10000001 = 129
-     * 0b11111111 = 255
-     *
-     * toIndex(num) = return num * 128 + 128;
-     * java and lce supposedly store light data in the same way
-     */
-    void V12Chunk::readLights() {
-
-        chunkData.skyLight = u8_vec(32768);
-        chunkData.blockLight = u8_vec(32768);
-        int writeOffset = 0;
-
-        chunkData.DataGroupCount = 0;
-        u8_vec_vec dataArray(4);
-        for (int i = 0; i < 4; i++) {
-            u32 num = (u32) dataManager.readInt32();
-            int index = toIndex(num);
-            dataArray[i] = dataManager.readIntoVector(index);
-            chunkData.DataGroupCount += (i32)dataArray[i].size();
-        }
-
-        auto processLightData = [](const u8_vec& data, u8_vec& lightData, int& offset) {
-            for (int k = 0; k < 128; k++) {
-                if (data[k] == 128) {
-                    memset(&lightData[offset], 0, 128);
-                } else if (data[k] == 129) {
-                    memset(&lightData[offset], 255, 128);
-                } else {
-                    std::memcpy(&lightData[offset], &data[toIndex(data[k])], 128);
-                }
-                offset += 128;
-            }
-        };
-
-        // Process light data
-        processLightData(dataArray[0], chunkData.skyLight, writeOffset);
-        processLightData(dataArray[1], chunkData.skyLight, writeOffset);
-        writeOffset = 0; // Reset offset for block light
-        processLightData(dataArray[2], chunkData.blockLight, writeOffset);
-        processLightData(dataArray[3], chunkData.blockLight, writeOffset);
-    }
-
-
     void V12Chunk::readBlocks() {
-        chunkData.blocks = u16_vec(65536);
-        chunkData.submerged = u16_vec(65536);
-
         u32 maxSectionAddress = dataManager.readInt16() << 8;
-
-
 
         u16_vec sectionJumpTable(16); // read 16 shorts so 32 bytes
         for (int i = 0; i < 16; i++) {
@@ -129,10 +66,10 @@ namespace universal {
             if (!sizeOfSubChunks[section]) { continue; }
             u8_vec sectionHeader = dataManager.readIntoVector(128);
 
-            u16 gridFormats[64] = {0};
-            u16 gridOffsets[64] = {0};
-            u32 gridFormatIndex = 0;
-            u32 gridOffsetIndex = 0;
+            // u16 gridFormats[64] = {0};
+            // u16 gridOffsets[64] = {0};
+            // u32 gridFormatIndex = 0;
+            // u32 gridOffsetIndex = 0;
             for (int gridX = 0; gridX < 4; gridX++) {
                 for (int gridZ = 0; gridZ < 4; gridZ++) {
                     for (int gridY = 0; gridY < 4; gridY++) {
@@ -152,8 +89,8 @@ namespace universal {
 
                         int offsetInBlockWrite = (section * 16 + gridY * 4) + gridZ * 1024 + gridX * 16384;
 
-                        gridFormats[gridFormatIndex++] = format;
-                        gridOffsets[gridOffsetIndex++] = gridPosition - 26;
+                        // gridFormats[gridFormatIndex++] = format;
+                        // gridOffsets[gridOffsetIndex++] = gridPosition - 26;
 
                         // ensure not reading past the memory buffer
                         if EXPECT_FALSE (gridPosition + GRID_SIZES[format] >= dataManager.size) {
@@ -219,7 +156,7 @@ namespace universal {
         } // end of section
     }
 
-    
+
     void V12Chunk::placeBlocks(u16_vec& writeVec, const u8* grid, int writeOffset) {
         int readOffset = 0;
         for (int z = 0; z < 4; z++) {
@@ -243,7 +180,7 @@ namespace universal {
     void V12Chunk::fillWithMaxBlocks(const u8* buffer, u8* grid) {
         std::copy_n(buffer, 128, grid);
     }
-    
+
 
     /**
      * only parse the palette + positions.
@@ -281,7 +218,8 @@ namespace universal {
         }
         return true;
     }
-    
+
+
     /**
      * parses the palette + positions + liquid data.
      *
@@ -329,6 +267,55 @@ namespace universal {
             }
         }
         return true;
+    }
+
+
+    /**
+     * 0b10000000 = 128
+     * 0b10000001 = 129
+     * 0b11111111 = 255
+     *
+     * toIndex(num) = return num * 128 + 128;
+     * java and lce supposedly store light data in the same way
+     */
+    void V12Chunk::readLights() {
+        int writeOffset = 0;
+
+        chunkData.DataGroupCount = 0;
+        u8_vec_vec dataArray(4);
+        for (int i = 0; i < 4; i++) {
+            u32 num = (u32) dataManager.readInt32();
+            u32 index = toIndex(num);
+            dataArray[i] = dataManager.readIntoVector(index);
+            chunkData.DataGroupCount += (i32)dataArray[i].size();
+        }
+
+        auto processLightData = [](const u8_vec& data, u8_vec& lightData, int& offset) {
+            for (int k = 0; k < 128; k++) {
+                if (data[k] == 128) {
+                    memset(&lightData[offset], 0, 128);
+                } else if (data[k] == 129) {
+                    memset(&lightData[offset], 255, 128);
+                } else {
+                    std::memcpy(&lightData[offset], &data[toIndex(data[k])], 128);
+                }
+                offset += 128;
+            }
+        };
+
+        // Process light data
+        processLightData(dataArray[0], chunkData.skyLight, writeOffset);
+        processLightData(dataArray[1], chunkData.skyLight, writeOffset);
+        writeOffset = 0; // Reset offset for block light
+        processLightData(dataArray[2], chunkData.blockLight, writeOffset);
+        processLightData(dataArray[3], chunkData.blockLight, writeOffset);
+    }
+
+
+    void V12Chunk::readNBTData() {
+        if (*dataManager.ptr == 0xA) {
+            chunkData.NBTData = NBT::readTag(dataManager);
+        }
     }
 
 }

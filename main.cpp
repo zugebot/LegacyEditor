@@ -99,7 +99,6 @@ int main() {
             }
         }
     }
-    */
     u16 block;
     for (int x = 0; x < 16; x++) {
         for (int z = 0; z < 16; z++) {
@@ -108,6 +107,7 @@ int main() {
 
         }
     }
+    */
     // chunkParser.placeBlock(0, 74, 0, 300, 0);
     // chunkParser.placeBlock(1, 74, 1, 265, 0);
     // chunkParser.placeBlock(2, 74, 2, 266, 0);

@@ -7,6 +7,8 @@
 
 
 namespace universal {
+
+
     /**
      * "Aquatic" chunks.
      */
@@ -14,6 +16,29 @@ namespace universal {
     private:
         /// used for making writeLights faster
         std::vector<int> sectionOffsets;
+
+        enum GRID_STATE {
+            _0_SINGLE_BLOCK = 0,
+            _1_BIT = 2,
+            _1_BIT_SUBMERGED = 3,
+            _2_BIT = 4,
+            _2_BIT_SUBMERGED = 5,
+            _3_BIT = 6,
+            _3_BIT_SUBMERGED = 7,
+            _4_BIT = 8,
+            _4_BIT_SUBMERGED = 9,
+            _8_FULL_BLOCKS = 0x0e,
+            _8_FULL_BLOCKS_SUBMERGED = 0x0f
+        };
+
+        /**
+         * key: grid format\n
+         * return: size of memory that is being written to for that grid\n
+         * 0's mean like, idk lol I love documentation yay!!!!!!!!@!@!!
+         */
+        static constexpr u32 GRID_SIZES[16] = {0, 0, 12, 20, 24, 40, 40, 64, 64, 96, 0, 0, 0, 0, 128, 256};
+
+
     public:
         ChunkData chunkData;
         DataManager dataManager;
@@ -38,12 +63,7 @@ namespace universal {
 
 
     private:
-        /**
-         * key: grid format\n
-         * return: size of memory that is being written to for that grid\n
-         * 0's mean like, idk lol I love documentation yay!!!!!!!!@!@!!
-         */
-        static constexpr u32 GRID_SIZES[16] = {0, 0, 12, 20, 24, 40, 40, 64, 64, 96, 0, 0, 0, 0, 128, 256};
+
 
         // #####################################################
         // #               Read Section
@@ -66,14 +86,18 @@ namespace universal {
         // #####################################################
 
         void writeBlockData();
-        /// used to write only the palette and positions.\nIt does not write liquid data, because I have been told that that is unnecessary.
+        /// used to write only the palette and positions.\n
+        /// It does not write liquid data, because I have been told that that is unnecessary.
         template<size_t BitsPerBlock>
         void writeLayer(u16_vec& blocks, u16_vec& positions);
+
         /// used to write full block data, instead of using palette.
         void writeWithMaxBlocks(u16_vec& blocks, u16_vec& positions);
 
         void writeLightSection(u8_vec& light, int& readOffset);
+
         void writeLight(int index, int& readOffset, u8_vec& light);
+
         void writeLightData();
 
         void writeNBTData();

@@ -36,8 +36,12 @@ u8 DataManager::peekPreviousByte() const {
 }
 
 
-void DataManager::incrementPointer(i32 amount) {
+void DataManager::incrementPointer(u32 amount) {
     ptr += amount;
+}
+
+void DataManager::decrementPointer(u32 amount) {
+    ptr -= amount;
 }
 
 
@@ -70,7 +74,7 @@ i32 DataManager::readInt24() {
     } else {
         value = value & 0x00FFFFFF;
     }
-    incrementPointer(-1);
+    decrementPointer(1);
     return (i32) value;
 
 }
@@ -86,7 +90,7 @@ i32 DataManager::readInt24(bool isLittleIn) {
     } else {
         val = (val & 0xFFFFFF00) >> 8;
     }
-    incrementPointer(-1); // 3 = 4 - 1
+    decrementPointer(1); // 3 = 4 - 1
     isBig = originalEndianType;
     return (int) val;
 }
@@ -132,13 +136,13 @@ u64 DataManager::readInt64() {
 }
 
 
-u8 DataManager::readInt8AtOffset(u32 offset) {
+u8 DataManager::readInt8AtOffset(u32 offset) const {
     u8 value = data[offset];
     return value;
 }
 
 
-u16 DataManager::readInt16AtOffset(u32 offset) {
+u16 DataManager::readInt16AtOffset(u32 offset) const {
     u8* ptrOff = data + offset;
     u16 value;
     if (isBig) {
@@ -150,7 +154,7 @@ u16 DataManager::readInt16AtOffset(u32 offset) {
 }
 
 
-u32 DataManager::readInt32AtOffset(u32 offset) {
+u32 DataManager::readInt32AtOffset(u32 offset) const {
     u8* ptrOff = data + offset;
     u32 value;
     if (isBig) {
@@ -162,7 +166,7 @@ u32 DataManager::readInt32AtOffset(u32 offset) {
 }
 
 
-u64 DataManager::readInt64AtOffset(u32 offset) {
+u64 DataManager::readInt64AtOffset(u32 offset) const {
     u8* ptrOff = data + offset;
     i64 val;
     if (isBig) {
@@ -263,7 +267,7 @@ std::string DataManager::readWAsString(u32 length) {
 
 
 
-u8_vec DataManager::readIntoVector(i32 amount) {
+u8_vec DataManager::readIntoVector(u32 amount) {
     if EXPECT_FALSE(getPosition() + amount > size) {
         return u8_vec(amount, 0);
     }

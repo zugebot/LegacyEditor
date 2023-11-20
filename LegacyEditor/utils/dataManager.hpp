@@ -43,7 +43,8 @@ public:
     u32 getPosition() const;
     u8 peekNextByte() const;
     ND u8 peekPreviousByte() const;
-    void incrementPointer(i32 amount);
+    void incrementPointer(u32 amount);
+    void decrementPointer(u32 amount);
 
     inline void incrementPointer1() { ptr += 1; }
     inline void incrementPointer2() { ptr += 2; }
@@ -63,13 +64,13 @@ public:
     double readDouble();
 
     /// reads at offset from .data, not .ptr! Does not increment .ptr.
-    u8 readInt8AtOffset(u32 offset);
+    u8 readInt8AtOffset(u32 offset) const;
     /// reads at offset from .data, not .ptr! Does not increment .ptr.
-    u16 readInt16AtOffset(u32 offset);
+    u16 readInt16AtOffset(u32 offset) const;
     /// reads at offset from .data, not .ptr! Does not increment .ptr.
-    u32 readInt32AtOffset(u32 offset);
+    u32 readInt32AtOffset(u32 offset) const;
     /// reads at offset from .data, not .ptr! Does not increment .ptr.
-    u64 readInt64AtOffset(u32 offset);
+    u64 readInt64AtOffset(u32 offset) const;
 
     std::string readUTF();
     std::string readString(i32 length);
@@ -78,7 +79,7 @@ public:
     std::wstring readWString(u32 length);
     std::string readWAsString(u32 length);
 
-    u8_vec readIntoVector(i32 amount);
+    u8_vec readIntoVector(u32 amount);
 
     u8* readWithOffset(i32 offset, i32 amount);
     u8* readBytes(u32 length);
