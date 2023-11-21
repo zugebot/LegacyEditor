@@ -11,7 +11,7 @@
 // #include "UUID.hpp"
 #include "LegacyEditor/utils/PS3_DEFLATE/deflateUsage.hpp"
 
-
+class DataManager;
 
 enum NBTType : u8 {
     NBT_NONE = 0,

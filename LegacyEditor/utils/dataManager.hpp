@@ -5,9 +5,10 @@
 #include <memory>
 
 #include "LegacyEditor/utils/data.hpp"
-#include "LegacyEditor/utils/file.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 
+
+class File;
 
 /**
  * Starts writing in "Big Endian".

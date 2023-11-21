@@ -8,6 +8,38 @@
 #include "LegacyEditor/LCE/Region/RegionManager.hpp"
 
 
+i16 extractMapNumber(const std::string& str) {
+    static const std::string start = "map_";
+    static const std::string end = ".dat";
+    size_t startPos = str.find(start);
+    size_t endPos = str.find(end);
+
+    if (startPos != std::string::npos && endPos != std::string::npos) {
+        startPos += start.length();
+
+        std::string numberStr = str.substr(startPos, endPos - startPos);
+        return (i16)std::stoi(numberStr);
+    }
+    return 32767;
+}
+
+std::pair<int, int> extractRegionCoords(const std::string& filename) {
+    size_t lastDot = filename.find_last_of('.');
+    std::string relevantPart = filename.substr(0, lastDot);
+
+    std::istringstream iss(relevantPart);
+    std::string part;
+    std::vector<std::string> parts;
+
+    while (std::getline(iss, part, '.')) {
+        parts.push_back(part);
+    }
+
+    int num1 = std::stoi(parts[parts.size() - 2]);
+    int num2 = std::stoi(parts[parts.size() - 1]);
+    return {num1, num2};
+}
+
 
 
 void FileListing::read(Data &dataIn) {
@@ -46,10 +78,9 @@ void FileListing::read(Data &dataIn) {
         managerIn.seek(index);
         data = managerIn.readBytes(fileSize);
 
-        allFiles.emplace_back(data, fileSize, fileName, timestamp);
-        printf("%s\n", fileName.c_str());
-
+        allFiles.emplace_back(data, fileSize, timestamp);
         File &file = allFiles.back();
+        printf("%s\n", fileName.c_str());
 
         if (fileName.ends_with(".mcr")) {
             if (fileName.starts_with("DIM-1")) {
@@ -58,26 +89,58 @@ void FileListing::read(Data &dataIn) {
                 file.fileType = FileType::REGION_END;
             } else if (fileName.starts_with("r")) {
                 file.fileType = FileType::REGION_OVERWORLD;
-            } else {
-                printf("File '%s' is not from any dimension!\n", fileName.c_str());
             }
-        } else if (fileName == "level.dat") {
-            file.fileType = FileType::LEVEL;
-        } else if (fileName.starts_with("data/map_")) {
-            file.fileType = FileType::MAP;
-        } else if (fileName == "data/villages.dat") {
-            file.fileType = FileType::VILLAGE;
-        } else if (fileName == "data/largeMapDataMappings.dat") {
-            file.fileType = FileType::DATA_MAPPING;
-        } else if (fileName.starts_with("data/")) {
-            file.fileType = FileType::STRUCTURE;
-        } else if (fileName.ends_with(".grf")) {
-            file.fileType = FileType::GRF;
-        } else if (fileName.starts_with("players/") || fileName.find('/') == -1) {
-            file.fileType = FileType::PLAYER;
-        } else {
-            printf("Unknown File: %s\n", fileName.c_str());
+            auto* nbt = file.createNBTTagCompound();
+            auto pair = extractRegionCoords(fileName);
+            nbt->setTag("x", createNBT_INT16((i16)pair.first));
+            nbt->setTag("z", createNBT_INT16((i16)pair.second));
+            continue;
         }
+
+        if (fileName == "level.dat") {
+            file.fileType = FileType::LEVEL;
+            continue;
+        }
+
+        if (fileName.starts_with("data/map_")) {
+            file.fileType = FileType::MAP;
+            auto* nbt = file.createNBTTagCompound();
+            i16 mapNumber = extractMapNumber(fileName);
+            nbt->setTag("#", createNBT_INT16(mapNumber));
+            continue;
+        }
+
+        if (fileName == "data/villages.dat") {
+            file.fileType = FileType::VILLAGE;
+            continue;
+        }
+
+        if (fileName == "data/largeMapDataMappings.dat") {
+            file.fileType = FileType::DATA_MAPPING;
+            continue;
+        }
+
+        if (fileName.starts_with("data/")) {
+            file.fileType = FileType::STRUCTURE;
+            auto* nbt = file.createNBTTagCompound();
+            nbt->setString("filename", fileName);
+            continue;
+        }
+
+        if (fileName.ends_with(".grf")) {
+            file.fileType = FileType::GRF;
+            continue;
+        }
+
+        if (fileName.starts_with("players/") || fileName.find('/') == -1) {
+            file.fileType = FileType::PLAYER;
+            auto* nbt = file.createNBTTagCompound();
+            nbt->setString("filename", fileName);
+            continue;
+        }
+
+        printf("Unknown File: %s\n", fileName.c_str());
+
     }
     updatePointers();
     printf("\n");
@@ -133,18 +196,14 @@ void FileListing::saveToFolder(const std::string &folder) {
         }
     }
 
-
-    for (const File &file: allFiles) {
-        std::string fullPath = folder + "\\" + file.name;
+    for (File &file: allFiles) {
+        std::string fullPath = folder + "\\" + file.constructFileName(console);
         fs::path path(fullPath);
+        // make sure path is valid before writing
         if (!fs::exists(path.parent_path())) {
             fs::create_directories(path.parent_path());
         }
-    }
-
-    // step 2: write files to correct locations
-    for (File &file: allFiles) {
-        std::string fullPath = folder + "\\" + file.name;
+        // write the file
         DataManager fileOut(file.data);
         fileOut.writeToFile(fullPath);
     }
@@ -192,8 +251,8 @@ Data FileListing::write(CONSOLE consoleOut) {
     for (File &fileIter: allFiles) {
         // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter.
         // additionalData, fileIter.size, fileIter.name.c_str());
-
-        managerOut.writeWString(fileIter.name, 64);
+        std::string fileIterName = fileIter.constructFileName(consoleOut);
+        managerOut.writeWString(fileIterName, 64);
         managerOut.writeInt32(fileIter.data.getSize());
         managerOut.writeInt32(fileIter.additionalData);
         managerOut.writeInt64(fileIter.timestamp);
@@ -217,7 +276,6 @@ std::vector<File> FileListing::collectFiles(FileType fileType) {
                         bool isType = file.fileType == fileType;
                         if (isType) {
                             collectedFiles.push_back(file);
-
                         }
                         return isType;
                     }
@@ -245,9 +303,12 @@ void FileListing::deallocate() {
 
 
 void FileListing::clearPointers() {
-    overworld.clear();
-    nether.clear();
-    endFilePtrs.clear();
+    region_overworld.clear();
+    region_nether.clear();
+    region_end.clear();
+    entity_overworld.clear();
+    entity_nether.clear();
+    entity_end.clear();
     maps.clear();
     structures.clear();
     players.clear();
@@ -274,13 +335,13 @@ void FileListing::updatePointers() {
                 maps.push_back(&file);
                 break;
             case FileType::REGION_NETHER:
-                nether.push_back(&file);
+                region_nether.push_back(&file);
                 break;
             case FileType::REGION_OVERWORLD:
-                overworld.push_back(&file);
+                region_overworld.push_back(&file);
                 break;
             case FileType::REGION_END:
-                endFilePtrs.push_back(&file);
+                region_end.push_back(&file);
                 break;
             case FileType::PLAYER:
                 players.push_back(&file);
@@ -290,6 +351,15 @@ void FileListing::updatePointers() {
                 break;
             case FileType::GRF:
                 grf = &file;
+                break;
+            case FileType::ENTITY_NETHER:
+                entity_nether.push_back(&file);
+                break;
+            case FileType::ENTITY_OVERWORLD:
+                entity_overworld.push_back(&file);
+                break;
+            case FileType::ENTITY_END:
+                entity_end.push_back(&file);
                 break;
             default:
                 break;

@@ -1,5 +1,7 @@
 #include "RegionManager.hpp"
 
+#include "LegacyEditor/utils/file.hpp"
+
 
 ChunkManager* RegionManager::getChunk(int x, int z) {
     int index = x + z * 32;

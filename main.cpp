@@ -64,11 +64,12 @@ int main() {
     fileListing.saveToFolder(dir_path + "dump_wiiu");
 
     RegionManager region(fileListing.console);
-    region.read(fileListing.overworld[1]);
+    region.read(fileListing.region_overworld[1]);
     ChunkManager* chunkManager = region.getChunk(0, 17);
     chunkManager->ensure_decompress(CONSOLE::WIIU);
 
 
+    /*
     universal::V12Chunk chunkParser;
     auto real = DataManager(chunkManager);
     real.writeToFile(dir_path + "chunk_read.bin");
@@ -76,7 +77,6 @@ int main() {
 
     chunkParser.readChunk(real, DIM::OVERWORLD);
 
-    /*
     int x = 4;
     int z = 4;
     for (int y = 74; y < 80; y++) {
@@ -135,6 +135,7 @@ int main() {
      */
 
 
+    /*
     Data out_lol(123456);
 
     auto out = DataManager(out_lol);
@@ -160,6 +161,7 @@ int main() {
     chunkManager->data = out_ptr.data;
     chunkManager->size = out_ptr.size;
     chunkManager->dec_size = chunkManager->size;
+     */
 
     /*
     universal::V12Chunk chunkParser2;
@@ -172,7 +174,7 @@ int main() {
 
     chunkManager->ensure_compressed(CONSOLE::WIIU);
     Data new_region = region.write(CONSOLE::WIIU);
-    fileListing.overworld[1]->data = new_region;
+    fileListing.region_overworld[1]->data = new_region;
 
     fileListing.removeFileTypes({FileType::PLAYER, FileType::DATA_MAPPING});
 
@@ -196,6 +198,11 @@ int main() {
     } else {
         printf("finished!");
     }
+
+    ConsoleParser parser2;
+    parser2.readConsoleFile(outFilePath);
+    FileListing listing(parser2);
+    listing.saveToFolder(dir_path + "wiiu_out_recreate_names");
 
     /*
      *
@@ -344,8 +351,7 @@ int main() {
     // Data dataOutVita = fileListingWiiU.write(CONSOLE::WIIU);
     // parser.saveWiiU(dir_path + "tests/230918230206", dataOutVita);
 
-    int aaa; std::cin >> aaa;
-
+    system("pause");
 
     /*
     {

@@ -1,11 +1,16 @@
 #pragma once
 
 #include "LegacyEditor/utils/processor.hpp"
+#include "NBT.hpp"
 #include "data.hpp"
+#include "enums.hpp"
 
 #include <string>
 #include <utility>
 
+
+class NBTBase;
+class NBTTagCompound;
 
 enum class FileType : u8 {
     NONE,               // NONE
@@ -18,37 +23,31 @@ enum class FileType : u8 {
     REGION_END,         // ...
     PLAYER,             // ...
     LEVEL,              // ...
-    GRF                 // ...
+    GRF,                // ...
+    ENTITY_NETHER,    // ...
+    ENTITY_OVERWORLD, // ...
+    ENTITY_END,       // ...
 };
 
-
-
-
-struct File {
+class File {
 public:
+    NBTBase* nbt  = nullptr;
     Data data;
-    std::string name;
-    FileType fileType = FileType::NONE;
     u64 timestamp = 0;
     u32 additionalData = 0;
+    FileType fileType = FileType::NONE;
 
+    ~File();
     File() = default;
+    explicit File(u32 sizeIn) : data(Data(sizeIn)) {}
+    File(u32 sizeIn, u64 timestampIn) : data(Data(sizeIn)), timestamp(timestampIn) {}
+    File(u8* dataIn, u32 sizeIn, u64 timestampIn) : data(dataIn, sizeIn), timestamp(timestampIn) {}
 
-    explicit File(u32 sizeIn) {
-        data = Data(sizeIn);
-    }
 
-    File(u32 sizeIn, std::string nameIn, u64 timestampIn)
-        : name(std::move(nameIn)), timestamp(timestampIn) {
-        data = Data(sizeIn);
-    }
-
-    File(u8* dataIn, u32 sizeIn, std::string nameIn, u64 timestampIn)
-        : data(dataIn, sizeIn), name(std::move(nameIn)), timestamp(timestampIn) {}
-
-    ND bool isEmpty() const {
-        return data.size != 0;
-    }
+    ND NBTTagCompound* createNBTTagCompound();
+    ND NBTTagCompound* getNBTCompound() const;
+    ND std::string constructFileName(CONSOLE console) const;
+    ND bool isEmpty() const { return data.size != 0; }
 };
 
 

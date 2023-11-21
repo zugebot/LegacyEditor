@@ -4,7 +4,11 @@
 #include "LegacyEditor/utils/NBT.hpp"
 #include "LegacyEditor/utils/mapcolors.hpp"
 #include "LegacyEditor/utils/picture.hpp"
+#include "LegacyEditor/utils/file.hpp"
+
 #include <iostream>
+
+
 
 
 void saveMapToPng(File* map, const std::string& path, const std::string& filename = "map_0.png") {

@@ -33,14 +33,20 @@ public:
 
 class FileListing {
 public:
-    std::vector<FileList*> dimFileLists = {&nether, &overworld, &endFilePtrs};
+    std::vector<FileList*> dimFileLists = {&region_nether, &region_overworld, &region_end};
+    std::vector<FileList*> entityFileLists = {&entity_overworld, &entity_nether, &entity_end};
+
     CONSOLE console = CONSOLE::NONE;
     std::vector<File> allFiles;
 
     // pointers
-    FileList overworld;
-    FileList nether;
-    FileList endFilePtrs;
+    FileList region_overworld;
+    FileList region_nether;
+    FileList region_end;
+
+    FileList entity_overworld;
+    FileList entity_nether;
+    FileList entity_end;
 
     FileList maps;
     FileList structures;
@@ -121,9 +127,12 @@ private:
         {FileType::STRUCTURE, [this]() { structures.removeAll(); }},
         {FileType::MAP, [this]() { maps.removeAll(); }},
         {FileType::PLAYER, [this]() { players.removeAll(); }},
-        {FileType::REGION_NETHER, [this]() { nether.removeAll(); }},
-        {FileType::REGION_OVERWORLD, [this]() { overworld.removeAll(); }},
-        {FileType::REGION_END, [this]() { endFilePtrs.removeAll(); }},
+        {FileType::REGION_NETHER, [this]() { region_nether.removeAll(); }},
+        {FileType::REGION_OVERWORLD, [this]() { region_overworld.removeAll(); }},
+        {FileType::REGION_END, [this]() { region_end.removeAll(); }},
+        {FileType::ENTITY_NETHER, [this]() { entity_nether.removeAll(); }},
+        {FileType::ENTITY_OVERWORLD, [this]() { entity_overworld.removeAll(); }},
+        {FileType::ENTITY_END, [this]() { entity_end.removeAll(); }},
         {FileType::VILLAGE, [this]() {
                  delete[] village->data.data;
                  village = nullptr; }},
@@ -146,9 +155,12 @@ private:
             {FileType::STRUCTURE, [this]() { structures.clear(); }},
             {FileType::MAP, [this]() { maps.clear(); }},
             {FileType::PLAYER, [this]() { players.clear(); }},
-            {FileType::REGION_NETHER, [this]() { nether.clear(); }},
-            {FileType::REGION_OVERWORLD, [this]() { overworld.clear(); }},
-            {FileType::REGION_END, [this]() { endFilePtrs.clear(); }},
+            {FileType::REGION_NETHER, [this]() { region_nether.clear(); }},
+            {FileType::REGION_OVERWORLD, [this]() { region_overworld.clear(); }},
+            {FileType::REGION_END, [this]() { region_end.clear(); }},
+            {FileType::ENTITY_NETHER, [this]() { entity_nether.clear(); }},
+            {FileType::ENTITY_OVERWORLD, [this]() { entity_overworld.clear(); }},
+            {FileType::ENTITY_END, [this]() { entity_end.clear(); }},
             {FileType::VILLAGE, [this]() { village = nullptr; }},
             {FileType::DATA_MAPPING, [this]() {
                  largeMapDataMappings = nullptr;
