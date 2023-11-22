@@ -12,4 +12,4 @@ file(GLOB_RECURSE LEGACY_EDITOR_SOURCES
         "${CMAKE_SOURCE_DIR}/LegacyEditor/*.h"
 )
 
-add_executable(LegacyEditor main.cpp ${LEGACY_EDITOR_SOURCES})
+add_executable(LegacyEditor main.cpp ${LEGACY_EDITOR_SOURCES} LegacyEditor/LCE/Chunk/v12ChunkFunctions.cpp)

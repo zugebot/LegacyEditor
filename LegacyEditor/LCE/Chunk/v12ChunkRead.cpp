@@ -19,17 +19,16 @@ namespace universal {
         chunkData.lastUpdate = (i64) dataManager.readInt64();
         chunkData.inhabitedTime = (i64) dataManager.readInt64();
 
-        auto t_start = getNanoSeconds();
         u8* start = dataManager.ptr;
-        readBlocks();
-        u8* end = dataManager.ptr;
-        dataManager.writeToFile(start, end - start, dir_path + "block_read.bin");
+        auto t_start = getNanoSeconds();
+        readBlockData();
         auto t_end = getNanoSeconds();
+        u8* end = dataManager.ptr;
+        dataManager.writeToFile(start, end - start, dir_path + "light_read.bin");
         auto diff = t_end - t_start;
-        printf("Block Read Time: %llu (%llums)\n", diff, diff / 1000000);
+        printf("Block Read Time: %llu (%fms)\n", diff, float(diff) / 1000000.0F);
 
-
-        readLights();
+        readLightData();
 
         chunkData.heightMap = read256(dataManager);
         chunkData.terrainPopulated = (i16) dataManager.readInt16();
@@ -39,17 +38,10 @@ namespace universal {
     }
 
 
-    void V12Chunk::readChunkForAccess(DataManager& managerIn, DIM dim) {
-        dataManager = managerIn;
-        dataManager.seek(26);
-        readBlocks();
-    }
-
-
-    void V12Chunk::readBlocks() {
+    void V12Chunk::readBlockData() {
         u32 maxSectionAddress = dataManager.readInt16() << 8;
 
-        u16_vec sectionJumpTable(16); // read 16 shorts so 32 bytes
+        u16_vec sectionJumpTable(16);
         for (int i = 0; i < 16; i++) {
             u16 address = dataManager.readInt16();
             sectionJumpTable[i] = address;
@@ -66,10 +58,10 @@ namespace universal {
             if (!sizeOfSubChunks[section]) { continue; }
             u8_vec sectionHeader = dataManager.readIntoVector(128);
 
-            u16 gridFormats[64] = {0};
-            u16 gridOffsets[64] = {0};
-            u32 gridFormatIndex = 0;
-            u32 gridOffsetIndex = 0;
+            // u16 gridFormats[64] = {0};
+            // u16 gridOffsets[64] = {0};
+            // u32 gridFormatIndex = 0;
+            // u32 gridOffsetIndex = 0;
             for (int gridX = 0; gridX < 4; gridX++) {
                 for (int gridZ = 0; gridZ < 4; gridZ++) {
                     for (int gridY = 0; gridY < 4; gridY++) {
@@ -89,8 +81,8 @@ namespace universal {
 
                         int offsetInBlockWrite = (section * 16 + gridY * 4) + gridZ * 1024 + gridX * 16384;
 
-                        gridFormats[gridFormatIndex++] = format;
-                        gridOffsets[gridOffsetIndex++] = gridPosition - 26;
+                        // gridFormats[gridFormatIndex++] = format;
+                        // gridOffsets[gridOffsetIndex++] = gridPosition - 26;
 
                         // ensure not reading past the memory buffer
                         if EXPECT_FALSE (gridPosition + GRID_SIZES[format] >= dataManager.size) {
@@ -102,12 +94,9 @@ namespace universal {
                         bool success = true;
                         switch(format) {
                             case _0_SINGLE_BLOCK:
-                                for (int i = 0; i < 128; i++) {
-                                    if (i & 1) {
-                                        grid[i] = v2;
-                                    } else {
-                                        grid[i] = v1;
-                                    }
+                                for (int i = 0; i < 128; i += 2) {
+                                    grid[i] = v1;
+                                    grid[i + 1] = v2;
                                 }
                                 break;
                             case _1_BIT:
@@ -146,16 +135,14 @@ namespace universal {
                         }
 
                         if EXPECT_FALSE (!success) { return; }
-                        // dataManager.ptr = bufferPtr + GRID_SIZES[format];
                         placeBlocks(chunkData.blocks, grid, offsetInBlockWrite);
                         if (format & 1) {
                             placeBlocks(chunkData.submerged, submergedGrid, offsetInBlockWrite);
                         }
-                    } // end of gy
-                } // end of gz
-            } // end of gx
-            volatile int x;
-        } // end of section
+                    }
+                }
+            }
+        }
         dataManager.seek(76 + maxSectionAddress);
     }
 
@@ -283,7 +270,7 @@ namespace universal {
      * toIndex(num) = return num * 128 + 128;
      * java and lce supposedly store light data in the same way
      */
-    void V12Chunk::readLights() {
+    void V12Chunk::readLightData() {
         int writeOffset = 0;
 
         chunkData.DataGroupCount = 0;

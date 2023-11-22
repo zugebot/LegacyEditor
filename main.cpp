@@ -163,10 +163,10 @@ int main() {
         printf("finished!");
     }
 
-    ConsoleParser parser2;
-    int g = parser2.readConsoleFile(outFilePath);
-    FileListing listing(parser2);
-    listing.saveToFolder(dir_path + "wiiu_out_recreate_names");
+    // ConsoleParser parser2;
+    // int g = parser2.readConsoleFile(outFilePath);
+    // FileListing listing(parser2);
+    // listing.saveToFolder(dir_path + "wiiu_out_recreate_names");
 
     /*
      *

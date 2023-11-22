@@ -69,16 +69,17 @@ namespace universal {
         dataManager.writeInt64(chunkData.lastUpdate);
         dataManager.writeInt64(chunkData.inhabitedTime);
 
+
+
         u8* start = dataManager.ptr;
         auto t_start = getNanoSeconds();
         writeBlockData();
         auto t_end = getNanoSeconds();
         u8* end = dataManager.ptr;
-        printf("size=%d\n", dataManager.getPosition());
-        dataManager.writeToFile(start, end - start, dir_path + "block_write.bin");
-
+        dataManager.writeToFile(start, end - start, dir_path + "light_write.bin");
         auto diff = t_end - t_start;
-        printf("Block Write Time: %llu (%llums)\n\n", diff, diff / 1000000);
+        printf("Block Write Size: %llu bytes. \n", end - start);
+        printf("Block Write Time: %llu (%fms)\n\n", diff, float(diff) / 1000000);
 
         writeLightData();
 
@@ -86,35 +87,6 @@ namespace universal {
         dataManager.writeInt16(chunkData.terrainPopulated);
         dataManager.writeBytes(chunkData.biomes.data(), 256);
 
-        /*
-        u8* NBT_START = dataManager.ptr;
-        printf("\n");
-        auto* compound1 = this->chunkData.NBTData->toType<NBTTagCompound>();
-        for (const auto& tag : compound1->tagMap) {
-            printf("%s: %s\n", tag.first.c_str(), tag.second.toString().c_str());
-        }
-
-        writeNBTData();
-
-        dataManager.ptr = NBT_START;
-        auto* compound2 = NBT::readTag(dataManager)->toType<NBTTagCompound>();
-
-        printf("\n");
-        for (const auto& tag : compound2->tagMap) {
-            printf("%s: %s\n", tag.first.c_str(), tag.second.toString().c_str());
-        }
-        printf("\n");
-
-
-        chunkData.NBTData = new NBTBase(new NBTTagCompound(), TAG_COMPOUND);
-        auto* chunkRootNbtData = static_cast<NBTTagCompound*>(chunkData.NBTData->data);
-        auto* entities = new NBTTagList();
-        auto* tileEntities = new NBTTagList();
-        auto* tileTicks = new NBTTagList();
-        chunkRootNbtData->setListTag("Entities", entities);
-        chunkRootNbtData->setListTag("TileEntities", tileEntities);
-        chunkRootNbtData->setListTag("TileTicks", tileTicks);
-        */
         writeNBTData();
 
     }
@@ -182,27 +154,10 @@ namespace universal {
                                         blockVector.push_back(block);
                                         blockLocations.push_back(location);
                                     }
-                                    /*
-                                    if (blockMap.contains(block)) {
-                                        blockLocations.push_back(blockMap[block]);
-                                    } else {
-                                        blockMap[block] = blockVector.size();
-                                        u16 location = blockVector.size();
-                                        blockVector.push_back(block);
-                                        blockLocations.push_back(location);
-                                    }
-                                     */
                                 }
                             }
                         }
-                        if (blockVector.size() == 2) {
-                            u16 first = blockVector[0];
-                            blockVector[0] = blockVector[1];
-                            blockVector[1] = first;
-                            for (int x = 0; x < 64; x++) {
-                                blockLocations[x] = 1 - blockLocations[x];
-                            }
-                        }
+
                         // hardcode blocks here for testing
                         // auto rng = std::default_random_engine {};
                         // std::shuffle(std::begin(blockVector), std::end(blockVector), rng);
@@ -216,16 +171,16 @@ namespace universal {
                             gridFormat = _0_SINGLE_BLOCK;
                             gridID = blockVector[0];
                         } else {
-                            if (blockCount == 2) { // 1 bit
+                            if (blockCount == 2) {
                                 gridFormat = _1_BIT;
                                 writeLayer<1>(blockVector, blockLocations);
-                            } else if (blockCount <= 4) { // 2 bit
+                            } else if (blockCount <= 4) {
                                 gridFormat = _2_BIT;
                                 writeLayer<2>(blockVector, blockLocations);
-                            } else if (blockCount <= 8) { // 3 bit
+                            } else if (blockCount <= 8) {
                                 gridFormat = _3_BIT;
                                 writeLayer<3>(blockVector, blockLocations);
-                            } else if (blockCount <= 16) { // 4 bit
+                            } else if (blockCount <= 16) {
                                 gridFormat = _4_BIT;
                                 writeLayer<4>(blockVector, blockLocations);
                             } else {
@@ -292,6 +247,7 @@ namespace universal {
             dataManager.writeInt16(block);
         }
         // fill rest of empty palette with 0xFF's
+        // TODO: idk if this is actually necessary
         for (u64 rest = 0; rest < palette_size - blocks.size(); rest++) {
             dataManager.writeInt16(0xffff);
         }
@@ -332,9 +288,9 @@ namespace universal {
         // Write headers
         u8* ptr = light.data() + readOffset;
         for (int i = 0; i < 128; i++) {
-            if (is0_128(ptr)) {
+            if (is0_128_slow(ptr)) {
                 dataManager.writeInt8(128);
-            } else if (is255_128(ptr)) {
+            } else if (is255_128_slow(ptr)) {
                 dataManager.writeInt8(129);
             } else {
                 sectionOffsets.push_back(readOffset);
