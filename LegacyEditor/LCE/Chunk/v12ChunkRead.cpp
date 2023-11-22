@@ -20,16 +20,16 @@ namespace universal {
         chunkData.inhabitedTime = (i64) dataManager.readInt64();
 
         auto t_start = getNanoSeconds();
+        u8* start = dataManager.ptr;
         readBlocks();
+        u8* end = dataManager.ptr;
+        dataManager.writeToFile(start, end - start, dir_path + "block_read.bin");
         auto t_end = getNanoSeconds();
         auto diff = t_end - t_start;
-        printf("Block Read Time: %llu (%llums)\n", diff, diff / 1000);
+        printf("Block Read Time: %llu (%llums)\n", diff, diff / 1000000);
 
 
-        u8* start = dataManager.ptr;
         readLights();
-        u8* end = dataManager.ptr;
-        dataManager.writeToFile(start, end - start, dir_path + "light_read.bin");
 
         chunkData.heightMap = read256(dataManager);
         chunkData.terrainPopulated = (i16) dataManager.readInt16();
@@ -66,10 +66,10 @@ namespace universal {
             if (!sizeOfSubChunks[section]) { continue; }
             u8_vec sectionHeader = dataManager.readIntoVector(128);
 
-            // u16 gridFormats[64] = {0};
-            // u16 gridOffsets[64] = {0};
-            // u32 gridFormatIndex = 0;
-            // u32 gridOffsetIndex = 0;
+            u16 gridFormats[64] = {0};
+            u16 gridOffsets[64] = {0};
+            u32 gridFormatIndex = 0;
+            u32 gridOffsetIndex = 0;
             for (int gridX = 0; gridX < 4; gridX++) {
                 for (int gridZ = 0; gridZ < 4; gridZ++) {
                     for (int gridY = 0; gridY < 4; gridY++) {
@@ -89,8 +89,8 @@ namespace universal {
 
                         int offsetInBlockWrite = (section * 16 + gridY * 4) + gridZ * 1024 + gridX * 16384;
 
-                        // gridFormats[gridFormatIndex++] = format;
-                        // gridOffsets[gridOffsetIndex++] = gridPosition - 26;
+                        gridFormats[gridFormatIndex++] = format;
+                        gridOffsets[gridOffsetIndex++] = gridPosition - 26;
 
                         // ensure not reading past the memory buffer
                         if EXPECT_FALSE (gridPosition + GRID_SIZES[format] >= dataManager.size) {
@@ -98,6 +98,7 @@ namespace universal {
                         }
 
                         u8* bufferPtr = dataManager.data + gridPosition;
+                        dataManager.ptr = bufferPtr + GRID_SIZES[format] + 128;
                         bool success = true;
                         switch(format) {
                             case _0_SINGLE_BLOCK:
@@ -145,7 +146,7 @@ namespace universal {
                         }
 
                         if EXPECT_FALSE (!success) { return; }
-
+                        // dataManager.ptr = bufferPtr + GRID_SIZES[format];
                         placeBlocks(chunkData.blocks, grid, offsetInBlockWrite);
                         if (format & 1) {
                             placeBlocks(chunkData.submerged, submergedGrid, offsetInBlockWrite);
@@ -153,14 +154,16 @@ namespace universal {
                     } // end of gy
                 } // end of gz
             } // end of gx
+            volatile int x;
         } // end of section
+        dataManager.seek(76 + maxSectionAddress);
     }
 
 
     void V12Chunk::placeBlocks(u16_vec& writeVec, const u8* grid, int writeOffset) {
         int readOffset = 0;
-        for (int z = 0; z < 4; z++) {
-            for (int x = 0; x < 4; x++) {
+        for (int x = 0; x < 4; x++) {
+            for (int z = 0; z < 4; z++) {
                 for (int y = 0; y < 4; y++) {
                     int currentOffset = y + z * 256 + x * 4096;
                     u8 v1 = grid[readOffset++];
@@ -193,6 +196,8 @@ namespace universal {
     template<size_t BitsPerBlock>
     bool V12Chunk::parseLayer(const u8* buffer, u8* grid) {
         int size = (1 << BitsPerBlock) * 2;
+        u16_vec palette(size);
+        std::copy_n(buffer, size, palette.begin());
 
         for (int i = 0; i < 8; i++) {
             u8 vBlocks[BitsPerBlock];
@@ -212,8 +217,8 @@ namespace universal {
                 if EXPECT_FALSE (idx >= size) { return false; }
                 int gridIndex = (i * 8 + j) * 2;
                 int paletteIndex = idx * 2;
-                grid[gridIndex] = buffer[paletteIndex];
-                grid[gridIndex + 1] = buffer[paletteIndex + 1];
+                grid[gridIndex] = palette[paletteIndex];
+                grid[gridIndex + 1] = palette[paletteIndex + 1];
             }
         }
         return true;
@@ -232,8 +237,8 @@ namespace universal {
     template<size_t BitsPerBlock>
     bool V12Chunk::parseWithLayers(u8 const* buffer, u8* grid, u8* submergedGrid) {
         int size = (1 << BitsPerBlock) * 2;
-        // u16_vec palette(size);
-        // std::copy_n(buffer, size, palette.begin());
+        u16_vec palette(size);
+        std::copy_n(buffer, size, palette.begin());
 
         for (int i = 0; i < 8; i++) {
             u8 vBlocks[BitsPerBlock];
@@ -260,10 +265,10 @@ namespace universal {
                 int gridIndex = (i * 8 + j) * 2;
                 int paletteIndex = idxBlock * 2;
                 int paletteIndexSubmerged = idxWater * 2;
-                grid[gridIndex] = buffer[paletteIndex];
-                grid[gridIndex + 1] = buffer[paletteIndex + 1];
-                submergedGrid[gridIndex] = buffer[paletteIndexSubmerged];
-                submergedGrid[gridIndex + 1] = buffer[paletteIndexSubmerged + 1];
+                grid[gridIndex] = palette[paletteIndex];
+                grid[gridIndex + 1] = palette[paletteIndex + 1];
+                submergedGrid[gridIndex] = palette[paletteIndexSubmerged];
+                submergedGrid[gridIndex + 1] = palette[paletteIndexSubmerged + 1];
             }
         }
         return true;

@@ -133,7 +133,6 @@ int ConsoleParser::readWiiU(u32 file_size) {
 int ConsoleParser::readPs3(u32 dest_size) {
     printf("Detected compressed PS3 savefile, converting\n");
     console = CONSOLE::PS3;
-    int status;
 
     // source
     Data src = Data(source_binary_size);

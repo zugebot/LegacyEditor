@@ -26,7 +26,6 @@ ChunkManager* RegionManager::getNonEmptyChunk() {
 }
 
 
-
 void RegionManager::read(Data* dataIn) {
     totalSectors = (dataIn->size + SECTOR_SIZE - 1) / SECTOR_SIZE;
 

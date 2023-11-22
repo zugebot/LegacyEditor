@@ -61,6 +61,11 @@ namespace universal {
             chunkData.blocks[offset] = value;
         }
 
+        u16 getBlock(int x, int y, int z) {
+            int offset = y + 256 * z + 4096 * x;
+            return chunkData.blocks[offset];
+        }
+
 
     private:
 

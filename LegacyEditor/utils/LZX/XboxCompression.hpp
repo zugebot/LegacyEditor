@@ -1,12 +1,12 @@
 #pragma once
 
-#include <iostream>
 #include "lzx.h"
+#include <iostream>
 
 #include "LegacyEditor/utils/dataManager.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 
-//the max "amount" here is 0xffff which is only 2^16 - 1, so it won't overflow (0xff < 8) | 0xff
+/// the max "amount" here is 0xffff which is only 2^16 - 1, so it won't overflow (0xff < 8) | 0xff
 static int hasOverFlow(i64 bytesRead, i64 size, int amount) {
     if (bytesRead + amount > size) {
         printf("Tried to readBytes past buffer when decompressing buffer with xmem\n");
@@ -15,9 +15,9 @@ static int hasOverFlow(i64 bytesRead, i64 size, int amount) {
     return 0;
 }
 
-static int XDecompress(u8 *output, const u32 *sizeOut, u8 *input, u32 sizeIn) {
-    auto *dst = (u8 *) malloc(0x8000);
-    auto *src = (u8 *) malloc(0x8000);
+static int XDecompress(u8* output, const u32* sizeOut, u8* input, u32 sizeIn) {
+    auto* dst = (u8*) malloc(0x8000);
+    auto* src = (u8*) malloc(0x8000);
     if (src == nullptr || dst == nullptr) {
         printf("Out of memory, could not allocate 2 * 32768 bytes for buffer, exiting\n");
         if (src != nullptr) {
@@ -28,8 +28,8 @@ static int XDecompress(u8 *output, const u32 *sizeOut, u8 *input, u32 sizeIn) {
         }
         return 0;
     }
-    u8 *outputPointer = output;
-    struct lzx_state *strm = lzx_init(17);
+    u8* outputPointer = output;
+    struct lzx_state* strm = lzx_init(17);
     if (!strm) {
         printf("Failed to initialize lzx decompressor, exiting\n");
         free(src);
@@ -71,25 +71,25 @@ static int XDecompress(u8 *output, const u32 *sizeOut, u8 *input, u32 sizeIn) {
         }
 
         if (src_size == 0 || dst_size == 0) {
-            //no need to output this
-            //printf("EOF\n");
+            // no need to output this
+            // printf("EOF\n");
             break;
         }
         if (wasLargerThan0x8000 && src_size <= 0x8000) {
             wasLargerThan0x8000 = 0;
             free(src);
-            src = (u8 *) malloc(0x8000);
+            src = (u8*) malloc(0x8000);
             if (src == nullptr) {
                 printf("Out of memory, could not allocate 32768 bytes for buffer, exiting\n");
                 bytes = 0;
                 goto DECOMP_ERROR;
             }
         }
-        if (src_size > 0x8000)//the compressed size if rarely larger than the decompressed size
+        if (src_size > 0x8000) // the compressed size if rarely larger than the decompressed size
         {
             wasLargerThan0x8000 = 1;
             free(src);
-            src = (u8 *) malloc(src_size);
+            src = (u8*) malloc(src_size);
             if (src == nullptr) {
                 printf("Out of memory, could not allocate %d bytes for buffer, exiting\n", src_size);
                 bytes = 0;
@@ -110,11 +110,11 @@ static int XDecompress(u8 *output, const u32 *sizeOut, u8 *input, u32 sizeIn) {
             break;
         }
     }
-    DECOMP_ERROR:
+DECOMP_ERROR:
     if (src != nullptr) {
         free(src);
     }
     free(dst);
     lzx_teardown(strm);
-    return bytes;
+    return (int)bytes;
 }

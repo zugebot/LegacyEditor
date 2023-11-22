@@ -66,13 +66,13 @@ public:
     /// bytes 4-11
     ND u64 getFileSize() const { return isSystemLittle() ? ::swapEndian64(DAT.file_size) : DAT.file_size; }
     /// bytes 4-7
-    ND u32 getVitaFileSize() const { return isSystemLittle() ? VITA.file_size : swapEndian32(VITA.file_size) ; }
+    ND u32 getVitaFileSize() const { return isSystemLittle() ? VITA.file_size : ::swapEndian32(VITA.file_size) ; }
     /// bytes 8-11
-    ND u32 getVitaFileListing() const { return isSystemLittle() ? VITA.file_listing_offset : swapEndian32(VITA.file_listing_offset); }
+    ND u32 getVitaFileListing() const { return isSystemLittle() ? VITA.file_listing_offset : ::swapEndian32(VITA.file_listing_offset); }
     /// bytes 0-3
-    ND u32 getSwitchFileSize() const { return isSystemLittle() ? SWITCH.file_size : swapEndian32(SWITCH.file_size) ; }
+    ND u32 getSwitchFileSize() const { return isSystemLittle() ? SWITCH.file_size : ::swapEndian32(SWITCH.file_size) ; }
     /// bytes 4-7
-    ND u32 getSwitchSomething() const { return isSystemLittle() ? SWITCH.something : swapEndian32(SWITCH.something); }
+    ND u32 getSwitchSomething() const { return isSystemLittle() ? SWITCH.something : ::swapEndian32(SWITCH.something); }
 
 
 };

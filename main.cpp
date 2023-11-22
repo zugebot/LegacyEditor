@@ -46,7 +46,7 @@ int main() {
     std::cout << "goto 'LegacyEditor/utils/processor.hpp' and change 'dir_path' to be the path of the src'" << std::endl;
 
     auto start = getMilliseconds();
-    std::string inFilePath1 = dir_path + R"(tests\fortnite_world)";
+    std::string inFilePath1 = dir_path + R"(tests\fortnite_world_2)";
     // std::string inFilePath2 = dir_path + R"(tests\Vita Save\PCSB00560-231005063840\GAMEDATA.bin)";
     // std::string inFilePath2 = dir_path + R"(tests\GAMEDATA_RPCS3)";
     std::string inFilePath2 = dir_path + R"(tests\WiiU Save\231008144148)";
@@ -64,12 +64,15 @@ int main() {
     fileListing.saveToFolder(dir_path + "dump_wiiu");
 
     RegionManager region(fileListing.console);
-    region.read(fileListing.region_overworld[1]);
-    ChunkManager* chunkManager = region.getChunk(0, 17);
+    region.read(fileListing.region_overworld[2]);
+    ChunkManager* chunkManager = region.getChunk(0, 0);
     chunkManager->ensure_decompress(CONSOLE::WIIU);
 
 
-    /*
+    u16 block = 0x0380;
+    u16 id = block >> 4;
+
+
     universal::V12Chunk chunkParser;
     auto real = DataManager(chunkManager);
     real.writeToFile(dir_path + "chunk_read.bin");
@@ -77,80 +80,42 @@ int main() {
 
     chunkParser.readChunk(real, DIM::OVERWORLD);
 
-    int x = 4;
-    int z = 4;
-    for (int y = 74; y < 80; y++) {
-        int offset = y + 256 * z + 4096 * x;
-        // 56 is diamond ore
-        chunkParser.chunkData.blocks[offset] = 56 << 4;
-    }
-     */
+    u16 block2;
+    for (u16 x = 0; x < 16; x++) {
+        for (u16 z = 0; z < 16; z++) {
+            for (u16 y = 66; y < 255; y++) {
+                block2 = chunkParser.getBlock(x, y, z);
 
-
-    /*
-    u16 block;
-    u16 data;
-    for (int x = 0; x < 16; x++) {
-        for (int z = 0; z < 16; z++) {
-            for (int y = 0; y < 240; y++) {
-                block = 264;
-                data = (y + x + z) % 16;
-                chunkParser.placeBlock(x, y, z, block, data);
+                // chunkParser.placeBlock(x, y, z, 0, 0);
             }
+            //chunkParser.placeBlock(x, 239, z, 56, 0);
         }
     }
-    u16 block;
-    for (int x = 0; x < 16; x++) {
-        for (int z = 0; z < 16; z++) {
-            block = 46;
-            chunkParser.placeBlock(x, 74, z, 1, 1, true);
 
-        }
-    }
-    */
-    // chunkParser.placeBlock(0, 74, 0, 300, 0);
-    // chunkParser.placeBlock(1, 74, 1, 265, 0);
-    // chunkParser.placeBlock(2, 74, 2, 266, 0);
-    // chunkParser.placeBlock(3, 74, 3, 267, 0);
-    // chunkParser.placeBlock(4, 74, 4, 268, 0);
-    // chunkParser.placeBlock(5, 74, 5, 269, 0);
-
-    /*
-    u16 block;
-    for (int z = 0; z <= 1; z++) {
-        for (int y = 70; y <= 78; y++) {
-            for (int x = 0; x <= 5; x++) {
-                if (x != 3 && x != 2 && y < 72) {
-                    int offset = y + 256 * z + 4096 * x;
-                    chunkParser.chunkData.blocks[offset] = 57 << 4;
-                }
-
-                if (y >= 71 && x == 3 || x == 2) {
-                    int offset = y + 256 * z + 4096 * x;
-                    chunkParser.chunkData.blocks[offset] = 1 << 4;
-                }
-            }
-        }
-    }
-     */
+    chunkParser.placeBlock(3, 253,  3, 56, 0);
+    chunkParser.placeBlock(4, 253,  2, 57, 0);
+    chunkParser.placeBlock(0, 253, 15, 58, 0);
 
 
-    /*
+
+
     Data out_lol(123456);
 
     auto out = DataManager(out_lol);
 
     chunkParser.writeChunk(out, DIM::OVERWORLD);
+
+
     auto* compound = chunkParser.chunkData.NBTData->toType<NBTTagCompound>();
     for (const auto& key : compound->tagMap) {
         std::cout << key.first << std::endl;
     }
-
     std::cout << "Chunk: (" << chunkParser.chunkData.chunkX << ", " << chunkParser.chunkData.chunkZ << ")" << std::endl;
+
     Data out_ptr(chunkParser.dataManager.getPosition());
     memcpy(out_ptr.data, out_lol.data, out_ptr.size);
 
-    DataManager(out_ptr).writeToFile(dir_path + "chunk_write.bin");
+    // DataManager(out_ptr).writeToFile(dir_path + "chunk_write.bin");
 
     delete[] out_lol.data;
     out_lol.data = nullptr;
@@ -161,7 +126,6 @@ int main() {
     chunkManager->data = out_ptr.data;
     chunkManager->size = out_ptr.size;
     chunkManager->dec_size = chunkManager->size;
-     */
 
     /*
     universal::V12Chunk chunkParser2;
@@ -174,7 +138,7 @@ int main() {
 
     chunkManager->ensure_compressed(CONSOLE::WIIU);
     Data new_region = region.write(CONSOLE::WIIU);
-    fileListing.region_overworld[1]->data = new_region;
+    fileListing.region_overworld[2]->data = new_region;
 
     fileListing.removeFileTypes({FileType::PLAYER, FileType::DATA_MAPPING});
 
@@ -200,7 +164,7 @@ int main() {
     }
 
     ConsoleParser parser2;
-    parser2.readConsoleFile(outFilePath);
+    int g = parser2.readConsoleFile(outFilePath);
     FileListing listing(parser2);
     listing.saveToFolder(dir_path + "wiiu_out_recreate_names");
 
