@@ -1,9 +1,11 @@
 #pragma once
 
 #include "ChunkManager.hpp"
+
 #include "LegacyEditor/utils/enums.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 
+class File;
 
 class RegionManager {
 private:

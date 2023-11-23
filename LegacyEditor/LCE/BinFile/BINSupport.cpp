@@ -624,7 +624,10 @@ FileInfo extractSaveGameDat(u8* inputData, i64 inputSize) {
     stfsInfo.parse();
     StfsFileListing listing = stfsInfo.getFileListing();
     StfsFileEntry* entry = findSavegameFileEntry(listing);
-    if (!entry) { return {}; }
+    if (!entry) {
+        free(inputData);
+        return {};
+    }
     DataManager out;
     stfsInfo.extract(entry, out);
     

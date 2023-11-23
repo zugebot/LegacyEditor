@@ -79,9 +79,7 @@ int ConsoleParser::readVita() {
 
     // allocate memory
     Data src(source_binary_size);
-
-    data = new (std::nothrow) u8[size];
-    if (data == nullptr) return printf_err(error2, size);
+    allocate(size);
 
     // goto offset 8 for the data, read data into src
     fseek(f_in, 8, SEEK_SET);
@@ -89,18 +87,8 @@ int ConsoleParser::readVita() {
 
     RLEVITA_DECOMPRESS(src.data, src.size, data, size);
 
-    delete[] src.data;
+    src.deallocate();
 
-    /*
-    std::string path = dir_path + "tests/vitaUncompressed.bin";
-    FILE* f_out = fopen(path.c_str(), "wb");
-    if (f_out != nullptr) {
-        fwrite(data, 1, size, f_out);
-        fclose(f_out);
-    } else {
-        printf("Cannot open outfile \"tests/vitaUncompressed.bin\"");
-    }
-     */
 
     return 0;
 }
@@ -121,8 +109,10 @@ int ConsoleParser::readWiiU(u32 file_size) {
     fread(src.start(), 1, source_binary_size, f_in);
 
     tinf_zlib_uncompress((Bytef*) start(), &size, (Bytef*) src.start(), source_binary_size);
+    src.deallocate();
 
     if (getSize() == 0) return printf_err("%s", error3);
+
 
     return 0;
 }
@@ -145,6 +135,7 @@ int ConsoleParser::readPs3(u32 dest_size) {
     src.size -= 12;
     fread(src.start(), 1, src.size, f_in);
     tinf_uncompress(start(), &dest_size, src.start(), src.getSize());
+    src.deallocate();
 
     if (dest_size == 0) return printf_err("%s", error3);
 
@@ -175,6 +166,7 @@ int ConsoleParser::readXbox360_DAT() {
     // decompress src -> data
     fread(src.start(), 1, src.size, f_in);
     size = XDecompress(start(), &size, src.start(), src.getSize());
+    src.deallocate();
 
     if (size == 0) return printf_err("%s", error3);
 
@@ -193,6 +185,7 @@ int ConsoleParser::readXbox360_BIN() {
     fread(bin.start(), 1, source_binary_size, f_in);
 
     saveGameInfo = extractSaveGameDat(bin.start(), (i64) source_binary_size);
+    bin.deallocate(); // TODO: idk if it should but it is for now
 
     u32 src_size = saveGameInfo.saveFileData.readInt32() - 8;
 

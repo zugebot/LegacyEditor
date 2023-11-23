@@ -18,13 +18,10 @@
 
 class FileList : public std::vector<File*> {
 public:
-    // ~FileList() {
-    //     removeAll();
-    // }
-
     void removeAll() {
         for (File* file : *this) {
             delete[] file->data.data;
+            file->data.data = nullptr;
         }
         clear();
     }
@@ -68,6 +65,9 @@ public:
     explicit FileListing(ConsoleParser* consoleParser) : console(consoleParser->console) {
         read(*consoleParser);
     }
+    ~FileListing() {
+        deallocate();
+    }
 
     void read(Data& dataIn);
     Data write(CONSOLE consoleOut);
@@ -82,8 +82,6 @@ public:
 
     void clearPointers();
     void updatePointers();
-
-
 
 
     void removeFileTypes(std::set<FileType> typesToRemove) {
@@ -135,17 +133,21 @@ private:
         {FileType::ENTITY_END, [this]() { entity_end.removeAll(); }},
         {FileType::VILLAGE, [this]() {
                  delete[] village->data.data;
+                 village->data.data = nullptr;
                  village = nullptr; }},
         {FileType::DATA_MAPPING, [this]() {
                  delete[] largeMapDataMappings->data.data;
+                 largeMapDataMappings->data.data = nullptr;
                  largeMapDataMappings = nullptr;
          }},
         {FileType::LEVEL, [this]() {
              delete[] level->data.data;
+             level->data.data = nullptr;
              level = nullptr;
          }},
         {FileType::GRF, [this]() {
              delete[] grf->data.data;
+             grf->data.data = nullptr;
              grf = nullptr;
          }},
     };

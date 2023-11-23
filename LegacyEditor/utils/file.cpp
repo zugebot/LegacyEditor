@@ -5,6 +5,9 @@ File::~File() {
     if (nbt == nullptr) return;
     if (nbt->data == nullptr) return;
     getNBTCompound()->deleteAll();
+    nbt->data = nullptr;
+    delete nbt;
+    nbt = nullptr;
 }
 
 

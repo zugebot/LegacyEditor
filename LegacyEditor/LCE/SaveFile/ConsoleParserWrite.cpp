@@ -29,7 +29,7 @@ int ConsoleParser::saveWiiU(const std::string& outfileStr, Data& dataOut) {
     u8_vec compressedData(compressedSize);
     if (compress(compressedData.data(), &compressedSize,
                  managerOut.data, managerOut.size) != Z_OK) {
-        return {};
+        return -1;
     }
     compressedData.resize(compressedSize);
 

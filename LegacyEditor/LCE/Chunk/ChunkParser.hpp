@@ -1,31 +1,27 @@
 #pragma once
 
-#include "LegacyEditor/utils/dataManager.hpp"
+#include "ChunkData.hpp"
+#include "LegacyEditor/utils/DataManager.hpp"
 #include "LegacyEditor/utils/processor.hpp"
-
-#include <cstring>
-
 
 namespace universal {
 
+    class V11Chunk;
+    class V12Chunk;
 
-    class ChunkParserBase {
+    class ChunkParser {
     public:
+        ChunkData chunkData;
 
-        static u32 toIndex(u32 num) {
-            return (num + 1) * 128;
-        }
+        V11Chunk* v11Chunk = nullptr;
+        V12Chunk* v12Chunk = nullptr;
 
-        static u8_vec read128(DataManager& inputData) {
-            u32 num = (u32) inputData.readInt32();
-            u8_vec array1 = inputData.readIntoVector((i32)toIndex(num));
-            return array1;
-        }
+        MU void readChunk(DataManager* managerIn, DIM dim);
+        MU void writeChunk(DataManager* managerOut, DIM dim);
 
-        static u8_vec read256(DataManager& inputData) {
-            u8_vec array1 = inputData.readIntoVector(256);
-            return array1;
-        }
+        void placeBlock(int x, int y, int z, u16 block, u16 data = 0, bool waterlogged = false);
+        u16 getBlock(int x, int y, int z);
+        void rotateUpsideDown();
 
 
     };

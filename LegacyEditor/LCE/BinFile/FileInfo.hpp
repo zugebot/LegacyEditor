@@ -32,6 +32,14 @@ public:
     WorldOptions options;
 
     FileInfo() = default;
+
+    ~FileInfo() {
+        delete[] saveFileData.data;
+        saveFileData.data = nullptr;
+        delete[] thumbnailImage.data;
+        thumbnailImage.data = nullptr;
+    }
+
     /*
     FileInfo(DataInManager saveFileDataIn, std::wstring saveNameIn, DataInManager thumbnailImageIn,
              timePoint_t createdTimeIn, WorldOptions optionsIn)

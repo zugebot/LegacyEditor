@@ -71,14 +71,14 @@ void RegionManager::read(Data* dataIn) {
         switch (console) {
             case CONSOLE::PS3:
             case CONSOLE::RPCS3:
-                chunk.dec_size = managerIn.readInt32();
-                chunk.dec_size = managerIn.readInt32();
+                chunk.dec_size = managerIn.readInt32(); // rle dec size (?)
+                chunk.dec_size = managerIn.readInt32(); // final dec size
                 break;
             case CONSOLE::XBOX360:
             case CONSOLE::WIIU:
             case CONSOLE::VITA:
             default:
-                chunk.dec_size = managerIn.readInt32();
+                chunk.dec_size = managerIn.readInt32(); // final dec size
                 break;
         }
 
@@ -137,6 +137,7 @@ Data RegionManager::write(CONSOLE consoleIn) {
     for (const ChunkManager& chunk : chunks) {
         if (chunk.sectors == 0) continue;
 
+        // this looks kinda bad
         managerOut.seek(chunk.location * SECTOR_SIZE);
 
         u32 size = chunk.size;

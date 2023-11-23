@@ -1,6 +1,11 @@
 #include "ChunkManager.hpp"
 
 #include "LegacyEditor/utils/PS3_DEFLATE/deflateUsage.hpp"
+#include "LegacyEditor/utils/LZX/XboxCompression.hpp"
+#include "LegacyEditor/utils/RLE/rle.hpp"
+#include "LegacyEditor/utils/processor.hpp"
+#include "LegacyEditor/utils/tinf/tinf.h"
+#include "LegacyEditor/utils/zlib-1.2.12/zlib.h"
 
 
 void ChunkManager::ensure_decompress(CONSOLE console) {
@@ -31,22 +36,17 @@ void ChunkManager::ensure_decompress(CONSOLE console) {
             break;
     }
 
-    if (data != nullptr) {
-        delete[] data;
-        data = nullptr;
-        size = 0;
-    }
+    deallocate();
+
 
     if (rleFlag) {
-        Data rle(dec_size);
-        RLE_decompress(decompData.start(), decompData.size, rle.start(), dec_size_copy);
-        data = rle.data;
-        size = dec_size;
-        return;
-
+        allocate(dec_size);
+        RLE_decompress(decompData.start(), decompData.size, start(), dec_size_copy);
+        decompData.deallocate();
     } else {
         data = decompData.data;
         size = dec_size_copy;
+        decompData.reset();
     }
 }
 
@@ -57,22 +57,17 @@ void ChunkManager::ensure_compressed(CONSOLE console) {
         // printf("chunk data is nullptr, cannot Chunk.ensure_compress nothing\n");
         return;
     }
-    isCompressed = true;
 
+    isCompressed = true;
     dec_size = size;
 
     if (rleFlag) {
-        Data rle(size);
-        RLE_compress(data, size, rle.data, rle.size);
-
-        if (data != nullptr) {
-            delete[] data;
-            data = nullptr;
-            size = 0;
-        }
-
-        data = rle.data;
-        size = rle.size;
+        Data rleBuffer(size);
+        RLE_compress(data, size, rleBuffer.data, rleBuffer.size);
+        deallocate();
+        data = rleBuffer.data;
+        size = rleBuffer.size;
+        rleBuffer.reset();
     }
 
     // allocate memory and recompress
@@ -91,36 +86,30 @@ void ChunkManager::ensure_compressed(CONSOLE console) {
             break;
 
         case CONSOLE::RPCS3: {
-            printf("decompressing rpcs3\n");
             int status = ::def(data, comp_ptr, size, (uLongf*)&comp_size, -15);
             if (status != 0) {
-                printf("error has occurred\n");
+                printf("error has occurred compressing chunk\n");
             }
 
-
-            if (data != nullptr) {
-                delete[] data;
-                data = nullptr;
-                size = 0;
-            }
+            deallocate();
             data = comp_ptr;
             size = comp_size;
+            comp_size = 0;
             break;
         }
 
 
         case CONSOLE::WIIU:
         case CONSOLE::VITA: {
-            ::compress(comp_ptr, &comp_size, data, size);
-
-            if (data != nullptr) {
-                delete[] data;
-                data = nullptr;
-                size = 0;
+            int status = ::compress(comp_ptr, &comp_size, data, size);
+            if (status != 0) {
+                printf("error has occurred compressing chunk\n");
             }
 
+            deallocate();
             data = comp_ptr;
             size = comp_size;
+            comp_size = 0;
             break;
         }
         default:

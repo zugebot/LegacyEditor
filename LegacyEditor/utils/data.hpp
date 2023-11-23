@@ -28,6 +28,19 @@ public:
         data = new u8[sizeIn];
     }
 
-    ND u8* start() const { return data; }
-    ND u32 getSize() const { return size; }
+    void deallocate() {
+        if (data != nullptr) {
+            delete[] data;
+            data = nullptr;
+            size = 0;
+        }
+    }
+
+    void reset() {
+        data = nullptr;
+        size = 0;
+    }
+
+    ND inline u8* start() const { return data; }
+    ND inline u32 getSize() const { return size; }
 };

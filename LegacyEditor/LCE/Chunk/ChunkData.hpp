@@ -12,16 +12,31 @@ public:
     u8_vec heightMap;
     u8_vec biomes;
     NBTBase* NBTData = nullptr;
-    i16 terrainPopulated;
-    i64 lastUpdate;
-    i64 inhabitedTime;
+    i16 terrainPopulated = 0;
+    i64 lastUpdate = 0;
+    i64 inhabitedTime = 0;
 
     /// Used to skip the lights in the chunk
-    i32 DataGroupCount;
+    i32 DataGroupCount = 0;
 
-    i32 chunkX;
-    i32 chunkZ;
+    i32 chunkX = 0;
+    i32 chunkZ = 0;
+
+    i32 lastVersion = 0;
 
     /// Aquatic only
+    // TODO: get rid of this
     u16_vec submerged;
+
+    ~ChunkData() {
+        if (NBTData != nullptr) {
+            NBTData->NbtFree();
+            delete NBTData;
+            NBTData = nullptr;
+        }
+    }
+
+    ND std::string getCoords() const {
+        return "(" + std::to_string(chunkX) + ", " + std::to_string(chunkZ) + ")";
+    }
 };

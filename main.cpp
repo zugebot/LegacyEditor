@@ -4,7 +4,8 @@
 
 #include "LegacyEditor/utils/dataManager.hpp"
 
-#include "LegacyEditor/LCE/Chunk/include.h"
+#include "LegacyEditor/LCE/Chunk/ChunkParser.hpp"
+
 #include "LegacyEditor/LCE/Map/Map.hpp"
 #include "LegacyEditor/LCE/Region/ChunkManager.hpp"
 #include "LegacyEditor/LCE/Region/RegionManager.hpp"
@@ -45,33 +46,188 @@ int toBlock(int x, int y, int z) {
 int main() {
     std::cout << "goto 'LegacyEditor/utils/processor.hpp' and change 'dir_path' to be the path of the src'" << std::endl;
 
-    auto start = getMilliseconds();
-    std::string inFilePath1 = dir_path + R"(tests\fortnite_world_2)";
-    // std::string inFilePath2 = dir_path + R"(tests\Vita Save\PCSB00560-231005063840\GAMEDATA.bin)";
-    // std::string inFilePath2 = dir_path + R"(tests\GAMEDATA_RPCS3)";
+    std::string inFilePath1 = dir_path + R"(tests\231022105047)";
     std::string inFilePath2 = dir_path + R"(tests\WiiU Save\231008144148)";
     std::string outFilePath = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\230918230206)";
 
     ConsoleParser parser;
-    int status = parser.readConsoleFile(inFilePath1);
-    // int status = parser.readConsoleFile(dir_path + "GAMEDATA (1)");
-    if (status) {
+    int statusIn = parser.readConsoleFile(inFilePath1);
+    if (statusIn) {
         printf("failed to load file\n");
-        return 1;
+        return -1;
     }
 
     FileListing fileListing(parser);
+    fileListing.removeFileTypes({FileType::PLAYER, FileType::DATA_MAPPING});
     fileListing.saveToFolder(dir_path + "dump_wiiu");
 
+
+    for (int regionIndex = 0; regionIndex < 4; regionIndex++) {
+
+
+        CONSOLE console = parser.console;
+        // read a region file
+        RegionManager region(fileListing.console);
+        region.read(fileListing.region_overworld[regionIndex]);
+        fileListing.region_overworld[regionIndex]->data.deallocate();
+
+        int h = -1;
+        for (ChunkManager& chunkManager : region.chunks) {
+            h++;
+            if (chunkManager.sectors == 0)
+                continue;
+
+            chunkManager.ensure_decompress(console);
+            DataManager chunkDataIn(chunkManager);
+            universal::ChunkParser chunkParser;
+            chunkParser.readChunk(&chunkDataIn, DIM::OVERWORLD);
+            auto& chunkData = chunkParser.chunkData;
+            // chunkDataIn.writeToFile(dir_path + "chunk_read.bin");
+
+
+            // silly stuff here
+
+            u16 blocks[65536];
+            for (u16 x = 0; x < 16; x++) {
+                for (u16 z = 0; z < 16; z++) {
+                    for (u16 y = 0; y < 256; y++) {
+                        u16 block = chunkParser.getBlock(x, y, z);
+
+                        int offset_1 = (255 - y) + 256 * z + 4096 * x;
+                        int offset_2 = y + 256 * z + 4096 * x;
+
+                        if (/*((block >> 4) >= 8) && ((block >> 4) <= 11) ||*/ ((block >> 15) == 1)) {
+                            block = 0;
+                        }
+                        blocks[offset_1] = block;
+                        // blocks[offset_2] = block;
+                    }
+                }
+            }
+
+            // for (u16 y = 0; y < 256; y++) {
+            //     blocks[y] = 2 << 4;
+            // }
+
+            // memset(&chunkData.blockLight[0], 0xFF, 32768);
+            // memset(&chunkData.skyLight[0], 0xFF, 32768);
+
+
+            memcpy(&chunkData.blocks[0], &blocks[0], 131072);
+            /*
+            if (chunkData.NBTData != nullptr) {
+                chunkData.NBTData->toType<NBTTagCompound>()->deleteAll();
+                delete chunkData.NBTData;
+            }
+
+            chunkData.NBTData = new NBTBase(new NBTTagCompound(), TAG_COMPOUND);
+            auto* chunkRootNbtData = static_cast<NBTTagCompound*>(chunkData.NBTData->data);
+            auto* entities = new NBTTagList();
+            auto* tileEntities = new NBTTagList();
+            auto* tileTicks = new NBTTagList();
+            chunkRootNbtData->setListTag("Entities", entities);
+            chunkRootNbtData->setListTag("TileEntities", tileEntities);
+            chunkRootNbtData->setListTag("TileTicks", tileTicks);
+             */
+
+
+            if (chunkData.NBTData != nullptr) {
+                auto* compound = chunkData.NBTData->toType<NBTTagCompound>();
+
+                auto* tileTicks = compound->getListTag("TileTicks");
+                if (tileTicks != nullptr) {
+                    for (auto& tick : tileTicks->tagList) {
+                        auto* tickCompound = tick.toType<NBTTagCompound>();
+                        auto tagY = tickCompound->getTag("y");
+                        i32 y = 255 - tagY.toPrimitiveType<i32>();
+                        tickCompound->setTag("y", createNBT_INT32(y));
+                    }
+                }
+
+                auto* tileEntities = compound->getListTag("TileEntities");
+                if (tileEntities != nullptr) {
+                    for (auto& tick : tileEntities->tagList) {
+                        auto* tickCompound = tick.toType<NBTTagCompound>();
+                        auto tagY = tickCompound->getTag("y");
+                        i32 y = 255 - tagY.toPrimitiveType<i32>();
+                        tickCompound->setTag("y", createNBT_INT32(y));
+                    }
+                }
+
+
+                auto* entities = compound->getListTag("Entities");
+                if (entities != nullptr) {
+                    for (auto& tick : entities->tagList) {
+                        auto* tickCompound = tick.toType<NBTTagCompound>();
+                        auto tagY = tickCompound->getTag("y");
+                        i32 y = 255 - tagY.toPrimitiveType<i32>();
+                        tickCompound->setTag("y", createNBT_INT32(y));
+                    }
+                }
+            }
+
+
+
+
+
+            Data outBuffer(40000000);
+            auto managerChunkOut = DataManager(outBuffer);
+            chunkParser.writeChunk(&managerChunkOut, DIM::OVERWORLD);
+
+
+
+            std::cout << "Chunk: " << chunkData.getCoords() << std::endl;
+
+
+            Data outData(managerChunkOut.getPosition());
+            memcpy(outData.data, outBuffer.data, outData.size);
+
+            outBuffer.deallocate();
+            chunkManager.deallocate();
+
+            chunkManager.data = outData.data;
+            chunkManager.size = outData.size;
+            chunkManager.dec_size = chunkManager.size;
+
+
+            // universal::ChunkParser chunkParser2;
+            // DataManager out2(chunkManager);
+            // chunkParser2.readChunk(&out2, DIM::OVERWORLD);
+
+
+            chunkManager.ensure_compressed(console);
+
+        }
+
+        fileListing.region_overworld[regionIndex]->data = region.write(console);
+    }
+
+    CONSOLE consoleOut = CONSOLE::WIIU;
+    for (auto* fileList : fileListing.dimFileLists) {
+        for (File* file: *fileList) {
+            RegionManager reg(CONSOLE::WIIU);
+            reg.read(file);
+            Data _data = reg.write(consoleOut);
+            file->data.deallocate();
+            file->data = _data;
+        }
+    }
+
+    Data dataOut = fileListing.write(consoleOut); // write file listing
+    int statusOut = ConsoleParser::saveWiiU(outFilePath, dataOut);
+    if (statusOut) {
+        printf("converting to wiiu failed...\n");
+    } else {
+        printf("finished!\n");
+    }
+
+    return 0;
+
+    /*
     RegionManager region(fileListing.console);
     region.read(fileListing.region_overworld[2]);
     ChunkManager* chunkManager = region.getChunk(0, 0);
     chunkManager->ensure_decompress(CONSOLE::WIIU);
-
-
-    u16 block = 0x0380;
-    u16 id = block >> 4;
-
 
     universal::V12Chunk chunkParser;
     auto real = DataManager(chunkManager);
@@ -95,7 +251,9 @@ int main() {
     chunkParser.placeBlock(3, 253,  3, 56, 0);
     chunkParser.placeBlock(4, 253,  2, 57, 0);
     chunkParser.placeBlock(0, 253, 15, 58, 0);
+    chunkParser.placeBlock(7, 250,  7, 59, 0);
 
+    chunkParser.rotateUpsideDown();
 
 
 
@@ -127,48 +285,25 @@ int main() {
     chunkManager->size = out_ptr.size;
     chunkManager->dec_size = chunkManager->size;
 
-    /*
+
     universal::V12Chunk chunkParser2;
     auto real2 = DataManager(chunkManager);
 
     u16 chunkVersion2 = real2.readInt16();
 
     chunkParser2.readChunk(real2, DIM::OVERWORLD);
-    */
+
 
     chunkManager->ensure_compressed(CONSOLE::WIIU);
     Data new_region = region.write(CONSOLE::WIIU);
     fileListing.region_overworld[2]->data = new_region;
-
-    fileListing.removeFileTypes({FileType::PLAYER, FileType::DATA_MAPPING});
-
-    CONSOLE consoleOut = CONSOLE::WIIU;
-    for (auto* fileList : fileListing.dimFileLists) {
-        for (File* file: *fileList) {
-            RegionManager reg(CONSOLE::WIIU);
-            reg.read(file);
-            Data _data = reg.write(consoleOut);
-            delete[] file->data.data;
-            file->data = _data;
-        }
-    }
-
-    Data dataOut = fileListing.write(consoleOut); // write file listing
-    fileListing.deallocate();
-
-    int status2 = ConsoleParser::saveWiiU(outFilePath, dataOut);
-    if (status2) {
-        printf("converting to wiiu failed...");
-    } else {
-        printf("finished!");
-    }
-
+    */
+    /*
     // ConsoleParser parser2;
     // int g = parser2.readConsoleFile(outFilePath);
     // FileListing listing(parser2);
     // listing.saveToFolder(dir_path + "wiiu_out_recreate_names");
 
-    /*
      *
     for (int i = 0; i < fileListing.overworld.size(); i++) {
         std::cout << fileListing.overworld[2]->name << std::endl;
@@ -188,9 +323,6 @@ int main() {
 
     out.writeToFile(dir_path + "180809114549_dec.dat");
     */
-
-
-
     /*
 
     // int status = ConsoleParser().convertAndReplaceRegions(inFilePath1, inFilePath2, outFilePath, CONSOLE::WIIU);
@@ -201,11 +333,7 @@ int main() {
         std::cout << "Failed to convert..." << std::endl;
     }
      */
-
-
-
-
-
+    /*
     // ConsoleParser parser;
     // int status = parser.readConsoleFile(inFilePath2);
     // if (status != 0) return status;
@@ -220,12 +348,7 @@ int main() {
     // chunk->ensure_decompress(CONSOLE::RPCS3);
     // DataManager chunkOut(chunk);
     // chunkOut.writeToFile(dir_path + "rpcs3_chunk_dec.bin");
-
-
-
-
-
-
+    */
     /*
     ConsoleParser out;
     out.readConsoleFile(outFilePath);
@@ -256,8 +379,7 @@ int main() {
     }
     std::cout << "finished reading" << std::endl;
     */
-
-
+    /*
     // ConsoleParser parserWiiU;
     // int status1 = parserWiiU.readConsoleFile(wiiuFilePath);
     // FileListing fileListingWiiU(parserWiiU.console, parserWiiU);
@@ -293,8 +415,7 @@ int main() {
     // std::cout << "\n\n\n" << std::endl;
     // std::cout << playerNBTStringvita << std::endl;
     // compareNBT(datawiiu, datavita);
-
-
+    */
     /*
     saveMapToPng(fileListingVita.mapFilePtrs[0], dir_path);
 
@@ -306,17 +427,6 @@ int main() {
         file->data = data;
     }
      */
-
-
-
-    // fileListingWiiU.deleteAllChunks();
-
-
-    // Data dataOutVita = fileListingWiiU.write(CONSOLE::WIIU);
-    // parser.saveWiiU(dir_path + "tests/230918230206", dataOutVita);
-
-    system("pause");
-
     /*
     {
         DataManager managerOut(14);
@@ -361,7 +471,6 @@ int main() {
     // int y; std::cin >> y;
     // std::string fileInPath = dir_path + "230918230206.wii";
     */
-
     /*
 
     auto* player = fileListingWiiU.structureFilePtrs[0]; // playerFilePtrs[0];
@@ -370,7 +479,6 @@ int main() {
     std::string playerNBTString = data->toString();
     std::cout << playerNBTString << std::endl;
     */
-
     /*
     File* levelFilePtr = fileListingWiiU.levelFilePtr;
 
@@ -421,8 +529,8 @@ int main() {
     }
     levelOut.writeToFile(dir_path + "chunk_out.bin");
      */
-    // chunk.ensure_compressed(CONSOLE::WIIU);
     /*
+    // chunk.ensure_compressed(CONSOLE::WIIU);
     for (int i = 0; i < 1024; i++) {
         chunk->ensure_decompress(CONSOLE::WIIU);
         chunk->ensure_compressed(CONSOLE::WIIU);
@@ -481,8 +589,8 @@ int main() {
         printf("Recompressed all chunks in '%s'\n", regionFilePtr->name.c_str());
     }
      */
-    // Data dataOut = fileListingWiiU.write(CONSOLE::WIIU);
     /*
+    // Data dataOut = fileListingWiiU.write(CONSOLE::WIIU);
     // compare decompressed FileListing
     // DataManager(parser).writeToFile(dir_path + "in_" + "file_listing");
     // DataManager(dataOut).writeToFile(dir_path + "out_" + "file_listing");
@@ -538,5 +646,4 @@ int main() {
     std::cout << "time: " << diff << "ms" << std::endl;
 
      */
-    return 0;
 }

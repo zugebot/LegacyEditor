@@ -23,6 +23,7 @@ i16 extractMapNumber(const std::string& str) {
     return 32767;
 }
 
+
 std::pair<int, int> extractRegionCoords(const std::string& filename) {
     size_t lastDot = filename.find_last_of('.');
     std::string relevantPart = filename.substr(0, lastDot);
@@ -82,6 +83,7 @@ void FileListing::read(Data &dataIn) {
         File &file = allFiles.back();
         printf("%s\n", fileName.c_str());
 
+        // region file
         if (fileName.ends_with(".mcr")) {
             if (fileName.starts_with("DIM-1")) {
                 file.fileType = FileType::REGION_NETHER;

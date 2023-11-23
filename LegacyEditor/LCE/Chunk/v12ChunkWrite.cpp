@@ -61,31 +61,33 @@ bool is255_128_slow(const u8* ptr) {
 namespace universal {
 
 
-    void V12Chunk::writeChunk(DataManager& managerOut, DIM) {
+    void V12Chunk::writeChunk(ChunkData* chunkDataIn, DataManager* managerOut, DIM dim) {
         dataManager = managerOut;
-        dataManager.writeInt16(12);
-        dataManager.writeInt32(chunkData.chunkX);
-        dataManager.writeInt32(chunkData.chunkZ);
-        dataManager.writeInt64(chunkData.lastUpdate);
-        dataManager.writeInt64(chunkData.inhabitedTime);
+        chunkData = chunkDataIn;
+
+        // dataManager->writeInt16(chunkData->lastVersion);
+        dataManager->writeInt32(chunkData->chunkX);
+        dataManager->writeInt32(chunkData->chunkZ);
+        dataManager->writeInt64(chunkData->lastUpdate);
+        dataManager->writeInt64(chunkData->inhabitedTime);
 
 
 
-        u8* start = dataManager.ptr;
+        u8* start = dataManager->ptr;
         auto t_start = getNanoSeconds();
         writeBlockData();
         auto t_end = getNanoSeconds();
-        u8* end = dataManager.ptr;
-        dataManager.writeToFile(start, end - start, dir_path + "light_write.bin");
+        u8* end = dataManager->ptr;
+        dataManager->writeToFile(start, end - start, dir_path + "block_write.bin");
         auto diff = t_end - t_start;
-        printf("Block Write Size: %llu bytes. \n", end - start);
-        printf("Block Write Time: %llu (%fms)\n\n", diff, float(diff) / 1000000);
+        // printf("Block Write Size: %llu bytes. \n", end - start);
+        // printf("Block Write Time: %llu (%fms)\n\n", diff, float(diff) / 1000000);
 
         writeLightData();
 
-        dataManager.writeBytes(chunkData.heightMap.data(), 256);
-        dataManager.writeInt16(chunkData.terrainPopulated);
-        dataManager.writeBytes(chunkData.biomes.data(), 256);
+        dataManager->writeBytes(chunkData->heightMap.data(), 256);
+        dataManager->writeInt16(chunkData->terrainPopulated);
+        dataManager->writeBytes(chunkData->biomes.data(), 256);
 
         writeNBTData();
 
@@ -109,7 +111,7 @@ namespace universal {
         const u32 H_SECT_START =      50;
 
         /// increment 50 for block header
-        dataManager.incrementPointer(50);
+        dataManager->incrementPointer(50);
 
         u32 last_section_jump = 0;
         u32 last_section_size = 0;
@@ -119,9 +121,9 @@ namespace universal {
             u32 sectionSize = 0;
 
             {
-            u32 reducedSectionJump = last_section_jump * 256;
+            u32 reducedSectionJump = 256 * last_section_jump;
             u32 index = 26 + H_SECT_JUMP_TABLE + 2 * sectionIndex;
-            dataManager.writeInt16AtOffset(index, reducedSectionJump);
+            dataManager->writeInt16AtOffset(index, reducedSectionJump);
             }
 
             // serialize grid to buffer
@@ -136,7 +138,7 @@ namespace universal {
                         blockVector.clear();
                         blockLocations.clear();
 
-                        dataManager.ptr = dataManager.data + 26 + 50 + 128 + last_section_jump * 256 + sectionSize;
+                        dataManager->ptr = dataManager->data + 26 + 50 + 128 + last_section_jump * 256 + sectionSize;
 
                         u32 offsetInBlock = sectionIndex * 16 + gridY * 4 + gridZ * 1024 + gridX * 16384;
 
@@ -144,8 +146,8 @@ namespace universal {
                         for (u32 blockX = 0; blockX < 4; blockX++) {
                             for (u32 blockZ = 0; blockZ < 4; blockZ++) {
                                 for (u32 blockY = 0; blockY < 4; blockY++) {
-                                    u32 blockIndex = offsetInBlock + blockY + blockZ * 256 + blockX * 4096;
-                                    u16 block = chunkData.blocks[blockIndex];
+                                    u32 blockIndex = offsetInBlock + blockY + 256 * blockZ + 4096 * blockX;
+                                    u16 block = chunkData->blocks[blockIndex];
                                     if (blockMap[block]) {
                                         blockLocations.push_back(blockMap[block] - 1);
                                     } else {
@@ -158,6 +160,14 @@ namespace universal {
                             }
                         }
 
+
+                        // for (u16 block : blockVector) {
+                        //     blockMap[block] = 0;
+                        // }
+                        // blockVector = {1 << 4};
+                        // memset(blockLocations.data(), 0, 128);
+
+
                         // hardcode blocks here for testing
                         // auto rng = std::default_random_engine {};
                         // std::shuffle(std::begin(blockVector), std::end(blockVector), rng);
@@ -168,23 +178,23 @@ namespace universal {
                         u16 gridID;
 
                         if (blockCount == 1) {
-                            gridFormat = _0_SINGLE_BLOCK;
+                            gridFormat = V12_0_SINGLE_BLOCK;
                             gridID = blockVector[0];
                         } else {
                             if (blockCount == 2) {
-                                gridFormat = _1_BIT;
+                                gridFormat = V12_1_BIT;
                                 writeLayer<1>(blockVector, blockLocations);
                             } else if (blockCount <= 4) {
-                                gridFormat = _2_BIT;
+                                gridFormat = V12_2_BIT;
                                 writeLayer<2>(blockVector, blockLocations);
                             } else if (blockCount <= 8) {
-                                gridFormat = _3_BIT;
+                                gridFormat = V12_3_BIT;
                                 writeLayer<3>(blockVector, blockLocations);
                             } else if (blockCount <= 16) {
-                                gridFormat = _4_BIT;
+                                gridFormat = V12_4_BIT;
                                 writeLayer<4>(blockVector, blockLocations);
                             } else {
-                                gridFormat = _8_FULL_BLOCKS;
+                                gridFormat = V12_8_FULL_BLOCKS;
                                 writeWithMaxBlocks(blockVector, blockLocations);
                             }
                             gridID = sectionSize >> 2 | gridFormat << 12;
@@ -196,14 +206,14 @@ namespace universal {
 
                         // debugging
                         // gridFormats[gridFormatIndex++] = gridFormat;
-                        // gridOffsets[gridOffsetIndex++] = dataManager.getPosition();
+                        // gridOffsets[gridOffsetIndex++] = dataManager->getPosition();
 
                         // write correct grid header
-                        dataManager.setLittleEndian();
-                        dataManager.writeInt16AtOffset(26 + sectorStart + 2 * gridIndex, gridID);
-                        dataManager.setBigEndian();
+                        dataManager->setLittleEndian();
+                        dataManager->writeInt16AtOffset(26 + sectorStart + 2 * gridIndex, gridID);
+                        dataManager->setBigEndian();
 
-                        sectionSize += GRID_SIZES[gridFormat];
+                        sectionSize += V12_GRID_SIZES[gridFormat];
 
 
                     }
@@ -211,22 +221,26 @@ namespace universal {
             }
 
             // write section size to section size table
-            u8* position = dataManager.data + 26 + sectorStart;
+            u8* position = dataManager->data + 26 + sectorStart;
             u32 index = 26 + H_SECT_SIZE_TABLE + sectionIndex;
             if (is0_128_slow(position)) {
-                dataManager.ptr -= 128;
                 last_section_size = 0;
             } else {
                 last_section_size = (128 + sectionSize + 255) / 256;
                 last_section_jump += last_section_size;
             }
-            dataManager.writeInt8AtOffset(index, last_section_size);
+            dataManager->writeInt8AtOffset(index, last_section_size);
 
         }
 
-        dataManager.writeInt16AtOffset(26, last_section_jump + last_section_size - 1);
+        if (last_section_size == 0) {
+            dataManager->ptr -= 128;
+        }
 
-        dataManager.seek(76 + (last_section_jump + last_section_size - 1) * 256);
+        dataManager->writeInt16AtOffset(26, last_section_jump);
+
+        //dataManager->ptr = dataManager->data + 26 + 50 + last_section_jump * 256;
+        dataManager->seek(76 + last_section_jump * 256);
     }
 
 
@@ -240,103 +254,93 @@ namespace universal {
     template<size_t BitsPerBlock>
     void V12Chunk::writeLayer(u16_vec& blocks, u16_vec& positions) {
         u32 palette_size = (1 << BitsPerBlock);
-        dataManager.setLittleEndian();
+        dataManager->setLittleEndian();
 
         // write the block data
         for (u16 block : blocks) {
-            dataManager.writeInt16(block);
+            dataManager->writeInt16(block);
         }
         // fill rest of empty palette with 0xFF's
-        // TODO: idk if this is actually necessary
+        // TODO: IDK if this is actually necessary
         for (u64 rest = 0; rest < palette_size - blocks.size(); rest++) {
-            dataManager.writeInt16(0xffff);
+            dataManager->writeInt16(0xffff);
         }
-        dataManager.setBigEndian();
+        dataManager->setBigEndian();
 
-        /*
-         * write the position data
-         *
-         * so, write the first bit of each position, as a single u64,
-         * then the second, third etc. N times,
-         * where N is BitsPerBlock
-         */
+         //  write the position data
+         //  so, write the first bit of each position, as a single u64,
+         //  then the second, third etc. N times, where N is BitsPerBlock
          for (u64 bitIndex = 0; bitIndex < BitsPerBlock; bitIndex++) {
             u64 position = 0;
             for (u32 locIndex = 0; locIndex < 64; locIndex++) {
                 u64 pos = positions[locIndex];
                 position |= ((pos >> bitIndex) & 1) << (63 - locIndex);
             }
-            dataManager.writeInt64(position);
+            dataManager->writeInt64(position);
          }
     }
 
 
     /// make this copy all u16 blocks from the grid location or whatnot
     void V12Chunk::writeWithMaxBlocks(u16_vec& blocks, u16_vec& positions) {
-         dataManager.setLittleEndian();
+         dataManager->setLittleEndian();
          for (u32 i = 0; i < 64; i++) {
             u16 blockPos = positions[i];
-            dataManager.writeInt16(blocks[blockPos]);
+            dataManager->writeInt16(blocks[blockPos]);
          }
-         dataManager.setBigEndian();
+         dataManager->setBigEndian();
     }
 
 
-    void V12Chunk::writeLightSection(u8_vec& light, int& readOffset) {
+    void V12Chunk::writeLightSection(int index, u32& readOffset, u8_vec& light) {
+         static std::vector<u32> sectionOffsets;
+         sectionOffsets.reserve(64);
+
+        u32 start = dataManager->getPosition();
+        dataManager->writeInt32(0);
         sectionOffsets.clear();
 
         // Write headers
+        u32 sectionOffsetSize = 0;
         u8* ptr = light.data() + readOffset;
         for (int i = 0; i < 128; i++) {
             if (is0_128_slow(ptr)) {
-                dataManager.writeInt8(128);
+                dataManager->writeInt8(128);
             } else if (is255_128_slow(ptr)) {
-                dataManager.writeInt8(129);
+                dataManager->writeInt8(129);
             } else {
                 sectionOffsets.push_back(readOffset);
-                dataManager.writeInt8(sectionOffsets.size() - 1);
+                dataManager->writeInt8(sectionOffsetSize++);
             }
             ptr += 128;
             readOffset += 128;
         }
 
         // Write light data sections
-        for (int offset: sectionOffsets) {
-            dataManager.writeBytes(&light[offset], 128);
+        for (u32 offset : sectionOffsets) {
+            dataManager->writeBytes(&light[offset], 128);
         }
-    }
-
-
-    void V12Chunk::writeLight(int index, int& readOffset, u8_vec& light) {
-        u8* startPtr = dataManager.ptr;
-        dataManager.writeInt32(0); // Placeholder for size
-
-        writeLightSection(light, readOffset);
 
         // Calculate and write the size
-        u8* endPtr = dataManager.ptr;
-        i64 size = (endPtr - startPtr - 4 - 128) / 128; // -4 to exclude the size field itself
-        dataManager.ptr = startPtr;
-        dataManager.writeInt32(static_cast<int>(size));
-        dataManager.ptr = endPtr;
-
-        // printf("%d: size=%d\n", index, dataManager.getPosition());
-        // dataManager.writeToFile(dataManager.data, dataManager.getPosition(), dir_path + "light_" + std::to_string(index) + ".bin");
+        u32 end = dataManager->getPosition();
+        u32 size = (end - start - 4 - 128) / 128; // -4 to exclude size header
+        dataManager->writeInt32AtOffset(start, size);
     }
 
 
     void V12Chunk::writeLightData() {
-        int readOffset = 0;
-        writeLight(0, readOffset, chunkData.skyLight);
-        writeLight(1, readOffset, chunkData.skyLight);
+        u32 readOffset = 0;
+        writeLightSection(0, readOffset, chunkData->skyLight);
+        writeLightSection(1, readOffset, chunkData->skyLight);
         readOffset = 0;
-        writeLight(2, readOffset, chunkData.blockLight);
-        writeLight(3, readOffset, chunkData.blockLight);
+        writeLightSection(2, readOffset, chunkData->blockLight);
+        writeLightSection(3, readOffset, chunkData->blockLight);
     }
 
+
     void V12Chunk::writeNBTData() {
-        if (chunkData.NBTData != nullptr) {
-            NBT::writeTag(chunkData.NBTData, dataManager);
+        if (chunkData->NBTData != nullptr) {
+            NBT::writeTag(chunkData->NBTData, *dataManager);
         }
     }
 }
