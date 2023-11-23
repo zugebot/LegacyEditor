@@ -1,3 +1,0 @@
-C:/Users/jerrin/CLionProjects/LegacyEditor/cmake-build-debug/CMakeFiles/LegacyEditor.dir
-C:/Users/jerrin/CLionProjects/LegacyEditor/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/jerrin/CLionProjects/LegacyEditor/cmake-build-debug/CMakeFiles/rebuild_cache.dir
