@@ -61,7 +61,9 @@ int main() {
     fileListing.removeFileTypes({FileType::PLAYER, FileType::DATA_MAPPING});
     fileListing.saveToFolder(dir_path + "dump_wiiu");
 
+    std::set<u16> blockSet;
 
+    auto start = getNanoSeconds();
     for (int regionIndex = 0; regionIndex < 4; regionIndex++) {
 
 
@@ -84,26 +86,57 @@ int main() {
             auto& chunkData = chunkParser.chunkData;
             // chunkDataIn.writeToFile(dir_path + "chunk_read.bin");
 
-
-            // silly stuff here
-
             u16 blocks[65536];
             for (u16 x = 0; x < 16; x++) {
                 for (u16 z = 0; z < 16; z++) {
                     for (u16 y = 0; y < 256; y++) {
-                        u16 block = chunkParser.getBlock(x, y, z);
+                        u16 block1 = chunkParser.getBlock(x, y, z);
+                        // u16 block2 = block1;
 
-                        int offset_1 = (255 - y) + 256 * z + 4096 * x;
-                        int offset_2 = y + 256 * z + 4096 * x;
+                        int offset1 =       y + 256 * z + 4096 * x;
+                        // int offset2 = 255 - y + 256 * z + 4096 * x;
 
-                        if (/*((block >> 4) >= 8) && ((block >> 4) <= 11) ||*/ ((block >> 15) == 1)) {
-                            block = 0;
+                        u16 compare1 = (block1 & 0x1FF0) >> 4;
+                        if (block1 & 0x8000) { // fix stupid blocks
+                            if (compare1 == 271) { // sea pickle
+                                block1 = (block1 & 0x9FF7) | 0x08;
+                            }
+                            if (compare1 == 272) { // bubble column
+                                block1 = (block1 & 0x1FFF) | 0x08;
+                                // block1 = 9 << 4;
+                            }
                         }
-                        blocks[offset_1] = block;
-                        // blocks[offset_2] = block;
+                        /*
+                        if (compare1 == 8 || compare1 == 9) {
+                            block2 = 0;
+                        }
+
+                        if (block2 & 0x8000) {
+                            block2 &= 0x1FFF;
+                            u16 compare = (block2 & 0x1FF0) >> 4;
+                            if (compare == 271) { // sea pickle
+                                block2 = 0; //9 << 4;
+                            }
+                            if (compare == 272) { // bubble column
+                                block2 = 0;//9 << 4;
+                            }
+                        }
+                        blocks[offset2] = block2;
+                         */
+                        blocks[offset1] = block1;
                     }
                 }
             }
+
+            memcpy(&chunkData.blocks[0], &blocks[0], 131072);
+            memset(&chunkData.blockLight[0], 0xFF, 32768);
+            memset(&chunkData.skyLight[0], 0xFF, 32768);
+
+            // chunkParser.placeBlock(4, 158, 4, 8, 0, true);
+            // chunkParser.placeBlock(4, 158, 8, 9, 0, true);
+            // chunkParser.placeBlock(8, 158, 8, 10, 0, true);
+            // chunkParser.placeBlock(8, 158, 4, 11, 0, true);
+
 
             // for (u16 y = 0; y < 256; y++) {
             //     blocks[y] = 2 << 4;
@@ -112,13 +145,11 @@ int main() {
             // memset(&chunkData.blockLight[0], 0xFF, 32768);
             // memset(&chunkData.skyLight[0], 0xFF, 32768);
 
-
-            memcpy(&chunkData.blocks[0], &blocks[0], 131072);
             /*
-            if (chunkData.NBTData != nullptr) {
+             if (chunkData.NBTData != nullptr) {
                 chunkData.NBTData->toType<NBTTagCompound>()->deleteAll();
                 delete chunkData.NBTData;
-            }
+                }
 
             chunkData.NBTData = new NBTBase(new NBTTagCompound(), TAG_COMPOUND);
             auto* chunkRootNbtData = static_cast<NBTTagCompound*>(chunkData.NBTData->data);
@@ -129,8 +160,19 @@ int main() {
             chunkRootNbtData->setListTag("TileEntities", tileEntities);
             chunkRootNbtData->setListTag("TileTicks", tileTicks);
              */
+            if (chunkData.chunkX == -3 && chunkData.chunkZ == 26) {
+                if (chunkData.NBTData != nullptr) {
+                    auto* compound = chunkData.NBTData->toType<NBTTagCompound>();
+
+                    auto tileTicks = compound->getTag("TileTicks");
+                    std::cout << tileTicks.toString() << std::endl;
+                    auto tileEntities = compound->getTag("TileEntities");
+                    std::cout << tileEntities.toString() << std::endl;
+                }
+            }
 
 
+            /*
             if (chunkData.NBTData != nullptr) {
                 auto* compound = chunkData.NBTData->toType<NBTTagCompound>();
 
@@ -165,18 +207,22 @@ int main() {
                     }
                 }
             }
+             */
 
 
 
 
 
-            Data outBuffer(40000000);
+            Data outBuffer(4000000);
+            memset(outBuffer.data, 0, 4000000);
             auto managerChunkOut = DataManager(outBuffer);
             chunkParser.writeChunk(&managerChunkOut, DIM::OVERWORLD);
 
-
-
-            std::cout << "Chunk: " << chunkData.getCoords() << std::endl;
+            std::cout << "Chunk: " << chunkData.getCoords();
+            if (chunkData.hasSubmerged) {
+                std::cout << "(Submerged)";
+            }
+            std::cout << std::endl;
 
 
             Data outData(managerChunkOut.getPosition());
@@ -201,6 +247,17 @@ int main() {
 
         fileListing.region_overworld[regionIndex]->data = region.write(console);
     }
+
+    printf("waterlogged blocks:");
+    for (u16 block : blockSet) {
+        printf("id: %.3d\n", block);
+    }
+
+
+
+    auto end = getNanoSeconds();
+    printf("Total Time: %.3f\n", float(end - start) / float(1000000000));
+
 
     CONSOLE consoleOut = CONSOLE::WIIU;
     for (auto* fileList : fileListing.dimFileLists) {

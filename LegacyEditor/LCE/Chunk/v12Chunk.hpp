@@ -9,7 +9,7 @@ namespace universal {
 
 
     enum GRID_STATE {
-        V12_0_SINGLE_BLOCK = 0,
+        V12_0_SINGLE = 0,
         V12_1_BIT = 2,
         V12_1_BIT_SUBMERGED = 3,
         V12_2_BIT = 4,
@@ -18,7 +18,7 @@ namespace universal {
         V12_3_BIT_SUBMERGED = 7,
         V12_4_BIT = 8,
         V12_4_BIT_SUBMERGED = 9,
-        V12_8_FULL_BLOCKS = 0x0e,
+        V12_8_FULL = 0x0e,
         V12_8_FULL_BLOCKS_SUBMERGED = 0x0f
     };
 
@@ -66,8 +66,8 @@ namespace universal {
         void writeBlockData();
         /// used to write only the palette and positions.\n
         /// It does not write liquid data, because I have been told that that is unnecessary.
-        template<size_t BitsPerBlock>
-        void writeLayer(u16_vec& blocks, u16_vec& positions);
+        template<size_t BitsPerBlock, size_t BlockCount, size_t EmptyCount>
+        void writeLayer(u16_vec& blockVector, u16_vec& blockLocations, u8* blockMap);
         /// used to write full block data, instead of using palette.
         void writeWithMaxBlocks(u16_vec& blocks, u16_vec& positions);
         void writeLightSection(int index, u32& readOffset, u8_vec& light);

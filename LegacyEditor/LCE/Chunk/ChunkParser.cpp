@@ -51,6 +51,15 @@ namespace universal {
     }
 
 
+    void ChunkParser::fixLight() {
+
+    }
+
+
+    void ChunkParser::fixHeightMap() {
+
+    }
+
 
     void ChunkParser::placeBlock(int x, int y, int z, u16 block, u16 data, bool waterlogged) {
         int offset = toPos(x, y, z);

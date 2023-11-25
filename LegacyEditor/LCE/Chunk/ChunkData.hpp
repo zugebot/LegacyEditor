@@ -25,7 +25,7 @@ public:
     i32 lastVersion = 0;
 
     /// Aquatic only
-    // TODO: get rid of this
+    bool hasSubmerged = false;
     u16_vec submerged;
 
     ~ChunkData() {

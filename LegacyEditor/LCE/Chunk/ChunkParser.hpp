@@ -19,6 +19,10 @@ namespace universal {
         MU void readChunk(DataManager* managerIn, DIM dim);
         MU void writeChunk(DataManager* managerOut, DIM dim);
 
+        void fixLight();
+        void fixHeightMap();
+
+
         void placeBlock(int x, int y, int z, u16 block, u16 data = 0, bool waterlogged = false);
         u16 getBlock(int x, int y, int z);
         void rotateUpsideDown();

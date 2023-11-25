@@ -49,7 +49,7 @@ namespace universal {
 
 
         u32 maxSectionAddress = dataManager->readInt16() << 8;
-        dataManager->writeToFile(start, 50 + maxSectionAddress, dir_path + "block_read.bin");
+        // dataManager->writeToFile(start, 50 + maxSectionAddress, dir_path + "block_read.bin");
 
 
         u16_vec sectionJumpTable(16);
@@ -110,7 +110,7 @@ namespace universal {
                         dataManager->ptr = bufferPtr + V12_GRID_SIZES[format] + 128;
                         bool success = true;
                         switch(format) {
-                            case V12_0_SINGLE_BLOCK:
+                            case V12_0_SINGLE:
                                 for (int i = 0; i < 128; i += 2) {
                                     grid[i] = v1;
                                     grid[i + 1] = v2;
@@ -120,30 +120,35 @@ namespace universal {
                                 success = parseLayer<1>(bufferPtr, grid);
                                 break;
                             case V12_1_BIT_SUBMERGED:
+                                chunkData->hasSubmerged = true;
                                 success = parseWithLayers<1>(bufferPtr, grid, submergedGrid);
                                 break;
                             case V12_2_BIT:
                                 success = parseLayer<2>(bufferPtr, grid);
                                 break;
                             case V12_2_BIT_SUBMERGED:
+                                chunkData->hasSubmerged = true;
                                 success = parseWithLayers<2>(bufferPtr, grid, submergedGrid);
                                 break;
                             case V12_3_BIT:
                                 success = parseLayer<3>(bufferPtr, grid);
                                 break;
                             case V12_3_BIT_SUBMERGED:
+                                chunkData->hasSubmerged = true;
                                 success = parseWithLayers<3>(bufferPtr, grid, submergedGrid);
                                 break;
                             case V12_4_BIT:
                                 success = parseLayer<4>(bufferPtr, grid);
                                 break;
                             case V12_4_BIT_SUBMERGED:
+                                chunkData->hasSubmerged = true;
                                 success = parseWithLayers<4>(bufferPtr, grid, submergedGrid);
                                 break;
-                            case V12_8_FULL_BLOCKS:
+                            case V12_8_FULL:
                                 fillWithMaxBlocks(bufferPtr, grid);
                                 break;
                             case V12_8_FULL_BLOCKS_SUBMERGED:
+                                chunkData->hasSubmerged = true;
                                 fillWithMaxBlocks(bufferPtr, grid);
                                 fillWithMaxBlocks(bufferPtr + 128, submergedGrid);
                                 break;
