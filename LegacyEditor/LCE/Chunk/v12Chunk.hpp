@@ -55,9 +55,9 @@ namespace universal {
         static void placeBlocks(u16_vec& writeVec, const u8* grid, int writeOffset);
         static void fillWithMaxBlocks(const u8* buffer, u8* grid);
         template<size_t BitsPerBlock>
-        bool parseLayer(const u8* buffer, u8* grid);
+        bool readGrid(const u8* buffer, u8* grid);
         template<size_t BitsPerBlock>
-        bool parseWithLayers(u8 const* buffer, u8* grid, u8* submergedGrid);
+        bool readGridSubmerged(u8 const* buffer, u8* grid, u8* submergedGrid);
 
         // #####################################################
         // #               Write Section

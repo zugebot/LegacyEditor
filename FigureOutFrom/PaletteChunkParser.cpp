@@ -10,28 +10,28 @@ PaletteChunkParser::~PaletteChunkParser() {
 }
 
 
-UniversalChunkFormat* PaletteChunkParser::ParseChunk(DataInputManager& inputData, DIMENSION dimension, LCEFixes& fixes,
+UniversalChunkFormat* PaletteChunkParser::ParseChunk(DataManager& inputData, DIM dimension, LCEFixes& fixes,
                                                      int version) {
     this->LCE_ChunkData.version = version;
-    this->LCE_ChunkData.chunkX = (int) inputData.readInt();
-    this->LCE_ChunkData.chunkZ = (int) inputData.readInt();
-    this->LCE_ChunkData.lastUpdate = (int64_t) inputData.readLong();
+    this->LCE_ChunkData.chunkX = (int) inputData.readInt32();
+    this->LCE_ChunkData.chunkZ = (int) inputData.readInt32();
+    this->LCE_ChunkData.lastUpdate = (int64_t) inputData.readInt64();
     if (version > 8) {
-        this->LCE_ChunkData.inhabitedTime = (int64_t) inputData.readLong();
+        this->LCE_ChunkData.inhabitedTime = (int64_t) inputData.readInt64();
     } else {
         this->LCE_ChunkData.inhabitedTime = 0;
     }
     this->parseBlocks(inputData);
     this->readData(inputData);
     this->LCE_ChunkData.heightMap = PaletteChunkParser::read256(inputData);
-    this->LCE_ChunkData.terrainPopulated = (short) inputData.readShort();
+    this->LCE_ChunkData.terrainPopulated = (short) inputData.readInt16();
     this->LCE_ChunkData.biomes = PaletteChunkParser::read256(inputData);
     this->readNBTData(inputData);
     return LCE_universal::convertLCE1_12RegionToUniversal(this->LCE_ChunkData, dimension, fixes);
 }
 
 
-UniversalChunkFormat* PaletteChunkParser::ParseChunkForAccess(DataInputManager& inputData, DIMENSION dimension,
+UniversalChunkFormat* PaletteChunkParser::ParseChunkForAccess(DataManager& inputData, DIM dimension,
                                                               LCEFixes& fixes) {
     inputData.seek(LCE_ChunkData.version == 8 ? 18 : 26);
     this->parseBlocks(inputData);
@@ -40,12 +40,12 @@ UniversalChunkFormat* PaletteChunkParser::ParseChunkForAccess(DataInputManager& 
 }
 
 
-void PaletteChunkParser::readNBTData(DataInputManager& inputData) {
+void PaletteChunkParser::readNBTData(DataManager& inputData) {
     if (*inputData.data == 0xA) { this->LCE_ChunkData.NBTData = NBT::readTag(inputData); }
 }
 
 
-void PaletteChunkParser::readData(DataInputManager& inputData) {
+void PaletteChunkParser::readData(DataManager& inputData) {
     std::vector<std::vector<uint8_t>> dataArray;
     for (int i = 0; i < 6; i++) {
         std::vector<uint8_t> item = PaletteChunkParser::read128(inputData);
@@ -80,7 +80,7 @@ void PaletteChunkParser::readData(DataInputManager& inputData) {
 }
 
 
-void PaletteChunkParser::readDataOnlyForAccess(DataInputManager& inputData) {
+void PaletteChunkParser::readDataOnlyForAccess(DataManager& inputData) {
     std::vector<uint8_t> dataTo128 = PaletteChunkParser::read128(inputData);
     std::vector<uint8_t> dataFrom128 = PaletteChunkParser::read128(inputData);
 
@@ -107,13 +107,13 @@ void PaletteChunkParser::readDataOnlyForAccess(DataInputManager& inputData) {
     this->LCE_ChunkData.data = blockData;
 }
 
-std::vector<uint8_t> PaletteChunkParser::read256(DataInputManager& inputData) {
+std::vector<uint8_t> PaletteChunkParser::read256(DataManager& inputData) {
     std::vector<uint8_t> array1 = inputData.readIntoVector(256);
     return array1;
 }
 
-std::vector<uint8_t> PaletteChunkParser::read128(DataInputManager& inputData) {
-    int num = (int) inputData.readInt();
+std::vector<uint8_t> PaletteChunkParser::read128(DataManager& inputData) {
+    int num = (int) inputData.readInt32();
     std::vector<uint8_t> array1;
     array1 = inputData.readIntoVector((num + 1) * 0x80);
     return array1;
@@ -128,79 +128,49 @@ void PaletteChunkParser::copyArray128(std::vector<uint8_t>& readVector, int read
     for (int i = 0; i < 0x80; i++) { writeVector[writeOffset + i] = readVector[readOffset + i]; }
 }
 
-void PaletteChunkParser::parseBlocks(DataInputManager& inputData) {
+void PaletteChunkParser::parseBlocks(DataManager& inputData) {
     this->LCE_ChunkData.blocks = std::vector<uint8_t>(0x10000);
-    uint32_t blockLength = inputData.readInt();
-    blockLength -= 1024;
-    std::vector<uint8_t> header = inputData.readIntoVector(1024);
-    if (blockLength > 0) {
-        std::vector<uint8_t> data = inputData.readIntoVector((int) blockLength);
-        for (int i = 0; i < 1024; i += 2) {
-            uint8_t byte1 = header[i];
-            uint8_t byte2 = header[i + 1];
-            if (byte1 == 7) {
-                if (byte2 != 0) { PaletteChunkParser::fillWithByte(this->LCE_ChunkData.blocks, 0, i >> 1, byte2); }
-            } else {
-                int dataOffset = (byte1 & 252) / 2 + byte2 * 128;
-                int gridPosition = 1054 + dataOffset;//1024 for header, and 30 for start
-                uint8_t format = byte1 & 3;
-                uint8_t grid[64];
+    for (int loop = 0; loop < 2; ++loop) {
+        uint32_t blockLength = inputData.readInt32();
+        blockLength -= 1024;
+        std::vector<uint8_t> header = inputData.readIntoVector(1024);
+        if (blockLength > 0) {
+            std::vector<uint8_t> data = inputData.readIntoVector((int) blockLength);
+            for (int i = 0; i < 1024; i += 2) {
+                uint8_t byte1 = header[i];
+                uint8_t byte2 = header[i + 1];
+                int fillOffset = (loop == 0) ? 0 : 32768;
+                int putBlockOffset = fillOffset;
 
-                switch (format) {
-                    case 0:
-                        parse<1>(inputData.dataStart + gridPosition, grid);
-                        break;
-                    case 1:
-                        parse<2>(inputData.dataStart + gridPosition, grid);
-                        break;
-                    case 2:
-                        parse<4>(inputData.dataStart + gridPosition, grid);
-                        break;
-                    case 3:
-                        maxBlocks(inputData.dataStart + gridPosition, grid);
-                        break;
-                    default:
-                        return;
+                if (byte1 == 7) {
+                    if (byte2 != 0) {
+                        PaletteChunkParser::fillWithByte(this->LCE_ChunkData.blocks, fillOffset, i >> 1, byte2);
+                    }
+                } else {
+                    int dataOffset = (byte1 & 252) / 2 + byte2 * 128;
+                    int gridPosition = 1054 + dataOffset; // 1024 for header, and 30 for start
+                    uint8_t format = byte1 & 3;
+                    uint8_t grid[64];
+
+                    switch (format) {
+                        case 0:
+                            parse<1>(inputData.data + gridPosition, grid);
+                            break;
+                        case 1:
+                            parse<2>(inputData.data + gridPosition, grid);
+                            break;
+                        case 2:
+                            parse<4>(inputData.data + gridPosition, grid);
+                            break;
+                        case 3:
+                            maxBlocks(inputData.data + gridPosition, grid);
+                            break;
+                        default:
+                            return;
+                    }
+
+                    PaletteChunkParser::putBlocks(this->LCE_ChunkData.blocks, grid, putBlockOffset, calculateOffset(i >> 1));
                 }
-
-                PaletteChunkParser::putBlocks(this->LCE_ChunkData.blocks, grid, 0, calculateOffset(i >> 1));
-            }
-        }
-    }
-
-    blockLength = inputData.readInt();
-    blockLength -= 1024;
-    header = inputData.readIntoVector(1024);
-    if (blockLength > 0) {
-        std::vector<uint8_t> data = inputData.readIntoVector((int) blockLength);
-        for (int i = 0; i < 1024; i += 2) {
-            uint8_t byte1 = header[i];
-            uint8_t byte2 = header[i + 1];
-            if (byte1 == 7) {
-                if (byte2 != 0) { PaletteChunkParser::fillWithByte(this->LCE_ChunkData.blocks, 32768, i >> 1, byte2); }
-            } else {
-                int dataOffset = (byte1 & 252) / 2 + byte2 * 128;
-                int gridPosition = 1054 + dataOffset;//1024 for header, and 30 for start
-                uint8_t format = byte1 & 3;
-                uint8_t grid[64];
-
-                switch (format) {
-                    case 0:
-                        parse<1>(inputData.dataStart + gridPosition, grid);
-                        break;
-                    case 1:
-                        parse<2>(inputData.dataStart + gridPosition, grid);
-                        break;
-                    case 2:
-                        parse<4>(inputData.dataStart + gridPosition, grid);
-                        break;
-                    case 3:
-                        maxBlocks(inputData.dataStart + gridPosition, grid);
-                        break;
-                    default:
-                        return;
-                }
-                PaletteChunkParser::putBlocks(this->LCE_ChunkData.blocks, grid, 32768, calculateOffset(i >> 1));
             }
         }
     }
@@ -222,11 +192,14 @@ int PaletteChunkParser::calculateOffset(int value) {
 }
 
 
-void PaletteChunkParser::maxBlocks(uint8_t const* buffer, uint8_t* grid) { std::copy_n(buffer, 64, grid); }
+void PaletteChunkParser::maxBlocks(uint8_t const* buffer, uint8_t* grid) {
+    std::copy_n(buffer, 64, grid);
+}
 
 
-void PaletteChunkParser::putBlocks(std::vector<uint8_t>& writeVector, const uint8_t* readArray, int writeOffset,
-                                   int readOffset) {
+void PaletteChunkParser::putBlocks(
+        std::vector<uint8_t>& writeVector, const uint8_t* readArray,
+        int writeOffset, int readOffset) {
     int num = 0;
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
@@ -243,10 +216,10 @@ bool PaletteChunkParser::parse(uint8_t const* buffer, uint8_t* grid) {
     int size = (1 << BitsPerBlock);
     std::vector<uint8_t> palette(size);
     std::copy_n(buffer, size, palette.begin());
-    int totalIndicies = BitsPerBlock * 8;
+    int totalIndices = BitsPerBlock * 8;
     int blocksPerByte = 8 / BitsPerBlock;
     int gridIndex = 0;
-    for (size_t i = 0; i < totalIndicies; i++) {
+    for (size_t i = 0; i < totalIndices; i++) {
         uint16_t v = buffer[size + i];
         for (int j = 0; j < blocksPerByte; j++) {
             uint16_t idx = 0;

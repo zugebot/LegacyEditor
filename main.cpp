@@ -89,12 +89,12 @@ int main() {
             u16 blocks[65536];
             for (u16 x = 0; x < 16; x++) {
                 for (u16 z = 0; z < 16; z++) {
-                    for (u16 y = 0; y < 256; y++) {
+                    for (u16 y = 0; y < 128; y++) {
                         u16 block1 = chunkParser.getBlock(x, y, z);
-                        // u16 block2 = block1;
+                        u16 block2 = block1;
 
                         int offset1 =       y + 256 * z + 4096 * x;
-                        // int offset2 = 255 - y + 256 * z + 4096 * x;
+                        int offset2 = 255 - y + 256 * z + 4096 * x;
 
                         u16 compare1 = (block1 & 0x1FF0) >> 4;
                         if (block1 & 0x8000) { // fix stupid blocks
@@ -106,7 +106,7 @@ int main() {
                                 // block1 = 9 << 4;
                             }
                         }
-                        /*
+
                         if (compare1 == 8 || compare1 == 9) {
                             block2 = 0;
                         }
@@ -122,7 +122,7 @@ int main() {
                             }
                         }
                         blocks[offset2] = block2;
-                         */
+
                         blocks[offset1] = block1;
                     }
                 }
@@ -213,8 +213,8 @@ int main() {
 
 
 
-            Data outBuffer(4000000);
-            memset(outBuffer.data, 0, 4000000);
+            Data outBuffer(1000000);
+            memset(outBuffer.data, 0, 1000000);
             auto managerChunkOut = DataManager(outBuffer);
             chunkParser.writeChunk(&managerChunkOut, DIM::OVERWORLD);
 

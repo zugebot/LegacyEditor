@@ -1,11 +1,12 @@
 #pragma once
 
 
-#include "Utils/Enums.hpp"
-#include "Utils/NBT.hpp"
-#include "Utils/processor.hpp"
+#include "LegacyEditor/utils/Enums.hpp"
+#include "LegacyEditor/utils/NBT.hpp"
+#include "LegacyEditor/utils/processor.hpp"
 
 #include "LCE/AquaticChunkParser.hpp"
+
 
 
 class PaletteChunkParser {

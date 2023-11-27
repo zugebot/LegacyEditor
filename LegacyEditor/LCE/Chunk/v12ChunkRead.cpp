@@ -117,32 +117,32 @@ namespace universal {
                                 }
                                 break;
                             case V12_1_BIT:
-                                success = parseLayer<1>(bufferPtr, grid);
+                                success = readGrid<1>(bufferPtr, grid);
                                 break;
                             case V12_1_BIT_SUBMERGED:
                                 chunkData->hasSubmerged = true;
-                                success = parseWithLayers<1>(bufferPtr, grid, submergedGrid);
+                                success = readGridSubmerged<1>(bufferPtr, grid, submergedGrid);
                                 break;
                             case V12_2_BIT:
-                                success = parseLayer<2>(bufferPtr, grid);
+                                success = readGrid<2>(bufferPtr, grid);
                                 break;
                             case V12_2_BIT_SUBMERGED:
                                 chunkData->hasSubmerged = true;
-                                success = parseWithLayers<2>(bufferPtr, grid, submergedGrid);
+                                success = readGridSubmerged<2>(bufferPtr, grid, submergedGrid);
                                 break;
                             case V12_3_BIT:
-                                success = parseLayer<3>(bufferPtr, grid);
+                                success = readGrid<3>(bufferPtr, grid);
                                 break;
                             case V12_3_BIT_SUBMERGED:
                                 chunkData->hasSubmerged = true;
-                                success = parseWithLayers<3>(bufferPtr, grid, submergedGrid);
+                                success = readGridSubmerged<3>(bufferPtr, grid, submergedGrid);
                                 break;
                             case V12_4_BIT:
-                                success = parseLayer<4>(bufferPtr, grid);
+                                success = readGrid<4>(bufferPtr, grid);
                                 break;
                             case V12_4_BIT_SUBMERGED:
                                 chunkData->hasSubmerged = true;
-                                success = parseWithLayers<4>(bufferPtr, grid, submergedGrid);
+                                success = readGridSubmerged<4>(bufferPtr, grid, submergedGrid);
                                 break;
                             case V12_8_FULL:
                                 fillWithMaxBlocks(bufferPtr, grid);
@@ -206,7 +206,7 @@ namespace universal {
      * @return
      */
     template<size_t BitsPerBlock>
-    bool V12Chunk::parseLayer(const u8* buffer, u8* grid) {
+    bool V12Chunk::readGrid(const u8* buffer, u8* grid) {
         int size = (1 << BitsPerBlock) * 2;
         u16_vec palette(size);
         std::copy_n(buffer, size, palette.begin());
@@ -249,7 +249,7 @@ namespace universal {
      * @return
      */
     template<size_t BitsPerBlock>
-    bool V12Chunk::parseWithLayers(u8 const* buffer, u8* grid, u8* submergedGrid) {
+    bool V12Chunk::readGridSubmerged(u8 const* buffer, u8* grid, u8* submergedGrid) {
         int size = (1 << BitsPerBlock) * 2;
         u16_vec palette(size);
         std::copy_n(buffer, size, palette.begin());
@@ -300,14 +300,13 @@ namespace universal {
      * java and lce supposedly store light data in the same way
      */
     void V12Chunk::readLightData() {
-        int writeOffset = 0;
 
         chunkData->DataGroupCount = 0;
         u8_vec_vec dataArray(4);
         for (int i = 0; i < 4; i++) {
             u32 num = (u32) dataManager->readInt32();
             u32 index = toIndex(num);
-            // this is really slow, figure out how to remove it
+            // TODO: this is really slow, figure out how to remove it
             dataArray[i] = dataManager->readIntoVector(index);
             chunkData->DataGroupCount += (i32)dataArray[i].size();
         }
@@ -326,6 +325,7 @@ namespace universal {
         };
 
         // Process light data
+        int writeOffset = 0;
         processLightData(dataArray[0], chunkData->skyLight, writeOffset);
         processLightData(dataArray[1], chunkData->skyLight, writeOffset);
         writeOffset = 0; // Reset offset for block light

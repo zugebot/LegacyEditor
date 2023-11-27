@@ -7,6 +7,7 @@
 class ChunkData {
 public:
     u16_vec blocks;
+    u8_vec blockData;
     u8_vec blockLight;
     u8_vec skyLight;
     u8_vec heightMap;
