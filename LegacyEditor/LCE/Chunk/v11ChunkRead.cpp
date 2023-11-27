@@ -42,23 +42,26 @@ namespace universal {
         std::copy_n(buffer, 64, grid);
     }
 
+
     // TODO: integrate this into making it write blocks as u16's for compatability
     static inline void putBlocks(
-                    std::vector<uint8_t>& writeVector, const uint8_t* readArray,
-                    int writeOffset, int readOffset) {
+            std::vector<u16>& writeVec, const u8* grid, int writeOffset, int readOffset) {
         int num = 0;
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 for (int k = 0; k < 4; k++) {
-                    int num2 = readOffset + i * 16 + j + k * 256;
-                    writeVector[num2 + writeOffset] = readArray[num++];
+                    int currentOffset = readOffset + i * 16 + j + k * 256;
+                    // writeVector[currentOffset + writeOffset] = readArray[num++];
+                    u8 v1 = grid[num++];
+                    grid[num++];
+                    writeVec[currentOffset + writeOffset] = static_cast<u16>(v1); // | (static_cast<u16>(v2) << 8);
                 }
             }
         }
     }
 
 
-    void V11Chunk::readBlocks() {
+    void V11Chunk::readBlocks() const {
         for (int loop = 0; loop < 2; ++loop) {
             uint32_t blockLength = dataManager->readInt32();
             blockLength -= 1024;
@@ -74,7 +77,7 @@ namespace universal {
                     if (byte1 == 7) {
                         if (byte2 != 0) {
 
-                            uint8_t grid[64];
+                            uint8_t grid[128];
                             int offset = calculateOffset(gridIndex >> 1);
                             for (unsigned char& i: grid) { i = byte2; }
                             putBlocks(chunkData->blocks, grid, fillOffset, offset);
@@ -125,12 +128,12 @@ namespace universal {
             for (int j = 0; j < blocksPerByte; j++) {
                 u16 idx = 0;
                 for (int x = 0; x < BitsPerBlock; x++) {
-                    idx |= ((v & 1) > 0 ? 1 : 0) << x;
+                    idx |= (v & 1) << x;
                     v >>= 1;
                 }
                 if EXPECT_FALSE (idx >= size) { return false; }
                 grid[gridIndex] = palette[idx];
-                gridIndex++;
+                gridIndex += 2;
             }
         }
         return true;

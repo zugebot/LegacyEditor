@@ -18,7 +18,7 @@ namespace universal {
 
         V11Chunk() = default;
 
-        MU void readBlocks();
+        MU void readBlocks() const;
         template<size_t BitsPerBlock>
         MU bool readGrid(u8 const* buffer, u8* grid) const;
         MU void readData() const;
