@@ -16,8 +16,7 @@ class File;
 class DataManager {
 public:
     mutable bool isBig = true;
-    u8* data = nullptr;
-    u8* ptr = nullptr;
+    u8 *data = nullptr, *ptr = nullptr;
     u32 size = 0;
 
     DataManager() = default;

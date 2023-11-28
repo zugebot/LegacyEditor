@@ -1,8 +1,7 @@
 #include "ConsoleParser.hpp"
-#include "LegacyEditor/LCE/Chunk/v12Chunk.hpp"
-#include "LegacyEditor/LCE/Region/RegionManager.hpp"
-#include "fileListing.hpp"
 
+#include "fileListing.hpp"
+#include "LegacyEditor/LCE/Region/RegionManager.hpp"
 
 
 
@@ -17,13 +16,6 @@ MU ND int ConsoleParser::convertTo(const std::string& inFileStr, const std::stri
     fileListing.removeFileTypes({FileType::PLAYER, FileType::DATA_MAPPING});
 
 
-
-
-
-
-
-
-
     for (auto* fileList : fileListing.dimFileLists) {
         for (File* file: *fileList) {
             RegionManager region(this->console);
@@ -33,8 +25,6 @@ MU ND int ConsoleParser::convertTo(const std::string& inFileStr, const std::stri
             file->data = data;
         }
     }
-
-
 
     Data dataOut = fileListing.write(consoleOut); // write file listing
     fileListing.deallocate();

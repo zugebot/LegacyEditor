@@ -1,35 +1,7 @@
 #include "v12Chunk.hpp"
 
-#include "LegacyEditor/utils/time.hpp"
 #include <random>
-#include <set>
-
-
-/**
- * This checks if the next 1024 bits are all zeros.\n
- * this is u8[128]
- * @param ptr
- * @return true if all bits are zero, else 0.
- */
-bool is0_128(u8* ptr) {
-    u64* ptr64 = reinterpret_cast<u64*>(ptr);
-    for (int i = 0; i < 16; ++i) {
-        if (ptr64[i] != 0x0000000000000000) {
-            return false;
-        }
-    }
-    return true;
-}
-
-bool is255_128(u8* ptr) {
-    u64* ptr64 = reinterpret_cast<u64*>(ptr);
-    for (int i = 0; i < 16; ++i) {
-        if (ptr64[i] != 0xFFFFFFFFFFFFFFFF) {
-            return false;
-        }
-    }
-    return true;
-}
+// #include "LegacyEditor/utils/time.hpp"
 
 
 
@@ -39,7 +11,7 @@ bool is255_128(u8* ptr) {
  * @param ptr
  * @return true if all bits are zero, else 0.
  */
-bool is0_128_slow(const u8* ptr) {
+static bool is0_128_slow(const u8* ptr) {
     for (int i = 0; i < 128; ++i) {
         if (ptr[i] != 0x00) {
             return false;
@@ -48,7 +20,7 @@ bool is0_128_slow(const u8* ptr) {
     return true;
 }
 
-bool is255_128_slow(const u8* ptr) {
+static bool is255_128_slow(const u8* ptr) {
     for (int i = 0; i < 128; ++i) {
         if (ptr[i] != 0xFF) {
             return false;
@@ -59,24 +31,23 @@ bool is255_128_slow(const u8* ptr) {
 
 
 namespace universal {
-    static size_t totalTime;
-    static size_t totalAmount;
+    // static size_t totalTime;
+    // static size_t totalAmount;
 
     void V12Chunk::writeChunk(ChunkData* chunkDataIn, DataManager* managerOut, DIM dim) {
         dataManager = managerOut;
         chunkData = chunkDataIn;
 
-        // dataManager->writeInt16(chunkData->lastVersion);
         dataManager->writeInt32(chunkData->chunkX);
         dataManager->writeInt32(chunkData->chunkZ);
         dataManager->writeInt64(chunkData->lastUpdate);
         dataManager->writeInt64(chunkData->inhabitedTime);
 
+        writeBlockData();
 
-
+        /*
         u8* start = dataManager->ptr;
         auto t_start = getNanoSeconds();
-        writeBlockData();
         auto t_end = getNanoSeconds();
         u8* end = dataManager->ptr;
         // dataManager->writeToFile(start, end - start, dir_path + "block_write.bin");
@@ -85,6 +56,7 @@ namespace universal {
         totalAmount++;
         // printf("Block Write Size: %llu bytes. \n", end - start);
         // printf("Block Write Time: (%.3fms) | Avg (%.3fms)\n", float(diff) / 1000000, float(float(totalTime) / float(totalAmount)) / 1000000);
+        */
 
         writeLightData();
 
@@ -92,7 +64,9 @@ namespace universal {
         dataManager->writeInt16(chunkData->terrainPopulated);
         dataManager->writeBytes(chunkData->biomes.data(), 256);
 
-        writeNBTData();
+        if (chunkData->NBTData != nullptr) {
+            NBT::writeTag(chunkData->NBTData, *dataManager);
+        }
 
     }
 
@@ -120,7 +94,7 @@ namespace universal {
         dataManager->seek(H_SECT_START);
 
         u32 last_section_jump = 0;
-        u32 last_section_size = 0;
+        u32 last_section_size;
 
         for (u32 sectionIndex = 0; sectionIndex < 16; sectionIndex++) {
             const u32 incSectJump = last_section_jump * 256;
@@ -176,66 +150,66 @@ namespace universal {
 
                             case 2:
                                 gridFormat = V12_1_BIT;
-                                writeLayer<1, 2, 0>(blockVector, blockLocations, blockMap);
+                                writeGrid<1, 2, 0>(blockVector, blockLocations, blockMap);
                                 break;
 
                             case 3:
                                 gridFormat = V12_2_BIT;
-                                writeLayer<2, 3, 1>(blockVector, blockLocations, blockMap);
+                                writeGrid<2, 3, 1>(blockVector, blockLocations, blockMap);
                                 break;
                             case 4:
                                 gridFormat = V12_2_BIT;
-                                writeLayer<2, 4, 0>(blockVector, blockLocations, blockMap);
+                                writeGrid<2, 4, 0>(blockVector, blockLocations, blockMap);
                                 break;
 
                             case 5:
                                 gridFormat = V12_3_BIT;
-                                writeLayer<3, 5, 3>(blockVector, blockLocations, blockMap);
+                                writeGrid<3, 5, 3>(blockVector, blockLocations, blockMap);
                                 break;
                             case 6:
                                 gridFormat = V12_3_BIT;
-                                writeLayer<3, 6, 2>(blockVector, blockLocations, blockMap);
+                                writeGrid<3, 6, 2>(blockVector, blockLocations, blockMap);
                                 break;
                             case 7:
                                 gridFormat = V12_3_BIT;
-                                writeLayer<3, 7, 1>(blockVector, blockLocations, blockMap);
+                                writeGrid<3, 7, 1>(blockVector, blockLocations, blockMap);
                                 break;
                             case 8:
                                 gridFormat = V12_3_BIT;
-                                writeLayer<3, 8, 0>(blockVector, blockLocations, blockMap);
+                                writeGrid<3, 8, 0>(blockVector, blockLocations, blockMap);
                                 break;
 
                             case 9:
                                 gridFormat = V12_4_BIT;
-                                writeLayer<4, 9, 7>(blockVector, blockLocations, blockMap);
+                                writeGrid<4, 9, 7>(blockVector, blockLocations, blockMap);
                                 break;
                             case 10:
                                 gridFormat = V12_4_BIT;
-                                writeLayer<4, 10, 6>(blockVector, blockLocations, blockMap);
+                                writeGrid<4, 10, 6>(blockVector, blockLocations, blockMap);
                                 break;
                             case 11:
                                 gridFormat = V12_4_BIT;
-                                writeLayer<4, 11, 5>(blockVector, blockLocations, blockMap);
+                                writeGrid<4, 11, 5>(blockVector, blockLocations, blockMap);
                                 break;
                             case 12:
                                 gridFormat = V12_4_BIT;
-                                writeLayer<4, 12, 4>(blockVector, blockLocations, blockMap);
+                                writeGrid<4, 12, 4>(blockVector, blockLocations, blockMap);
                                 break;
                             case 13:
                                 gridFormat = V12_4_BIT;
-                                writeLayer<4, 13, 3>(blockVector, blockLocations, blockMap);
+                                writeGrid<4, 13, 3>(blockVector, blockLocations, blockMap);
                                 break;
                             case 14:
                                 gridFormat = V12_4_BIT;
-                                writeLayer<4, 14, 2>(blockVector, blockLocations, blockMap);
+                                writeGrid<4, 14, 2>(blockVector, blockLocations, blockMap);
                                 break;
                             case 15:
                                 gridFormat = V12_4_BIT;
-                                writeLayer<4, 15, 1>(blockVector, blockLocations, blockMap);
+                                writeGrid<4, 15, 1>(blockVector, blockLocations, blockMap);
                                 break;
                             case 16:
                                 gridFormat = V12_4_BIT;
-                                writeLayer<4, 16, 0>(blockVector, blockLocations, blockMap);
+                                writeGrid<4, 16, 0>(blockVector, blockLocations, blockMap);
                                 break;
 
                             default:
@@ -291,7 +265,7 @@ namespace universal {
      * @tparam BitsPerBlock
      */
     template<size_t BitsPerBlock, size_t BlockCount, size_t EmptyCount>
-    void V12Chunk::writeLayer(u16_vec& blockVector, u16_vec& blockLocations, u8* blockMap) {
+    void V12Chunk::writeGrid(u16_vec& blockVector, u16_vec& blockLocations, u8* blockMap) {
 
         // write the block data
         dataManager->setLittleEndian();
@@ -331,7 +305,7 @@ namespace universal {
 
 
     /// make this copy all u16 blocks from the grid location or whatnot
-    void V12Chunk::writeWithMaxBlocks(u16_vec& blocks, u16_vec& positions) {
+    void V12Chunk::writeWithMaxBlocks(u16_vec& blocks, u16_vec& positions) const {
         dataManager->setLittleEndian();
         for (u32 i = 0; i < 64; i++) {
             u16 blockPos = positions[i];
@@ -341,7 +315,7 @@ namespace universal {
     }
 
 
-    void V12Chunk::writeLightSection(int index, u32& readOffset, u8_vec& light) {
+    void V12Chunk::writeLightSection(u32& readOffset, u8_vec& light) const {
         static std::vector<u32> sectionOffsets;
         sectionOffsets.reserve(64);
 
@@ -379,17 +353,11 @@ namespace universal {
 
     void V12Chunk::writeLightData() {
         u32 readOffset = 0;
-        writeLightSection(0, readOffset, chunkData->skyLight);
-        writeLightSection(1, readOffset, chunkData->skyLight);
+        writeLightSection(readOffset, chunkData->skyLight);
+        writeLightSection(readOffset, chunkData->skyLight);
         readOffset = 0;
-        writeLightSection(2, readOffset, chunkData->blockLight);
-        writeLightSection(3, readOffset, chunkData->blockLight);
+        writeLightSection(readOffset, chunkData->blockLight);
+        writeLightSection(readOffset, chunkData->blockLight);
     }
 
-
-    void V12Chunk::writeNBTData() {
-        if (chunkData->NBTData != nullptr) {
-            NBT::writeTag(chunkData->NBTData, *dataManager);
-        }
-    }
 }

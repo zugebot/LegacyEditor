@@ -15,38 +15,62 @@ namespace universal {
         dataManager = managerIn;
         chunkData = chunkDataIn;
 
-        chunkData->skyLight = u8_vec(32768);
-        chunkData->blockLight = u8_vec(32768);
-        chunkData->blocks = u16_vec(65536);
-        chunkData->submerged = u16_vec(65536);
+        chunkData->dimension = dim;
         chunkData->chunkX = (i32) dataManager->readInt32();
         chunkData->chunkZ = (i32) dataManager->readInt32();
         chunkData->lastUpdate = (i64) dataManager->readInt64();
         chunkData->inhabitedTime = (i64) dataManager->readInt64();
 
-
-        u8* start = dataManager->ptr;
-        auto t_start = getNanoSeconds();
+        chunkData->blocks = u16_vec(65536);
+        chunkData->submerged = u16_vec(65536);
         readBlockData();
-        auto t_end = getNanoSeconds();
-        u8* end = dataManager->ptr;
-        // dataManager->writeToFile(start, end - start, dir_path + "block_read.bin");
-        auto diff = t_end - t_start;
-        // printf("Block Read Time: %llu (%fms)\n", diff, float(diff) / 1000000.0F);
 
+        /*
+        // u8* start = dataManager->ptr;
+        // auto t_start = getNanoSeconds();
+        // auto t_end = getNanoSeconds();
+        // u8* end = dataManager->ptr;
+        // dataManager->writeToFile(start, end - start, dir_path + "block_read.bin");
+        // auto diff = t_end - t_start;
+        // printf("Block Read Time: %llu (%fms)\n", diff, float(diff) / 1000000.0F);
+         */
+
+        chunkData->skyLight = u8_vec(32768);
+        chunkData->blockLight = u8_vec(32768);
         readLightData();
 
         chunkData->heightMap = dataManager->readIntoVector(256);
         chunkData->terrainPopulated = (i16) dataManager->readInt16();
         chunkData->biomes = dataManager->readIntoVector(256);
 
-        readNBTData();
+        if (*dataManager->ptr == 0xA) {
+            chunkData->NBTData = NBT::readTag(*dataManager);
+        }
     }
 
 
-    void V12Chunk::readBlockData() {
-        u8* start = dataManager->ptr;
+    static void placeBlocks(u16_vec& writeVec, const u8* grid, int writeOffset) {
+        int readOffset = 0;
+        for (int x = 0; x < 4; x++) {
+            for (int z = 0; z < 4; z++) {
+                for (int y = 0; y < 4; y++) {
+                    int currentOffset = y + z * 256 + x * 4096;
+                    u8 v1 = grid[readOffset++];
+                    u8 v2 = grid[readOffset++];
+                    writeVec[currentOffset + writeOffset] = static_cast<u16>(v1) | (static_cast<u16>(v2) << 8);
+                }
+            }
+        }
+    }
 
+
+    static void fillWithMaxBlocks(const u8* buffer, u8 grid[128]) {
+        std::copy_n(buffer, 128, grid);
+    }
+
+
+    void V12Chunk::readBlockData() const {
+        // u8* start = dataManager->ptr;
 
         u32 maxSectionAddress = dataManager->readInt16() << 8;
         // dataManager->writeToFile(start, 50 + maxSectionAddress, dir_path + "block_read.bin");
@@ -73,6 +97,7 @@ namespace universal {
             if (!sizeOfSubChunks[section]) {
                 continue;
             }
+            // TODO: replace with telling cpu to cache that address, and use a ptr?
             u8_vec sectionHeader = dataManager->readIntoVector(128);
 
             u16 gridFormats[64] = {0};
@@ -83,8 +108,8 @@ namespace universal {
                 for (int gridZ = 0; gridZ < 4; gridZ++) {
                     for (int gridY = 0; gridY < 4; gridY++) {
                         int gridIndex = gridX * 16 + gridZ * 4 + gridY;
-                        u8 grid[128];
-                        u8 submergedGrid[128];
+                        u8 blockGrid[128] = {0};
+                        u8 sbmrgGrid[128] = {0};
 
                         u8 v1 = sectionHeader[gridIndex * 2];
                         u8 v2 = sectionHeader[gridIndex * 2 + 1];
@@ -112,45 +137,45 @@ namespace universal {
                         switch(format) {
                             case V12_0_SINGLE:
                                 for (int i = 0; i < 128; i += 2) {
-                                    grid[i] = v1;
-                                    grid[i + 1] = v2;
+                                    blockGrid[i] = v1;
+                                    blockGrid[i + 1] = v2;
                                 }
                                 break;
                             case V12_1_BIT:
-                                success = readGrid<1>(bufferPtr, grid);
+                                success = readGrid<1>(bufferPtr, blockGrid);
                                 break;
                             case V12_1_BIT_SUBMERGED:
                                 chunkData->hasSubmerged = true;
-                                success = readGridSubmerged<1>(bufferPtr, grid, submergedGrid);
+                                success = readGridSubmerged<1>(bufferPtr, blockGrid, sbmrgGrid);
                                 break;
                             case V12_2_BIT:
-                                success = readGrid<2>(bufferPtr, grid);
+                                success = readGrid<2>(bufferPtr, blockGrid);
                                 break;
                             case V12_2_BIT_SUBMERGED:
                                 chunkData->hasSubmerged = true;
-                                success = readGridSubmerged<2>(bufferPtr, grid, submergedGrid);
+                                success = readGridSubmerged<2>(bufferPtr, blockGrid, sbmrgGrid);
                                 break;
                             case V12_3_BIT:
-                                success = readGrid<3>(bufferPtr, grid);
+                                success = readGrid<3>(bufferPtr, blockGrid);
                                 break;
                             case V12_3_BIT_SUBMERGED:
                                 chunkData->hasSubmerged = true;
-                                success = readGridSubmerged<3>(bufferPtr, grid, submergedGrid);
+                                success = readGridSubmerged<3>(bufferPtr, blockGrid, sbmrgGrid);
                                 break;
                             case V12_4_BIT:
-                                success = readGrid<4>(bufferPtr, grid);
+                                success = readGrid<4>(bufferPtr, blockGrid);
                                 break;
                             case V12_4_BIT_SUBMERGED:
                                 chunkData->hasSubmerged = true;
-                                success = readGridSubmerged<4>(bufferPtr, grid, submergedGrid);
+                                success = readGridSubmerged<4>(bufferPtr, blockGrid, sbmrgGrid);
                                 break;
                             case V12_8_FULL:
-                                fillWithMaxBlocks(bufferPtr, grid);
+                                fillWithMaxBlocks(bufferPtr, blockGrid);
                                 break;
                             case V12_8_FULL_BLOCKS_SUBMERGED:
                                 chunkData->hasSubmerged = true;
-                                fillWithMaxBlocks(bufferPtr, grid);
-                                fillWithMaxBlocks(bufferPtr + 128, submergedGrid);
+                                fillWithMaxBlocks(bufferPtr, blockGrid);
+                                fillWithMaxBlocks(bufferPtr + 128, sbmrgGrid);
                                 break;
                             default: // this should never occur
                                 return;
@@ -159,41 +184,15 @@ namespace universal {
                         if EXPECT_FALSE (!success) {
                             return;
                         }
-                        placeBlocks(chunkData->blocks, grid, offsetInBlockWrite);
+                        placeBlocks(chunkData->blocks, blockGrid, offsetInBlockWrite);
                         if (format & 1) {
-                            placeBlocks(chunkData->submerged, submergedGrid, offsetInBlockWrite);
+                            placeBlocks(chunkData->submerged, sbmrgGrid, offsetInBlockWrite);
                         }
                     }
                 }
             }
-            volatile int x = 0;
         }
         dataManager->seek(76 + maxSectionAddress);
-    }
-
-
-    void V12Chunk::placeBlocks(u16_vec& writeVec, const u8* grid, int writeOffset) {
-        int readOffset = 0;
-        for (int x = 0; x < 4; x++) {
-            for (int z = 0; z < 4; z++) {
-                for (int y = 0; y < 4; y++) {
-                    int currentOffset = y + z * 256 + x * 4096;
-                    u8 v1 = grid[readOffset++];
-                    u8 v2 = grid[readOffset++];
-                    writeVec[currentOffset + writeOffset] = static_cast<u16>(v1) | (static_cast<u16>(v2) << 8);
-                }
-            }
-        }
-    }
-
-
-    /**
-     *
-     * @param buffer
-     * @param grid u16[128]
-     */
-    void V12Chunk::fillWithMaxBlocks(const u8* buffer, u8* grid) {
-        std::copy_n(buffer, 128, grid);
     }
 
 
@@ -206,7 +205,7 @@ namespace universal {
      * @return
      */
     template<size_t BitsPerBlock>
-    bool V12Chunk::readGrid(const u8* buffer, u8* grid) {
+    bool V12Chunk::readGrid(const u8* buffer, u8 grid[128]) const {
         int size = (1 << BitsPerBlock) * 2;
         u16_vec palette(size);
         std::copy_n(buffer, size, palette.begin());
@@ -220,7 +219,7 @@ namespace universal {
             }
 
             for (int j = 0; j < 8; j++) {
-                u8 mask = 128 >> j;
+                u8 mask = 0b10000000 >> j;
                 u16 idx = 0;
 
                 for (int k = 0; k < BitsPerBlock; k++) {
@@ -231,7 +230,7 @@ namespace universal {
                 }
                 int gridIndex = (i * 8 + j) * 2;
                 int paletteIndex = idx * 2;
-                grid[gridIndex] = palette[paletteIndex];
+                grid[gridIndex + 0] = palette[paletteIndex + 0];
                 grid[gridIndex + 1] = palette[paletteIndex + 1];
             }
         }
@@ -244,12 +243,12 @@ namespace universal {
      *
      * @tparam BitsPerBlock
      * @param buffer
-     * @param grid
-     * @param submergedGrid
+     * @param blockGrid
+     * @param SbmrgGrid
      * @return
      */
     template<size_t BitsPerBlock>
-    bool V12Chunk::readGridSubmerged(u8 const* buffer, u8* grid, u8* submergedGrid) {
+    bool V12Chunk::readGridSubmerged(u8 const* buffer, u8 blockGrid[128], u8 SbmrgGrid[128]) const {
         int size = (1 << BitsPerBlock) * 2;
         u16_vec palette(size);
         std::copy_n(buffer, size, palette.begin());
@@ -266,25 +265,25 @@ namespace universal {
             }
 
             for (int j = 0; j < 8; j++) {
-                u8 mask = 0x80 >> j;
+                u8 mask = 0b10000000 >> j;
                 u16 idxBlock = 0;
-                u16 idxWater = 0;
+                u16 idxSbmrg = 0;
                 for (int k = 0; k < BitsPerBlock; k++) {
                     idxBlock |= ((vBlocks[k] & mask) >> (7 - j)) << k;
-                    idxWater |= ((vWaters[k] & mask) >> (7 - j)) << k;
+                    idxSbmrg |= ((vWaters[k] & mask) >> (7 - j)) << k;
                 }
 
-                if EXPECT_FALSE (idxBlock >= size || idxWater >= size) {
+                if EXPECT_FALSE (idxBlock >= size || idxSbmrg >= size) {
                     return false;
                 }
 
                 int gridIndex = (i * 8 + j) * 2;
-                int paletteIndex = idxBlock * 2;
-                int paletteIndexSubmerged = idxWater * 2;
-                grid[gridIndex] = palette[paletteIndex];
-                grid[gridIndex + 1] = palette[paletteIndex + 1];
-                submergedGrid[gridIndex] = palette[paletteIndexSubmerged];
-                submergedGrid[gridIndex + 1] = palette[paletteIndexSubmerged + 1];
+                int paletteIndexBlock = idxBlock * 2;
+                int paletteIndexSbmrg = idxSbmrg * 2;
+                blockGrid[gridIndex + 0] = palette[paletteIndexBlock + 0];
+                blockGrid[gridIndex + 1] = palette[paletteIndexBlock + 1];
+                SbmrgGrid[gridIndex + 0] = palette[paletteIndexSbmrg + 0];
+                SbmrgGrid[gridIndex + 1] = palette[paletteIndexSbmrg + 1];
             }
         }
         return true;
@@ -299,16 +298,16 @@ namespace universal {
      * toIndex(num) = return num * 128 + 128;
      * java and lce supposedly store light data in the same way
      */
-    void V12Chunk::readLightData() {
+    void V12Chunk::readLightData() const {
 
         chunkData->DataGroupCount = 0;
         u8_vec_vec dataArray(4);
         for (int i = 0; i < 4; i++) {
-            u32 num = (u32) dataManager->readInt32();
+            u32 num = dataManager->readInt32();
             u32 index = toIndex(num);
             // TODO: this is really slow, figure out how to remove it
             dataArray[i] = dataManager->readIntoVector(index);
-            chunkData->DataGroupCount += (i32)dataArray[i].size();
+            chunkData->DataGroupCount += dataArray[i].size();
         }
 
         auto processLightData = [](const u8_vec& data, u8_vec& lightData, int& offset) {
@@ -324,20 +323,12 @@ namespace universal {
             }
         };
 
-        // Process light data
         int writeOffset = 0;
         processLightData(dataArray[0], chunkData->skyLight, writeOffset);
         processLightData(dataArray[1], chunkData->skyLight, writeOffset);
-        writeOffset = 0; // Reset offset for block light
+        writeOffset = 0;
         processLightData(dataArray[2], chunkData->blockLight, writeOffset);
         processLightData(dataArray[3], chunkData->blockLight, writeOffset);
-    }
-
-
-    void V12Chunk::readNBTData() {
-        if (*dataManager->ptr == 0xA) {
-            chunkData->NBTData = NBT::readTag(*dataManager);
-        }
     }
 
 }

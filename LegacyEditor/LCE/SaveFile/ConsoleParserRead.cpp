@@ -1,6 +1,7 @@
 #include "ConsoleParser.hpp"
 
 #include <cstdio>
+
 #include "LegacyEditor/utils/RLEVITA/rlevita.hpp"
 #include "LegacyEditor/utils/LZX/XboxCompression.hpp"
 #include "LegacyEditor/utils/processor.hpp"
@@ -8,6 +9,7 @@
 #include "LegacyEditor/utils/zlib-1.2.12/zlib.h"
 
 #include "LegacyEditor/LCE/BinFile/BINSupport.hpp"
+#include "LegacyEditor/utils/dataManager.hpp"
 
 
 int ConsoleParser::readConsoleFile(const std::string& inFileStr) {

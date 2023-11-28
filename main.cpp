@@ -15,6 +15,7 @@
 #include "LegacyEditor/utils/mapcolors.hpp"
 #include "LegacyEditor/utils/picture.hpp"
 #include "LegacyEditor/utils/time.hpp"
+#include "LegacyEditor/LCE/BinFile/BINSupport.hpp"
 
 
 void compareNBT(NBTBase* first, NBTBase* second) {
@@ -49,6 +50,15 @@ int main() {
     std::string inFilePath1 = dir_path + R"(tests\231022105047)";
     std::string inFilePath2 = dir_path + R"(tests\WiiU Save\231008144148)";
     std::string outFilePath = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\230918230206)";
+
+    DataManager in_ext;
+    in_ext.readFromFile(dir_path + R"(tests\WiiU Save\231008144148.ext)");
+    in_ext.data = in_ext.data + 0x100;
+    in_ext.ptr = in_ext.data;
+    in_ext.size -= 0x100;
+    WorldOptions options = getTagsInImage(in_ext);
+
+
 
     ConsoleParser parser;
     int statusIn = parser.readConsoleFile(inFilePath1);

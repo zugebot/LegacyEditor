@@ -18,12 +18,13 @@ public:
     i64 inhabitedTime = 0;
 
     /// Used to skip the lights in the chunk
-    i32 DataGroupCount = 0;
+    size_t DataGroupCount = 0;
 
     i32 chunkX = 0;
     i32 chunkZ = 0;
 
     i32 lastVersion = 0;
+    DIM dimension = DIM::OVERWORLD;
 
     /// Aquatic only
     bool hasSubmerged = false;

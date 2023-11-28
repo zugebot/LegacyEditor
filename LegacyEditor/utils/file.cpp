@@ -22,10 +22,10 @@ ND NBTTagCompound* File::getNBTCompound() const {
     if (nbt == nullptr) return nullptr;
     if (nbt->data == nullptr) return nullptr;
     return static_cast<NBTTagCompound*>(nbt->data);
-};
+}
 
 
-std::string File::constructFileName(CONSOLE console) const {
+std::string File::constructFileName(MU CONSOLE console) const {
     std::string name;
     switch (fileType) {
         using std::to_string;
@@ -55,10 +55,8 @@ std::string File::constructFileName(CONSOLE console) const {
         case FileType::REGION_NETHER:
         case FileType::REGION_OVERWORLD:
         case FileType::REGION_END: {
-            auto tagX = getNBTCompound()->getTag("x");
-            auto tagZ = getNBTCompound()->getTag("z");
-            i16 x = tagX.toPrimitiveType<i16>();
-            i16 z = tagZ.toPrimitiveType<i16>();
+            i16 x = getNBTCompound()->getTag("x").toPrimitiveType<i16>();
+            i16 z = getNBTCompound()->getTag("z").toPrimitiveType<i16>();
             if (fileType == FileType::REGION_NETHER) {
                 name = "DIM-1";
             } else if (fileType == FileType::REGION_OVERWORLD) {

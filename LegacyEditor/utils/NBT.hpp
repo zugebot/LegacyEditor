@@ -76,10 +76,13 @@ public:
     }
 
     void write(DataManager& output) const;
+
     void read(DataManager& input);
 
     ND std::string toString() const;
+
     ND NBTBase copy() const;
+
     void NbtFree() const;
 
     static bool equals(NBTBase check);

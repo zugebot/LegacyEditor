@@ -1,18 +1,13 @@
 #pragma once
 
-#include "LegacyEditor/utils/enums.hpp"
-#include "LegacyEditor/utils/file.hpp"
-#include "LegacyEditor/utils/processor.hpp"
-
-#include "ConsoleParser.hpp"
-#include "LegacyEditor/utils/dataManager.hpp"
-
 #include <functional>
 #include <map>
 #include <set>
 #include <vector>
 
-
+#include "LegacyEditor/utils/enums.hpp"
+#include "LegacyEditor/utils/processor.hpp"
+#include "LegacyEditor/utils/file.hpp"
 
 
 
@@ -28,95 +23,51 @@ public:
 };
 
 
+class ConsoleParser;
+
+
 class FileListing {
+private:
+    static constexpr u32 FILE_HEADER_SIZE = 144;
+
 public:
-    std::vector<FileList*> dimFileLists = {&region_nether, &region_overworld, &region_end};
-    std::vector<FileList*> entityFileLists = {&entity_overworld, &entity_nether, &entity_end};
-
-    CONSOLE console = CONSOLE::NONE;
-    std::vector<File> allFiles;
-
-    // pointers
-    FileList region_overworld;
-    FileList region_nether;
-    FileList region_end;
-
-    FileList entity_overworld;
-    FileList entity_nether;
-    FileList entity_end;
-
-    FileList maps;
-    FileList structures;
-    FileList players;
-
-    File* largeMapDataMappings{};
-    File* level{};
-    File* grf{};
-    File* village{};
 
     // data
+    std::vector<File> allFiles;
     i32 oldestVersion{};
     i32 currentVersion{};
+    CONSOLE console = CONSOLE::NONE;
+    MU bool separateEntities = false;
+    MU bool separateRegions = false;
+
+    // pointers
+    MU FileList* dimFileLists[3] = {&region_nether, &region_overworld, &region_end};
+    MU FileList* entityFileLists[3] = {&entity_nether, &entity_overworld, &entity_end};
+    FileList region_nether, region_overworld, region_end;
+    FileList entity_nether, entity_overworld, entity_end;
+    FileList maps, structures, players;
+    File *largeMapDataMappings{}, *level{}, *grf{}, *village{};
+
 
     FileListing() = default;
-    explicit FileListing(ConsoleParser& consoleParser) : console(consoleParser.console) {
-        read(consoleParser);
-    }
-    explicit FileListing(ConsoleParser* consoleParser) : console(consoleParser->console) {
-        read(*consoleParser);
-    }
-    ~FileListing() {
-        deallocate();
-    }
+    explicit FileListing(ConsoleParser& consoleParser);
+    MU explicit FileListing(ConsoleParser* consoleParser);
+    ~FileListing() { deallocate(); }
 
     void read(Data& dataIn);
     Data write(CONSOLE consoleOut);
     void saveToFolder(const std::string& folder);
 
-    void convertRegions(CONSOLE consoleOut);
-
-    void deleteAllChunks();
+    MU void convertRegions(CONSOLE consoleOut);
+    MU void deleteAllChunks();
 
 
     void deallocate();
-
     void clearPointers();
     void updatePointers();
-
-
-    void removeFileTypes(std::set<FileType> typesToRemove) {
-        allFiles.erase(
-                std::remove_if(
-                        allFiles.begin(),
-                        allFiles.end(),
-                        [&typesToRemove](File& file) {
-                            bool to_del = typesToRemove.count(file.fileType) > 0;
-                            if (to_del) {
-                                delete[] file.data.data;
-                                file.data.data = nullptr;
-                            }
-                            return to_del;
-                        }
-                        ),
-                allFiles.end()
-        );
-        for (const auto& fileType : typesToRemove) {
-            if (clearActionsRemove.count(fileType)) {
-                clearActionsRemove[fileType]();
-            }
-        }
-    }
-
-
-    void addFiles(std::vector<File> filesIn) {
-        allFiles.insert(allFiles.end(), filesIn.begin(), filesIn.end());
-        updatePointers();
-    }
-
-
-
+    void removeFileTypes(std::set<FileType> typesToRemove);
+    MU void addFiles(std::vector<File> filesIn);
     std::vector<File> collectFiles(FileType fileType);
-
 
 
 private:

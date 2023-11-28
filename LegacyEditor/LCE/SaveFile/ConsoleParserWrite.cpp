@@ -2,15 +2,17 @@
 
 #include <cstdio>
 #include "LegacyEditor/utils/RLEVITA/rlevita.hpp"
-#include "LegacyEditor/utils/LZX/XboxCompression.hpp"
 #include "LegacyEditor/utils/processor.hpp"
-#include "LegacyEditor/utils/tinf/tinf.h"
 #include "LegacyEditor/utils/zlib-1.2.12/zlib.h"
+// #include "LegacyEditor/utils/LZX/XboxCompression.hpp"
+// #include "LegacyEditor/utils/tinf/tinf.h"
 
 #include "LegacyEditor/utils/endian.hpp"
+#include "LegacyEditor/utils/dataManager.hpp"
 
 
-int ConsoleParser::saveConsoleFile(const std::string& outfileStr) {
+
+MU int ConsoleParser::saveConsoleFile(MU const std::string& outfileStr) {
     return 0;
 }
 
@@ -19,8 +21,7 @@ int ConsoleParser::saveWiiU(const std::string& outfileStr, Data& dataOut) {
     DataManager managerOut(dataOut);
     u64 src_size = managerOut.size;
 
-    FILE* f_out = fopen(outfileStr.c_str(), "wb");
-    if (!f_out) { return -1; }
+    FILE* f_out = fopen(outfileStr.c_str(), "wb"); if (!f_out) { return -1; }
 
     // Write src_size to the file
     uLong compressedSize = compressBound(src_size);
@@ -44,7 +45,6 @@ int ConsoleParser::saveWiiU(const std::string& outfileStr, Data& dataOut) {
 
     fclose(f_out);
 
-
     return 0;
 }
 
@@ -64,7 +64,6 @@ int ConsoleParser::saveVita(const std::string& outFileStr, Data& dataOut) {
     int num = 0;
     fwrite(&num, sizeof(u32), 1, f_out);
 
-
     u32 val;
     std::memcpy(&val, &data[0], 4);
     val += 0x0900;
@@ -78,14 +77,21 @@ int ConsoleParser::saveVita(const std::string& outFileStr, Data& dataOut) {
 }
 
 
-
-int ConsoleParser::savePS3Uncompressed() { return 0; }
-
-
-int ConsoleParser::savePS3Compressed() { return 0; }
+MU int ConsoleParser::savePS3Uncompressed() {
+    return 0;
+}
 
 
-int ConsoleParser::saveXbox360_DAT() { return 0; }
+MU int ConsoleParser::savePS3Compressed() {
+    return 0;
+}
 
 
-int ConsoleParser::saveXbox360_BIN() { return 0; }
+MU int ConsoleParser::saveXbox360_DAT() {
+    return 0;
+}
+
+
+MU int ConsoleParser::saveXbox360_BIN() {
+    return 0;
+}

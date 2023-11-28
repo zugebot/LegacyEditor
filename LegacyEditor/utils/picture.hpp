@@ -30,18 +30,20 @@ public:
         allocate();
     }
 
-    explicit Picture(int size) : Picture(size, size) {}
+    MU explicit Picture(int size) : Picture(size, size) {}
 
-    ND u32 getWidth() const { return width; }
-    ND u32 getHeight() const { return height; }
-    ND u32 inline getIndex(u32 x, u32 y) const { return x + y * height; }
+    ~Picture() { delete[] data; }
+
+    MU ND inline u32 getWidth() const { return width; }
+    MU ND inline u32 getHeight() const { return height; }
+    ND inline u32 getIndex(u32 x, u32 y) const { return x + y * height; }
 
     MU void drawPixel(unsigned char* rgb, u32 x, u32 y) const {
         u32 index = getIndex(x, y);
         memcpy(&data[index * 3], rgb, 3);
     }
 
-    ND bool drawBox(u32 startX, u32 startY, u32 endX, u32 endY, u8 red, u8 green, u8 blue) const {
+    MU ND bool drawBox(u32 startX, u32 startY, u32 endX, u32 endY, u8 red, u8 green, u8 blue) const {
 
         if (startX > width || startY > height) return false;
         if (endX > width || endY > height) return false;
@@ -63,7 +65,7 @@ public:
         return true;
     }
 
-    void fillColor(u8 red, u8 green, u8 blue) const {
+    MU void fillColor(u8 red, u8 green, u8 blue) const {
         for (u32 x = 0; x < width; x++) {
             u32 index = getIndex(x, 0) * RGB_SIZE;
             data[index] = red;
@@ -84,6 +86,6 @@ public:
         stbi_write_png(filename.c_str(), (int) width, (int) height, RGB_SIZE, data, (int) width * RGB_SIZE);
     }
 
-    ~Picture() { delete[] data; }
+
 };
 

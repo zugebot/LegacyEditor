@@ -7,6 +7,7 @@
 
 #include "LegacyEditor/utils/dataManager.hpp"
 
+// TODO: integrate this into FileListing
 
 // this works with the .ext file in cemu / vita, and in xbox .bin
 struct WorldOptions {

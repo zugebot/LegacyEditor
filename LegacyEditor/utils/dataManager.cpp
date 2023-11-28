@@ -310,7 +310,7 @@ u8* DataManager::readBytes(u32 length) {
 
 
 void DataManager::readOntoData(u32 length, u8* dataIn) {
-    memcpy(dataIn, data, length);
+    memcpy(dataIn, ptr, length);
     incrementPointer((i32)length);
 }
 

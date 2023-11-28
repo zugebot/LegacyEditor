@@ -2,10 +2,11 @@
 
 #include "v11Chunk.hpp"
 #include "v12Chunk.hpp"
+#include "LegacyEditor/utils/DataManager.hpp"
 
 
 
-inline int toPos(int x, int y, int z) {
+static inline int toPos(int x, int y, int z) {
     return y + 256 * z + 4096 * x;
 }
 
@@ -17,16 +18,28 @@ namespace universal {
         managerIn->seekStart();
         chunkData.lastVersion = managerIn->readInt16();
         switch(chunkData.lastVersion) {
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+            case 6:
+            case 7:
             case 8:
             case 9:
             case 10:
             case 11:
+                v11Chunk = new V11Chunk();
+                if (v11Chunk == nullptr) return;
+                v11Chunk->readChunk(&chunkData, managerIn, dim);
+                delete v11Chunk;
                 break;
             case 12:
                 v12Chunk = new V12Chunk();
+                if (v12Chunk == nullptr) return;
                 v12Chunk->readChunk(&chunkData, managerIn, dim);
                 delete v12Chunk;
-                v12Chunk = nullptr;
                 break;
         }
     }
@@ -36,32 +49,39 @@ namespace universal {
         managerOut->seekStart();
         managerOut->writeInt16(chunkData.lastVersion);
         switch(chunkData.lastVersion) {
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+            case 6:
+            case 7:
             case 8:
             case 9:
             case 10:
             case 11:
+                v11Chunk = new V11Chunk();
+                if (v11Chunk == nullptr) return;
+                v11Chunk->writeChunk(&chunkData, managerOut, dim);
+                delete v11Chunk;
                 break;
             case 12:
                 v12Chunk = new V12Chunk();
+                if (v12Chunk == nullptr) return;
                 v12Chunk->writeChunk(&chunkData, managerOut, dim);
                 delete v12Chunk;
-                v12Chunk = nullptr;
                 break;
         }
     }
 
 
-    void ChunkParser::fixLight() {
+    MU void ChunkParser::fixHeightMap() {
 
     }
 
 
-    void ChunkParser::fixHeightMap() {
-
-    }
-
-
-    void ChunkParser::placeBlock(int x, int y, int z, u16 block, u16 data, bool waterlogged) {
+    MU void ChunkParser::placeBlock(int x, int y, int z, u16 block, u16 data, bool waterlogged) {
         int offset = toPos(x, y, z);
         u16 value = block << 4 | data;
         if (waterlogged) {
@@ -77,7 +97,7 @@ namespace universal {
     }
 
 
-    void ChunkParser::rotateUpsideDown() {
+    MU void ChunkParser::rotateUpsideDown() {
         u16 blocks[65536];
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {

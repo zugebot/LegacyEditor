@@ -7,8 +7,10 @@ namespace universal {
 
 
     /// "Elytra" chunks.
-    /// "Aquatic" chunks.
     class V11Chunk {
+    private:
+        static constexpr u32 GRID_HEADER_SIZE = 1024;
+
     public:
         ChunkData* chunkData = nullptr;
         DataManager* dataManager = nullptr;
@@ -18,11 +20,11 @@ namespace universal {
 
         V11Chunk() = default;
 
+    private:
         MU void readBlocks() const;
         template<size_t BitsPerBlock>
-        MU bool readGrid(u8 const* buffer, u8* grid) const;
+        MU bool readGrid(u8 const* buffer, u8 grid[128]) const;
         MU void readData() const;
-        MU void readNBTData() const;
     };
 
 

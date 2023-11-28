@@ -4,15 +4,9 @@
 #include <vector>
 
 
-
-class RGB {
-public:
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-
-    RGB(uint8_t r, uint8_t g, uint8_t b)
-        : r(r), g(g), b(b) {}
+struct RGB {
+    uint8_t r, g, b;
+    RGB(uint8_t r, uint8_t g, uint8_t b) : r(r), g(g), b(b) {}
 };
 
 

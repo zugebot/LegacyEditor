@@ -153,15 +153,6 @@ void StfsPackage::extract(StfsFileEntry* entry, DataManager& out) {
 }
 
 
-
-
-
-
-
-
-
-
-
 /// convert a block into an address in the file
 ND u32 StfsPackage::blockToAddress(u32 blockNum) {
     // check for invalid block number
@@ -481,13 +472,15 @@ StfsFileEntry* findSavegameFileEntry(StfsFileListing& listing) {
         if (file.name == "savegame.dat") { return &file; }
     }
     for (StfsFileListing& folder: listing.folderEntries) {
-        if (StfsFileEntry* entry = findSavegameFileEntry(folder); entry) { return entry; }
+        if (StfsFileEntry* entry = findSavegameFileEntry(folder); entry) {
+            return entry;
+        }
     }
     return nullptr;
 }
 
 
-u32 c2n(char c) {
+static u32 c2n(char c) {
     if (c >= '0' && c <= '9') return c - '0';
     if (c >= 'a' && c <= 'f') return c - 'a' + 10;
     if (c >= 'A' && c <= 'F') return c - 'A' + 10;
@@ -495,7 +488,7 @@ u32 c2n(char c) {
 }
 
 
-i64 stringToHex(const std::string& str) {
+static i64 stringToHex(const std::string& str) {
     i64 result = 0;
     size_t i = 0;
     int stringSize = (int)str.size() - 1; // terminating value doesn't count
@@ -504,7 +497,7 @@ i64 stringToHex(const std::string& str) {
 }
 
 
-i64 stringToInt64(const std::string& str) {
+static i64 stringToInt64(const std::string& str) {
     i64 result = 0;
     int sign = 1;
     size_t i = 0;
@@ -520,6 +513,12 @@ i64 stringToInt64(const std::string& str) {
 }
 
 
+struct TextChunk {
+    std::string keyword;
+    std::string text;
+};
+
+
 WorldOptions getTagsInImage(DataManager& image) {
     WorldOptions options;
     u8_vec PNGHeader = image.readIntoVector(8);
@@ -532,30 +531,32 @@ WorldOptions getTagsInImage(DataManager& image) {
     std::vector<TextChunk> chunks;
 
     while (!image.isEndOfData()) {
-        // Read chunk length
-        auto length = (u32) image.readInt32();
+        u32 chunkLength = image.readInt32(); // Read chunk length
+        std::string chunkType = image.readString(4);
 
-        // Read chunk type
-        std::string type = image.readString(4);
-        //check if end
-        if (type == "IEND") {
-            break;
-        }
-        // Check if the chunk is a tEXt chunk
-        if (type != "tEXt") {
-            image.incrementPointer(u32(length + 4)); //the extra 4 is the crc
+        if (chunkType == "IEND") break; // check if end
+
+        if (chunkType != "tEXt") {
+            image.incrementPointer(u32(chunkLength + 4)); // the extra 4 is the crc
             continue;
         }
+
+
         // Read keyword
-        auto chunkLength = (int) length;
-        u8_vec chunkData = image.readIntoVector(chunkLength);
+        size_t length = chunkLength;
+        u8_vec chunkData = image.readIntoVector(length);
         chunkData.push_back(0); // add a null byte for the last text
-        while (chunkLength > 0) {
-            std::string keyword(reinterpret_cast<char*>(chunkData.data() + (length - chunkLength)));
-            chunkLength -= (int) keyword.size() + 1;
+
+        while (length > 0) {
+            u8* begin = chunkData.data() + chunkLength;
+
+            std::string keyword(reinterpret_cast<char*>(begin - length));
+            length -= keyword.size() + 1;
             if (keyword.empty()) { continue; }
-            std::string text(reinterpret_cast<char*>(chunkData.data() + (length - chunkLength)));
-            chunkLength -= (int) text.size() + 1;
+
+            std::string text(reinterpret_cast<char*>(begin - length));
+            length -= text.size() + 1;
+
             chunks.push_back({keyword, text});
             if (image.isEndOfData()) { break; }
         }
@@ -564,8 +565,7 @@ WorldOptions getTagsInImage(DataManager& image) {
         image.readInt32();
     }
 
-
-    //get keys and store them
+    // get keys and store them
     for (const TextChunk& chunk: chunks) {
         if (chunk.keyword == "4J_SEED") {
             options.displaySeed = stringToInt64(chunk.text);
@@ -583,6 +583,7 @@ WorldOptions getTagsInImage(DataManager& image) {
             options.baseSaveName = chunk.text;
         }
     }
+
     return options;
 }
 
@@ -623,28 +624,34 @@ FileInfo extractSaveGameDat(u8* inputData, i64 inputSize) {
     StfsPackage stfsInfo(binFile);
     stfsInfo.parse();
     StfsFileListing listing = stfsInfo.getFileListing();
+
     StfsFileEntry* entry = findSavegameFileEntry(listing);
     if (!entry) {
         free(inputData);
         return {};
     }
+
     DataManager out;
     stfsInfo.extract(entry, out);
     
-    FileInfo savegame;
-    savegame.createdTime = TimePointFromFatTimestamp(entry->createdTimeStamp);
-    BINHeader meta = stfsInfo.getMetaData();
-    if (meta.thumbnailImage.size) { savegame.thumbnailImage = meta.thumbnailImage; }
+    FileInfo saveGame;
+    saveGame.createdTime = TimePointFromFatTimestamp(entry->createdTimeStamp);
 
-    int savefileSize = (int) out.size;
-    if (savefileSize) {
-        auto* savefile = (u8*) malloc(savefileSize);
-        memcpy(savefile, out.data, savefileSize);
-        savegame.saveFileData = DataManager(savefile, savefileSize);
+    BINHeader meta = stfsInfo.getMetaData();
+
+    saveGame.saveName = meta.displayName;
+    saveGame.options = getTagsInImage(saveGame.thumbnailImage);
+
+    if (meta.thumbnailImage.size) {
+        saveGame.thumbnailImage = meta.thumbnailImage;
     }
 
-    savegame.saveName = stfsInfo.getMetaData().displayName;
-    savegame.options = getTagsInImage(savegame.thumbnailImage);
+    if (out.size) {
+        u8* saveFile = new u8[out.size];
+        memcpy(saveFile, out.data, out.size);
+        saveGame.saveFileData = DataManager(saveFile, out.size);
+    }
+
     free(inputData);
-    return savegame;
+    return saveGame;
 }

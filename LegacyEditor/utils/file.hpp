@@ -1,12 +1,13 @@
 #pragma once
 
-#include "LegacyEditor/utils/processor.hpp"
+#include <string>
+#include <utility>
+
+#include "processor.hpp"
 #include "NBT.hpp"
 #include "data.hpp"
 #include "enums.hpp"
 
-#include <string>
-#include <utility>
 
 
 class NBTBase;
@@ -24,9 +25,9 @@ enum class FileType : u8 {
     PLAYER,             // ...
     LEVEL,              // ...
     GRF,                // ...
-    ENTITY_NETHER,    // ...
-    ENTITY_OVERWORLD, // ...
-    ENTITY_END,       // ...
+    ENTITY_NETHER,      // ...
+    ENTITY_OVERWORLD,   // ...
+    ENTITY_END,         // ...
 };
 
 class File {
@@ -47,7 +48,7 @@ public:
     ND NBTTagCompound* createNBTTagCompound();
     ND NBTTagCompound* getNBTCompound() const;
     ND std::string constructFileName(CONSOLE console) const;
-    ND bool isEmpty() const { return data.size != 0; }
+    MU ND bool isEmpty() const { return data.size != 0; }
 };
 
 

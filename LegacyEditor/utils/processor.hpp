@@ -5,47 +5,43 @@
 #include <string>
 #include <vector>
 
-// unsigned
-typedef uint8_t u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
-typedef std::vector<uint8_t> u8_vec;
-typedef std::vector<uint16_t> u16_vec;
-typedef std::vector<uint32_t> u32_vec;
-typedef std::vector<uint64_t> u64_vec;
-typedef std::vector<std::vector<uint8_t>> u8_vec_vec;
-typedef std::vector<std::vector<uint16_t>> u16_vec_vec;
-typedef std::vector<std::vector<uint32_t>> u32_vec_vec;
-typedef std::vector<std::vector<uint64_t>> u64_vec_vec;
-
-// signed
-typedef int8_t i8;
-typedef int16_t i16;
-typedef int32_t i32;
-typedef int64_t i64;
-typedef std::vector<int8_t> i8_vec;
-typedef std::vector<int16_t> i16_vec;
-typedef std::vector<int32_t> i32_vec;
-typedef std::vector<int64_t> i64_vec;
-typedef std::vector<std::vector<int8_t>> i8_vec_vec;
-typedef std::vector<std::vector<int16_t>> i16_vec_vec;
-typedef std::vector<std::vector<int32_t>> i32_vec_vec;
-typedef std::vector<std::vector<int64_t>> i64_vec_vec;
-
 
 static std::string dir_path = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\)";
-
-
 
 #define ND [[nodiscard]]
 #define MU [[maybe_unused]]
 
-#define BREAK_CASE break; case
-#define BREAK_DEFAULT break; default
-
 #define EXPECT_FALSE(COND) (__builtin_expect((COND), 0)) // [[unlikely]]
 #define EXPECT_TRUE(COND) (__builtin_expect((COND), 1))  // [[likely]]
+
+
+// unsigned
+MU typedef uint8_t u8;
+MU typedef uint16_t u16;
+MU typedef uint32_t u32;
+MU typedef uint64_t u64;
+MU typedef std::vector<uint8_t> u8_vec;
+MU typedef std::vector<uint16_t> u16_vec;
+MU typedef std::vector<uint32_t> u32_vec;
+MU typedef std::vector<uint64_t> u64_vec;
+MU typedef std::vector<std::vector<uint8_t>> u8_vec_vec;
+MU typedef std::vector<std::vector<uint16_t>> u16_vec_vec;
+MU typedef std::vector<std::vector<uint32_t>> u32_vec_vec;
+MU typedef std::vector<std::vector<uint64_t>> u64_vec_vec;
+
+// signed
+MU typedef int8_t i8;
+MU typedef int16_t i16;
+MU typedef int32_t i32;
+MU typedef int64_t i64;
+MU typedef std::vector<int8_t> i8_vec;
+MU typedef std::vector<int16_t> i16_vec;
+MU typedef std::vector<int32_t> i32_vec;
+MU typedef std::vector<int64_t> i64_vec;
+MU typedef std::vector<std::vector<int8_t>> i8_vec_vec;
+MU typedef std::vector<std::vector<int16_t>> i16_vec_vec;
+MU typedef std::vector<std::vector<int32_t>> i32_vec_vec;
+MU typedef std::vector<std::vector<int64_t>> i64_vec_vec;
 
 
 static int inline printf_err(const char* format, ...) {

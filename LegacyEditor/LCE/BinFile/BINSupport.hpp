@@ -79,12 +79,12 @@ class StfsPackage {
 public:
     explicit StfsPackage(DataManager& input) : data(input) {}
     
-    StfsFileListing getFileListing() { return fileListing; }
     void extract(StfsFileEntry* entry, DataManager& out);
     ND u32 blockToAddress(u32 blockNum);
     ND u32 getHashAddressOfBlock(u32 blockNum);
-    ~StfsPackage() = default;
-    ND BINHeader getMetaData() { return metaData; }
+
+    ND inline StfsFileListing getFileListing() { return fileListing; }
+    ND inline BINHeader getMetaData() { return metaData; }
     
     /// parse the file
     void parse();
@@ -115,17 +115,7 @@ private:
 };
 
 
-struct TextChunk {
-    std::string keyword;
-    std::string text;
-};
-
-
 StfsFileEntry* findSavegameFileEntry(StfsFileListing& listing);
-
-u32 c2n(char c);
-i64 stringToHex(const std::string& str);
-i64 stringToInt64(const std::string& str);
 
 WorldOptions getTagsInImage(DataManager& image);
 

@@ -3,20 +3,20 @@
 #include "LegacyEditor/utils/file.hpp"
 
 
-ChunkManager* RegionManager::getChunk(int x, int z) {
-    int index = x + z * 32;
+MU ChunkManager* RegionManager::getChunk(int x, int z) {
+    u32 index = x + z * REGION_WIDTH;
     if (index > CHUNK_COUNT) return nullptr;
     return &chunks[index];
 }
 
 
-ChunkManager* RegionManager::getChunk(int index) {
+MU ChunkManager* RegionManager::getChunk(int index) {
     if (index > CHUNK_COUNT) return nullptr;
     return &chunks[index];
 }
 
 
-ChunkManager* RegionManager::getNonEmptyChunk() {
+MU ChunkManager* RegionManager::getNonEmptyChunk() {
     for (auto & chunk : chunks) {
        if (chunk.size != 0) {
            return &chunk;
@@ -64,6 +64,7 @@ void RegionManager::read(Data* dataIn) {
         // allocates memory for the chunk
         chunk.size = managerIn.readInt32();
         chunk.rleFlag = chunk.size >> 31;
+        chunk.unknownFlag = (chunk.size >> 30) & 1;
         chunk.size &= 0x3FFFFFFF;
         chunk.allocate(chunk.size);
 
@@ -141,11 +142,9 @@ Data RegionManager::write(CONSOLE consoleIn) {
         managerOut.seek(chunk.location * SECTOR_SIZE);
 
         u32 size = chunk.size;
-        if (chunk.rleFlag) {
-            u32 mask = 0x00FFFFFF;
-            size &= mask;
-            size |= (0xC0 << 24);
-        }
+        if (chunk.rleFlag) size |= 0x80000000;
+        if (chunk.unknownFlag) size |= 0x40000000;
+
         managerOut.writeInt32(size);
 
         switch (console) {

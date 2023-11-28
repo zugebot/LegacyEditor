@@ -9,9 +9,10 @@
  */
  class HeaderUnion {
  private:
-     static bool isSystemLittle() {
+     static inline bool isSystemLittle() {
          return isSystemLittleEndian();
      }
+
 public:
     union {
         /// header size: 12 bytes
@@ -70,9 +71,9 @@ public:
     /// bytes 8-11
     ND u32 getVitaFileListing() const { return isSystemLittle() ? VITA.file_listing_offset : ::swapEndian32(VITA.file_listing_offset); }
     /// bytes 0-3
-    ND u32 getSwitchFileSize() const { return isSystemLittle() ? SWITCH.file_size : ::swapEndian32(SWITCH.file_size) ; }
+    MU ND u32 getSwitchFileSize() const { return isSystemLittle() ? SWITCH.file_size : ::swapEndian32(SWITCH.file_size) ; }
     /// bytes 4-7
-    ND u32 getSwitchSomething() const { return isSystemLittle() ? SWITCH.something : ::swapEndian32(SWITCH.something); }
+    MU ND u32 getSwitchSomething() const { return isSystemLittle() ? SWITCH.something : ::swapEndian32(SWITCH.something); }
 
 
 };

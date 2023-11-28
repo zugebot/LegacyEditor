@@ -38,7 +38,6 @@ void ChunkManager::ensure_decompress(CONSOLE console) {
 
     deallocate();
 
-
     if (rleFlag) {
         allocate(dec_size);
         RLE_decompress(decompData.start(), decompData.size, start(), dec_size_copy);

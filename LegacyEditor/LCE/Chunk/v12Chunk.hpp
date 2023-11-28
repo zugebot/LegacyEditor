@@ -49,15 +49,12 @@ namespace universal {
         // #               Read Section
         // #####################################################
 
-        void readNBTData();
-        void readLightData();
-        void readBlockData();
-        static void placeBlocks(u16_vec& writeVec, const u8* grid, int writeOffset);
-        static void fillWithMaxBlocks(const u8* buffer, u8* grid);
+        void readLightData() const;
+        void readBlockData() const;
         template<size_t BitsPerBlock>
-        bool readGrid(const u8* buffer, u8* grid);
+        bool readGrid(const u8* buffer, u8 grid[128]) const;
         template<size_t BitsPerBlock>
-        bool readGridSubmerged(u8 const* buffer, u8* grid, u8* submergedGrid);
+        bool readGridSubmerged(u8 const* buffer, u8 blockGrid[128], u8 SbmrgGrid[128]) const;
 
         // #####################################################
         // #               Write Section
@@ -67,11 +64,10 @@ namespace universal {
         /// used to write only the palette and positions.\n
         /// It does not write liquid data, because I have been told that that is unnecessary.
         template<size_t BitsPerBlock, size_t BlockCount, size_t EmptyCount>
-        void writeLayer(u16_vec& blockVector, u16_vec& blockLocations, u8* blockMap);
+        void writeGrid(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[65536]);
         /// used to write full block data, instead of using palette.
-        void writeWithMaxBlocks(u16_vec& blocks, u16_vec& positions);
-        void writeLightSection(int index, u32& readOffset, u8_vec& light);
+        void writeWithMaxBlocks(u16_vec& blocks, u16_vec& positions) const;
+        void writeLightSection(u32& readOffset, u8_vec& light) const;
         void writeLightData();
-        void writeNBTData();
     };
 }

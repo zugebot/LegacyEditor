@@ -5,6 +5,8 @@
 #include <algorithm>
 
 #include "LegacyEditor/utils/endian.hpp"
+
+#include "ConsoleParser.hpp"
 #include "LegacyEditor/LCE/Region/RegionManager.hpp"
 
 
@@ -42,6 +44,16 @@ std::pair<int, int> extractRegionCoords(const std::string& filename) {
 }
 
 
+FileListing::FileListing(ConsoleParser& consoleParser) : console(consoleParser.console) {
+    read(consoleParser);
+}
+
+
+MU FileListing::FileListing(ConsoleParser* consoleParser) : console(consoleParser->console) {
+    read(*consoleParser);
+}
+
+
 
 void FileListing::read(Data &dataIn) {
     DataManager managerIn(dataIn);
@@ -54,20 +66,19 @@ void FileListing::read(Data &dataIn) {
     u32 fileCount = managerIn.readInt32();
     oldestVersion = managerIn.readInt16();
     currentVersion = managerIn.readInt16();
-    u32 total_size = 0;
 
     allFiles.clear();
     allFiles.reserve(fileCount);
 
+    u32 total_size = 0;
     for (int fileIndex = 0; fileIndex < fileCount; fileIndex++) {
-        managerIn.seek(indexOffset + fileIndex * 144);
+        managerIn.seek(indexOffset + fileIndex * FILE_HEADER_SIZE);
 
         std::string fileName = managerIn.readWAsString(64);
 
         u32 fileSize = managerIn.readInt32();
         total_size += fileSize;
 
-        u8 *data = nullptr;
         u32 index = managerIn.readInt32();
         u64 timestamp = managerIn.readInt64();
 
@@ -77,7 +88,7 @@ void FileListing::read(Data &dataIn) {
         }
 
         managerIn.seek(index);
-        data = managerIn.readBytes(fileSize);
+        u8* data = managerIn.readBytes(fileSize);
 
         allFiles.emplace_back(data, fileSize, timestamp);
         File &file = allFiles.back();
@@ -149,7 +160,7 @@ void FileListing::read(Data &dataIn) {
 }
 
 
-void FileListing::convertRegions(CONSOLE consoleOut) {
+MU void FileListing::convertRegions(CONSOLE consoleOut) {
     for (FileList* fileList : dimFileLists) {
         for (File* file : *fileList) {
             RegionManager region(console);
@@ -162,8 +173,7 @@ void FileListing::convertRegions(CONSOLE consoleOut) {
 }
 
 
-
-void FileListing::deleteAllChunks() {
+MU void FileListing::deleteAllChunks() {
     RegionManager region(console);
     for (FileList* fileList : dimFileLists) {
         for (File* file: *fileList) {
@@ -180,8 +190,8 @@ void FileListing::deleteAllChunks() {
 
 
 void FileListing::saveToFolder(const std::string &folder) {
-
     namespace fs = std::filesystem;
+
     if (folder.length() < 10) {
         printf("tried to delete short directory, will not risk");
         return;
@@ -223,7 +233,7 @@ Data FileListing::write(CONSOLE consoleOut) {
     u32 fileInfoOffset = fileDataSize + 12;
 
     // step 2: find total binary size and create its data buffer
-    u32 totalFileSize = fileInfoOffset + 144 * fileCount;
+    u32 totalFileSize = fileInfoOffset + FILE_HEADER_SIZE * fileCount;
 
     Data dataOut(totalFileSize);
     DataManager managerOut(dataOut);
@@ -249,23 +259,17 @@ Data FileListing::write(CONSOLE consoleOut) {
     }
 
     // step 5: write file metadata
-    int count = 0;
     for (File &fileIter: allFiles) {
-        // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter.
-        // additionalData, fileIter.size, fileIter.name.c_str());
+        // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter.additionalData, fileIter.size, fileIter.name.c_str());
         std::string fileIterName = fileIter.constructFileName(consoleOut);
         managerOut.writeWString(fileIterName, 64);
         managerOut.writeInt32(fileIter.data.getSize());
         managerOut.writeInt32(fileIter.additionalData);
         managerOut.writeInt64(fileIter.timestamp);
-
-        count++;
     }
 
     return dataOut;
 }
-
-
 
 
 std::vector<File> FileListing::collectFiles(FileType fileType) {
@@ -287,8 +291,6 @@ std::vector<File> FileListing::collectFiles(FileType fileType) {
     clearActionsRemove[fileType]();
     return collectedFiles;
 }
-
-
 
 
 void FileListing::deallocate() {
@@ -319,6 +321,7 @@ void FileListing::clearPointers() {
     grf = nullptr;
     village = nullptr;
 }
+
 
 void FileListing::updatePointers() {
     clearPointers();
@@ -370,18 +373,31 @@ void FileListing::updatePointers() {
 }
 
 
+void FileListing::removeFileTypes(std::set<FileType> typesToRemove) {
+    allFiles.erase(
+            std::remove_if(
+                    allFiles.begin(),
+                    allFiles.end(),
+                    [&typesToRemove](File& file) {
+                        bool to_del = typesToRemove.count(file.fileType) > 0;
+                        if (to_del) {
+                            delete[] file.data.data;
+                            file.data.data = nullptr;
+                        }
+                        return to_del;
+                    }
+                    ),
+            allFiles.end()
+    );
+    for (const auto& fileType : typesToRemove) {
+        if (clearActionsRemove.count(fileType)) {
+            clearActionsRemove[fileType]();
+        }
+    }
+}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+MU void FileListing::addFiles(std::vector<File> filesIn) {
+    allFiles.insert(allFiles.end(), filesIn.begin(), filesIn.end());
+    updatePointers();
+}
