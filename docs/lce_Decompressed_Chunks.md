@@ -94,8 +94,8 @@ Inhabited Time = 74775
 - This section will only focus on Aquatic format as Elytra is different `see (1.1)`
 
 ## 2.0 What is a Section?
-- Sections are intervals of 16 blocks on the Y level of the full chunk
-- It is used in order to break down and make accessing and saving the blocks faster
+- Sections are intervals of 16 newBlocks on the Y level of the full chunk
+- It is used in order to break down and make accessing and saving the newBlocks faster
 
 ## 2.1 Sections' Size `[0x1a..0x1b]`
 - The first two bytes of the section header as a `(short/int16_t)` represent the chunk's sections' size (not in bytes)
@@ -148,7 +148,7 @@ Section Size Table = { 6, 5, 5, 4, 4, 3, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0 }
 the sections' size in bytes `(see 2.1 point 2)`
 
 # 3.0.1 Block Overview
-- Individual blocks are stored in two bytes as a `short/int16_t` <span style="color:red"> in little endian format </span>
+- Individual newBlocks are stored in two bytes as a `short/int16_t` <span style="color:red"> in little endian format </span>
 - The most significant bit of an individual block determines if the block is waterlogged
 - The following 11 significant bits are the ID of the block
 - The last 4 significant bits is the data of the block
@@ -204,18 +204,18 @@ an oak-wood stairs block facing west and upside down and waterlogged
 | Format ID | Size | Description                                                                                                  | Block Storage Format                                                                                                                                              | Bits per block |
 |-----------|------|--------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------|
 | 0x0       | 1    | The grid contains only <span style="color:green"> 1 </span> block                                            | The single block is stored the in the grid index                                                                                                                  | N/A            |
-| 0x2       | 12   | The grid contains only <span style="color:green"> 2 </span> different blocks                                 | The first 4 bytes as `short/int16_t` values is the block palette and the following 8 bytes are the block positions                                                | 1              |
-| 0x3       | 20   | The grid contains only <span style="color:green"> 2 </span> different blocks along with `Liquid data`        | The first 4 bytes as `short/int16_t` values is the block palette, the following 8 bytes are the block positions and the following 8 bytes is the `Liquid data`    | 1              |
-| 0x4       | 24   | The grid contains only <span style="color:green"> up to 4 </span> different blocks                           | The first 8 bytes as `short/int16_t` values is the block palette and the following 16 bytes are the block positions                                               | 2              |
-| 0x5       | 40   | The grid contains only <span style="color:green"> up to 4 </span> different blocks along with `Liquid data`  | The first 8 bytes as `short/int16_t` values is the block palette, the following 16 bytes are the block positions and the following 16 bytes is the `Liquid data`  | 2              |
-| 0x6       | 40   | The grid contains only <span style="color:green"> up to 8 </span> different blocks                           | The first 16 bytes as `short/int16_t` values is the block palette and the following 24 bytes are the block positions                                              | 3              |
-| 0x7       | 64   | The grid contains only <span style="color:green"> up to 8 </span> different blocks along with `Liquid data`  | The first 16 bytes as `short/int16_t` values is the block palette, the following 24 bytes are the block positions and the following 24 bytes is the `Liquid data` | 3              |
-| 0x8       | 64   | The grid contains only <span style="color:green"> up to 16 </span> different blocks                          | The first 32 bytes as `short/int16_t` values is the block palette and the following 32 bytes are the block positions                                              | 4              |  
-| 0x9       | 96   | The grid contains only <span style="color:green"> up to 16 </span> different blocks along with `Liquid data` | The first 32 bytes as `short/int16_t` values is the block palette, the following 32 bytes are the block positions and the following 32 bytes is the `Liquid data` | 4              |
-| 0xe       | 128  | The blocks in this grid is stored in <span style="color:green"> full </span>                                 | The full 128 bytes stored are the blocks                                                                                                                          | N/A            |
-| 0xf       | 256  | The blocks in this grid is stored in <span style="color:green"> full </span> along with `Liquid data`        | The full 128 bytes stored are the blocks and the following 128 bytes is the `Liquid data`                                                                         | N/A            |
+| 0x2       | 12   | The grid contains only <span style="color:green"> 2 </span> different newBlocks                                 | The first 4 bytes as `short/int16_t` values is the block palette and the following 8 bytes are the block positions                                                | 1              |
+| 0x3       | 20   | The grid contains only <span style="color:green"> 2 </span> different newBlocks along with `Liquid data`        | The first 4 bytes as `short/int16_t` values is the block palette, the following 8 bytes are the block positions and the following 8 bytes is the `Liquid data`    | 1              |
+| 0x4       | 24   | The grid contains only <span style="color:green"> up to 4 </span> different newBlocks                           | The first 8 bytes as `short/int16_t` values is the block palette and the following 16 bytes are the block positions                                               | 2              |
+| 0x5       | 40   | The grid contains only <span style="color:green"> up to 4 </span> different newBlocks along with `Liquid data`  | The first 8 bytes as `short/int16_t` values is the block palette, the following 16 bytes are the block positions and the following 16 bytes is the `Liquid data`  | 2              |
+| 0x6       | 40   | The grid contains only <span style="color:green"> up to 8 </span> different newBlocks                           | The first 16 bytes as `short/int16_t` values is the block palette and the following 24 bytes are the block positions                                              | 3              |
+| 0x7       | 64   | The grid contains only <span style="color:green"> up to 8 </span> different newBlocks along with `Liquid data`  | The first 16 bytes as `short/int16_t` values is the block palette, the following 24 bytes are the block positions and the following 24 bytes is the `Liquid data` | 3              |
+| 0x8       | 64   | The grid contains only <span style="color:green"> up to 16 </span> different newBlocks                          | The first 32 bytes as `short/int16_t` values is the block palette and the following 32 bytes are the block positions                                              | 4              |  
+| 0x9       | 96   | The grid contains only <span style="color:green"> up to 16 </span> different newBlocks along with `Liquid data` | The first 32 bytes as `short/int16_t` values is the block palette, the following 32 bytes are the block positions and the following 32 bytes is the `Liquid data` | 4              |
+| 0xe       | 128  | The newBlocks in this grid is stored in <span style="color:green"> full </span>                                 | The full 128 bytes stored are the newBlocks                                                                                                                          | N/A            |
+| 0xf       | 256  | The newBlocks in this grid is stored in <span style="color:green"> full </span> along with `Liquid data`        | The full 128 bytes stored are the newBlocks and the following 128 bytes is the `Liquid data`                                                                         | N/A            |
 
-## 3.2 Parsing blocks from a grid index
+## 3.2 Parsing newBlocks from a grid index
 
 ## 3.2.1 Parsing Single Block (Format ID 0x0)
 - The block is the 2 bytes as a `short/int16_t` stored in the grid index
@@ -226,11 +226,11 @@ an oak-wood stairs block facing west and upside down and waterlogged
 
 ### 3.2.2.1 What is a palette?
 - There are 2 components to parsing formats 2-9
-- The first component is the `block palette` which stores what blocks are used in the grid
+- The first component is the `block palette` which stores what newBlocks are used in the grid
   - `block palette` will contain 2 `0xff` bytes for each unused block in the palette (for example if only 3 of 4 is used)
 - The second component is the `pointer array` which stores what block in the palette is at an index in the grid
   - `bits per block` in the format table `(see 3.1.1)` determines how many bits are needed per block in `pointer array`
-  - The more blocks there are in the palette, the more bits are need in order to sufficiently point to the block
+  - The more newBlocks there are in the palette, the more bits are need in order to sufficiently point to the block
 
 | Palette Size | Bits per block |
 |--------------|----------------|
@@ -242,7 +242,7 @@ an oak-wood stairs block facing west and upside down and waterlogged
 #### Explanation
 - Palette size of 2 only needs 1 bit because it will either point to index 0 or 1
 - Palette size of 8 only needs 3 bits because 3 bits can point between index 0 to 7 inclusive which is all that is needed
-- Therefore, the bits per block is determined by the number of palette blocks in the grid when writting the grid
+- Therefore, the bits per block is determined by the number of palette newBlocks in the grid when writting the grid
 - On the other hand `block palette` size can also be acquired by `bits per block`
 by bit shifting left 1 by the number of bits per block (1 << `bits per block`)
 
@@ -260,20 +260,20 @@ by bit shifting left 1 by the number of bits per block (1 << `bits per block`)
 - Third step is to loop 64 times (for each bit) inside the `bits per block` loop
   - This loop should pass all the 64 bits into an array of `indexes` from the X<sup>th</sup> `segment` (8 bytes) in the `pointer array`
   - Each iteration after the first should append the bits on top of the existing value
-- The end result will be an array of palettes of the blocks used and an array of `indexes` that should point to an index in the palette
+- The end result will be an array of palettes of the newBlocks used and an array of `indexes` that should point to an index in the palette
 
 ### 3.2.2.4 How is the `palette` and `indexes` Used?
 - `Indexes` array should be 64 in size and each points to a block in the `palette`
 - `Indexes` now represents the grid block values
 - `Indexes` is in the order of YZX in the grid `((x * 16) | (z * 4) | y)`
-- Fill the `grid` with the blocks from `Indexes` associated with the block in palette array
+- Fill the `grid` with the newBlocks from `Indexes` associated with the block in palette array
 
 ## 3.2.3 Parsing Full Blocks (Format ID 0xe-0xf)
 - Copy the number of bytes in `Size` coloumn of the format table `(see 3.1)`
 - This should either be 128 bytes for format ID `0xe` or 256 bytes for format ID `0xf`
 
 ## 3.3 What to do with Grids?
-- The grid is now filled with 64 blocks
+- The grid is now filled with 64 newBlocks
 - The grid is in YZX order
 - Parsing grids will likely be moved to a full block array, if that is the case, take the corresponding YZX values
 in the grid and place them in the associated places of the full block array
@@ -337,7 +337,7 @@ Offset = 0
 Skip to offset 0 from the end of the table which in this example is:
 70 00 15 00 10 00 ff ff 13 10 31 30 13 30 13 00 00 03 00 03 20 03 00 11
 Since we know the format ID is 4, the palette is size (1 << bits per block) = 4
-Palette = { 0x7000, 0x1500, 0x1000, 0xffff } - this is our palette of blocks
+Palette = { 0x7000, 0x1500, 0x1000, 0xffff } - this is our palette of newBlocks
 Segments = { 0x1310313013301300, 0x0003000320030011 } - there are 2 entries because
 the bits per block for this format ID is 2 (see 3.1 format table)
 
@@ -381,7 +381,7 @@ Offset = 24
 Skip to offset 24 from the end of the table which in this example is:
 15 00 10 00 73 3f 73 bf 77 7f 77 ff
 Since we know the format ID is 2, the palette is size (1 << bits per block) = 2
-Palette = { 0x1500, 0x1000 } - this is our palette of blocks
+Palette = { 0x1500, 0x1000 } - this is our palette of newBlocks
 Segments = { 0x733f73bf777f77ff } - there is only one entry because
 the bits per block for this format ID is 1 (see 3.1 format table)
 
@@ -413,7 +413,7 @@ b0 00 10 00 15 00 11 00
 01 11 21 11 91 13 09 91
 00 00 00 00 66 20 f6 60
 Since we know the format ID is 6, the palette is size (1 << bits per block) = 8
-Palette = { 0xb000, 0x1000, 0x1500, 0x1100, 0x3000, 0xffff, 0xffff, 0xffff } - this is our palette of blocks
+Palette = { 0xb000, 0x1000, 0x1500, 0x1100, 0x3000, 0xffff, 0xffff, 0xffff } - this is our palette of newBlocks
 Segments = { 0x1000300091120997, 0x0111211191130991, 0x000000006620f660 } - there are 3 entries because
 the bits per block for this format ID is 3 (see 3.1 format table)
 
@@ -470,7 +470,7 @@ which can be seen that no index in the indexes array is 5 to 7
 - There are 4 sections in light
   - First 2 is sky-light
   - Last 2 is block-light
-  - The first light section is y0-y127 blocks with the second section of the same light type being y128-y255
+  - The first light section is y0-y127 newBlocks with the second section of the same light type being y128-y255
 
 ## 4.1 Light Section size `[*+0x4c...*+0x4f]`
 - The first 4 bytes of a light section header as a `(int/int32_t)` represent the light section's size (not in bytes)

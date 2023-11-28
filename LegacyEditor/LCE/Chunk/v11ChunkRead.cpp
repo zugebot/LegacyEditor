@@ -16,7 +16,7 @@ namespace universal {
         if (chunkData->lastVersion > 8)
             chunkData->inhabitedTime = (i64) dataManager->readInt64();
 
-        chunkData->blocks = u16_vec(65536);
+        chunkData->newBlocks = u16_vec(65536);
         readBlocks();
 
         chunkData->DataGroupCount = 0;
@@ -104,7 +104,7 @@ namespace universal {
                     }
                 }
 
-                putBlocks(chunkData->blocks, grid, putBlockOffset, gridIndex);
+                putBlocks(chunkData->newBlocks, grid, putBlockOffset, gridIndex);
             }
 
         }

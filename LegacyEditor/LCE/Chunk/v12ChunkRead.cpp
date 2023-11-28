@@ -21,7 +21,7 @@ namespace universal {
         chunkData->lastUpdate = (i64) dataManager->readInt64();
         chunkData->inhabitedTime = (i64) dataManager->readInt64();
 
-        chunkData->blocks = u16_vec(65536);
+        chunkData->newBlocks = u16_vec(65536);
         chunkData->submerged = u16_vec(65536);
         readBlockData();
 
@@ -184,7 +184,7 @@ namespace universal {
                         if EXPECT_FALSE (!success) {
                             return;
                         }
-                        placeBlocks(chunkData->blocks, blockGrid, offsetInBlockWrite);
+                        placeBlocks(chunkData->newBlocks, blockGrid, offsetInBlockWrite);
                         if (format & 1) {
                             placeBlocks(chunkData->submerged, sbmrgGrid, offsetInBlockWrite);
                         }

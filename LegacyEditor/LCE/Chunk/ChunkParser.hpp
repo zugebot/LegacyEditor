@@ -3,18 +3,20 @@
 #include "ChunkData.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 
+#include "v10Chunk.hpp"
+#include "v11Chunk.hpp"
+#include "v12Chunk.hpp"
+
 class DataManager;
 
 
 namespace universal {
 
-    class V11Chunk;
-    class V12Chunk;
-
     class ChunkParser {
     private:
-        MU V11Chunk* v11Chunk = nullptr;
-        MU V12Chunk* v12Chunk = nullptr;
+        V10Chunk v10Chunk;
+        V11Chunk v11Chunk;
+        V12Chunk v12Chunk;
 
     public:
         ChunkData chunkData;

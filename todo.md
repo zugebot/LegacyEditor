@@ -1,9 +1,9 @@
 Todo:
 
 Fix v12Chunk::writeBlockData:
-- currently, it does not write blocks correctly 
-if there is an empty section, with blocks above
-said section. Writing blocks to the highest section
+- currently, it does not write newBlocks correctly 
+if there is an empty section, with newBlocks above
+said section. Writing newBlocks to the highest section
 also does not work.
 
 Add V11Chunk::write and V11Chunk::read

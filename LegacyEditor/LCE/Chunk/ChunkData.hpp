@@ -6,16 +6,24 @@
 
 class ChunkData {
 public:
-    u16_vec blocks;
+
+    // old versions
+    u8_vec oldBlocks;
     u8_vec blockData;
-    u8_vec blockLight;
-    u8_vec skyLight;
-    u8_vec heightMap;
-    u8_vec biomes;
-    NBTBase* NBTData = nullptr;
-    i16 terrainPopulated = 0;
-    i64 lastUpdate = 0;
-    i64 inhabitedTime = 0;
+
+    // aquatic
+    u16_vec newBlocks;
+    bool hasSubmerged = false;
+    u16_vec submerged;
+
+    u8_vec blockLight;          //
+    u8_vec skyLight;            //
+    u8_vec heightMap;           //
+    u8_vec biomes;              //
+    NBTBase* NBTData = nullptr; //
+    i16 terrainPopulated = 0;   //
+    i64 lastUpdate = 0;         //
+    i64 inhabitedTime = 0;      //
 
     /// Used to skip the lights in the chunk
     size_t DataGroupCount = 0;
@@ -25,10 +33,6 @@ public:
 
     i32 lastVersion = 0;
     DIM dimension = DIM::OVERWORLD;
-
-    /// Aquatic only
-    bool hasSubmerged = false;
-    u16_vec submerged;
 
     ~ChunkData() {
         if (NBTData != nullptr) {

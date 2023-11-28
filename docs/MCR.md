@@ -6,7 +6,7 @@
 Offset   Length
 ```  
 • The offset and length can be multiplied by 0x1000 to get the actual values. if a chunk offset has all zeros, that means the chunk does not exist.  
-• The offset points to a position in the mcr where the chunk's data is stored. The length specifies how many `0x1000` blocks the compressed chunk data takes up.  
+• The offset points to a position in the mcr where the chunk's data is stored. The length specifies how many `0x1000` newBlocks the compressed chunk data takes up.  
 # __**2. ChunkManager Timestamps `[0x1000..0x1FFF]`**__  
 • The next 0x1000 bytes are supposedly (according to miku) timestamps of the chunks, for some reason. Maybe it was the timestamp of when the chunk was last edited? I'm not sure.  
 # __**3. ChunkManager Data `[0x2000..]`**__  

@@ -37,12 +37,12 @@ public:
     i32 oldestVersion{};
     i32 currentVersion{};
     CONSOLE console = CONSOLE::NONE;
-    MU bool separateEntities = false;
-    MU bool separateRegions = false;
+    bool separateEntities = false;
+    bool separateRegions = false;
 
     // pointers
-    MU FileList* dimFileLists[3] = {&region_nether, &region_overworld, &region_end};
-    MU FileList* entityFileLists[3] = {&entity_nether, &entity_overworld, &entity_end};
+    FileList* dimFileLists[3] = {&region_nether, &region_overworld, &region_end};
+    FileList* entityFileLists[3] = {&entity_nether, &entity_overworld, &entity_end};
     FileList region_nether, region_overworld, region_end;
     FileList entity_nether, entity_overworld, entity_end;
     FileList maps, structures, players;

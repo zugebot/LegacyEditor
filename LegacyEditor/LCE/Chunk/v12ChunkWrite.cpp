@@ -127,7 +127,7 @@ namespace universal {
                                 #pragma unroll
                                 for (u32 blockY = 0; blockY < 4; blockY++) {
                                     u32 blockIndex = offsetInBlock + blockY + blockZ + blockX;
-                                    u16 block = chunkData->blocks[blockIndex];
+                                    u16 block = chunkData->newBlocks[blockIndex];
                                     if (blockMap[block]) {
                                         blockLocations.push_back(blockMap[block] - 1);
                                     } else {
@@ -149,69 +149,38 @@ namespace universal {
                                 goto SWITCH_END;
 
                             case 2:
-                                gridFormat = V12_1_BIT;
-                                writeGrid<1, 2, 0>(blockVector, blockLocations, blockMap);
-                                break;
+                                gridFormat = V12_1_BIT; writeGrid<1, 2, 0>(blockVector, blockLocations, blockMap); break;
 
                             case 3:
-                                gridFormat = V12_2_BIT;
-                                writeGrid<2, 3, 1>(blockVector, blockLocations, blockMap);
-                                break;
+                                gridFormat = V12_2_BIT; writeGrid<2, 3, 1>(blockVector, blockLocations, blockMap); break;
                             case 4:
-                                gridFormat = V12_2_BIT;
-                                writeGrid<2, 4, 0>(blockVector, blockLocations, blockMap);
-                                break;
+                                gridFormat = V12_2_BIT; writeGrid<2, 4, 0>(blockVector, blockLocations, blockMap); break;
 
                             case 5:
-                                gridFormat = V12_3_BIT;
-                                writeGrid<3, 5, 3>(blockVector, blockLocations, blockMap);
-                                break;
+                                gridFormat = V12_3_BIT; writeGrid<3, 5, 3>(blockVector, blockLocations, blockMap); break;
                             case 6:
-                                gridFormat = V12_3_BIT;
-                                writeGrid<3, 6, 2>(blockVector, blockLocations, blockMap);
-                                break;
+                                gridFormat = V12_3_BIT; writeGrid<3, 6, 2>(blockVector, blockLocations, blockMap); break;
                             case 7:
-                                gridFormat = V12_3_BIT;
-                                writeGrid<3, 7, 1>(blockVector, blockLocations, blockMap);
-                                break;
+                                gridFormat = V12_3_BIT; writeGrid<3, 7, 1>(blockVector, blockLocations, blockMap); break;
                             case 8:
-                                gridFormat = V12_3_BIT;
-                                writeGrid<3, 8, 0>(blockVector, blockLocations, blockMap);
-                                break;
+                                gridFormat = V12_3_BIT; writeGrid<3, 8, 0>(blockVector, blockLocations, blockMap); break;
 
                             case 9:
-                                gridFormat = V12_4_BIT;
-                                writeGrid<4, 9, 7>(blockVector, blockLocations, blockMap);
-                                break;
+                                gridFormat = V12_4_BIT; writeGrid<4, 9, 7>(blockVector, blockLocations, blockMap); break;
                             case 10:
-                                gridFormat = V12_4_BIT;
-                                writeGrid<4, 10, 6>(blockVector, blockLocations, blockMap);
-                                break;
+                                gridFormat = V12_4_BIT; writeGrid<4, 10, 6>(blockVector, blockLocations, blockMap); break;
                             case 11:
-                                gridFormat = V12_4_BIT;
-                                writeGrid<4, 11, 5>(blockVector, blockLocations, blockMap);
-                                break;
+                                gridFormat = V12_4_BIT; writeGrid<4, 11, 5>(blockVector, blockLocations, blockMap); break;
                             case 12:
-                                gridFormat = V12_4_BIT;
-                                writeGrid<4, 12, 4>(blockVector, blockLocations, blockMap);
-                                break;
+                                gridFormat = V12_4_BIT; writeGrid<4, 12, 4>(blockVector, blockLocations, blockMap); break;
                             case 13:
-                                gridFormat = V12_4_BIT;
-                                writeGrid<4, 13, 3>(blockVector, blockLocations, blockMap);
-                                break;
+                                gridFormat = V12_4_BIT; writeGrid<4, 13, 3>(blockVector, blockLocations, blockMap); break;
                             case 14:
-                                gridFormat = V12_4_BIT;
-                                writeGrid<4, 14, 2>(blockVector, blockLocations, blockMap);
-                                break;
+                                gridFormat = V12_4_BIT; writeGrid<4, 14, 2>(blockVector, blockLocations, blockMap); break;
                             case 15:
-                                gridFormat = V12_4_BIT;
-                                writeGrid<4, 15, 1>(blockVector, blockLocations, blockMap);
-                                break;
+                                gridFormat = V12_4_BIT; writeGrid<4, 15, 1>(blockVector, blockLocations, blockMap); break;
                             case 16:
-                                gridFormat = V12_4_BIT;
-                                writeGrid<4, 16, 0>(blockVector, blockLocations, blockMap);
-                                break;
-
+                                gridFormat = V12_4_BIT; writeGrid<4, 16, 0>(blockVector, blockLocations, blockMap); break;
                             default:
                                 gridFormat = V12_8_FULL;
                                 writeWithMaxBlocks(blockVector, blockLocations);
@@ -281,7 +250,6 @@ namespace universal {
             dataManager->writeInt16(0xffff);
         }
 
-
         //  write the position data
         //  so, write the first bit of each position, as a single u64,
         //  then the second, third etc. N times, where N is BitsPerBlock
@@ -295,11 +263,9 @@ namespace universal {
         }
 
         // clear the table
-        // for (size_t i = 0; i < BlockCount; ++i) {
-        //     blockMap[blockVector[i]] = 0;
-        // }
-        for (u16 block : blockVector) {
-            blockMap[block] = 0;
+        #pragma unroll
+        for (size_t i = 0; i < BlockCount; ++i) {
+            blockMap[blockVector[i]] = 0;
         }
     }
 

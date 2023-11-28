@@ -14,7 +14,7 @@
    |...   InhabitedTime
 ```  
 # __**2. Section Header `[0x1A..0x4B]`**__  
-> **\*** "Sections" are vertically-aligned cubes of 16×16×16 blocks (4096), and there are 16 of them in each chunk. Starting from 0 (y0) up to 15 (y255)  
+> **\*** "Sections" are vertically-aligned cubes of 16×16×16 newBlocks (4096), and there are 16 of them in each chunk. Starting from 0 (y0) up to 15 (y255)  
   
 • The first 0x2 `[0x1A..0x1B]` bytes define how large the block data is (multiply by `0x100` to get the actual size)  
 • The next 0x20 bytes `[0x1C..0x3B]` contain 16 shorts defining offsets of where sections start. If an offset matches the block data length (shown above), then there should be no more sections to parseLayer.  
@@ -24,30 +24,30 @@
 > **\*** X is defined in the Section Header as the "block data size" `[0x1A..0x1B]`  
 > **†** Y is defined in the Section Header as the "section offset". Add `0x4C` to get the actual address in the chunk data. `[0x1C..0x3B]`  
 > **‡** Z is defined in the Section Header as the "section size". `[0x3C..0x4B]`  
-> **⁂** Grids are cubes of 4×4×4 blocks (64 blocks), and there are 64 of them per section (64×64=4096 blocks per section). They are stored in a 4×4×4 grid of the section.  
+> **⁂** Grids are cubes of 4×4×4 newBlocks (64 newBlocks), and there are 64 of them per section (64×64=4096 newBlocks per section). They are stored in a 4×4×4 grid of the section.  
 > **⸸** Block data is stored in 2 bytes like this: nybbles 2, 3, and 0 make up the extended block ID, and nybble 1 makes up the data value.  
 > **Example:** `5F 10` - `Block ID: 0x105 (261)` + `Data Value: 0xF (15)`  
   
 Each section takes up a specific amount of space (defined in the section header `[0x3C..0x4B]`. We will document just a single section for simplicity.  
   
 • The first 0x80 bytes `[†Y..Y+0x7F]` is the grid`⁂` index table. Grid indicies are stored in YZX format. `gridIndex = Y† + ((gx * 16) + (gz * 4) + gy)`  
-• The remaining bytes `[Y+0x80..(Y+(Z-0x80))]` define the 'palette' data, storing what blocks are used in the section.  
-• Each "grid index" consist of 2 bytes. The first nybble of the second byte defines the grid's format, which defines how the blocks are stored and how many bits are stored. Nybbles `3`, `0`, and `1` build the offset of where the grid's palette is stored in the palette data. `offset = (nybble3 << 8 | nybble0 << 4 | nybble1) * 4` / `format = nybble2`  
+• The remaining bytes `[Y+0x80..(Y+(Z-0x80))]` define the 'palette' data, storing what newBlocks are used in the section.  
+• Each "grid index" consist of 2 bytes. The first nybble of the second byte defines the grid's format, which defines how the newBlocks are stored and how many bits are stored. Nybbles `3`, `0`, and `1` build the offset of where the grid's palette is stored in the palette data. `offset = (nybble3 << 8 | nybble0 << 4 | nybble1) * 4` / `format = nybble2`  
 **Example:** `9C 40` - `Format = 0x4` + `Offset = 0x270`  
 • Formats are shown below:  
 
 | Format | Palette Size | Description |
 | --- | --- | --- |
 | 0 | 1 (0x01) | The entire grid is filled with just one type of block. Block is stored in the grid index itself (byte 0 and byte 1 make up the block data⸸) |
-| E | 128 (0x80) | The entire grid is filled with multiple kinds of blocks (up to 64). The palette for this grid is is 0x80 bytes long, storing the blocks in a YZX format.   |
+| E | 128 (0x80) | The entire grid is filled with multiple kinds of newBlocks (up to 64). The palette for this grid is is 0x80 bytes long, storing the newBlocks in a YZX format.   |
 | F | 256 (0x100) | Basically the exact same as format `E`, except the palette has been extended to 0x100 bytes, the last 0x80 bytes containing the "Liquid" data. This format was specifically created for the Aquatic update. |
-| 2 | 12 (0x0C) | The grid contains only 2 block types. The first 2 shorts of the palette are the blocks. The last 8 bytes define bits that store the block's positions, the 1st block type being 0 and the 2nd block type being 1. The positions are stored in YZX format. **Example:** `C0 00` = `1100 0000 0000 0000` |
+| 2 | 12 (0x0C) | The grid contains only 2 block types. The first 2 shorts of the palette are the newBlocks. The last 8 bytes define bits that store the block's positions, the 1st block type being 0 and the 2nd block type being 1. The positions are stored in YZX format. **Example:** `C0 00` = `1100 0000 0000 0000` |
 | 3 | 20 (0x14) | Unknown at the current time, however it never seems to show up from personal experience. |
-| 4 | 24 (0x18) | The grid contains up to 4 block types. (If there are less than 4 blocks, it fills the rest of the bytes with `0xFF`) The first 4 shorts of the palette are the blocks. The last 16 bytes define bits that store the block's positions. ❖The positions are stored in YZX format. |
+| 4 | 24 (0x18) | The grid contains up to 4 block types. (If there are less than 4 newBlocks, it fills the rest of the bytes with `0xFF`) The first 4 shorts of the palette are the newBlocks. The last 16 bytes define bits that store the block's positions. ❖The positions are stored in YZX format. |
 | 5 | 40 (0x28) | Unknown at the current time, however it never seems to show up from personal experience. |
-| 6 | 40 (0x28) | The grid contains up to 8 block types. (If there are less than 8 blocks, it fills the rest of the bytes with `0xFF`) The first 8 shorts of the palette are the blocks. The last 28 bytes define bits that store the block's positions. ❖The positions are stored in YZX format. |
+| 6 | 40 (0x28) | The grid contains up to 8 block types. (If there are less than 8 newBlocks, it fills the rest of the bytes with `0xFF`) The first 8 shorts of the palette are the newBlocks. The last 28 bytes define bits that store the block's positions. ❖The positions are stored in YZX format. |
 | 7 | 64 (0x40) | Unknown at the current time, however it never seems to show up from personal experience. |
-| 8 | 64 (0x40) | The grid contains up to 16 block types. (If there are less than 16 blocks, it fills the rest of the bytes with `0xFF`) The first 16 shorts of the palette are the blocks. The last 32 bytes define bits that store the block's positions. ❖The positions are stored in YZX format. |  
+| 8 | 64 (0x40) | The grid contains up to 16 block types. (If there are less than 16 newBlocks, it fills the rest of the bytes with `0xFF`) The first 16 shorts of the palette are the newBlocks. The last 32 bytes define bits that store the block's positions. ❖The positions are stored in YZX format. |  
   
 ❖ Block Positions are stored both similarly and differently per format. Here's how to get the block positions:  
 Get the location bytes, and split them evenly into arrays of 8 bytes (if the locations array is 24 bytes long, split them into **3** 8-byte arrays). Then reverse the order, convert each byte into binary, then add the arrays' bits together.  

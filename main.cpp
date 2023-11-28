@@ -45,23 +45,35 @@ int toBlock(int x, int y, int z) {
 
 
 int main() {
+
+    double number = 1.19082301892444899345634646545345646564564568040123;
+    int another = *(int*)&number;
+
+    std::cout << number << std::endl;
+    std::cout << another << std::endl;
+
+
+
+
     std::cout << "goto 'LegacyEditor/utils/processor.hpp' and change 'dir_path' to be the path of the src'" << std::endl;
 
-    std::string inFilePath1 = dir_path + R"(tests\231022105047)";
-    std::string inFilePath2 = dir_path + R"(tests\WiiU Save\231008144148)";
-    std::string outFilePath = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\230918230206)";
+    std::string inFilePathAquatic = dir_path + R"(tests\aquatic_tutorial)";
+    std::string outFilePathAquatic = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\230918230206)";
 
-    DataManager in_ext;
-    in_ext.readFromFile(dir_path + R"(tests\WiiU Save\231008144148.ext)");
-    in_ext.data = in_ext.data + 0x100;
-    in_ext.ptr = in_ext.data;
-    in_ext.size -= 0x100;
-    WorldOptions options = getTagsInImage(in_ext);
+    std::string inFilePathElytra = dir_path + R"(tests\elytra_tutorial)";
+    std::string outFilePathElytra = R"(D:\wiiu\mlc\usr\save\00050000\101dbe00\user\80000001\231028115220)";
+
+    // DataManager in_ext;
+    // in_ext.readFromFile(dir_path + R"(tests\WiiU Save\231008144148.ext)");
+    // in_ext.data = in_ext.data + 0x100;
+    // in_ext.ptr = in_ext.data;
+    // in_ext.size -= 0x100;
+    // WorldOptions options = getTagsInImage(in_ext);
 
 
 
     ConsoleParser parser;
-    int statusIn = parser.readConsoleFile(inFilePath1);
+    int statusIn = parser.readConsoleFile(inFilePathElytra);
     if (statusIn) {
         printf("failed to load file\n");
         return -1;
@@ -86,8 +98,9 @@ int main() {
         int h = -1;
         for (ChunkManager& chunkManager : region.chunks) {
             h++;
-            if (chunkManager.sectors == 0)
+            if (chunkManager.sectors == 0) {
                 continue;
+            }
 
             chunkManager.ensure_decompress(console);
             DataManager chunkDataIn(chunkManager);
@@ -96,6 +109,7 @@ int main() {
             auto& chunkData = chunkParser.chunkData;
             // chunkDataIn.writeToFile(dir_path + "chunk_read.bin");
 
+            /*
             u16 blocks[65536];
             for (u16 x = 0; x < 16; x++) {
                 for (u16 z = 0; z < 16; z++) {
@@ -147,14 +161,13 @@ int main() {
             // chunkParser.placeBlock(8, 158, 8, 10, 0, true);
             // chunkParser.placeBlock(8, 158, 4, 11, 0, true);
 
-
             // for (u16 y = 0; y < 256; y++) {
             //     blocks[y] = 2 << 4;
             // }
 
             // memset(&chunkData.blockLight[0], 0xFF, 32768);
             // memset(&chunkData.skyLight[0], 0xFF, 32768);
-
+            */
             /*
              if (chunkData.NBTData != nullptr) {
                 chunkData.NBTData->toType<NBTTagCompound>()->deleteAll();
@@ -170,6 +183,7 @@ int main() {
             chunkRootNbtData->setListTag("TileEntities", tileEntities);
             chunkRootNbtData->setListTag("TileTicks", tileTicks);
              */
+
             if (chunkData.chunkX == -3 && chunkData.chunkZ == 26) {
                 if (chunkData.NBTData != nullptr) {
                     auto* compound = chunkData.NBTData->toType<NBTTagCompound>();
@@ -281,7 +295,7 @@ int main() {
     }
 
     Data dataOut = fileListing.write(consoleOut); // write file listing
-    int statusOut = ConsoleParser::saveWiiU(outFilePath, dataOut);
+    int statusOut = ConsoleParser::saveWiiU(outFilePathAquatic, dataOut);
     if (statusOut) {
         printf("converting to wiiu failed...\n");
     } else {

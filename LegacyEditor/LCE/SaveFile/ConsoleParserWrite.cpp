@@ -65,7 +65,7 @@ int ConsoleParser::saveVita(const std::string& outFileStr, Data& dataOut) {
     fwrite(&num, sizeof(u32), 1, f_out);
 
     u32 val;
-    std::memcpy(&val, &data[0], 4);
+    memcpy(&val, &data[0], 4);
     val += 0x0900;
 
     // might need to swap endianness

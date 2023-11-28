@@ -1,6 +1,8 @@
 #include "NBT.hpp"
 
 
+inline int TO_STRING_MAX_LIST_SIZE = 128;
+
 void NBTBase::write(DataManager& output) const {
     switch (type) {
         case NBT_INT8: {
@@ -178,9 +180,12 @@ std::string NBTBase::toString() const {
             auto* val = toType<NBTTagByteArray>();
             std::string stringBuilder = "[B;";
 
-            for (int i = 0; i < val->size; ++i) {
+            for (int i = 0; i < std::min(TO_STRING_MAX_LIST_SIZE, val->size); ++i) {
                 if (i != 0) { stringBuilder.append(", "); }
                 stringBuilder.append(std::to_string(val->array[i]));
+            }
+            if (val->size > TO_STRING_MAX_LIST_SIZE) {
+                stringBuilder.append("...");
             }
             stringBuilder.push_back(']');
             return stringBuilder;
@@ -223,10 +228,12 @@ std::string NBTBase::toString() const {
             auto* val = toType<NBTTagIntArray>();
             std::string stringBuilder = "[I;";
 
-            for (int i = 0; i < val->size; ++i) {
+            for (int i = 0; i < std::min(TO_STRING_MAX_LIST_SIZE, val->size); ++i) {
                 if (i != 0) { stringBuilder.append(", "); }
-
                 stringBuilder.append(std::to_string(val->array[i]));
+            }
+            if (val->size > TO_STRING_MAX_LIST_SIZE) {
+                stringBuilder.append("...");
             }
             stringBuilder.push_back(']');
             return stringBuilder;
@@ -345,7 +352,9 @@ void NBTBase::read(DataManager& input) {
             int i = (int) input.readInt32();
             val->array = (int*) malloc(i * 4);//i * size of int
 
-            for (int j = 0; j < i; ++j) { val->array[j] = (int) input.readInt32(); }
+            for (int j = 0; j < i; ++j) {
+                val->array[j] = (int) input.readInt32();
+            }
             val->size = i;
             return;
         }
@@ -354,7 +363,9 @@ void NBTBase::read(DataManager& input) {
             int i = (int) input.readInt32();
             val->array = (i64*) malloc(i * 8);//i * size of long
 
-            for (int j = 0; j < i; ++j) { val->array[j] = (int) input.readInt64(); }
+            for (int j = 0; j < i; ++j) {
+                val->array[j] = (int) input.readInt64();
+            }
             val->size = i;
             return;
         }

@@ -548,13 +548,11 @@ WorldOptions getTagsInImage(DataManager& image) {
         chunkData.push_back(0); // add a null byte for the last text
 
         while (length > 0) {
-            u8* begin = chunkData.data() + chunkLength;
-
-            std::string keyword(reinterpret_cast<char*>(begin - length));
+            std::string keyword(reinterpret_cast<char*>(chunkData.data() + chunkLength - length));
             length -= keyword.size() + 1;
             if (keyword.empty()) { continue; }
 
-            std::string text(reinterpret_cast<char*>(begin - length));
+            std::string text(reinterpret_cast<char*>(chunkData.data() + chunkLength - length));
             length -= text.size() + 1;
 
             chunks.push_back({keyword, text});
