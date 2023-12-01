@@ -2,6 +2,10 @@
 
 
 File::~File() {
+    if (!deleteData) {
+        return;
+    }
+
     if (nbt == nullptr) return;
     if (nbt->data == nullptr) return;
     getNBTCompound()->deleteAll();
@@ -12,15 +16,18 @@ File::~File() {
 
 
 NBTTagCompound* File::createNBTTagCompound() {
-    if (nbt != nullptr) return nullptr;
+    if (nbt != nullptr)
+        return nullptr;
     nbt = new NBTBase(new NBTTagCompound(), TAG_COMPOUND);
     return static_cast<NBTTagCompound*>(nbt->data);
 }
 
 
 ND NBTTagCompound* File::getNBTCompound() const {
-    if (nbt == nullptr) return nullptr;
-    if (nbt->data == nullptr) return nullptr;
+    if (nbt == nullptr)
+        return nullptr;
+    if (nbt->data == nullptr)
+        return nullptr;
     return static_cast<NBTTagCompound*>(nbt->data);
 }
 
@@ -35,6 +42,11 @@ std::string File::constructFileName(MU CONSOLE console) const {
             break;
         }
         case FileType::STRUCTURE: {
+            auto* compound = getNBTCompound();
+            if (compound == nullptr) {
+                name = "NULL";
+                break;
+            }
             name = getNBTCompound()->getString("filename");
             break;
         }

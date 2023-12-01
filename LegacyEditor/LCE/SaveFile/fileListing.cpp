@@ -373,27 +373,23 @@ void FileListing::updatePointers() {
 }
 
 
-void FileListing::removeFileTypes(std::set<FileType> typesToRemove) {
-    allFiles.erase(
-            std::remove_if(
-                    allFiles.begin(),
-                    allFiles.end(),
-                    [&typesToRemove](File& file) {
-                        bool to_del = typesToRemove.count(file.fileType) > 0;
-                        if (to_del) {
-                            delete[] file.data.data;
-                            file.data.data = nullptr;
-                        }
-                        return to_del;
-                    }
-                    ),
-            allFiles.end()
-    );
-    for (const auto& fileType : typesToRemove) {
-        if (clearActionsRemove.count(fileType)) {
-            clearActionsRemove[fileType]();
+void FileListing::removeFileTypes(const std::set<FileType>& typesToRemove) {
+
+    for (int index = 0; index < allFiles.size();) {
+        if (typesToRemove.contains(allFiles[index].fileType)) {
+            delete[] allFiles[index].data.data;
+            allFiles[index].data.data = nullptr;
+            allFiles.erase(allFiles.begin() + index);
+        } else {
+            index++;
         }
     }
+
+    for (const auto& fileType : typesToRemove) {
+        clearActionsRemove[fileType]();
+    }
+
+    updatePointers();
 }
 
 

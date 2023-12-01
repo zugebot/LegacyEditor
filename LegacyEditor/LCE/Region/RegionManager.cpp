@@ -27,7 +27,7 @@ MU ChunkManager* RegionManager::getNonEmptyChunk() {
 
 
 void RegionManager::read(Data* dataIn) {
-    totalSectors = (dataIn->size + SECTOR_SIZE - 1) / SECTOR_SIZE;
+    u32 totalSectors = (dataIn->size + SECTOR_SIZE - 1) / SECTOR_SIZE;
 
     // step 0: copying data from file
     DataManager managerIn(dataIn);

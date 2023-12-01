@@ -25,8 +25,8 @@ namespace universal {
         memcpy(&chunkData->oldBlocks[0], blockArray->array, 65536);
 
         auto* blockDataArray = chunkNBT->getByteArray("Data");
-        chunkData->blockData = u8_vec(65536);
-        memcpy(&chunkData->blockData[0], blockDataArray->array, 256);
+        chunkData->blockData = u8_vec(32768);
+        memcpy(&chunkData->blockData[0], blockDataArray->array, 32768);
 
         auto* heightMapArray = chunkNBT->getByteArray("HeightMap");
         chunkData->heightMap = u8_vec(256);
@@ -45,12 +45,9 @@ namespace universal {
         memcpy(&chunkData->blockLight[0], blockLightArray->array, 32768);
 
         chunkData->NBTData = new NBTBase(new NBTTagCompound(), NBTType::TAG_COMPOUND);
-        auto* compound_root = chunkData->NBTData->toType<NBTTagCompound>();
-        auto* compound = chunkData->NBTData->toType<NBTTagCompound>();
-        compound_root->setCompoundTag("Level", compound);
-        compound->setListTag("Entities", static_cast<NBTTagList*>(chunkNBT->getTag("Entities").copy().data));
-        compound->setListTag("TileEntities", static_cast<NBTTagList*>(chunkNBT->getTag("TileEntities").copy().data));
-        compound->setListTag("TileTicks", static_cast<NBTTagList*>(chunkNBT->getTag("TileTicks").copy().data));
+        chunkData->NBTData->toType<NBTTagCompound>()->setTag("Entities", chunkNBT->getTag("Entities").copy());
+        chunkData->NBTData->toType<NBTTagCompound>()->setTag("TileEntities", chunkNBT->getTag("TileEntities").copy());
+        chunkData->NBTData->toType<NBTTagCompound>()->setTag("TileTicks", chunkNBT->getTag("TileTicks").copy());
 
         // IDK if this is enough nbt is cringe
         chunkNBT->deleteAll();

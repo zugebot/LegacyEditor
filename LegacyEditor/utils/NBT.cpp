@@ -547,7 +547,8 @@ void NBTTagCompound::setDouble(const std::string& key, double value) {
 
 
 void NBTTagCompound::setString(const std::string& key, const std::string& value) {
-    if (tagMap.find(key) != tagMap.end()) tagMap[key].NbtFree();
+    if (tagMap.find(key) != tagMap.end())
+        tagMap[key].NbtFree();
     tagMap[key] = NBTBase(new NBTTagString(value), NBTType::TAG_STRING);
 }
 
@@ -614,7 +615,12 @@ void NBTTagCompound::deleteAll() {
 
 
 bool NBTTagCompound::hasKey(const std::string& key) {
-    if (tagMap.find(key) != tagMap.end()) return true;
+    if (tagMap.empty()) {
+        return false;
+    }
+    if (tagMap.find(key) != tagMap.end()) {
+        return true;
+    }
     return false;
 }
 

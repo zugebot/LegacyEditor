@@ -49,6 +49,7 @@ void ChunkManager::ensure_decompress(CONSOLE console) {
     }
 }
 
+
 void ChunkManager::ensure_compressed(CONSOLE console) {
     if (isCompressed || console == CONSOLE::NONE || data == nullptr || sectors == 0) {
         // printf("cannot Chunk.ensure_compress if the chunk is already compressed\n");

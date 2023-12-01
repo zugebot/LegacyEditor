@@ -65,7 +65,7 @@ public:
     void deallocate();
     void clearPointers();
     void updatePointers();
-    void removeFileTypes(std::set<FileType> typesToRemove);
+    void removeFileTypes(const std::set<FileType>& typesToRemove);
     MU void addFiles(std::vector<File> filesIn);
     std::vector<File> collectFiles(FileType fileType);
 

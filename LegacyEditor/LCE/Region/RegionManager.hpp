@@ -16,7 +16,6 @@ private:
 
 public:
     ChunkManager chunks[CHUNK_COUNT] = {};
-    u32 totalSectors = 0;
     CONSOLE console = CONSOLE::NONE;
 
     explicit RegionManager(CONSOLE consoleIn) : console(consoleIn) {}

@@ -43,17 +43,17 @@ int toBlock(int x, int y, int z) {
     return y + 256 * z + 4096 * x;
 }
 
+// DataManager in_ext;
+// in_ext.readFromFile(dir_path + R"(tests\WiiU Save\231008144148.ext)");
+// in_ext.data = in_ext.data + 0x100;
+// in_ext.ptr = in_ext.data;
+// in_ext.size -= 0x100;
+// WorldOptions options = getTagsInImage(in_ext);
+
+
+
 
 int main() {
-
-    double number = 1.19082301892444899345634646545345646564564568040123;
-    int another = *(int*)&number;
-
-    std::cout << number << std::endl;
-    std::cout << another << std::endl;
-
-
-
 
     std::cout << "goto 'LegacyEditor/utils/processor.hpp' and change 'dir_path' to be the path of the src'" << std::endl;
 
@@ -63,27 +63,21 @@ int main() {
     std::string inFilePathElytra = dir_path + R"(tests\elytra_tutorial)";
     std::string outFilePathElytra = R"(D:\wiiu\mlc\usr\save\00050000\101dbe00\user\80000001\231028115220)";
 
-    // DataManager in_ext;
-    // in_ext.readFromFile(dir_path + R"(tests\WiiU Save\231008144148.ext)");
-    // in_ext.data = in_ext.data + 0x100;
-    // in_ext.ptr = in_ext.data;
-    // in_ext.size -= 0x100;
-    // WorldOptions options = getTagsInImage(in_ext);
-
-
-
     ConsoleParser parser;
-    int statusIn = parser.readConsoleFile(inFilePathElytra);
+    int statusIn = parser.readConsoleFile(inFilePathAquatic);
     if (statusIn) {
         printf("failed to load file\n");
         return -1;
     }
 
     FileListing fileListing(parser);
-    fileListing.removeFileTypes({FileType::PLAYER, FileType::DATA_MAPPING});
+    fileListing.removeFileTypes({FileType::PLAYER, FileType::DATA_MAPPING, FileType::STRUCTURE});
     fileListing.saveToFolder(dir_path + "dump_wiiu");
 
-    std::set<u16> blockSet;
+
+
+    static std::set<u16> allBlocks;
+    static std::set<u16> _n11_2_blocks;
 
     auto start = getNanoSeconds();
     for (int regionIndex = 0; regionIndex < 4; regionIndex++) {
@@ -107,9 +101,45 @@ int main() {
             universal::ChunkParser chunkParser;
             chunkParser.readChunk(&chunkDataIn, DIM::OVERWORLD);
             auto& chunkData = chunkParser.chunkData;
-            // chunkDataIn.writeToFile(dir_path + "chunk_read.bin");
+
+            std::cout << "Chunk: " << chunkData.getCoords() << " " << chunkData.lastVersion;
+            if (chunkData.hasSubmerged) {
+                std::cout << "(Submerged)";
+            }
+            std::cout << std::endl;
+
+
+            // chunkParser.convertOldToNew();
 
             /*
+            i32 chunkX = chunkData.chunkX, chunkZ = chunkData.chunkZ;
+            if (chunkX == -11 && chunkZ == 2) {
+                for (int x = 0; x < 65536; x++) {
+                    u16 block = chunkData.newBlocks[x];
+
+                    // above 150
+                    if (block >> 4 > 30) {
+                        if ((block & 15) != 0) {
+                            std::cout << (block >> 4) << ":" << (block & 15) << std::endl;
+                        }
+                        chunkData.newBlocks[x] = 0;
+                    }
+
+
+                    _n11_2_blocks.insert(chunkData.newBlocks[x]);
+                }
+                int ertgije; std::cin >> ertgije;
+            } else if (chunkX > -13 && chunkX < -9 && chunkZ < 4 && chunkZ > -3) {
+                for (int x = 0; x < 65536; x++) {
+                    allBlocks.insert(chunkData.newBlocks[x]);
+                }
+            }
+            */
+
+            // std::cout << chunkData.NBTData->toString() << std::endl;
+            // chunkDataIn.writeToFile(dir_path + "chunk_read.bin");
+
+            // /*
             u16 blocks[65536];
             for (u16 x = 0; x < 16; x++) {
                 for (u16 z = 0; z < 16; z++) {
@@ -152,10 +182,10 @@ int main() {
                 }
             }
 
-            memcpy(&chunkData.blocks[0], &blocks[0], 131072);
+            memcpy(&chunkData.newBlocks[0], &blocks[0], 131072);
             memset(&chunkData.blockLight[0], 0xFF, 32768);
             memset(&chunkData.skyLight[0], 0xFF, 32768);
-
+            /*
             // chunkParser.placeBlock(4, 158, 4, 8, 0, true);
             // chunkParser.placeBlock(4, 158, 8, 9, 0, true);
             // chunkParser.placeBlock(8, 158, 8, 10, 0, true);
@@ -242,12 +272,6 @@ int main() {
             auto managerChunkOut = DataManager(outBuffer);
             chunkParser.writeChunk(&managerChunkOut, DIM::OVERWORLD);
 
-            std::cout << "Chunk: " << chunkData.getCoords();
-            if (chunkData.hasSubmerged) {
-                std::cout << "(Submerged)";
-            }
-            std::cout << std::endl;
-
 
             Data outData(managerChunkOut.getPosition());
             memcpy(outData.data, outBuffer.data, outData.size);
@@ -273,8 +297,18 @@ int main() {
     }
 
     printf("waterlogged blocks:");
-    for (u16 block : blockSet) {
-        printf("id: %.3d\n", block);
+    // for (u16 block : blockSet) {
+    //     printf("id: %.3d\n", block);
+    // }
+
+    std::set<u16> diff;
+    std::set_difference(_n11_2_blocks.begin(), _n11_2_blocks.end(),
+                        allBlocks.begin(), allBlocks.end(),
+                        std::inserter(diff, diff.begin()));
+
+    std::cout << "\n";
+    for (int elem : diff) {
+        std::cout << elem << " - " << (elem >> 4) << ":" << (elem & 15) << std::endl;
     }
 
 

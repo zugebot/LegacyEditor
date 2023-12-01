@@ -31,6 +31,8 @@ enum class FileType : u8 {
 };
 
 class File {
+private:
+    bool deleteData = true;
 public:
     NBTBase* nbt  = nullptr;
     Data data;
@@ -44,6 +46,9 @@ public:
     File(u32 sizeIn, u64 timestampIn) : data(Data(sizeIn)), timestamp(timestampIn) {}
     File(u8* dataIn, u32 sizeIn, u64 timestampIn) : data(dataIn, sizeIn), timestamp(timestampIn) {}
 
+    void doNotDelete() {
+        deleteData = false;
+    }
 
     ND NBTTagCompound* createNBTTagCompound();
     ND NBTTagCompound* getNBTCompound() const;

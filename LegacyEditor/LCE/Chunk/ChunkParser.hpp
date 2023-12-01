@@ -27,6 +27,8 @@ namespace universal {
 
         u16 getBlock(int x, int y, int z);
 
+        MU void convertOldToNew();
+
         MU void fixHeightMap();
         MU void placeBlock(int x, int y, int z, u16 block, u16 data = 0, bool waterlogged = false);
         MU void rotateUpsideDown();
