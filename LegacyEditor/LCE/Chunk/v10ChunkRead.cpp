@@ -44,6 +44,19 @@ namespace universal {
         chunkData->blockLight = u8_vec(32768);
         memcpy(&chunkData->blockLight[0], blockLightArray->array, 32768);
 
+        auto createAndCopy = [](const auto* byteArray, size_t size) {
+            u8_vec result(size);
+            memcpy(&result[0], byteArray->array, size);
+            return result;
+        };
+        chunkData->oldBlocks = createAndCopy(chunkNBT->getByteArray("Blocks"), 65536);
+        chunkData->blockData = createAndCopy(chunkNBT->getByteArray("Data"), 256);
+        chunkData->heightMap = createAndCopy(chunkNBT->getByteArray("HeightMap"), 256);
+        chunkData->biomes = createAndCopy(chunkNBT->getByteArray("Biomes"), 256);
+        chunkData->skyLight = createAndCopy(chunkNBT->getByteArray("SkyLight"), 32768);
+        chunkData->blockLight = createAndCopy(chunkNBT->getByteArray("BlockLight"), 32768);
+
+
         chunkData->NBTData = new NBTBase(new NBTTagCompound(), NBTType::TAG_COMPOUND);
         chunkData->NBTData->toType<NBTTagCompound>()->setTag("Entities", chunkNBT->getTag("Entities").copy());
         chunkData->NBTData->toType<NBTTagCompound>()->setTag("TileEntities", chunkNBT->getTag("TileEntities").copy());

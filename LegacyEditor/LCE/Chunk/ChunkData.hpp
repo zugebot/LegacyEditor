@@ -6,15 +6,14 @@
 
 class ChunkData {
 public:
-
-    // old versions
+    // old version
     u8_vec oldBlocks;
     u8_vec blockData;
 
-    // aquatic
+    // new version
     u16_vec newBlocks;
-    bool hasSubmerged = false;
     u16_vec submerged;
+    bool hasSubmerged = false;
 
     u8_vec blockLight;          //
     u8_vec skyLight;            //

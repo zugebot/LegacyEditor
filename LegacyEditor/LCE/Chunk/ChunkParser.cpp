@@ -36,7 +36,6 @@ namespace universal {
 
     MU void ChunkParser::writeChunk(DataManager* managerOut, DIM dim) {
         managerOut->seekStart();
-        managerOut->writeInt16(chunkData.lastVersion);
         switch(chunkData.lastVersion) {
             case 0x0a00:
                 v10Chunk.writeChunk(&chunkData, managerOut, dim);
@@ -44,9 +43,11 @@ namespace universal {
             case 0x0008:
             case 0x0009:
             case 0x000B:
+                managerOut->writeInt16(chunkData.lastVersion);
                 v11Chunk.writeChunk(&chunkData, managerOut, dim);
                 break;
             case 0x000C:
+                managerOut->writeInt16(chunkData.lastVersion);
                 v12Chunk.writeChunk(&chunkData, managerOut, dim);
                 break;
         }
