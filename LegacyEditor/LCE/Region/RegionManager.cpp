@@ -27,17 +27,19 @@ MU ChunkManager* RegionManager::getNonEmptyChunk() {
 
 
 void RegionManager::read(Data* dataIn) {
-    u32 totalSectors = (dataIn->size + SECTOR_SIZE - 1) / SECTOR_SIZE;
+    u32 totalSectors = dataIn->size / SECTOR_SIZE + 1;
 
     // step 0: copying data from file
     DataManager managerIn(dataIn);
     if (console == CONSOLE::VITA)
         managerIn.setLittleEndian();
 
+    int h = 0;
     for (ChunkManager &chunk: chunks) {
         u32 val = managerIn.readInt32();
         chunk.sectors = val & 0xff;
         chunk.location = val >> 8;
+        h++;
     }
 
 
@@ -103,13 +105,16 @@ Data RegionManager::write(CONSOLE consoleIn) {
     // step 3: calculate chunk offsets for each chunk
     int total_sectors = 2;
     for (ChunkManager& chunk : chunks) {
-        if (chunk.sectors == 0) {
+
+        if (chunk.size == 0) {
+            chunk.sectors = 0;
             chunk.location = 0;
+
         } else {
             chunk.ensure_compressed(consoleIn);
-            u8 chunk_sectors = (chunk.size + SECTOR_SIZE - 1) / SECTOR_SIZE + 1;
+            chunk.sectors = chunk.size / SECTOR_SIZE + 1;
             chunk.location = total_sectors;
-            total_sectors += chunk_sectors;
+            total_sectors += chunk.sectors;
         }
     }
 
@@ -117,10 +122,8 @@ Data RegionManager::write(CONSOLE consoleIn) {
     u32 data_size = total_sectors * SECTOR_SIZE;
     Data dataOut = Data(data_size);
     DataManager managerOut(dataOut);
-
-    if (consoleIn == CONSOLE::VITA) {
+    if (consoleIn == CONSOLE::VITA)
         managerOut.setLittleEndian();
-    }
 
     // step 5: write each chunk offset
     for (ChunkManager &chunk: chunks) {

@@ -210,32 +210,44 @@ namespace universal {
         u16_vec palette(size);
         std::copy_n(buffer, size, palette.begin());
 
-        for (int i = 0; i < 8; i++) {
+        int i = 0;
+        while (i < 64) {
             u8 vBlocks[BitsPerBlock];
 
-            // BitsPerBlock = how many times to do shift
+            // Calculate row and column for current index
+            int row = i / 8;
+            int column = i % 8;
+
+            // Load the pieces into a buffer
             for (int j = 0; j < BitsPerBlock; j++) {
-                vBlocks[j] = buffer[size + i + j * 8];
+                vBlocks[j] = buffer[size + row + j * 8];
             }
 
-            for (int j = 0; j < 8; j++) {
-                u8 mask = 0b10000000 >> j;
-                u16 idx = 0;
+            u8 mask = 0b10000000 >> column;
+            u16 idx = 0;
 
-                for (int k = 0; k < BitsPerBlock; k++) {
-                    idx |= ((vBlocks[k] & mask) >> (7 - j)) << k;
-                }
-                if EXPECT_FALSE (idx >= size) {
-                    return false;
-                }
-                int gridIndex = (i * 8 + j) * 2;
-                int paletteIndex = idx * 2;
-                grid[gridIndex + 0] = palette[paletteIndex + 0];
-                grid[gridIndex + 1] = palette[paletteIndex + 1];
+            // Calculate the index
+            for (int k = 0; k < BitsPerBlock; k++) {
+                idx |= ((vBlocks[k] & mask) >> (7 - column)) << k;
             }
+
+            if EXPECT_FALSE (idx >= size) {
+                return false;
+            }
+
+            // Calculate grid index and palette index
+            int gridIndex = i * 2;
+            int paletteIndex = idx * 2;
+
+            // Assign values to the grid
+            grid[gridIndex + 0] = palette[paletteIndex + 0];
+            grid[gridIndex + 1] = palette[paletteIndex + 1];
+
+            i++;
         }
         return true;
     }
+
 
 
     /**

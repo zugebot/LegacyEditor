@@ -19,6 +19,7 @@ public:
     CONSOLE console = CONSOLE::NONE;
 
     explicit RegionManager(CONSOLE consoleIn) : console(consoleIn) {}
+    ~RegionManager() = default;
 
     /// FUNCTIONS
 

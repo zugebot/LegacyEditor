@@ -55,6 +55,12 @@ int toBlock(int x, int y, int z) {
 
 int main() {
 
+    std::vector<u32> test;
+    test.reserve(4);
+    test.push_back(1);
+    std::cout << test[3] << std::endl;
+    u32 size = test.size();
+
     std::cout << "goto 'LegacyEditor/utils/processor.hpp' and change 'dir_path' to be the path of the src'" << std::endl;
 
     std::string inFilePathAquatic = dir_path + R"(tests\aquatic_tutorial)";
@@ -69,6 +75,7 @@ int main() {
         printf("failed to load file\n");
         return -1;
     }
+
 
     FileListing fileListing(parser);
     fileListing.removeFileTypes({FileType::PLAYER, FileType::DATA_MAPPING, FileType::STRUCTURE});
@@ -159,22 +166,32 @@ int main() {
                                 block1 = (block1 & 0x1FFF) | 0x08;
                                 // block1 = 9 << 4;
                             }
+                            block1 = 0;
                         }
 
-                        if (compare1 == 8 || compare1 == 9) {
+
+                        u16 compare2 = (block1 & 0x1FF0) >> 4;
+                        if (block2 & 0x8000) {
+                            block2 &= 0x1FFF;
+                            compare2 = (block2 & 0x1FF0) >> 4;
+                            if (compare2 == 271) { // sea pickle
+                                block2 = 0; //9 << 4;
+                            }
+                            if (compare2 == 272) { // bubble column
+                                block2 = 0;//9 << 4;
+                            }
                             block2 = 0;
                         }
 
-                        if (block2 & 0x8000) {
-                            block2 &= 0x1FFF;
-                            u16 compare = (block2 & 0x1FF0) >> 4;
-                            if (compare == 271) { // sea pickle
-                                block2 = 0; //9 << 4;
-                            }
-                            if (compare == 272) { // bubble column
-                                block2 = 0;//9 << 4;
-                            }
+                        if (compare1 == 8 || compare1 == 9 || compare1 == 10 || compare1 == 11 || compare1 > 3) {
+                            block1 = 0;
                         }
+
+                        if (compare2 == 8 || compare2 == 9 || compare2 == 10 || compare2 == 11 || compare2 > 3) {
+                            block2 = 0;
+                        }
+
+
                         blocks[offset2] = block2;
 
                         blocks[offset1] = block1;
@@ -183,8 +200,12 @@ int main() {
             }
 
             memcpy(&chunkData.newBlocks[0], &blocks[0], 131072);
-            memset(&chunkData.blockLight[0], 0xFF, 32768);
-            memset(&chunkData.skyLight[0], 0xFF, 32768);
+            memset(&chunkData.blockLight[0], 0x00, 32768);
+            memset(&chunkData.heightMap[0], 0xFF, 256);
+            memset(&chunkData.skyLight[0], 0x00, 32768);
+            chunkData.terrainPopulated = 2046;
+            chunkData.lastUpdate = 100;
+            chunkData.inhabitedTime = 200;
             /*
             // chunkParser.placeBlock(4, 158, 4, 8, 0, true);
             // chunkParser.placeBlock(4, 158, 8, 9, 0, true);
@@ -198,11 +219,11 @@ int main() {
             // memset(&chunkData.blockLight[0], 0xFF, 32768);
             // memset(&chunkData.skyLight[0], 0xFF, 32768);
             */
-            /*
+
              if (chunkData.NBTData != nullptr) {
                 chunkData.NBTData->toType<NBTTagCompound>()->deleteAll();
                 delete chunkData.NBTData;
-                }
+             }
 
             chunkData.NBTData = new NBTBase(new NBTTagCompound(), TAG_COMPOUND);
             auto* chunkRootNbtData = static_cast<NBTTagCompound*>(chunkData.NBTData->data);
@@ -212,8 +233,8 @@ int main() {
             chunkRootNbtData->setListTag("Entities", entities);
             chunkRootNbtData->setListTag("TileEntities", tileEntities);
             chunkRootNbtData->setListTag("TileTicks", tileTicks);
-             */
 
+            /*
             if (chunkData.chunkX == -3 && chunkData.chunkZ == 26) {
                 if (chunkData.NBTData != nullptr) {
                     auto* compound = chunkData.NBTData->toType<NBTTagCompound>();
@@ -224,8 +245,7 @@ int main() {
                     std::cout << tileEntities.toString() << std::endl;
                 }
             }
-
-
+             */
             /*
             if (chunkData.NBTData != nullptr) {
                 auto* compound = chunkData.NBTData->toType<NBTTagCompound>();
@@ -263,12 +283,8 @@ int main() {
             }
              */
 
-
-
-
-
-            Data outBuffer(1000000);
-            memset(outBuffer.data, 0, 1000000);
+            Data outBuffer(4000000);
+            memset(outBuffer.data, 0, 4000000);
             auto managerChunkOut = DataManager(outBuffer);
             chunkParser.writeChunk(&managerChunkOut, DIM::OVERWORLD);
 
@@ -296,7 +312,43 @@ int main() {
         fileListing.region_overworld[regionIndex]->data = region.write(console);
     }
 
-    printf("waterlogged blocks:");
+    /*
+    bool foundChunk = false;
+    ChunkManager chunkToCopy;
+
+    for (int regionIndex = 0; regionIndex < 4; regionIndex++) {
+        CONSOLE console = parser.console;
+        // read a region file
+        RegionManager region(fileListing.console);
+        region.read(fileListing.region_overworld[regionIndex]);
+        fileListing.region_overworld[regionIndex]->data.deallocate();
+
+
+        for (ChunkManager& chunkManager : region.chunks) {
+
+            if (chunkManager.sectors == 0) { continue; }
+            if (chunkManager.data == nullptr) { continue; }
+
+            if (!foundChunk) {
+                foundChunk = true;
+                chunkToCopy = chunkManager;
+                chunkToCopy.data = chunkManager.data;
+                chunkToCopy.size = chunkManager.size;
+            } else {
+                chunkManager.deallocate();
+                chunkManager = chunkToCopy;
+            }
+        }
+
+        fileListing.region_overworld[regionIndex]->data = region.write(console);
+    }
+     */
+
+
+
+
+
+     printf("waterlogged blocks:");
     // for (u16 block : blockSet) {
     //     printf("id: %.3d\n", block);
     // }

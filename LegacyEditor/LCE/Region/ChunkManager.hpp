@@ -10,7 +10,11 @@ public:
     bool isCompressed = true, rleFlag = true, unknownFlag = true;
     u8 sectors = 0;
 
-    ~ChunkManager() { deallocate(); }
+    ~ChunkManager() {
+        if (data != nullptr) {
+            // deallocate();
+        }
+    }
 
     void ensure_decompress(CONSOLE console);
     void ensure_compressed(CONSOLE console);

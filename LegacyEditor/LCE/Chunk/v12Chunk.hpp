@@ -66,7 +66,7 @@ namespace universal {
         template<size_t BitsPerBlock, size_t BlockCount, size_t EmptyCount>
         void writeGrid(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[65536]);
         /// used to write full block data, instead of using palette.
-        void writeWithMaxBlocks(u16_vec& blocks, u16_vec& positions) const;
+        void writeWithMaxBlocks(u16_vec& blockVector, u16_vec& blockLocations) const;
         void writeLightSection(u32& readOffset, u8_vec& light) const;
         void writeLightData();
     };
