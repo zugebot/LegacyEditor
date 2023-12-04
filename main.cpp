@@ -53,14 +53,8 @@ int toBlock(int x, int y, int z) {
 
 
 int main() {
+    dir_path = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\)";
 
-    std::vector<u32> test;
-    test.reserve(4);
-    test.push_back(1);
-    std::cout << test[3] << std::endl;
-    u32 size = test.size();
-
-    std::cout << "goto 'LegacyEditor/utils/processor.hpp' and change 'dir_path' to be the path of the src'" << std::endl;
 
     std::string inFilePathAquatic = dir_path + R"(tests\aquatic_tutorial)";
     std::string outFilePathAquatic = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\230918230206)";
@@ -74,7 +68,6 @@ int main() {
         printf("failed to load file\n");
         return -1;
     }
-
 
     FileListing fileListing(parser);
     fileListing.removeFileTypes({FileType::PLAYER, FileType::DATA_MAPPING, FileType::STRUCTURE});

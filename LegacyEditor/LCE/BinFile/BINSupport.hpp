@@ -7,6 +7,7 @@
 #include "FileInfo.hpp"
 #include "LegacyEditor/utils/dataManager.hpp"
 
+// TODO: this needs to be hidden from the user / just be good | idk if it works
 
 struct StfsFileEntry {
     u32 entryIndex{};

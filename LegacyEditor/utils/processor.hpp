@@ -6,7 +6,7 @@
 #include <vector>
 
 
-static std::string dir_path = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\)";
+static inline std::string dir_path;
 
 #define ND [[nodiscard]]
 #define MU [[maybe_unused]]

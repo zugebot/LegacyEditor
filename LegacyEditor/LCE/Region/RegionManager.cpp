@@ -26,6 +26,11 @@ MU ChunkManager* RegionManager::getNonEmptyChunk() {
 }
 
 
+void RegionManager::read(File* fileIn) {
+    read(&fileIn->data);
+}
+
+
 void RegionManager::read(Data* dataIn) {
     u32 totalSectors = dataIn->size / SECTOR_SIZE + 1;
 
@@ -38,7 +43,7 @@ void RegionManager::read(Data* dataIn) {
 
     for (chunkIndex = 0; chunkIndex < 1024; chunkIndex++) {
         u32 val = managerIn.readInt32();
-        sectors[chunkIndex] = val & 0xff;
+        sectors[chunkIndex] = val & 0xFF;
         locations[chunkIndex] = val >> 8;
     }
 
@@ -92,11 +97,6 @@ void RegionManager::read(Data* dataIn) {
     }
 
 
-}
-
-
-void RegionManager::read(File* fileIn) {
-    read(&fileIn->data);
 }
 
 
