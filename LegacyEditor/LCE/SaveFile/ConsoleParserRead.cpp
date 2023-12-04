@@ -17,7 +17,7 @@ int ConsoleParser::readConsoleFile(const std::string& inFileStr) {
     f_in = fopen(inFileCStr, "rb");
     if (f_in == nullptr) {
         printf("Cannot open infile %s", inFileCStr);
-        return -1;
+        return STATUS::FILE_NOT_FOUND;
     }
 
     fseek(f_in, 0, SEEK_END);
@@ -55,7 +55,7 @@ int ConsoleParser::readConsoleFile(const std::string& inFileStr) {
         result = readXbox360_BIN();
     } else {
         printf("%s", error3);
-        result = -1;
+        result = STATUS::INVALID_SAVE;
     }
 
     fclose(f_in);
@@ -92,7 +92,7 @@ int ConsoleParser::readVita() {
     src.deallocate();
 
 
-    return 0;
+    return STATUS::SUCCESS;
 }
 
 
@@ -105,18 +105,21 @@ int ConsoleParser::readWiiU(u32 file_size) {
 
     Data src = Data(source_binary_size);
 
-    allocate(file_size);
+    if(!allocate(file_size)) {
+        return STATUS::MALLOC_FAILED;
+    }
 
     fseek(f_in, 8, SEEK_SET);
     fread(src.start(), 1, source_binary_size, f_in);
 
-    tinf_zlib_uncompress((Bytef*) start(), &size, (Bytef*) src.start(), source_binary_size);
-    src.deallocate();
+    if (tinf_zlib_uncompress((Bytef*) start(), &size, (Bytef*) src.start(), source_binary_size)) {
+        src.deallocate();
+        return STATUS::DECOMPRESS;
+    } else {
+        src.deallocate();
+        return STATUS::SUCCESS;
+    }
 
-    if (getSize() == 0) return printf_err("%s", error3);
-
-
-    return 0;
 }
 
 
@@ -130,7 +133,10 @@ int ConsoleParser::readPs3(u32 dest_size) {
     Data src = Data(source_binary_size);
 
     // destination
-    allocate(dest_size);
+    if (!allocate(dest_size)) {
+        return STATUS::MALLOC_FAILED;
+    }
+
 
     // decompress src -> data
     fseek(f_in, 12, SEEK_SET);
@@ -139,19 +145,24 @@ int ConsoleParser::readPs3(u32 dest_size) {
     tinf_uncompress(start(), &dest_size, src.start(), src.getSize());
     src.deallocate();
 
-    if (dest_size == 0) return printf_err("%s", error3);
+    if (dest_size == 0) {
+        printf_err("%s", error3);
+        return STATUS::DECOMPRESS;
+    }
 
-    return 0;
+    return STATUS::SUCCESS;
 }
 
 
 int ConsoleParser::readRpcs3() {
     printf("Detected uncompressed PS3 / RPCS3 savefile, converting\n");
     console = CONSOLE::RPCS3;
-    allocate(source_binary_size);
+    if (!allocate(source_binary_size)) {
+        return STATUS::MALLOC_FAILED;
+    }
     fseek(f_in, 0, SEEK_SET);
     fread(start(), 1, size, f_in);
-    return 0;
+    return STATUS::SUCCESS;
 }
 
 
@@ -163,16 +174,20 @@ int ConsoleParser::readXbox360_DAT() {
     Data src(headerUnion.getSrcSize() - 8);
 
     // allocate destination memory
-    allocate(headerUnion.getFileSize());
+    if (!allocate(headerUnion.getFileSize())) {
+        return STATUS::MALLOC_FAILED;
+    }
 
     // decompress src -> data
     fread(src.start(), 1, src.size, f_in);
     size = XDecompress(start(), &size, src.start(), src.getSize());
     src.deallocate();
+    if (size == 0) {
+        printf_err("%s", error3);
+        return STATUS::DECOMPRESS;
+    }
 
-    if (size == 0) return printf_err("%s", error3);
-
-    return 0;
+    return STATUS::SUCCESS;
 }
 
 
@@ -181,7 +196,6 @@ int ConsoleParser::readXbox360_BIN() {
     printf("Detected Xbox360 .bin savefile, converting\n");
 
     fseek(f_in, 0, SEEK_SET);
-
 
     Data bin(source_binary_size);
     fread(bin.start(), 1, source_binary_size, f_in);
@@ -192,8 +206,11 @@ int ConsoleParser::readXbox360_BIN() {
     u32 src_size = saveGameInfo.saveFileData.readInt32() - 8;
 
     size = saveGameInfo.saveFileData.readInt64(); // at offset 8
-    allocate(size);
+
+    if (!allocate(size)) {
+        return STATUS::MALLOC_FAILED;
+    }
     size = XDecompress(start(), &size, saveGameInfo.saveFileData.data, src_size);
-    return 0;
+    return STATUS::SUCCESS;
 }
 

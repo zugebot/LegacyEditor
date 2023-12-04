@@ -2,10 +2,6 @@
 
 
 File::~File() {
-    if (!deleteData) {
-        return;
-    }
-
     if (nbt == nullptr) return;
     if (nbt->data == nullptr) return;
     getNBTCompound()->deleteAll();

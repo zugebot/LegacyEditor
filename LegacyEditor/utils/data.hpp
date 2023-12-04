@@ -16,17 +16,15 @@ public:
 
     explicit Data(u8* dataIn, u32 sizeIn) : data(dataIn), size(sizeIn) {}
 
-    ~Data() {
-        if (data != nullptr) {
 
-        }
-    }
-
-    void allocate(u32 sizeIn) {
+    bool allocate(u32 sizeIn) {
         size = sizeIn;
         delete[] data;
-        data = new u8[sizeIn];
+
+        data = new(std::nothrow) u8[sizeIn];
+        return data != nullptr;
     }
+
 
     void deallocate() {
         if (data != nullptr) {
@@ -34,6 +32,13 @@ public:
             data = nullptr;
             size = 0;
         }
+    }
+
+    void steal(Data other) {
+        deallocate();
+        data = other.data;
+        size = other.size;
+        other.reset();
     }
 
     void reset() {

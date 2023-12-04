@@ -1,21 +1,22 @@
 #pragma once
 
-#include "LegacyEditor/LCE/Chunk/ChunkData.hpp"
+#include "ChunkData.hpp"
 
 
-namespace universal {
+namespace chunk {
 
 
     /// "NBT" chunks.
-    class V10Chunk {
-    public:
+    class ChunkV10 {
+    private:
         ChunkData* chunkData = nullptr;
         DataManager* dataManager = nullptr;
+    public:
 
         MU void readChunk(ChunkData* chunkDataIn, DataManager* managerIn, DIM dim);
         MU void writeChunk(ChunkData* chunkDataIn, DataManager* managerOut, DIM dim);
 
-        V10Chunk() = default;
+        ChunkV10() = default;
     };
 
 }

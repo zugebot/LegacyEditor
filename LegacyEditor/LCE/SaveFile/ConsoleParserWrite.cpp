@@ -21,7 +21,8 @@ int ConsoleParser::saveWiiU(const std::string& outfileStr, Data& dataOut) {
     DataManager managerOut(dataOut);
     u64 src_size = managerOut.size;
 
-    FILE* f_out = fopen(outfileStr.c_str(), "wb"); if (!f_out) { return -1; }
+    FILE* f_out = fopen(outfileStr.c_str(), "wb");
+    if (!f_out) { return STATUS::FILE_NOT_FOUND; }
 
     // Write src_size to the file
     uLong compressedSize = compressBound(src_size);
@@ -30,7 +31,7 @@ int ConsoleParser::saveWiiU(const std::string& outfileStr, Data& dataOut) {
     u8_vec compressedData(compressedSize);
     if (compress(compressedData.data(), &compressedSize,
                  managerOut.data, managerOut.size) != Z_OK) {
-        return -1;
+        return STATUS::COMPRESS;
     }
     compressedData.resize(compressedSize);
 
@@ -45,17 +46,13 @@ int ConsoleParser::saveWiiU(const std::string& outfileStr, Data& dataOut) {
 
     fclose(f_out);
 
-    return 0;
+    return STATUS::SUCCESS;
 }
 
 
 int ConsoleParser::saveVita(const std::string& outFileStr, Data& dataOut) {
-
     FILE* f_out = fopen(outFileStr.c_str(), "wb");
-    if (!f_out) {
-        printf("failed to open file '%s'", outFileStr.c_str());
-        return -1;
-    }
+    if (!f_out) { return STATUS::FILE_NOT_FOUND; }
 
     allocate(dataOut.size + 2);
 
@@ -73,25 +70,25 @@ int ConsoleParser::saveVita(const std::string& outFileStr, Data& dataOut) {
     fwrite(data, sizeof(u8), size, f_out);
     fclose(f_out);
 
-    return 0;
+    return STATUS::SUCCESS;
 }
 
 
 MU int ConsoleParser::savePS3Uncompressed() {
-    return 0;
+    return STATUS::SUCCESS;
 }
 
 
 MU int ConsoleParser::savePS3Compressed() {
-    return 0;
+    return STATUS::SUCCESS;
 }
 
 
 MU int ConsoleParser::saveXbox360_DAT() {
-    return 0;
+    return STATUS::SUCCESS;
 }
 
 
 MU int ConsoleParser::saveXbox360_BIN() {
-    return 0;
+    return STATUS::SUCCESS;
 }

@@ -6,7 +6,7 @@ if there is an empty section, with newBlocks above
 said section. Writing newBlocks to the highest section
 also does not work.
 
-Add V11Chunk::write and V11Chunk::read
+Add ChunkV11::write and ChunkV11::read
 - This is needed for switch support
 
 Find correct compression functions for xbox360 and ps3.

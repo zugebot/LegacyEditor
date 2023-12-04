@@ -6,7 +6,7 @@
 
 MU ND int ConsoleParser::convertTo(const std::string& inFileStr, const std::string& outFileStr, CONSOLE consoleOut) {
     int status = readConsoleFile(inFileStr);
-    if (status != 0) return status;
+    if (status != STATUS::SUCCESS) return status;
 
     FileListing fileListing(this); // read  file listing
     fileListing.saveToFolder(dir_path + "dump_" + consoleToStr(console));
@@ -20,8 +20,7 @@ MU ND int ConsoleParser::convertTo(const std::string& inFileStr, const std::stri
             RegionManager region(this->console);
             region.read(file);
             Data data = region.write(consoleOut);
-            delete[] file->data.data;
-            file->data = data;
+            file->data.steal(data);
         }
     }
 
@@ -37,7 +36,7 @@ MU ND int ConsoleParser::convertTo(const std::string& inFileStr, const std::stri
         case CONSOLE::RPCS3:
         case CONSOLE::PS3:
         default:
-            return -1;
+            return STATUS::INVALID_CONSOLE;
     }
 }
 
@@ -48,11 +47,11 @@ MU ND int ConsoleParser::convertAndReplaceRegions(const std::string& inFileStr,
     auto replace = ConsoleParser();
 
     int status1 = readConsoleFile(inFileStr);
-    if (status1 != 0) return status1;
+    if (status1 != STATUS::SUCCESS) return status1;
     FileListing fL(this);
 
     int status2 = replace.readConsoleFile(inFileRegionReplacementStr);
-    if (status2 != 0) return status2;
+    if (status2 != STATUS::SUCCESS) return status2;
     FileListing fLR(replace);
 
     fL.removeFileTypes({FileType::REGION_NETHER,
@@ -68,8 +67,7 @@ MU ND int ConsoleParser::convertAndReplaceRegions(const std::string& inFileStr,
             RegionManager region(fLR.console);
             region.read(file);
             Data data = region.write(consoleOut);
-            delete[] file->data.data;
-            file->data = data;
+            file->data.steal(data);
         }
     }
 
@@ -87,7 +85,7 @@ MU ND int ConsoleParser::convertAndReplaceRegions(const std::string& inFileStr,
         case CONSOLE::RPCS3:
         case CONSOLE::PS3:
         default:
-            return -1;
+            return STATUS::INVALID_CONSOLE;
     }
 }
 

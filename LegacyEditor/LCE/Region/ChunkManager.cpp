@@ -7,6 +7,79 @@
 #include "LegacyEditor/utils/tinf/tinf.h"
 #include "LegacyEditor/utils/zlib-1.2.12/zlib.h"
 
+#include "LegacyEditor/LCE/Region/Chunk/v10.hpp"
+#include "LegacyEditor/LCE/Region/Chunk/v11.hpp"
+#include "LegacyEditor/LCE/Region/Chunk/v12.hpp"
+
+
+
+
+MU void ChunkManager::readChunk(DIM dim) {
+    DataManager managerIn = DataManager(this->data, this->size);
+    managerIn.seekStart();
+    chunkData->lastVersion = managerIn.readInt16();
+    
+    switch(chunkData->lastVersion) {
+        case 0x0a00: {
+            chunkData->lastVersion = 0x000A;
+            chunk::ChunkV10 v10Chunk;
+            v10Chunk.readChunk(chunkData, &managerIn, dim);
+            break;
+        }
+        case 0x0008:
+        case 0x0009:
+        case 0x000B: {
+            chunk::ChunkV11 v11Chunk;
+            v11Chunk.readChunk(chunkData, &managerIn, dim);
+            break;
+        }
+        case 0x000C: {
+            chunk::ChunkV12 v12Chunk;
+            v12Chunk.readChunk(chunkData, &managerIn, dim);
+            break;
+        }
+    }
+}
+
+
+MU Data ChunkManager::writeChunk(DIM dim) {
+    Data outBuffer(CHUNK_BUFFER_SIZE);
+    memset(outBuffer.data, 0, CHUNK_BUFFER_SIZE);
+    auto managerOut = DataManager(outBuffer);
+
+    managerOut.seekStart();
+    switch(chunkData->lastVersion) {
+        case 0x0a00: {
+            chunk::ChunkV10 v10Chunk;
+            v10Chunk.writeChunk(chunkData, &managerOut, dim);
+            break;
+        }
+        case 0x0008:
+        case 0x0009:
+        case 0x000B: {
+            managerOut.writeInt16(chunkData->lastVersion);
+            chunk::ChunkV11 v11Chunk;
+            v11Chunk.writeChunk(chunkData, &managerOut, dim);
+            break;
+        }
+        case 0x000C: {
+            managerOut.writeInt16(chunkData->lastVersion);
+            chunk::ChunkV12 v12Chunk;
+            v12Chunk.writeChunk(chunkData, &managerOut, dim);
+            break;
+        }
+    }
+
+    Data outData(managerOut.getPosition());
+    memcpy(outData.data, outBuffer.data, outData.size);
+    outBuffer.deallocate();
+
+    steal(outData);
+    setDecSize(size);
+
+    return outData;
+}
+
 
 void ChunkManager::ensure_decompress(CONSOLE console) {
     if (!getCompressed() || console == CONSOLE::NONE || data == nullptr || size == 0) {
@@ -17,8 +90,7 @@ void ChunkManager::ensure_decompress(CONSOLE console) {
         return;
     }
     setCompressed(false);
-
-
+    
     u32 dec_size_copy = getDecSize();
     Data decompData(getDecSize());
 
@@ -37,16 +109,13 @@ void ChunkManager::ensure_decompress(CONSOLE console) {
             break;
     }
 
-    deallocate();
-
     if (getRLE()) {
+        deallocate();
         allocate(getDecSize());
-        RLE_decompress(decompData.start(), decompData.size, start(), dec_size_copy);
+        RLE_decompress(decompData.start(), decompData.size, data, dec_size_copy);
         decompData.deallocate();
     } else {
-        data = decompData.data;
-        size = dec_size_copy;
-        decompData.reset();
+        steal(Data(decompData.data, dec_size_copy));
     }
 }
 
@@ -64,10 +133,7 @@ void ChunkManager::ensure_compressed(CONSOLE console) {
     if (getRLE()) {
         Data rleBuffer(size);
         RLE_compress(data, size, rleBuffer.data, rleBuffer.size);
-        deallocate();
-        data = rleBuffer.data;
-        size = rleBuffer.size;
-        rleBuffer.reset();
+        steal(rleBuffer);
     }
 
     // allocate memory and recompress
@@ -90,11 +156,7 @@ void ChunkManager::ensure_compressed(CONSOLE console) {
             if (status != 0) {
                 printf("error has occurred compressing chunk\n");
             }
-
-            deallocate();
-            data = comp_ptr;
-            size = comp_size;
-            comp_size = 0;
+            steal(Data(comp_ptr, comp_size));
             break;
         }
 
@@ -105,11 +167,7 @@ void ChunkManager::ensure_compressed(CONSOLE console) {
             if (status != 0) {
                 printf("error has occurred compressing chunk\n");
             }
-
-            deallocate();
-            data = comp_ptr;
-            size = comp_size;
-            comp_size = 0;
+            steal(Data(comp_ptr, comp_size));
             break;
         }
         default:

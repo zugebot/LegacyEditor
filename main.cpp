@@ -4,9 +4,9 @@
 
 #include "LegacyEditor/utils/dataManager.hpp"
 
-#include "LegacyEditor/LCE/Chunk/ChunkParser.hpp"
-
+#include "LegacyEditor/LCE/BinFile/BINSupport.hpp"
 #include "LegacyEditor/LCE/Map/Map.hpp"
+#include "LegacyEditor/LCE/Region/Chunk/modifiers.hpp"
 #include "LegacyEditor/LCE/Region/ChunkManager.hpp"
 #include "LegacyEditor/LCE/Region/RegionManager.hpp"
 #include "LegacyEditor/LCE/SaveFile/ConsoleParser.hpp"
@@ -15,7 +15,6 @@
 #include "LegacyEditor/utils/mapcolors.hpp"
 #include "LegacyEditor/utils/picture.hpp"
 #include "LegacyEditor/utils/time.hpp"
-#include "LegacyEditor/LCE/BinFile/BINSupport.hpp"
 
 
 void compareNBT(NBTBase* first, NBTBase* second) {
@@ -88,37 +87,27 @@ int main() {
 
     auto start = getNanoSeconds();
     for (int regionIndex = 0; regionIndex < 4; regionIndex++) {
+        const CONSOLE console = parser.console;
 
-
-        CONSOLE console = parser.console;
         // read a region file
         RegionManager region(fileListing.console);
         region.read(fileListing.region_overworld[regionIndex]);
-        fileListing.region_overworld[regionIndex]->data.deallocate();
 
         int h = -1;
         for (ChunkManager& chunkManager : region.chunks) {
             h++;
-            if (chunkManager.size == 0) {
-                continue;
-            }
+            if (chunkManager.size == 0) { continue; }
 
             chunkManager.ensure_decompress(console);
-            DataManager chunkDataIn(chunkManager);
-            universal::ChunkParser chunkParser;
-            chunkParser.readChunk(&chunkDataIn, DIM::OVERWORLD);
-            auto& chunkData = chunkParser.chunkData;
+            chunkManager.readChunk(DIM::OVERWORLD);
+            auto* chunkData = chunkManager.chunkData;
 
-            std::cout << "Chunk: " << chunkData.getCoords() << " " << chunkData.lastVersion;
-            if (chunkData.hasSubmerged) {
-                std::cout << "(Submerged)";
-            }
+            std::cout << "Chunk: " << chunkData->getCoords() << " " << chunkData->lastVersion;
+            if (chunkData->hasSubmerged) { std::cout << " (Submerged)"; }
             std::cout << std::endl;
 
-
-            // chunkParser.convertOldToNew();
-
             /*
+            // chunkParser.convertOldToNew();
             i32 chunkX = chunkData.chunkX, chunkZ = chunkData.chunkZ;
             if (chunkX == -11 && chunkZ == 2) {
                 for (int x = 0; x < 65536; x++) {
@@ -141,17 +130,16 @@ int main() {
                     allBlocks.insert(chunkData.newBlocks[x]);
                 }
             }
-            */
-
             // std::cout << chunkData.NBTData->toString() << std::endl;
             // chunkDataIn.writeToFile(dir_path + "chunk_read.bin");
+            // /
+            */
 
-            // /*
             u16 blocks[65536];
             for (u16 x = 0; x < 16; x++) {
                 for (u16 z = 0; z < 16; z++) {
                     for (u16 y = 0; y < 128; y++) {
-                        u16 block1 = chunkParser.getBlock(x, y, z);
+                        u16 block1 = chunk::getBlock(chunkManager.chunkData, x, y, z);
                         u16 block2 = block1;
 
                         int offset1 =       y + 256 * z + 4096 * x;
@@ -183,6 +171,7 @@ int main() {
                             // block2 = 0;
                         }
 
+                        /*
                         // if (compare1 == 8 || compare1 == 9 || compare1 == 10 || compare1 == 11) {
                         //     block1 = 0;
                         // }
@@ -190,7 +179,7 @@ int main() {
                         // if (compare2 == 8 || compare2 == 9 || compare2 == 10 || compare2 == 11) {
                         //     block2 = 0;
                         // }
-
+                        */
 
                         blocks[offset2] = block2;
 
@@ -199,13 +188,14 @@ int main() {
                 }
             }
 
-            memcpy(&chunkData.newBlocks[0], &blocks[0], 131072);
-            memset(&chunkData.blockLight[0], 0xFF, 32768);
-            memset(&chunkData.heightMap[0], 0xFF, 256);
-            memset(&chunkData.skyLight[0], 0xFF, 32768);
-            chunkData.terrainPopulated = 2046;
-            chunkData.lastUpdate = 100;
-            chunkData.inhabitedTime = 200;
+            memcpy(&chunkData->newBlocks[0], &blocks[0], 131072);
+            memset(&chunkData->blockLight[0], 0xFF, 32768);
+            memset(&chunkData->heightMap[0], 0xFF, 256);
+            memset(&chunkData->skyLight[0], 0xFF, 32768);
+            chunkData->terrainPopulated = 2046;
+            chunkData->lastUpdate = 100;
+            chunkData->inhabitedTime = 200;
+
             /*
             // chunkParser.placeBlock(4, 158, 4, 8, 0, true);
             // chunkParser.placeBlock(4, 158, 8, 9, 0, true);
@@ -283,32 +273,12 @@ int main() {
             }
              */
 
-            Data outBuffer(4000000);
-            memset(outBuffer.data, 0, 4000000);
-            auto managerChunkOut = DataManager(outBuffer);
-            chunkParser.writeChunk(&managerChunkOut, DIM::OVERWORLD);
-
-
-            Data outData(managerChunkOut.getPosition());
-            memcpy(outData.data, outBuffer.data, outData.size);
-
-            outBuffer.deallocate();
-            chunkManager.deallocate();
-
-            chunkManager.data = outData.data;
-            chunkManager.size = outData.size;
-            chunkManager.setDecSize(chunkManager.size);
-
-
-            // universal::ChunkParser chunkParser2;
-            // DataManager out2(chunkManager);
-            // chunkParser2.readChunk(&out2, DIM::OVERWORLD);
-
-
+            Data outBuffer = chunkManager.writeChunk(DIM::OVERWORLD);
             chunkManager.ensure_compressed(console);
 
         }
 
+        fileListing.region_overworld[regionIndex]->data.deallocate();
         fileListing.region_overworld[regionIndex]->data = region.write(console);
     }
 
@@ -345,13 +315,8 @@ int main() {
      */
 
 
-
-
-
      printf("waterlogged blocks:");
-    // for (u16 block : blockSet) {
-    //     printf("id: %.3d\n", block);
-    // }
+    // for (u16 block : blockSet) { printf("id: %.3d\n", block); }
 
     std::set<u16> diff;
     std::set_difference(_n11_2_blocks.begin(), _n11_2_blocks.end(),
@@ -375,8 +340,7 @@ int main() {
             RegionManager reg(CONSOLE::WIIU);
             reg.read(file);
             Data _data = reg.write(consoleOut);
-            file->data.deallocate();
-            file->data = _data;
+            file->steal(_data);
         }
     }
 

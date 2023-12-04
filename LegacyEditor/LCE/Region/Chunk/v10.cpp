@@ -1,13 +1,13 @@
-#include "v10Chunk.hpp"
+#include "v10.hpp"
 
 
-namespace universal {
+namespace chunk {
 
     // TODO: This can definitely be made much faster if you could somehow replace
     // TODO: The pointer a vector points to... I will look that up later.
 
     // TODO: add cases for when tags are not found
-    void V10Chunk::readChunk(ChunkData* chunkDataIn, DataManager* managerIn, DIM dim) {
+    void ChunkV10::readChunk(ChunkData* chunkDataIn, DataManager* managerIn, DIM dim) {
         dataManager = managerIn;
         chunkData = chunkDataIn;
 
@@ -66,6 +66,11 @@ namespace universal {
         chunkNBT->deleteAll();
         delete chunkNBT;
         delete nbt;
+
+    }
+
+
+    void ChunkV10::writeChunk(ChunkData* chunkDataIn, DataManager* managerOut, DIM dim) {
 
     }
 

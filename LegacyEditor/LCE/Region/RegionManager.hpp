@@ -2,8 +2,8 @@
 
 #include "ChunkManager.hpp"
 
-#include "LegacyEditor/utils/enums.hpp"
 #include "LegacyEditor/utils/processor.hpp"
+#include "LegacyEditor/utils/enums.hpp"
 
 
 class File;

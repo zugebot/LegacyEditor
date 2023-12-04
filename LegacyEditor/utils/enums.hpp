@@ -20,6 +20,19 @@ enum class DIM : i8 {
 };
 
 
+enum STATUS : int {
+    SUCCESS = 0,
+    COMPRESS = -1,
+    DECOMPRESS = -2,
+    MALLOC_FAILED = -3,
+    INVALID_SAVE = -4,
+    FILE_NOT_FOUND = -5,
+    INVALID_CONSOLE = -6
+};
+
+
+
+
 static std::string consoleToStr(CONSOLE console) {
     switch (console) {
         case CONSOLE::XBOX360:

@@ -5,13 +5,10 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "LegacyEditor/LCE/BinFile/FileInfo.hpp"
+#include "headerUnion.hpp"
 #include "LegacyEditor/utils/data.hpp"
 #include "LegacyEditor/utils/enums.hpp"
-#include "headerUnion.hpp"
-
-
-class DataManager;
+#include "LegacyEditor/LCE/BinFile/FileInfo.hpp"
 
 
 class ConsoleParser : public Data {
@@ -28,7 +25,6 @@ private:
 public:
     FileInfo saveGameInfo;
     u64 source_binary_size{};
-    u8 header[0xc]{};
     CONSOLE console = CONSOLE::NONE;
 
     ConsoleParser() : Data() {}

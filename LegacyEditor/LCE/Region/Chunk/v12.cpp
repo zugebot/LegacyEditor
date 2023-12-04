@@ -1,5 +1,5 @@
 #include "LegacyEditor/utils/time.hpp"
-#include "v12Chunk.hpp"
+#include "v12.hpp"
 
 
 static inline u32 toIndex(u32 num) {
@@ -35,13 +35,13 @@ static bool is255_128_slow(const u8* ptr) {
 
 
 
-namespace universal {
+namespace chunk {
 
     // #####################################################
     // #               Read Section
     // #####################################################
 
-    void V12Chunk::readChunk(ChunkData* chunkDataIn, DataManager* managerIn, DIM dim) {
+    void ChunkV12::readChunk(ChunkData* chunkDataIn, DataManager* managerIn, DIM dim) {
         dataManager = managerIn;
         chunkData = chunkDataIn;
 
@@ -89,7 +89,7 @@ namespace universal {
     }
 
 
-    void V12Chunk::readBlockData() const {
+    void ChunkV12::readBlockData() const {
         u32 maxSectionAddress = dataManager->readInt16() << 8;
 
         u16_vec sectionJumpTable(16);
@@ -216,7 +216,7 @@ namespace universal {
      * @return
      */
     template<size_t BitsPerBlock>
-    bool V12Chunk::readGrid(const u8* buffer, u8 grid[128]) const {
+    bool ChunkV12::readGrid(const u8* buffer, u8 grid[128]) const {
         int size = (1 << BitsPerBlock) * 2;
         u16_vec palette(size);
         std::copy_n(buffer, size, palette.begin());
@@ -266,7 +266,7 @@ namespace universal {
      * @return
      */
     template<size_t BitsPerBlock>
-    bool V12Chunk::readGridSubmerged(u8 const* buffer, u8 blockGrid[128], u8 SbmrgGrid[128]) const {
+    bool ChunkV12::readGridSubmerged(u8 const* buffer, u8 blockGrid[128], u8 SbmrgGrid[128]) const {
         int size = (1 << BitsPerBlock) * 2;
         u16_vec palette(size);
         std::copy_n(buffer, size, palette.begin());
@@ -316,7 +316,7 @@ namespace universal {
      * toIndex(num) = return num * 128 + 128;
      * java and lce supposedly store light data in the same way
      */
-    void V12Chunk::readLightData() const {
+    void ChunkV12::readLightData() const {
 
         chunkData->DataGroupCount = 0;
         u8_vec_vec dataArray(4);
@@ -355,7 +355,7 @@ namespace universal {
     // #####################################################
 
 
-    void V12Chunk::writeChunk(ChunkData* chunkDataIn, DataManager* managerOut, DIM dim) {
+    void ChunkV12::writeChunk(ChunkData* chunkDataIn, DataManager* managerOut, DIM dim) {
         dataManager = managerOut;
         chunkData = chunkDataIn;
 
@@ -378,7 +378,7 @@ namespace universal {
     }
 
 
-    void V12Chunk::writeBlockData() const {
+    void ChunkV12::writeBlockData() const {
 
         std::vector<u16> blockVector;
         std::vector<u16> blockLocations;
@@ -511,7 +511,7 @@ namespace universal {
      * @tparam BitsPerBlock
      */
     template<size_t BitsPerBlock, size_t BlockCount, size_t EmptyCount>
-    void V12Chunk::writeGrid(u16_vec& blockVector, u16_vec& blockLocations, u8* blockMap) const {
+    void ChunkV12::writeGrid(u16_vec& blockVector, u16_vec& blockLocations, u8* blockMap) const {
 
         // write the block data
         dataManager->setLittleEndian();
@@ -550,7 +550,7 @@ namespace universal {
 
     /// make this copy all u16 blocks from the grid location or whatnot
     /// used to write full block data, instead of using palette.
-    void V12Chunk::writeWithMaxBlocks(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[65536]) const {
+    void ChunkV12::writeWithMaxBlocks(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[65536]) const {
         dataManager->setLittleEndian();
         for (size_t i = 0; i < 64; i++) {
             u16 blockPos = blockLocations[i];
@@ -564,7 +564,7 @@ namespace universal {
     }
 
 
-    void V12Chunk::writeLightSection(u32& readOffset, u8_vec& light) const {
+    void ChunkV12::writeLightSection(u32& readOffset, u8_vec& light) const {
         static u32_vec sectionOffsets;
         sectionOffsets.reserve(64);
 
@@ -600,7 +600,7 @@ namespace universal {
     }
 
 
-    void V12Chunk::writeLightData() const {
+    void ChunkV12::writeLightData() const {
         u32 readOffset = 0;
         writeLightSection(readOffset, chunkData->skyLight);
         writeLightSection(readOffset, chunkData->skyLight);

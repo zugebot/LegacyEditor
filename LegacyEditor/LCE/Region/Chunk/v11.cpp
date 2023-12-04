@@ -1,4 +1,4 @@
-#include "v11Chunk.hpp"
+#include "v11.hpp"
 #include <algorithm>
 
 
@@ -7,10 +7,13 @@ static inline u32 toIndex(u32 num) {
 }
 
 
-namespace universal {
+namespace chunk {
 
+    // #####################################################
+    // #               Read Section
+    // #####################################################
 
-    void V11Chunk::readChunk(ChunkData* chunkDataIn, DataManager* managerIn, DIM dim) {
+    void ChunkV11::readChunk(ChunkData* chunkDataIn, DataManager* managerIn, DIM dim) {
         dataManager = managerIn;
         chunkData = chunkDataIn;
 
@@ -69,7 +72,7 @@ namespace universal {
     }
 
 
-    void V11Chunk::readBlocks() const {
+    void ChunkV11::readBlocks() const {
         const u32 CHUNK_HEADER_SIZE = chunkData->lastVersion > 8 ? 26 : 18;
 
         int putBlockOffset = 0;
@@ -116,7 +119,7 @@ namespace universal {
 
 
     template<size_t BitsPerBlock>
-    bool V11Chunk::readGrid(u8 const* buffer, u8 grid[128]) const {
+    bool ChunkV11::readGrid(u8 const* buffer, u8 grid[128]) const {
         int size = (1 << BitsPerBlock);
         u8_vec palette(size);
         std::copy_n(buffer, size, palette.begin());
@@ -140,7 +143,7 @@ namespace universal {
     }
 
 
-    void V11Chunk::readData() const {
+    void ChunkV11::readData() const {
 
         u8_vec_vec dataArray(6);
         for (int i = 0; i < 6; i++) {
@@ -174,6 +177,19 @@ namespace universal {
         processLightData(dataArray[4], chunkData->blockLight, writeOffset);
         processLightData(dataArray[5], chunkData->blockLight, writeOffset);
     }
+
+
+    // #####################################################
+    // #               Write Section
+    // #####################################################
+
+
+    void ChunkV11::writeChunk(ChunkData* chunkDataIn, DataManager* managerOut, DIM dim) {
+
+    }
+
+
+
 
 }
 

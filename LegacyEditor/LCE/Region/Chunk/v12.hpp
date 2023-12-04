@@ -2,10 +2,10 @@
 
 #include "LegacyEditor/utils/enums.hpp"
 
-#include "LegacyEditor/LCE/Chunk/ChunkData.hpp"
+#include "ChunkData.hpp"
 
 
-namespace universal {
+namespace chunk {
 
 
     enum V12_GRID_STATE {
@@ -33,7 +33,7 @@ namespace universal {
 
 
     /// "Aquatic" chunks.
-    class V12Chunk {
+    class ChunkV12 {
     public:
         ChunkData* chunkData = nullptr;
         DataManager* dataManager = nullptr;
@@ -41,7 +41,7 @@ namespace universal {
         MU void readChunk(ChunkData* chunkDataIn, DataManager* managerIn, DIM dim);
         MU void writeChunk(ChunkData* chunkDataIn, DataManager* managerOut, DIM dim);
 
-        V12Chunk() = default;
+        ChunkV12() = default;
 
     private:
 

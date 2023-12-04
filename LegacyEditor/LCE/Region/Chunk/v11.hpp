@@ -1,13 +1,13 @@
 #pragma once
 
-#include "LegacyEditor/LCE/Chunk/ChunkData.hpp"
+#include "ChunkData.hpp"
 
 
-namespace universal {
+namespace chunk {
 
 
     /// "Elytra" chunks.
-    class V11Chunk {
+    class ChunkV11 {
     private:
         static constexpr i32 GRID_HEADER_SIZE = 1024;
 
@@ -18,7 +18,7 @@ namespace universal {
         MU void readChunk(ChunkData* chunkDataIn, DataManager* managerIn, DIM dim);
         MU void writeChunk(ChunkData* chunkDataIn, DataManager* managerOut, DIM dim);
 
-        V11Chunk() = default;
+        ChunkV11() = default;
 
     private:
         MU void readBlocks() const;
