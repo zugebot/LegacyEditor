@@ -44,7 +44,7 @@ void RegionManager::read(Data* dataIn) {
 
     // step 2: read timestamps [1024]
     for (ChunkManager& chunk : chunks) {
-        chunk.timestamp = managerIn.readInt32();
+        chunk.setTimestamp(managerIn.readInt32());
     }
 
     // step 3: read chunk size, decompressed size
@@ -135,7 +135,7 @@ Data RegionManager::write(CONSOLE consoleIn) {
 
     // step 6: write each chunk timestamp
     for (const ChunkManager& chunk : chunks) {
-        managerOut.writeInt32(chunk.timestamp);
+        managerOut.writeInt32(chunk.getTimestamp());
     }
 
     // step 7: seek to each location, write chunk attr's, then chunk data

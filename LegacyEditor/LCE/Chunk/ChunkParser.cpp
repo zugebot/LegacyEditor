@@ -18,38 +18,49 @@ namespace universal {
         chunkData.lastVersion = managerIn->readInt16();
 
         switch(chunkData.lastVersion) {
-            case 0x0a00:
+            case 0x0a00: {
                 chunkData.lastVersion = 0x000A;
+                V10Chunk v10Chunk;
                 v10Chunk.readChunk(&chunkData, managerIn, dim);
                 break;
+            }
             case 0x0008:
             case 0x0009:
-            case 0x000B:
+            case 0x000B: {
+                V11Chunk v11Chunk;
                 v11Chunk.readChunk(&chunkData, managerIn, dim);
                 break;
-            case 0x000C:
+            }
+            case 0x000C: {
+                V12Chunk v12Chunk;
                 v12Chunk.readChunk(&chunkData, managerIn, dim);
                 break;
+            }
         }
     }
-
 
     MU void ChunkParser::writeChunk(DataManager* managerOut, DIM dim) {
         managerOut->seekStart();
         switch(chunkData.lastVersion) {
-            case 0x0a00:
+            case 0x0a00: {
+                V10Chunk v10Chunk;
                 v10Chunk.writeChunk(&chunkData, managerOut, dim);
                 break;
+            }
             case 0x0008:
             case 0x0009:
-            case 0x000B:
+            case 0x000B: {
                 managerOut->writeInt16(chunkData.lastVersion);
+                V11Chunk v11Chunk;
                 v11Chunk.writeChunk(&chunkData, managerOut, dim);
                 break;
-            case 0x000C:
+            }
+            case 0x000C: {
                 managerOut->writeInt16(chunkData.lastVersion);
+                V12Chunk v12Chunk;
                 v12Chunk.writeChunk(&chunkData, managerOut, dim);
                 break;
+            }
         }
     }
 
@@ -85,6 +96,7 @@ namespace universal {
             delete chunkData.NBTData;
             chunkData.NBTData = nullptr;
         }
+
         /*
         u16 data;
         for (int i = 0; i < 65536; i++) {

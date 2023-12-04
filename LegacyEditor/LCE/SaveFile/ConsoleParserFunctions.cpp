@@ -4,7 +4,6 @@
 #include "LegacyEditor/LCE/Region/RegionManager.hpp"
 
 
-
 MU ND int ConsoleParser::convertTo(const std::string& inFileStr, const std::string& outFileStr, CONSOLE consoleOut) {
     int status = readConsoleFile(inFileStr);
     if (status != 0) return status;
@@ -41,10 +40,6 @@ MU ND int ConsoleParser::convertTo(const std::string& inFileStr, const std::stri
             return -1;
     }
 }
-
-
-
-
 
 
 MU ND int ConsoleParser::convertAndReplaceRegions(const std::string& inFileStr,

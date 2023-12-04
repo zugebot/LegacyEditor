@@ -57,13 +57,8 @@ MU FileListing::FileListing(ConsoleParser* consoleParser) : console(consoleParse
 }
 
 
-
 void FileListing::read(Data &dataIn) {
-    DataManager managerIn(dataIn);
-
-    if (console == CONSOLE::VITA) {
-        managerIn.setLittleEndian();
-    }
+    DataManager managerIn(dataIn, consoleIsBigEndian(console));
 
     u32 indexOffset = managerIn.readInt32();
     u32 fileCount = managerIn.readInt32();
@@ -213,11 +208,11 @@ void FileListing::saveToFolder(const std::string &folder) {
     for (File &file: allFiles) {
         std::string fullPath = folder + "\\" + file.constructFileName(console);
         fs::path path(fullPath);
-        // make sure path is valid before writing
+
         if (!fs::exists(path.parent_path())) {
             fs::create_directories(path.parent_path());
         }
-        // write the file
+
         DataManager fileOut(file.data);
         fileOut.writeToFile(fullPath);
     }
@@ -238,11 +233,7 @@ Data FileListing::write(CONSOLE consoleOut) {
     u32 totalFileSize = fileInfoOffset + FILE_HEADER_SIZE * fileCount;
 
     Data dataOut(totalFileSize);
-    DataManager managerOut(dataOut);
-
-    if (consoleOut == CONSOLE::VITA) {
-        managerOut.setLittleEndian();
-    }
+    DataManager managerOut(dataOut, consoleIsBigEndian(consoleOut));
 
     // step 3: write start
     managerOut.writeInt32(fileInfoOffset);

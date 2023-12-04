@@ -5,36 +5,34 @@
 
 class ChunkManager : public Data {
 private:
-    union {
-        struct {
-            u32 decSize : 29;
-            u32 isCompressed : 1;
-            u32 rleFlag : 1;
-            u32 unknownFlag : 1;
-        } var{};
-    };
+    struct {
+        u32 timestamp;
+        u64 decSize : 29;
+        u64 isCompressed : 1;
+        u64 rleFlag : 1;
+        u64 unknownFlag : 1;
+    } managerData{};
 
 public:
-    u32 timestamp = 0;
-
     ChunkManager() {
-        var.decSize = 0;
-        var.isCompressed = 1;
-        var.rleFlag = 1;
-        var.unknownFlag = 1;
+        managerData.decSize = 0;
+        managerData.isCompressed = 1;
+        managerData.rleFlag = 1;
+        managerData.unknownFlag = 1;
+        managerData.timestamp = 0;
     }
 
+    MU void setTimestamp(u32 val) { managerData.timestamp = val;}
+    MU void setDecSize(u64 val) { managerData.decSize = val;}
+    MU void setRLE(u64 val) { managerData.rleFlag = val;}
+    MU void setUnknown(u64 val) { managerData.unknownFlag = val;}
+    MU void setCompressed(u64 val) { managerData.isCompressed = val;}
 
-
-    MU void setDecSize(u32 val) {var.decSize = val;}
-    MU void setRLE(u32 val) {var.rleFlag = val;}
-    MU void setUnknown(u32 val) {var.unknownFlag = val;}
-    MU void setCompressed(u32 val) {var.isCompressed = val;}
-    MU ND u32 getDecSize() const {return var.decSize;}
-    MU ND u32 getRLE() const {return var.rleFlag;}
-    MU ND u32 getUnknown() const {return var.unknownFlag;}
-    MU ND u32 getCompressed() const {return var.isCompressed;}
-
+    MU ND u32 getTimestamp() const {return managerData.timestamp;}
+    MU ND u64 getDecSize() const {return managerData.decSize;}
+    MU ND u64 getRLE() const {return managerData.rleFlag;}
+    MU ND u64 getUnknown() const {return managerData.unknownFlag;}
+    MU ND u64 getCompressed() const {return managerData.isCompressed;}
 
     ~ChunkManager() = default;
     void ensure_decompress(CONSOLE console);
