@@ -135,7 +135,7 @@ namespace universal {
                         dataManager->ptr = bufferPtr + V12_GRID_SIZES[format] + 128;
                         bool success = true;
                         switch(format) {
-                            case V12_0_SINGLE:
+                            case V12_0_UNO:
                                 for (int i = 0; i < 128; i += 2) {
                                     blockGrid[i] = v1;
                                     blockGrid[i + 1] = v2;
@@ -214,11 +214,9 @@ namespace universal {
         while (i < 64) {
             u8 vBlocks[BitsPerBlock];
 
-            // Calculate row and column for current index
             int row = i / 8;
             int column = i % 8;
 
-            // Load the pieces into a buffer
             for (int j = 0; j < BitsPerBlock; j++) {
                 vBlocks[j] = buffer[size + row + j * 8];
             }
@@ -226,7 +224,6 @@ namespace universal {
             u8 mask = 0b10000000 >> column;
             u16 idx = 0;
 
-            // Calculate the index
             for (int k = 0; k < BitsPerBlock; k++) {
                 idx |= ((vBlocks[k] & mask) >> (7 - column)) << k;
             }
@@ -235,11 +232,9 @@ namespace universal {
                 return false;
             }
 
-            // Calculate grid index and palette index
             int gridIndex = i * 2;
             int paletteIndex = idx * 2;
 
-            // Assign values to the grid
             grid[gridIndex + 0] = palette[paletteIndex + 0];
             grid[gridIndex + 1] = palette[paletteIndex + 1];
 

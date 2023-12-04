@@ -37,3 +37,18 @@ static std::string consoleToStr(CONSOLE console) {
             return "NONE";
     }
 }
+
+
+static bool consoleIsBigEndian(CONSOLE console) {
+    switch (console) {
+        case CONSOLE::NONE:
+        case CONSOLE::XBOX360:
+        case CONSOLE::PS3:
+        case CONSOLE::RPCS3:
+        case CONSOLE::WIIU:
+        default:
+            return true;
+        case CONSOLE::VITA:
+            return false;
+    }
+}

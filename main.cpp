@@ -166,7 +166,7 @@ int main() {
                                 block1 = (block1 & 0x1FFF) | 0x08;
                                 // block1 = 9 << 4;
                             }
-                            block1 = 0;
+                            // block1 = 0;
                         }
 
 
@@ -180,16 +180,16 @@ int main() {
                             if (compare2 == 272) { // bubble column
                                 block2 = 0;//9 << 4;
                             }
-                            block2 = 0;
+                            // block2 = 0;
                         }
 
-                        if (compare1 == 8 || compare1 == 9 || compare1 == 10 || compare1 == 11 || compare1 > 3) {
-                            block1 = 0;
-                        }
+                        // if (compare1 == 8 || compare1 == 9 || compare1 == 10 || compare1 == 11) {
+                        //     block1 = 0;
+                        // }
 
-                        if (compare2 == 8 || compare2 == 9 || compare2 == 10 || compare2 == 11 || compare2 > 3) {
-                            block2 = 0;
-                        }
+                        // if (compare2 == 8 || compare2 == 9 || compare2 == 10 || compare2 == 11) {
+                        //     block2 = 0;
+                        // }
 
 
                         blocks[offset2] = block2;
@@ -200,9 +200,9 @@ int main() {
             }
 
             memcpy(&chunkData.newBlocks[0], &blocks[0], 131072);
-            memset(&chunkData.blockLight[0], 0x00, 32768);
+            memset(&chunkData.blockLight[0], 0xFF, 32768);
             memset(&chunkData.heightMap[0], 0xFF, 256);
-            memset(&chunkData.skyLight[0], 0x00, 32768);
+            memset(&chunkData.skyLight[0], 0xFF, 32768);
             chunkData.terrainPopulated = 2046;
             chunkData.lastUpdate = 100;
             chunkData.inhabitedTime = 200;
@@ -219,7 +219,7 @@ int main() {
             // memset(&chunkData.blockLight[0], 0xFF, 32768);
             // memset(&chunkData.skyLight[0], 0xFF, 32768);
             */
-
+            /*
              if (chunkData.NBTData != nullptr) {
                 chunkData.NBTData->toType<NBTTagCompound>()->deleteAll();
                 delete chunkData.NBTData;
@@ -233,7 +233,7 @@ int main() {
             chunkRootNbtData->setListTag("Entities", entities);
             chunkRootNbtData->setListTag("TileEntities", tileEntities);
             chunkRootNbtData->setListTag("TileTicks", tileTicks);
-
+            */
             /*
             if (chunkData.chunkX == -3 && chunkData.chunkZ == 26) {
                 if (chunkData.NBTData != nullptr) {
@@ -297,7 +297,7 @@ int main() {
 
             chunkManager.data = outData.data;
             chunkManager.size = outData.size;
-            chunkManager.dec_size = chunkManager.size;
+            chunkManager.setDecSize(chunkManager.size);
 
 
             // universal::ChunkParser chunkParser2;

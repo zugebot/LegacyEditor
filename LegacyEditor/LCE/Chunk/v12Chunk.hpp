@@ -9,7 +9,7 @@ namespace universal {
 
 
     enum GRID_STATE {
-        V12_0_SINGLE = 0,
+        V12_0_UNO = 0,
         V12_1_BIT = 2,
         V12_1_BIT_SUBMERGED = 3,
         V12_2_BIT = 4,
@@ -66,7 +66,7 @@ namespace universal {
         template<size_t BitsPerBlock, size_t BlockCount, size_t EmptyCount>
         void writeGrid(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[65536]);
         /// used to write full block data, instead of using palette.
-        void writeWithMaxBlocks(u16_vec& blockVector, u16_vec& blockLocations) const;
+        void writeWithMaxBlocks(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[65536]) const;
         void writeLightSection(u32& readOffset, u8_vec& light) const;
         void writeLightData();
     };

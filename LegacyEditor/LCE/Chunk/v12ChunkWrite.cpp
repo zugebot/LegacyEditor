@@ -86,11 +86,11 @@ namespace universal {
         blockLocations.reserve(64);
 
         // header ptr offsets from start
-        const u32 H_BEGIN = 26;
+        const u32 H_BEGIN           =           26;
         const u32 H_SECT_JUMP_TABLE = H_BEGIN +  2; // step 2: i16 * 16 section jump table
         const u32 H_SECT_SIZE_TABLE = H_BEGIN + 34; // step 3:  i8 * 16 section size table / 256
-        const u32 H_SECT_START =      H_BEGIN + 50;
-        const u32 V_GRID_SIZE = 128;
+        const u32 H_SECT_START      = H_BEGIN + 50;
+        const u32 V_GRID_SIZE       =          128;
 
         /// increment 50 for block header
         dataManager->seek(H_SECT_START);
@@ -102,12 +102,12 @@ namespace universal {
             const u32 CURRENT_INC_SECT_JUMP = last_section_jump * 256;
             const u32 CURRENT_SECTION_START = H_SECT_START + CURRENT_INC_SECT_JUMP;
             u32 sectionSize = 0;
+            u32 gridIndex = 0;
 
             sectJumpTable[sectionIndex] = CURRENT_INC_SECT_JUMP;
 
             dataManager->ptr = dataManager->data + H_SECT_START + CURRENT_INC_SECT_JUMP + V_GRID_SIZE;
 
-            u32 gridIndex = 0;
             for (u32 gridX = 0; gridX < 65536; gridX += 16384) {
                 for (u32 gridZ = 0; gridZ < 4096; gridZ += 1024) {
                     for (u32 gridY = 0; gridY < 16; gridY += 4) {
@@ -134,74 +134,30 @@ namespace universal {
                             }
                         }
 
-                        u16 gridFormat, gridID, gridSize;
+                        u16 gridFormat, gridID;
                         switch (blockVector.size()) {
-                            case 1:
-                                gridSize = 0;
-                                gridID = blockVector[0];
-                                blockMap[blockVector[0]] = 0;
-                                goto SWITCH_END;
-
-                            case 2:
-                                gridFormat = V12_1_BIT; gridSize = 12;
-                                writeGrid<1, 2, 0>(blockVector, blockLocations, blockMap); break;
-
-                            case 3:
-                                gridFormat = V12_2_BIT; gridSize = 24;
-                                writeGrid<2, 3, 1>(blockVector, blockLocations, blockMap); break;
-                            case 4:
-                                gridFormat = V12_2_BIT; gridSize = 24;
-                                writeGrid<2, 4, 0>(blockVector, blockLocations, blockMap); break;
-
-                            case 5:
-                                gridFormat = V12_3_BIT; gridSize = 40;
-                                writeGrid<3, 5, 3>(blockVector, blockLocations, blockMap); break;
-                            case 6:
-                                gridFormat = V12_3_BIT; gridSize = 40;
-                                writeGrid<3, 6, 2>(blockVector, blockLocations, blockMap); break;
-                            case 7:
-                                gridFormat = V12_3_BIT; gridSize = 40;
-                                writeGrid<3, 7, 1>(blockVector, blockLocations, blockMap); break;
-                            case 8:
-                                gridFormat = V12_3_BIT; gridSize = 40;
-                                writeGrid<3, 8, 0>(blockVector, blockLocations, blockMap); break;
-
-                            case 9:
-                                gridFormat = V12_4_BIT; gridSize = 64;
-                                writeGrid<4, 9, 7>(blockVector, blockLocations, blockMap); break;
-                            case 10:
-                                gridFormat = V12_4_BIT; gridSize = 64;
-                                writeGrid<4, 10, 6>(blockVector, blockLocations, blockMap); break;
-                            case 11:
-                                gridFormat = V12_4_BIT; gridSize = 64;
-                                writeGrid<4, 11, 5>(blockVector, blockLocations, blockMap); break;
-                            case 12:
-                                gridFormat = V12_4_BIT; gridSize = 64;
-                                writeGrid<4, 12, 4>(blockVector, blockLocations, blockMap); break;
-                            case 13:
-                                gridFormat = V12_4_BIT; gridSize = 64;
-                                writeGrid<4, 13, 3>(blockVector, blockLocations, blockMap); break;
-                            case 14:
-                                gridFormat = V12_4_BIT; gridSize = 64;
-                                writeGrid<4, 14, 2>(blockVector, blockLocations, blockMap); break;
-                            case 15:
-                                gridFormat = V12_4_BIT; gridSize = 64;
-                                writeGrid<4, 15, 1>(blockVector, blockLocations, blockMap); break;
-                            case 16:
-                                gridFormat = V12_4_BIT; gridSize = 64;
-                                writeGrid<4, 16, 0>(blockVector, blockLocations, blockMap); break;
-                            default:
-                                gridFormat = V12_8_FULL; gridSize = 128;
-                                writeWithMaxBlocks(blockVector, blockLocations);
-                                for (u16 block : blockVector) { blockMap[block] = 0; }
-                                break;
+                            case  1: gridFormat = V12_0_UNO; gridID = blockVector[0]; blockMap[blockVector[0]] = 0; goto SWITCH_END;
+                            case  2: gridFormat = V12_1_BIT; writeGrid<1,  2, 0>(blockVector, blockLocations, blockMap); break;
+                            case  3: gridFormat = V12_2_BIT; writeGrid<2,  3, 1>(blockVector, blockLocations, blockMap); break;
+                            case  4: gridFormat = V12_2_BIT; writeGrid<2,  4, 0>(blockVector, blockLocations, blockMap); break;
+                            case  5: gridFormat = V12_3_BIT; writeGrid<3,  5, 3>(blockVector, blockLocations, blockMap); break;
+                            case  6: gridFormat = V12_3_BIT; writeGrid<3,  6, 2>(blockVector, blockLocations, blockMap); break;
+                            case  7: gridFormat = V12_3_BIT; writeGrid<3,  7, 1>(blockVector, blockLocations, blockMap); break;
+                            case  8: gridFormat = V12_3_BIT; writeGrid<3,  8, 0>(blockVector, blockLocations, blockMap); break;
+                            case  9: gridFormat = V12_4_BIT; writeGrid<4,  9, 7>(blockVector, blockLocations, blockMap); break;
+                            case 10: gridFormat = V12_4_BIT; writeGrid<4, 10, 6>(blockVector, blockLocations, blockMap); break;
+                            case 11: gridFormat = V12_4_BIT; writeGrid<4, 11, 5>(blockVector, blockLocations, blockMap); break;
+                            case 12: gridFormat = V12_4_BIT; writeGrid<4, 12, 4>(blockVector, blockLocations, blockMap); break;
+                            case 13: gridFormat = V12_4_BIT; writeGrid<4, 13, 3>(blockVector, blockLocations, blockMap); break;
+                            case 14: gridFormat = V12_4_BIT; writeGrid<4, 14, 2>(blockVector, blockLocations, blockMap); break;
+                            case 15: gridFormat = V12_4_BIT; writeGrid<4, 15, 1>(blockVector, blockLocations, blockMap); break;
+                            case 16: gridFormat = V12_4_BIT; writeGrid<4, 16, 0>(blockVector, blockLocations, blockMap); break;
+                            default: gridFormat = V12_8_FULL; writeWithMaxBlocks(blockVector, blockLocations, blockMap); break;
                         }
-
                         gridID = (sectionSize / 4) | gridFormat << 12;
                    SWITCH_END:;
-
                         gridHeader[gridIndex++] = gridID;
-                        sectionSize += gridSize;
+                        sectionSize += V12_GRID_SIZES[gridFormat];
 
                     }
 
@@ -229,7 +185,7 @@ namespace universal {
         // at root header, write section jump and size tables
         for (size_t sectionIndex = 0; sectionIndex < 16; sectionIndex++) {
             dataManager->writeInt16AtOffset(H_SECT_JUMP_TABLE + 2 * sectionIndex, sectJumpTable[sectionIndex]);
-            dataManager->writeInt8AtOffset( H_SECT_SIZE_TABLE + 1 * sectionIndex, sectSizeTable[sectionIndex]);
+            dataManager->writeInt8AtOffset( H_SECT_SIZE_TABLE +     sectionIndex, sectSizeTable[sectionIndex]);
         }
 
         u32 final_val = sectJumpTable[15] + sectSizeTable[15] * 256;
@@ -286,13 +242,17 @@ namespace universal {
 
 
     /// make this copy all u16 blocks from the grid location or whatnot
-    void V12Chunk::writeWithMaxBlocks(u16_vec& blockVector, u16_vec& blockLocations) const {
+    void V12Chunk::writeWithMaxBlocks(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[65536]) const {
         dataManager->setLittleEndian();
         for (size_t i = 0; i < 64; i++) {
             u16 blockPos = blockLocations[i];
             dataManager->writeInt16(blockVector[blockPos]);
         }
         dataManager->setBigEndian();
+
+        for (u16 block : blockVector) {
+            blockMap[block] = 0;
+        }
     }
 
 
