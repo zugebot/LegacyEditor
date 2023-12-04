@@ -18,9 +18,9 @@ MU ChunkManager* RegionManager::getChunk(int index) {
 
 MU ChunkManager* RegionManager::getNonEmptyChunk() {
     for (auto & chunk : chunks) {
-       if (chunk.size != 0) {
-           return &chunk;
-       }
+        if (chunk.size != 0) {
+            return &chunk;
+        }
     }
     return nullptr;
 }
@@ -29,19 +29,18 @@ MU ChunkManager* RegionManager::getNonEmptyChunk() {
 void RegionManager::read(Data* dataIn) {
     u32 totalSectors = dataIn->size / SECTOR_SIZE + 1;
 
+    size_t chunkIndex;
+    u8 sectors[1024];
+    u32 locations[1024];
+
     // step 0: copying data from file
-    DataManager managerIn(dataIn);
-    if (console == CONSOLE::VITA)
-        managerIn.setLittleEndian();
+    DataManager managerIn(dataIn, consoleIsBigEndian(console));
 
-    int h = 0;
-    for (ChunkManager &chunk: chunks) {
+    for (chunkIndex = 0; chunkIndex < 1024; chunkIndex++) {
         u32 val = managerIn.readInt32();
-        chunk.sectors = val & 0xff;
-        chunk.location = val >> 8;
-        h++;
+        sectors[chunkIndex] = val & 0xff;
+        locations[chunkIndex] = val >> 8;
     }
-
 
     // step 2: read timestamps [1024]
     for (ChunkManager& chunk : chunks) {
@@ -49,24 +48,26 @@ void RegionManager::read(Data* dataIn) {
     }
 
     // step 3: read chunk size, decompressed size
-    int count = 0;
+    chunkIndex = 0;
     for (ChunkManager& chunk : chunks) {
-        if (chunk.sectors == 0) continue;
+        if (sectors[chunkIndex] == 0) {
+            chunkIndex++;
+            continue;
+        }
 
-        if (chunk.location + chunk.sectors > totalSectors) {
-            printf("[%u] chunk sector[%u, %u] end goes outside file...\n", totalSectors, chunk.location, chunk.sectors);
+        if (locations[chunkIndex] + sectors[chunkIndex] > totalSectors) {
+            printf("[%u] chunk sector[%u, %u] end goes outside file...\n", totalSectors, locations[chunkIndex], sectors[chunkIndex]);
             throw std::runtime_error("debug here");
         }
 
-
         // read chunk info
-        managerIn.seek(SECTOR_SIZE * chunk.location);
-        count++;
+        managerIn.seek(SECTOR_SIZE * locations[chunkIndex]);
+        chunkIndex++;
 
         // allocates memory for the chunk
         chunk.size = managerIn.readInt32();
-        chunk.rleFlag = chunk.size >> 31;
-        chunk.unknownFlag = (chunk.size >> 30) & 1;
+        chunk.setRLE(chunk.size >> 31);
+        chunk.setUnknown((chunk.size >> 30) & 1);
         chunk.size &= 0x3FFFFFFF;
         chunk.allocate(chunk.size);
 
@@ -74,14 +75,14 @@ void RegionManager::read(Data* dataIn) {
         switch (console) {
             case CONSOLE::PS3:
             case CONSOLE::RPCS3:
-                chunk.dec_size = managerIn.readInt32(); // rle dec size (?)
-                chunk.dec_size = managerIn.readInt32(); // final dec size
+                chunk.setDecSize(managerIn.readInt32()); // rle dec size (?)
+                chunk.setDecSize(managerIn.readInt32()); // final dec size
                 break;
             case CONSOLE::XBOX360:
             case CONSOLE::WIIU:
             case CONSOLE::VITA:
             default:
-                chunk.dec_size = managerIn.readInt32(); // final dec size
+                chunk.setDecSize(managerIn.readInt32()); // final dec size
                 break;
         }
 
@@ -100,34 +101,35 @@ void RegionManager::read(File* fileIn) {
 
 
 Data RegionManager::write(CONSOLE consoleIn) {
+    u32 locations[1024] = {0};
+    u8 sectors[1024] = {0};
+
     // step 1: make sure all chunks are compressed correctly
     // step 2: recalculate sectorCount of each chunk
     // step 3: calculate chunk offsets for each chunk
     int total_sectors = 2;
-    for (ChunkManager& chunk : chunks) {
-
+    size_t chunkIndex = 0;
+    for (ChunkManager& chunk : this->chunks) {
         if (chunk.size == 0) {
-            chunk.sectors = 0;
-            chunk.location = 0;
-
+            sectors[chunkIndex] = 0;
+            locations[chunkIndex] = 0;
         } else {
             chunk.ensure_compressed(consoleIn);
-            chunk.sectors = chunk.size / SECTOR_SIZE + 1;
-            chunk.location = total_sectors;
-            total_sectors += chunk.sectors;
+            sectors[chunkIndex] = chunk.size / SECTOR_SIZE + 1;
+            locations[chunkIndex] = total_sectors;
+            total_sectors += sectors[chunkIndex];
         }
+        chunkIndex++;
     }
 
     // step 4: allocate memory and create buffer
     u32 data_size = total_sectors * SECTOR_SIZE;
     Data dataOut = Data(data_size);
-    DataManager managerOut(dataOut);
-    if (consoleIn == CONSOLE::VITA)
-        managerOut.setLittleEndian();
+    DataManager managerOut(dataOut, consoleIsBigEndian(consoleIn));
 
     // step 5: write each chunk offset
-    for (ChunkManager &chunk: chunks) {
-        u32 val = chunk.sectors | chunk.location << 8;
+    for (chunkIndex = 0; chunkIndex < 1024; chunkIndex++) {
+        u32 val = sectors[chunkIndex] | locations[chunkIndex] << 8;
         managerOut.writeInt32(val);
     }
 
@@ -138,29 +140,32 @@ Data RegionManager::write(CONSOLE consoleIn) {
 
     // step 7: seek to each location, write chunk attr's, then chunk data
     // make sure the pointer is a multiple of SECTOR_SIZE
+    chunkIndex = 0;
     for (const ChunkManager& chunk : chunks) {
-        if (chunk.sectors == 0) continue;
+        if (sectors[chunkIndex] == 0) {
+            chunkIndex++;
+            continue;
+        }
 
         // this looks kinda bad
-        managerOut.seek(chunk.location * SECTOR_SIZE);
+        managerOut.seek(locations[chunkIndex++] * SECTOR_SIZE);
 
         u32 size = chunk.size;
-        if (chunk.rleFlag) size |= 0x80000000;
-        if (chunk.unknownFlag) size |= 0x40000000;
-
+        if (chunk.getRLE())     size |= 0x80000000;
+        if (chunk.getUnknown()) size |= 0x40000000;
         managerOut.writeInt32(size);
 
         switch (console) {
             case CONSOLE::PS3:
             case CONSOLE::RPCS3:
-                managerOut.writeInt32(chunk.dec_size);
-                managerOut.writeInt32(chunk.dec_size);
+                managerOut.writeInt32(chunk.getDecSize());
+                managerOut.writeInt32(chunk.getDecSize());
                 break;
             case CONSOLE::XBOX360:
             case CONSOLE::WIIU:
             case CONSOLE::VITA:
             default:
-                managerOut.writeInt32(chunk.dec_size);
+                managerOut.writeInt32(chunk.getDecSize());
                 break;
         }
         managerOut.writeBytes(chunk.start(), chunk.size);

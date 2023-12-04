@@ -99,7 +99,7 @@ int main() {
         int h = -1;
         for (ChunkManager& chunkManager : region.chunks) {
             h++;
-            if (chunkManager.sectors == 0) {
+            if (chunkManager.size == 0) {
                 continue;
             }
 

@@ -8,7 +8,7 @@
 namespace universal {
 
 
-    enum GRID_STATE {
+    enum V12_GRID_STATE {
         V12_0_UNO = 0,
         V12_1_BIT = 2,
         V12_1_BIT_SUBMERGED = 3,
@@ -49,25 +49,22 @@ namespace universal {
         // #               Read Section
         // #####################################################
 
-        void readLightData() const;
         void readBlockData() const;
         template<size_t BitsPerBlock>
         bool readGrid(const u8* buffer, u8 grid[128]) const;
         template<size_t BitsPerBlock>
         bool readGridSubmerged(u8 const* buffer, u8 blockGrid[128], u8 SbmrgGrid[128]) const;
+        void readLightData() const;
 
         // #####################################################
         // #               Write Section
         // #####################################################
 
-        void writeBlockData();
-        /// used to write only the palette and positions.\n
-        /// It does not write liquid data, because I have been told that that is unnecessary.
+        void writeBlockData() const;
         template<size_t BitsPerBlock, size_t BlockCount, size_t EmptyCount>
-        void writeGrid(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[65536]);
-        /// used to write full block data, instead of using palette.
+        void writeGrid(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[65536]) const;
         void writeWithMaxBlocks(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[65536]) const;
         void writeLightSection(u32& readOffset, u8_vec& light) const;
-        void writeLightData();
+        void writeLightData() const;
     };
 }

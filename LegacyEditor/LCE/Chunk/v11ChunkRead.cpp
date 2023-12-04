@@ -2,6 +2,11 @@
 #include <algorithm>
 
 
+static inline u32 toIndex(u32 num) {
+    return (num + 1) * 128;
+}
+
+
 namespace universal {
 
 
@@ -69,10 +74,9 @@ namespace universal {
 
         int putBlockOffset = 0;
         for (size_t loop = 0; loop < 2; ++loop, putBlockOffset += 32768) {
-            u32 blockLength = dataManager->readInt32() - GRID_HEADER_SIZE;
+            i32 blockLength = (i32)dataManager->readInt32() - GRID_HEADER_SIZE;
 
-            /// TODO: should probably also check for underflow
-            if (blockLength == 0) {
+            if (blockLength <= 0) {
                 continue;
             }
 
@@ -136,18 +140,14 @@ namespace universal {
     }
 
 
-    static inline u32 toIndex(u32 num) {
-        return (num + 1) * 128;
-    }
-
-
     void V11Chunk::readData() const {
 
         u8_vec_vec dataArray(6);
         for (int i = 0; i < 6; i++) {
             u32 num = dataManager->readInt32();
             u32 index = toIndex(num);
-            dataArray[i] = dataManager->readIntoVector(index); // try to remove non-needed copy
+            // TODO: try to remove not-needed copy
+            dataArray[i] = dataManager->readIntoVector(index);
             chunkData->DataGroupCount += dataArray[i].size();
         }
 

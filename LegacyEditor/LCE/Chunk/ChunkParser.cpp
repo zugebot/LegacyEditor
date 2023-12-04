@@ -58,8 +58,6 @@ namespace universal {
     MU void ChunkParser::convertOldToNew() {
         chunkData.newBlocks = u16_vec(65536);
 
-
-
         int count = 0;
         for (int offset = 0; offset < 256; offset += 128) {
             for (int x = 0; x < 16; x++) {
@@ -100,9 +98,6 @@ namespace universal {
     }
 
 
-
-
-
     MU void ChunkParser::fixHeightMap() {
 
     }
@@ -112,7 +107,7 @@ namespace universal {
         int offset = toPos(x, y, z);
         u16 value = block << 4 | data;
         if (waterlogged) {
-            value |= 0b1000000000000000;
+            value |= 0x8000;
         }
         chunkData.newBlocks[offset] = value;
     }

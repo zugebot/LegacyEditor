@@ -9,17 +9,18 @@
 
 
 void ChunkManager::ensure_decompress(CONSOLE console) {
-    if (!isCompressed || console == CONSOLE::NONE || data == nullptr || sectors == 0) {
+    if (!getCompressed() || console == CONSOLE::NONE || data == nullptr || size == 0) {
         // printf("cannot Chunk.ensure_decompress the chunk if its already decompressed\n");
         // printf("passed CONSOLE::NONE to Chunk.ensure_decompress, results will not work\n");
         // printf("chunk data is nullptr, cannot Chunk.ensure_decompress nothing\n");
         // printf("cannot decompress data of chunk that has not been loaded");
         return;
     }
-    isCompressed = false;
+    setCompressed(false);
 
-    u32 dec_size_copy = dec_size;
-    Data decompData(dec_size);
+
+    u32 dec_size_copy = getDecSize();
+    Data decompData(getDecSize());
 
     switch (console) {
         case CONSOLE::XBOX360:
@@ -38,8 +39,8 @@ void ChunkManager::ensure_decompress(CONSOLE console) {
 
     deallocate();
 
-    if (rleFlag) {
-        allocate(dec_size);
+    if (getRLE()) {
+        allocate(getDecSize());
         RLE_decompress(decompData.start(), decompData.size, start(), dec_size_copy);
         decompData.deallocate();
     } else {
@@ -51,17 +52,16 @@ void ChunkManager::ensure_decompress(CONSOLE console) {
 
 
 void ChunkManager::ensure_compressed(CONSOLE console) {
-    if (isCompressed || console == CONSOLE::NONE || data == nullptr || sectors == 0) {
+    if (getCompressed() || console == CONSOLE::NONE || data == nullptr || size == 0) {
         // printf("cannot Chunk.ensure_compress if the chunk is already compressed\n");
         // printf("passed CONSOLE::NONE to Chunk.ensure_compress, results will not work\n");
         // printf("chunk data is nullptr, cannot Chunk.ensure_compress nothing\n");
         return;
     }
+    setCompressed(true);
+    setDecSize(size);
 
-    isCompressed = true;
-    dec_size = size;
-
-    if (rleFlag) {
+    if (getRLE()) {
         Data rleBuffer(size);
         RLE_compress(data, size, rleBuffer.data, rleBuffer.size);
         deallocate();

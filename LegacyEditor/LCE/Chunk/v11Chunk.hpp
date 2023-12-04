@@ -9,7 +9,7 @@ namespace universal {
     /// "Elytra" chunks.
     class V11Chunk {
     private:
-        static constexpr u32 GRID_HEADER_SIZE = 1024;
+        static constexpr i32 GRID_HEADER_SIZE = 1024;
 
     public:
         ChunkData* chunkData = nullptr;

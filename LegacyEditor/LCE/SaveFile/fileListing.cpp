@@ -10,6 +10,9 @@
 #include "LegacyEditor/LCE/Region/RegionManager.hpp"
 
 
+namespace fs = std::filesystem;
+
+
 i16 extractMapNumber(const std::string& str) {
     static const std::string start = "map_";
     static const std::string end = ".dat";
@@ -179,7 +182,7 @@ MU void FileListing::deleteAllChunks() {
         for (File* file: *fileList) {
             region.read(file);
             for (auto& chunk: region.chunks) {
-                chunk.sectors = 0;
+                chunk.size = 0;
             }
             Data data = region.write(console);
             delete[] file->data.data;
@@ -190,7 +193,6 @@ MU void FileListing::deleteAllChunks() {
 
 
 void FileListing::saveToFolder(const std::string &folder) {
-    namespace fs = std::filesystem;
 
     if (folder.length() < 10) {
         printf("tried to delete short directory, will not risk");
@@ -272,6 +274,7 @@ Data FileListing::write(CONSOLE consoleOut) {
 }
 
 
+// TODO: this function probably doesn't work
 std::vector<File> FileListing::collectFiles(FileType fileType) {
     std::vector<File> collectedFiles;
     allFiles.erase(
