@@ -29,9 +29,27 @@ ND NBTTagCompound* File::getNBTCompound() const {
 
 
 std::string File::constructFileName(MU CONSOLE console) const {
+    static std::unordered_map<FileType, std::string> FileTypeNames{
+        {FileType::VILLAGE, "data/villages.dat"},
+        {FileType::DATA_MAPPING, "data/largeMapDataMappings.dat"},
+        {FileType::LEVEL, "level.dat"},
+        {FileType::GRF, "requiredGameRules.grf"},
+        {FileType::ENTITY_NETHER, "DIM-1entities.dat"},
+        {FileType::ENTITY_OVERWORLD, "entities.dat"},
+        {FileType::ENTITY_END, "DIM1/entities.dat"}
+    };
     std::string name;
     switch (fileType) {
         using std::to_string;
+        case FileType::VILLAGE:
+        case FileType::DATA_MAPPING:
+        case FileType::LEVEL:
+        case FileType::GRF:
+        case FileType::ENTITY_NETHER:
+        case FileType::ENTITY_OVERWORLD:
+        case FileType::ENTITY_END:
+            name = FileTypeNames[fileType];
+            break;
         case FileType::NONE: {
             name = "NONE";
             printf("file encountered with no type, possibly an error?");
@@ -46,20 +64,15 @@ std::string File::constructFileName(MU CONSOLE console) const {
             name = getNBTCompound()->getString("filename");
             break;
         }
-        case FileType::VILLAGE: {
-            name = "data/villages.dat";
-            break;
-        }
-        case FileType::DATA_MAPPING: {
-            name = "data/largeMapDataMappings.dat";
-            break;
-        }
         case FileType::MAP: {
             auto tag = getNBTCompound()->getTag("#");
             i16 mapNum = tag.toPrimitiveType<i16>();
             name = "data/map" + to_string(mapNum) + ".dat";
             break;
         }
+        case FileType::PLAYER:
+            name = getNBTCompound()->getString("filename");
+            break;
         case FileType::REGION_NETHER:
         case FileType::REGION_OVERWORLD:
         case FileType::REGION_END: {
@@ -73,28 +86,6 @@ std::string File::constructFileName(MU CONSOLE console) const {
                 name = "DIM1/";
             }
             name += "r." + to_string(x) + "." + to_string(z) + ".mcr";
-            break;
-        }
-        case FileType::PLAYER: {
-            name = getNBTCompound()->getString("filename");
-            break;
-        }
-        case FileType::LEVEL: {
-            name = "level.dat";
-            break;
-        }
-        case FileType::GRF: {
-            name = "requiredGameRules.grf";
-            break;
-        }
-        case FileType::ENTITY_NETHER:
-            name = "DIM-1entities.dat";
-            break;
-        case FileType::ENTITY_OVERWORLD:
-            name = "entities.dat";
-            break;
-        case FileType::ENTITY_END: {
-            name = "DIM1/entities.dat";
             break;
         }
     }

@@ -103,7 +103,7 @@ int ConsoleParser::readWiiU(u32 file_size) {
     // total size of file
     source_binary_size -= 8;
 
-    Data src = Data(source_binary_size);
+    Data src = Data(source_binary_size * 2);
 
     if(!allocate(file_size)) {
         return STATUS::MALLOC_FAILED;
@@ -201,7 +201,7 @@ int ConsoleParser::readXbox360_BIN() {
     fread(bin.start(), 1, source_binary_size, f_in);
 
     saveGameInfo = extractSaveGameDat(bin.start(), (i64) source_binary_size);
-    bin.deallocate(); // TODO: idk if it should but it is for now
+    bin.deallocate(); // TODO: IDK if it should but it is for now
 
     u32 src_size = saveGameInfo.saveFileData.readInt32() - 8;
 

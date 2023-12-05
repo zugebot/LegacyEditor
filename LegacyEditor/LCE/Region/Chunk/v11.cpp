@@ -21,7 +21,7 @@ namespace chunk {
         chunkData->chunkX = (i32) dataManager->readInt32();
         chunkData->chunkZ = (i32) dataManager->readInt32();
         chunkData->lastUpdate = (i64) dataManager->readInt64();
-        if (chunkData->lastVersion > 8)
+        if (chunkData->lastVersion > 8) // Potions
             chunkData->inhabitedTime = (i64) dataManager->readInt64();
 
         chunkData->newBlocks = u16_vec(65536);

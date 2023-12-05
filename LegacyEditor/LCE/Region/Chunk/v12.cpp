@@ -442,13 +442,17 @@ namespace chunk {
                         u16 gridFormat, gridID;
                         switch (blockVector.size()) {
                             case  1: gridFormat = V12_0_UNO; gridID = blockVector[0]; blockMap[blockVector[0]] = 0; goto SWITCH_END;
+
                             case  2: gridFormat = V12_1_BIT; writeGrid<1,  2, 0>(blockVector, blockLocations, blockMap); break;
+
                             case  3: gridFormat = V12_2_BIT; writeGrid<2,  3, 1>(blockVector, blockLocations, blockMap); break;
                             case  4: gridFormat = V12_2_BIT; writeGrid<2,  4, 0>(blockVector, blockLocations, blockMap); break;
+
                             case  5: gridFormat = V12_3_BIT; writeGrid<3,  5, 3>(blockVector, blockLocations, blockMap); break;
                             case  6: gridFormat = V12_3_BIT; writeGrid<3,  6, 2>(blockVector, blockLocations, blockMap); break;
                             case  7: gridFormat = V12_3_BIT; writeGrid<3,  7, 1>(blockVector, blockLocations, blockMap); break;
                             case  8: gridFormat = V12_3_BIT; writeGrid<3,  8, 0>(blockVector, blockLocations, blockMap); break;
+
                             case  9: gridFormat = V12_4_BIT; writeGrid<4,  9, 7>(blockVector, blockLocations, blockMap); break;
                             case 10: gridFormat = V12_4_BIT; writeGrid<4, 10, 6>(blockVector, blockLocations, blockMap); break;
                             case 11: gridFormat = V12_4_BIT; writeGrid<4, 11, 5>(blockVector, blockLocations, blockMap); break;
@@ -457,6 +461,7 @@ namespace chunk {
                             case 14: gridFormat = V12_4_BIT; writeGrid<4, 14, 2>(blockVector, blockLocations, blockMap); break;
                             case 15: gridFormat = V12_4_BIT; writeGrid<4, 15, 1>(blockVector, blockLocations, blockMap); break;
                             case 16: gridFormat = V12_4_BIT; writeGrid<4, 16, 0>(blockVector, blockLocations, blockMap); break;
+
                             default: gridFormat = V12_8_FULL; writeWithMaxBlocks(blockVector, blockLocations, blockMap); break;
                         }
                         gridID = (sectionSize / 4) | gridFormat << 12;
@@ -493,7 +498,7 @@ namespace chunk {
             dataManager->writeInt8AtOffset( H_SECT_SIZE_TABLE +     sectionIndex, sectSizeTable[sectionIndex]);
         }
 
-        u32 final_val = sectJumpTable[15] + sectSizeTable[15] * 256;
+        u32 final_val = last_section_jump * 256;
 
         // at root header, write total file size
         dataManager->writeInt16AtOffset(H_BEGIN, final_val >> 8);

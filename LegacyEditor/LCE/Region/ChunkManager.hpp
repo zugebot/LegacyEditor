@@ -7,7 +7,7 @@
 
 class ChunkManager : public Data {
 private:
-    static constexpr u32 CHUNK_BUFFER_SIZE = 4000000;
+    static constexpr u32 CHUNK_BUFFER_SIZE = 0xFFFFFF; // 4,194,303
 
     struct {
         u32 timestamp;
@@ -22,7 +22,7 @@ public:
         managerData.decSize = 0;
         managerData.isCompressed = 1;
         managerData.rleFlag = 1;
-        managerData.unknownFlag = 1;
+        managerData.unknownFlag = 1; //
         managerData.timestamp = 0;
         chunkData = new chunk::ChunkData();
     }
@@ -55,5 +55,5 @@ public:
     void ensure_compressed(CONSOLE console);
 
     MU void readChunk(DIM dim);
-    MU ND Data writeChunk(DIM dim);
+    MU void writeChunk(DIM dim);
 };

@@ -42,7 +42,7 @@ MU void ChunkManager::readChunk(DIM dim) {
 }
 
 
-MU Data ChunkManager::writeChunk(DIM dim) {
+MU void ChunkManager::writeChunk(DIM dim) {
     Data outBuffer(CHUNK_BUFFER_SIZE);
     memset(outBuffer.data, 0, CHUNK_BUFFER_SIZE);
     auto managerOut = DataManager(outBuffer);
@@ -73,11 +73,11 @@ MU Data ChunkManager::writeChunk(DIM dim) {
     Data outData(managerOut.getPosition());
     memcpy(outData.data, outBuffer.data, outData.size);
     outBuffer.deallocate();
+    deallocate();
 
-    steal(outData);
+    data = outData.data;
+    size = outData.size;
     setDecSize(size);
-
-    return outData;
 }
 
 
@@ -109,13 +109,16 @@ void ChunkManager::ensure_decompress(CONSOLE console) {
             break;
     }
 
+    deallocate();
+
     if (getRLE()) {
-        deallocate();
         allocate(getDecSize());
-        RLE_decompress(decompData.start(), decompData.size, data, dec_size_copy);
+        RLE_decompress(decompData.start(), decompData.size, start(), dec_size_copy);
         decompData.deallocate();
     } else {
-        steal(Data(decompData.data, dec_size_copy));
+        data = decompData.data;
+        size = dec_size_copy;
+        decompData.reset();
     }
 }
 
@@ -133,7 +136,10 @@ void ChunkManager::ensure_compressed(CONSOLE console) {
     if (getRLE()) {
         Data rleBuffer(size);
         RLE_compress(data, size, rleBuffer.data, rleBuffer.size);
-        steal(rleBuffer);
+        deallocate();
+        data = rleBuffer.data;
+        size = rleBuffer.size;
+        rleBuffer.reset();
     }
 
     // allocate memory and recompress
@@ -156,10 +162,13 @@ void ChunkManager::ensure_compressed(CONSOLE console) {
             if (status != 0) {
                 printf("error has occurred compressing chunk\n");
             }
-            steal(Data(comp_ptr, comp_size));
+
+            deallocate();
+            data = comp_ptr;
+            size = comp_size;
+            comp_size = 0;
             break;
         }
-
 
         case CONSOLE::WIIU:
         case CONSOLE::VITA: {
@@ -167,18 +176,15 @@ void ChunkManager::ensure_compressed(CONSOLE console) {
             if (status != 0) {
                 printf("error has occurred compressing chunk\n");
             }
-            steal(Data(comp_ptr, comp_size));
+
+            deallocate();
+            data = comp_ptr;
+            size = comp_size;
+            comp_size = 0;
             break;
         }
         default:
             break;
     }
 
-
 }
-
-
-
-
-
-

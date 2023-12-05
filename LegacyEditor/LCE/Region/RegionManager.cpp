@@ -53,10 +53,11 @@ void RegionManager::read(Data* dataIn) {
     }
 
     // step 3: read chunk size, decompressed size
-    chunkIndex = 0;
+    chunkIndex = -1;
     for (ChunkManager& chunk : chunks) {
+        chunkIndex++;
+
         if (sectors[chunkIndex] == 0) {
-            chunkIndex++;
             continue;
         }
 
@@ -67,7 +68,6 @@ void RegionManager::read(Data* dataIn) {
 
         // read chunk info
         managerIn.seek(SECTOR_SIZE * locations[chunkIndex]);
-        chunkIndex++;
 
         // allocates memory for the chunk
         chunk.size = managerIn.readInt32();
@@ -108,18 +108,18 @@ Data RegionManager::write(CONSOLE consoleIn) {
     // step 2: recalculate sectorCount of each chunk
     // step 3: calculate chunk offsets for each chunk
     int total_sectors = 2;
-    size_t chunkIndex = 0;
+    size_t chunkIndex = -1;
     for (ChunkManager& chunk : this->chunks) {
+        chunkIndex++;
         if (chunk.size == 0) {
             sectors[chunkIndex] = 0;
             locations[chunkIndex] = 0;
         } else {
             chunk.ensure_compressed(consoleIn);
-            sectors[chunkIndex] = chunk.size / SECTOR_SIZE + 1;
+            sectors[chunkIndex] = (chunk.size + 12) / SECTOR_SIZE + 1;
             locations[chunkIndex] = total_sectors;
             total_sectors += sectors[chunkIndex];
         }
-        chunkIndex++;
     }
 
     // step 4: allocate memory and create buffer
@@ -140,15 +140,15 @@ Data RegionManager::write(CONSOLE consoleIn) {
 
     // step 7: seek to each location, write chunk attr's, then chunk data
     // make sure the pointer is a multiple of SECTOR_SIZE
-    chunkIndex = 0;
+    chunkIndex = -1;
     for (const ChunkManager& chunk : chunks) {
+        chunkIndex++;
         if (sectors[chunkIndex] == 0) {
-            chunkIndex++;
             continue;
         }
 
         // this looks kinda bad
-        managerOut.seek(locations[chunkIndex++] * SECTOR_SIZE);
+        managerOut.seek(locations[chunkIndex] * SECTOR_SIZE);
 
         u32 size = chunk.size;
         if (chunk.getRLE())     size |= 0x80000000;

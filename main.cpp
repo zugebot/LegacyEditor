@@ -38,6 +38,22 @@ void compareNBT(NBTBase* first, NBTBase* second) {
 }
 
 
+
+// Function to shuffle an array using Fisher-Yates algorithm
+void shuffleArray(uint16_t arr[], int size) {
+    // Initialize random number generator
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+
+    for (int i = size - 1; i > 0; --i) {
+        // Generate a random index between 0 and i (inclusive)
+        int j = std::rand() % (i + 1);
+
+        // Swap elements arr[i] and arr[j]
+        std::swap(arr[i], arr[j]);
+    }
+}
+
+
 int toBlock(int x, int y, int z) {
     return y + 256 * z + 4096 * x;
 }
@@ -70,7 +86,7 @@ int main() {
     }
 
     FileListing fileListing(parser);
-    fileListing.removeFileTypes({FileType::PLAYER, FileType::DATA_MAPPING, FileType::STRUCTURE});
+    fileListing.removeFileTypes({FileType::PLAYER, FileType::DATA_MAPPING, FileType::STRUCTURE, FileType::REGION_NETHER, FileType::REGION_END});
     fileListing.saveToFolder(dir_path + "dump_wiiu");
 
 
@@ -131,12 +147,13 @@ int main() {
             u16 blocks[65536];
             for (u16 x = 0; x < 16; x++) {
                 for (u16 z = 0; z < 16; z++) {
-                    for (u16 y = 0; y < 128; y++) {
+                    for (u16 y = 0; y < 256; y++) {
                         u16 block1 = chunk::getBlock(chunkManager.chunkData, x, y, z);
                         u16 block2 = block1;
 
                         int offset1 =       y + 256 * z + 4096 * x;
                         int offset2 = 255 - y + 256 * z + 4096 * x;
+
 
                         u16 compare1 = (block1 & 0x1FF0) >> 4;
                         if (block1 & 0x8000) { // fix stupid blocks
@@ -144,44 +161,30 @@ int main() {
                                 block1 = (block1 & 0x9FF7) | 0x08;
                             }
                             if (compare1 == 272) { // bubble column
-                                block1 = (block1 & 0x1FFF) | 0x08;
-                                // block1 = 9 << 4;
+                                block1 = (block1 & 0x7FFF) | 0b1111;
                             }
-                            // block1 = 0;
                         }
 
-
-                        u16 compare2 = (block1 & 0x1FF0) >> 4;
+                        u16 compare2;
                         if (block2 & 0x8000) {
                             block2 &= 0x1FFF;
                             compare2 = (block2 & 0x1FF0) >> 4;
                             if (compare2 == 271) { // sea pickle
-                                block2 = 0; //9 << 4;
+                                // block2 = 0;
                             }
                             if (compare2 == 272) { // bubble column
-                                block2 = 0;//9 << 4;
+                                // block2 = 0;
                             }
-                            // block2 = 0;
                         }
 
-                        /*
-                        // if (compare1 == 8 || compare1 == 9 || compare1 == 10 || compare1 == 11) {
-                        //     block1 = 0;
-                        // }
-
-                        // if (compare2 == 8 || compare2 == 9 || compare2 == 10 || compare2 == 11) {
-                        //     block2 = 0;
-                        // }
-                        */
-
-                        blocks[offset2] = block2;
-
                         blocks[offset1] = block1;
+                        // blocks[offset2] = block2;
                     }
                 }
             }
-
             memcpy(&chunkData->newBlocks[0], &blocks[0], 131072);
+            // shuffleArray(&chunkData->newBlocks[0], 256 * 15 * 8);
+
             memset(&chunkData->blockLight[0], 0xFF, 32768);
             memset(&chunkData->heightMap[0], 0xFF, 256);
             memset(&chunkData->skyLight[0], 0xFF, 32768);
@@ -202,21 +205,21 @@ int main() {
             // memset(&chunkData.blockLight[0], 0xFF, 32768);
             // memset(&chunkData.skyLight[0], 0xFF, 32768);
             */
-            /*
-             if (chunkData.NBTData != nullptr) {
-                chunkData.NBTData->toType<NBTTagCompound>()->deleteAll();
-                delete chunkData.NBTData;
+
+             if (chunkData->NBTData != nullptr) {
+                chunkData->NBTData->toType<NBTTagCompound>()->deleteAll();
+                delete chunkData->NBTData;
              }
 
-            chunkData.NBTData = new NBTBase(new NBTTagCompound(), TAG_COMPOUND);
-            auto* chunkRootNbtData = static_cast<NBTTagCompound*>(chunkData.NBTData->data);
+            chunkData->NBTData = new NBTBase(new NBTTagCompound(), TAG_COMPOUND);
+            auto* chunkRootNbtData = static_cast<NBTTagCompound*>(chunkData->NBTData->data);
             auto* entities = new NBTTagList();
             auto* tileEntities = new NBTTagList();
             auto* tileTicks = new NBTTagList();
             chunkRootNbtData->setListTag("Entities", entities);
             chunkRootNbtData->setListTag("TileEntities", tileEntities);
             chunkRootNbtData->setListTag("TileTicks", tileTicks);
-            */
+
             /*
             if (chunkData.chunkX == -3 && chunkData.chunkZ == 26) {
                 if (chunkData.NBTData != nullptr) {
@@ -228,7 +231,7 @@ int main() {
                     std::cout << tileEntities.toString() << std::endl;
                 }
             }
-             */
+            */
             /*
             if (chunkData.NBTData != nullptr) {
                 auto* compound = chunkData.NBTData->toType<NBTTagCompound>();
@@ -264,9 +267,10 @@ int main() {
                     }
                 }
             }
-             */
+            */
 
-            Data outBuffer = chunkManager.writeChunk(DIM::OVERWORLD);
+
+            chunkManager.writeChunk(DIM::OVERWORLD);
             chunkManager.ensure_compressed(console);
 
         }
@@ -327,16 +331,8 @@ int main() {
     printf("Total Time: %.3f\n", float(end - start) / float(1000000000));
 
 
-    CONSOLE consoleOut = CONSOLE::WIIU;
-    for (auto* fileList : fileListing.dimFileLists) {
-        for (File* file: *fileList) {
-            RegionManager reg(CONSOLE::WIIU);
-            reg.read(file);
-            Data _data = reg.write(consoleOut);
-            file->steal(_data);
-        }
-    }
-
+    const CONSOLE consoleOut = CONSOLE::WIIU;
+    fileListing.convertRegions(consoleOut);
     Data dataOut = fileListing.write(consoleOut); // write file listing
     int statusOut = ConsoleParser::saveWiiU(outFilePathAquatic, dataOut);
     if (statusOut) {

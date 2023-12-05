@@ -49,7 +49,6 @@ public:
     File *largeMapDataMappings{}, *level{}, *grf{}, *village{};
 
 
-    FileListing() = default;
     explicit FileListing(ConsoleParser& consoleParser);
     MU explicit FileListing(ConsoleParser* consoleParser);
     ~FileListing() { deallocate(); }
@@ -58,19 +57,20 @@ public:
     Data write(CONSOLE consoleOut);
     void saveToFolder(const std::string& folder);
 
+
     MU void convertRegions(CONSOLE consoleOut);
-    MU void deleteAllChunks();
 
 
     void deallocate();
-    void clearPointers();
-    void updatePointers();
     void removeFileTypes(const std::set<FileType>& typesToRemove);
     MU void addFiles(std::vector<File> filesIn);
     std::vector<File> collectFiles(FileType fileType);
 
 
 private:
+    void clearPointers();
+    void updatePointers();
+
     /// For use in removeFileTypes
     std::map<FileType, std::function<void()>> clearActionsDelete = {
         {FileType::STRUCTURE, [this]() { structures.removeAll(); }},

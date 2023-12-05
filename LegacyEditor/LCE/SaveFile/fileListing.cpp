@@ -164,24 +164,7 @@ MU void FileListing::convertRegions(CONSOLE consoleOut) {
             RegionManager region(console);
             region.read(file);
             Data data = region.write(consoleOut);
-            delete[] file->data.data;
-            file->data = data;
-        }
-    }
-}
-
-
-MU void FileListing::deleteAllChunks() {
-    RegionManager region(console);
-    for (FileList* fileList : dimFileLists) {
-        for (File* file: *fileList) {
-            region.read(file);
-            for (auto& chunk: region.chunks) {
-                chunk.size = 0;
-            }
-            Data data = region.write(console);
-            delete[] file->data.data;
-            file->data = data;
+            file->data.steal(data);
         }
     }
 }
