@@ -292,7 +292,8 @@ int main() {
     if (statusOut) {
         printf("converting to wiiu failed...\n");
     } else {
-        printf("finished!\n");
+        printf("Finished!\n");
+        printf("File Out: %s", TEST.second.c_str());
     }
 
     return 0;
