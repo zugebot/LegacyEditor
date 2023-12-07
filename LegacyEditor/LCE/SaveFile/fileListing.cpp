@@ -69,6 +69,7 @@ void FileListing::read(Data &dataIn) {
     allFiles.reserve(fileCount);
 
     u32 total_size = 0;
+    u32 non_empty_file_count = 0;
     for (int fileIndex = 0; fileIndex < fileCount; fileIndex++) {
         managerIn.seek(indexOffset + fileIndex * FILE_HEADER_SIZE);
 
@@ -84,6 +85,8 @@ void FileListing::read(Data &dataIn) {
             printf("Skipping empty file \"%s\"\n", fileName.c_str());
             continue;
         }
+
+        non_empty_file_count++;
 
         managerIn.seek(index);
         u8* data = managerIn.readBytes(fileSize);
@@ -153,6 +156,7 @@ void FileListing::read(Data &dataIn) {
         printf("Unknown File: %s\n", fileName.c_str());
 
     }
+
     updatePointers();
     printf("\n");
 }
@@ -352,11 +356,14 @@ void FileListing::updatePointers() {
 
 void FileListing::removeFileTypes(const std::set<FileType>& typesToRemove) {
 
-    for (int index = 0; index < allFiles.size();) {
+    size_t count = allFiles.size();
+    for (int index = 0; index < count;) {
         if (typesToRemove.contains(allFiles[index].fileType)) {
-            delete[] allFiles[index].data.data;
-            allFiles[index].data.data = nullptr;
-            allFiles.erase(allFiles.begin() + index);
+            allFiles[index].deleteData();
+            allFiles[index].deleteNBTCompound();
+            std::swap(allFiles[index], allFiles.back());
+            allFiles.pop_back();
+            count--;
         } else {
             index++;
         }

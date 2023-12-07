@@ -11,6 +11,13 @@ File::~File() {
 }
 
 
+void File::deleteData() {
+    delete[] data.data;
+    data.data = nullptr;
+    data.size = 0;
+}
+
+
 NBTTagCompound* File::createNBTTagCompound() {
     if (nbt != nullptr)
         return nullptr;
@@ -25,6 +32,16 @@ ND NBTTagCompound* File::getNBTCompound() const {
     if (nbt->data == nullptr)
         return nullptr;
     return static_cast<NBTTagCompound*>(nbt->data);
+}
+
+
+void File::deleteNBTCompound() {
+    if (nbt == nullptr) return;
+    if (nbt->data == nullptr) return;
+    getNBTCompound()->deleteAll();
+    nbt->data = nullptr;
+    delete nbt;
+    nbt = nullptr;
 }
 
 

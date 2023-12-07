@@ -44,10 +44,12 @@ public:
     File(u32 sizeIn, u64 timestampIn) : data(Data(sizeIn)), timestamp(timestampIn) {}
     File(u8* dataIn, u32 sizeIn, u64 timestampIn) : data(dataIn, sizeIn), timestamp(timestampIn) {}
 
+    void deleteData();
     void steal(Data& other) { data.steal(other); }
 
     ND NBTTagCompound* createNBTTagCompound();
     ND NBTTagCompound* getNBTCompound() const;
+    void deleteNBTCompound();
     ND std::string constructFileName(CONSOLE console) const;
     MU ND bool isEmpty() const { return data.size != 0; }
 };
