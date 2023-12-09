@@ -19,9 +19,6 @@
 #include "LegacyEditor/utils/time.hpp"
 
 
-typedef std::pair<std::string, std::string> strPair_t;
-
-
 void compareNBT(NBTBase* first, NBTBase* second) {
     auto* firstNBT = NBTBase::toType<NBTTagCompound>(first)->getCompoundTag("Data");
     auto* secondNBT = NBTBase::toType<NBTTagCompound>(second)->getCompoundTag("Data");;
@@ -40,16 +37,6 @@ void compareNBT(NBTBase* first, NBTBase* second) {
 }
 
 
-/// Function to shuffle an array using Fisher-Yates algorithm
-void shuffleArray(uint16_t arr[], int size) {
-    std::srand(static_cast<unsigned int>(std::time(nullptr)));
-    for (int i = size - 1; i > 0; --i) {
-        int j = std::rand() % (i + 1);
-        std::swap(arr[i], arr[j]);
-    }
-}
-
-
 int toBlock(int x, int y, int z) {
     return y + 256 * z + 4096 * x;
 }
@@ -64,7 +51,7 @@ int toBlock(int x, int y, int z) {
 
 
 
-void processRegion(CONSOLE parserConsole, int regionIndex, FileListing& fileListing) {
+void processRegion(int regionIndex, CONSOLE parserConsole, FileListing& fileListing) {
     const CONSOLE console = parserConsole;
 
     // read a region file
@@ -244,60 +231,56 @@ void processRegion(CONSOLE parserConsole, int regionIndex, FileListing& fileList
 }
 
 
-
-
 int main() {
+
+    typedef std::pair<std::string, std::string> strPair_t;
     dir_path = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\)";
+    tst_path = dir_path + R"(tests\)";
+    out_path = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\)";
 
     std::map<std::string, strPair_t> TESTS = {
-        {"superflat", std::make_pair(dir_path + R"(tests\superflat)", R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\231105133853)")},
-        {"aquatic_tut", std::make_pair(dir_path + R"(tests\aquatic_tutorial)", R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\231105133853)")},
-        {"vita", std::make_pair(dir_path + R"(tests\Vita Save\PCSB00560-231005063840\GAMEDATA.bin)", R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\BLANK_SAVE)")},
-        {"elytra_tut", std::make_pair(dir_path + R"()", R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\BLANK_SAVE)")},
+        {"superflat",   std::make_pair(tst_path + R"(superflat)",                                     out_path + R"(231105133853)")},
+        {"aquatic_tut", std::make_pair(tst_path + R"(aquatic_tutorial)",                              out_path + R"(231105133853)")},
+        {"vita",        std::make_pair(tst_path + R"(Vita Save\PCSB00560-231005063840\GAMEDATA.bin)", out_path + R"(BLANK_SAVE)")},
+        {"elytra_tut",  std::make_pair(tst_path + R"()",                                              out_path + R"(BLANK_SAVE)")},
     };
-
     strPair_t TEST = TESTS["vita"];
-
+    const CONSOLE consoleOut = CONSOLE::WIIU;
 
     // read savedata
     ConsoleParser parser;
     int statusIn = parser.readConsoleFile(TEST.first);
-    if (statusIn) {
-        printf("failed to load file\n");
-        return -1;
-    }
-
+    if (statusIn) return printf_err("failed to load file\n");
 
     // edit fileListing
     FileListing fileListing(parser);
     fileListing.removeFileTypes({FileType::PLAYER, FileType::DATA_MAPPING, FileType::STRUCTURE});
-    fileListing.saveToFolder(dir_path + "dump_wiiu");
+    fileListing.saveToFolder(dir_path + "dump_" + consoleToStr(parser.console)); // debugging
 
-
-    // edit regions
+    // edit regions (threaded)
     auto start = getNanoSeconds();
-    std::vector<std::thread> threads;
-    for (int regionIndex = 0; regionIndex < 4; regionIndex++)
-        threads.emplace_back(processRegion, parser.console, regionIndex, std::ref(fileListing));
-    for (auto& thread : threads) { if (thread.joinable()) { thread.join(); } }
+    run_parallel<4>(processRegion, parser.console, std::ref(fileListing));
     auto end = getNanoSeconds();
     printf("Total Time: %.3f\n", float(end - start) / float(1000000000));
 
-
     // convert to fileListing
-    const CONSOLE consoleOut = CONSOLE::WIIU;
     fileListing.convertRegions(consoleOut);
     Data dataOut = fileListing.write(consoleOut);
     int statusOut = ConsoleParser::saveWiiU(TEST.second, dataOut);
     if (statusOut) {
-        printf("converting to wiiu failed...\n");
+        return printf_err("converting to wiiu failed...\n");
     } else {
-        printf("Finished!\n");
-        printf("File Out: %s", TEST.second.c_str());
+        printf("Finished!\nile Out: %s", TEST.second.c_str());
     }
 
     return 0;
 }
+
+
+
+
+
+
 
 /*
 std::set<u16> diff;
