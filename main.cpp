@@ -26,14 +26,20 @@ void processRegion(int regionIndex, FileListing& fileListing) {
     RegionManager region(console);
     region.read(fileListing.region_overworld[regionIndex]);
 
-    int h = 0;
+    int h = -1;
     for (ChunkManager& chunkManager : region.chunks) {
-        if (chunkManager.size == 0) continue;
         h++;
+        if (chunkManager.size == 0) {
+            continue;
+        }
 
         chunkManager.ensure_decompress(console);
         chunkManager.readChunk(console, DIM::OVERWORLD);
         auto* chunkData = chunkManager.chunkData;
+
+        if (!chunkData->validChunk) {
+            continue;
+        }
 
         u16 blocks[65536];
         for (u16 x = 0; x < 16; x++) {
@@ -43,9 +49,6 @@ void processRegion(int regionIndex, FileListing& fileListing) {
                     u16 data_1 = 0;
                     int offset1 = y + 256 * z + 4096 * x;
 
-                    /*
-                    u16 block2 = block1;
-                    int offset2 = 255 - y + 256 * z + 4096 * x;
                     u16 compare1 = (block1 & 0x1FF0) >> 4;
                     if (block1 & 0x8000) { // fix stupid blocks
                         if (compare1 == 271) { // sea pickle
@@ -55,8 +58,11 @@ void processRegion(int regionIndex, FileListing& fileListing) {
                             block1 = (block1 & 0x7FFF) | 0b1111;
                         }
                     }
-                     */
 
+                    blocks[offset1] = block1 | data_1;
+
+
+                    /*
                     block1 = BlockID::AIR_ID;
                     if (y == 0) { block1 = BlockID::BEDROCK_ID; }
 
@@ -99,10 +105,13 @@ void processRegion(int regionIndex, FileListing& fileListing) {
                     END:
 
                     blocks[offset1] = block1 | data_1;
+                     */
                 }
             }
         }
+
         memcpy(&chunkData->newBlocks[0], &blocks[0], 131072);
+        // shuffleArray(&chunkData->newBlocks[0], 65535);
         memset(&chunkData->biomes[0], 0x0B, 256);
         memset(&chunkData->blockLight[0], 0xFF, 32768);
         memset(&chunkData->heightMap[0], 0xFF, 256);
@@ -125,28 +134,22 @@ void processRegion(int regionIndex, FileListing& fileListing) {
 typedef std::pair<std::string, std::string> strPair_t;
 std::map<std::string, strPair_t> TESTS;
 
-void PREPARE_TESTS() {
+void TEST_PAIR(stringRef_t key, stringRef_t in, stringRef_t out) {
+    std::string pathIn = dir_path + R"(tests\)" + in;
+    std::string pathOut = out_path + out;
+    TESTS.insert(std::make_pair(key, std::make_pair(pathIn, pathOut)));
+}
 
-    auto TEST_PAIR = [](stringRef_t key, stringRef_t in, stringRef_t out) {
-        TESTS.insert(std::make_pair(key, std::make_pair(tst_path + in, out_path + out)));
-    };
-
-    dir_path = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\)";
-    tst_path = dir_path + R"(tests\)";
-    out_path = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\)";
+int main() {
 
     TEST_PAIR("superflat",   R"(superflat)"                                    , R"(231105133853)");
-    TEST_PAIR("aquatic_tut", R"(aquatic_tutorial)"                             , R"(231105133853)");
+    TEST_PAIR("aquatic_tut", R"(aquatic_tutorial)"                             , R"(230918230206)");
     TEST_PAIR("vita",        R"(Vita Save\PCSB00560-231005063840\GAMEDATA.bin)", R"(BLANK_SAVE)");
     TEST_PAIR("elytra_tut",  R"()"                                             , R"(BLANK_SAVE)");
     TEST_PAIR("NS_save1"  ,  R"(NS\180809114549.dat)"                          , R"(BLANK_SAVE)");
     TEST_PAIR("fortnite",    R"(fortnite_world)"                               , R"(BLANK_SAVE)");
-}
 
-
-int main() {
-    PREPARE_TESTS();
-    strPair_t TEST = TESTS["fortnite"];
+    strPair_t TEST = TESTS["aquatic_tut"];
     const CONSOLE consoleOut = CONSOLE::WIIU;
 
     // read savedata
@@ -162,7 +165,7 @@ int main() {
     // edit regions (threaded)
     auto start = getNanoSeconds();
     run_parallel<4>(processRegion, std::ref(fileListing));
-    /* for (int ri = 0; ri < 4; ri++) processRegion(ri, parser.console, fileListing); */
+    // for (int ri = 0; ri < 4; ri++) processRegion(ri, fileListing);
     auto end = getNanoSeconds();
     printf("Total Time: %.3f\n", float(end - start) / float(1000000000));
 

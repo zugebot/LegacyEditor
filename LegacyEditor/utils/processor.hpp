@@ -7,10 +7,8 @@
 #include <thread>
 #include <vector>
 
-
-static inline std::string dir_path;
-static inline std::string tst_path;
-static inline std::string out_path;
+static inline std::string dir_path = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\)";
+static inline std::string out_path = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\)";
 
 #define ND [[nodiscard]]
 #define MU [[maybe_unused]]

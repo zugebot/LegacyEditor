@@ -40,6 +40,7 @@ namespace chunk {
         if (*dataManager->ptr == 0x0A) {
             chunkData->NBTData = NBT::readTag(*dataManager);
         }
+        chunkData->validChunk = true;
     }
 
 

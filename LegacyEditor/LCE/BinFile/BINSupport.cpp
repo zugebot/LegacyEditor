@@ -636,7 +636,7 @@ FileInfo extractSaveGameDat(u8* inputData, i64 inputSize) {
     stfsInfo.extract(entry, out);
     
     FileInfo saveGame;
-    saveGame.createdTime = TimePointFromFatTimestamp(entry->createdTimeStamp);
+    // saveGame.createdTime = TimePointFromFatTimestamp(entry->createdTimeStamp);
 
     BINHeader meta = stfsInfo.getMetaData();
 

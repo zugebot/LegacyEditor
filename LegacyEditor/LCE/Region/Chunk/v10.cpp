@@ -67,6 +67,8 @@ namespace chunk {
         delete chunkNBT;
         delete nbt;
 
+        chunkData->validChunk = true;
+
     }
 
 

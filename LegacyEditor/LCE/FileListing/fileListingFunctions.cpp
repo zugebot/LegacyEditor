@@ -33,7 +33,7 @@ void FileListing::saveToFolder(stringRef_t folderIn) {
     }
 
     for (File &file: allFiles) {
-        std::string fullPath = folderIn + "\\" + file.constructFileName(console);
+        std::string fullPath = folder + "\\" + file.constructFileName(console);
         fs::path path(fullPath);
 
         if (!fs::exists(path.parent_path())) {

@@ -53,17 +53,18 @@ void RegionManager::read(Data* dataIn) {
     }
 
     // step 3: read chunk size, decompressed size
-    chunkIndex = 0;
+    chunkIndex = -1;
     for (ChunkManager& chunk : chunks) {
+        chunkIndex++;
 
-        if (sectors[chunkIndex] == 0) continue;
+        if (sectors[chunkIndex] == 0) {
+            continue;
+        }
 
         if (locations[chunkIndex] + sectors[chunkIndex] > totalSectors) {
-            printf("[%u] chunk sector[%u, %u] end goes outside file...\n",
-                   totalSectors, locations[chunkIndex], sectors[chunkIndex]);
+            printf("[%u] chunk sector[%u, %u] end goes outside file...\n", totalSectors, locations[chunkIndex], sectors[chunkIndex]);
             throw std::runtime_error("debug here");
         }
-        chunkIndex++;
 
         // read chunk info
         managerIn.seek(SECTOR_SIZE * locations[chunkIndex]);
@@ -72,14 +73,14 @@ void RegionManager::read(Data* dataIn) {
         chunk.size = managerIn.readInt32();
         chunk.setRLE(chunk.size >> 31);
         chunk.setUnknown((chunk.size >> 30) & 1);
-        chunk.size &= 0x00FFFFFF;
+        chunk.size &= 0x3FFFFFFF;
         chunk.allocate(chunk.size);
 
         // set chunk's decompressed size attribute
         switch (console) {
             case CONSOLE::PS3:
             case CONSOLE::RPCS3:
-                managerIn.incrementPointer4(); // rle dec size (?)
+                chunk.setDecSize(managerIn.readInt32()); // rle dec size (?)
                 chunk.setDecSize(managerIn.readInt32()); // final dec size
                 break;
             case CONSOLE::XBOX360:
@@ -93,8 +94,12 @@ void RegionManager::read(Data* dataIn) {
 
         // each chunk gets its own memory
         memcpy(chunk.start(), managerIn.ptr, chunk.size);
+
     }
+
+
 }
+
 
 
 Data RegionManager::write(CONSOLE consoleIn) {
@@ -105,8 +110,9 @@ Data RegionManager::write(CONSOLE consoleIn) {
     // step 2: recalculate sectorCount of each chunk
     // step 3: calculate chunk offsets for each chunk
     int total_sectors = 2;
-    size_t chunkIndex = 0;
-    for (ChunkManager& chunk : chunks) {
+    size_t chunkIndex = -1;
+    for (ChunkManager& chunk : this->chunks) {
+        chunkIndex++;
         if (chunk.size == 0) {
             sectors[chunkIndex] = 0;
             locations[chunkIndex] = 0;
@@ -116,7 +122,6 @@ Data RegionManager::write(CONSOLE consoleIn) {
             locations[chunkIndex] = total_sectors;
             total_sectors += sectors[chunkIndex];
         }
-        chunkIndex++;
     }
 
     // step 4: allocate memory and create buffer
@@ -137,15 +142,20 @@ Data RegionManager::write(CONSOLE consoleIn) {
 
     // step 7: seek to each location, write chunk attr's, then chunk data
     // make sure the pointer is a multiple of SECTOR_SIZE
-    chunkIndex = 0;
+    chunkIndex = -1;
     for (const ChunkManager& chunk : chunks) {
+        chunkIndex++;
         if (sectors[chunkIndex] == 0) {
             continue;
         }
-        chunkIndex++;
 
+        // this looks kinda bad
         managerOut.seek(locations[chunkIndex] * SECTOR_SIZE);
-        managerOut.writeInt32(chunk.size & 0x00FFFFFF);
+
+        u32 size = chunk.size;
+        if (chunk.getRLE())     size |= 0x80000000;
+        if (chunk.getUnknown()) size |= 0x40000000;
+        managerOut.writeInt32(size);
 
         switch (console) {
             case CONSOLE::PS3:

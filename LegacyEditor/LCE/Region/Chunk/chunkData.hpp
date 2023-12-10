@@ -34,6 +34,7 @@ namespace chunk {
 
         i32 lastVersion = 0;
         DIM dimension = DIM::OVERWORLD;
+        bool validChunk = false;
 
         ~ChunkData() {
             if (NBTData != nullptr) {
