@@ -1,5 +1,7 @@
 #include "BINSupport.hpp"
 
+#include <cstring>
+
 
 void StfsVD::readStfsVD(DataManager& input) {
     size = input.readInt8();
