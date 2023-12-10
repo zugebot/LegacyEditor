@@ -585,7 +585,7 @@ WorldOptions getTagsInImage(DataManager& image) {
     return options;
 }
 
-
+/*
 std::optional<std::chrono::system_clock::time_point> TimePointFromFatTimestamp(u32 fat) {
     u32 year = (fat >> 25) + 1980;
     u32 month = 0xf & (fat >> 21);
@@ -615,6 +615,7 @@ std::optional<std::chrono::system_clock::time_point> TimePointFromFatTimestamp(u
            std::chrono::seconds(second);
 #endif
 }
+ */
 
 
 FileInfo extractSaveGameDat(u8* inputData, i64 inputSize) {

@@ -11,3 +11,4 @@ Find correct compression functions for xbox360 and ps3.
 are stored by dimension, not chunk, so all chunks would need to
 be appended with the correct NBT
 
+- get rid of windows only imports (#include <corecrt.h>)
