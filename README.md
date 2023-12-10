@@ -16,3 +16,5 @@ The code exists to write to:
 2. PsVita (Untested)
 
 I will update this README with more info when I am not tired.
+
+Be sure to check LICENSE.md for instructions on how this code may be used.
