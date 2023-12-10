@@ -9,7 +9,8 @@ enum class CONSOLE : i8 {
     PS3 = 1,
     WIIU = 2,
     VITA = 3,
-    RPCS3 = 4
+    RPCS3 = 4,
+    SWITCH = 5,
 };
 
 
@@ -31,8 +32,6 @@ enum STATUS : int {
 };
 
 
-
-
 static std::string consoleToStr(CONSOLE console) {
     switch (console) {
         case CONSOLE::XBOX360:
@@ -45,6 +44,8 @@ static std::string consoleToStr(CONSOLE console) {
             return "wiiu";
         case CONSOLE::VITA:
             return "vita";
+        case CONSOLE::SWITCH:
+            return "switch";
         case CONSOLE::NONE:
         default:
             return "NONE";
@@ -62,6 +63,7 @@ static bool consoleIsBigEndian(CONSOLE console) {
         default:
             return true;
         case CONSOLE::VITA:
+        case CONSOLE::SWITCH:
             return false;
     }
 }

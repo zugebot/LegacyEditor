@@ -189,7 +189,7 @@ ND u32 StfsPackage::getHashAddressOfBlock(u32 blockNum) {
 }
 
 
-/// read the file listing from the file
+/// readData the file listing from the file
 void StfsPackage::readFileListing() {
     fileListing.fileEntries.clear();
     fileListing.folderEntries.clear();

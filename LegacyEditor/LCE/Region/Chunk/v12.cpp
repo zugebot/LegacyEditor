@@ -507,8 +507,8 @@ namespace chunk {
 
 
     /**
-     * Used to write only the palette and positions.\n
-     * It does not write liquid data
+     * Used to writeData only the palette and positions.\n
+     * It does not writeData liquid data
      * 2: 1 |  2 | [_4] palette, [_8] positions
      * 4: 2 |  4 | [_8] palette, [16] positions
      * 6: 3 |  8 | [16] palette, [24] positions
@@ -554,7 +554,7 @@ namespace chunk {
 
 
     /// make this copy all u16 blocks from the grid location or whatnot
-    /// used to write full block data, instead of using palette.
+    /// used to writeData full block data, instead of using palette.
     void ChunkV12::writeWithMaxBlocks(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[65536]) const {
         dataManager->setLittleEndian();
         for (size_t i = 0; i < 64; i++) {

@@ -19,18 +19,15 @@ void File::deleteData() {
 
 
 NBTTagCompound* File::createNBTTagCompound() {
-    if (nbt != nullptr)
-        return nullptr;
+    if (nbt != nullptr) return nullptr;
     nbt = new NBTBase(new NBTTagCompound(), TAG_COMPOUND);
     return static_cast<NBTTagCompound*>(nbt->data);
 }
 
 
 ND NBTTagCompound* File::getNBTCompound() const {
-    if (nbt == nullptr)
-        return nullptr;
-    if (nbt->data == nullptr)
-        return nullptr;
+    if (nbt == nullptr) return nullptr;
+    if (nbt->data == nullptr) return nullptr;
     return static_cast<NBTTagCompound*>(nbt->data);
 }
 

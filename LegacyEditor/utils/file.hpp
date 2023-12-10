@@ -9,9 +9,9 @@
 #include "enums.hpp"
 
 
-
 class NBTBase;
 class NBTTagCompound;
+
 
 enum class FileType : u8 {
     NONE,               // NONE
@@ -29,6 +29,7 @@ enum class FileType : u8 {
     ENTITY_OVERWORLD,   // ...
     ENTITY_END,         // ...
 };
+
 
 class File {
 public:
@@ -53,6 +54,8 @@ public:
     ND std::string constructFileName(CONSOLE console) const;
     MU ND bool isEmpty() const { return data.size != 0; }
 };
+
+typedef std::vector<File> File_vec;
 
 
 

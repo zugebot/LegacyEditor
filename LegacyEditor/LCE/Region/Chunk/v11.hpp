@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ChunkData.hpp"
+#include "chunkData.hpp"
 
 
 namespace chunk {

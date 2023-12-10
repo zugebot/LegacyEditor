@@ -18,6 +18,7 @@ static inline std::string out_path;
 #define EXPECT_FALSE(COND) (__builtin_expect((COND), 0)) // [[unlikely]]
 #define EXPECT_TRUE(COND) (__builtin_expect((COND), 1))  // [[likely]]
 
+typedef const std::string& stringRef_t;
 
 // unsigned
 MU typedef uint8_t u8;
@@ -88,7 +89,7 @@ static int inline printf_err(const char* format, ...) {
 
 
 /// Function to shuffle an array using Fisher-Yates algorithm
-void shuffleArray(uint16_t arr[], int size) {
+static void shuffleArray(uint16_t arr[], int size) {
     std::srand(static_cast<unsigned int>(std::time(nullptr)));
     for (int i = size - 1; i > 0; --i) {
         int j = std::rand() % (i + 1);

@@ -2,6 +2,7 @@
 
 #include <utility>
 
+#include "LegacyEditor/utils/mapcolors.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 
 

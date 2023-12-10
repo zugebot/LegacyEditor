@@ -2,7 +2,7 @@
 
 #include "LegacyEditor/utils/enums.hpp"
 
-#include "ChunkData.hpp"
+#include "chunkData.hpp"
 
 
 namespace chunk {

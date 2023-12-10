@@ -3,103 +3,37 @@
 #include <iostream>
 #include <thread>
 
-#include "LegacyEditor/utils/dataManager.hpp"
-
 #include "LegacyEditor/LCE/BinFile/BINSupport.hpp"
+#include "LegacyEditor/LCE/Map/map.hpp"
+#include "LegacyEditor/utils/dataManager.hpp"
+#include "LegacyEditor/utils/picture.hpp"
+
 #include "LegacyEditor/LCE/MC/blocks.hpp"
-#include "LegacyEditor/LCE/Map/Map.hpp"
 #include "LegacyEditor/LCE/Region/Chunk/modifiers.hpp"
 #include "LegacyEditor/LCE/Region/ChunkManager.hpp"
 #include "LegacyEditor/LCE/Region/RegionManager.hpp"
-#include "LegacyEditor/LCE/SaveFile/ConsoleParser.hpp"
-#include "LegacyEditor/LCE/SaveFile/fileListing.hpp"
+#include "LegacyEditor/LCE/FileListing/fileListing.hpp"
 #include "LegacyEditor/utils/NBT.hpp"
 #include "LegacyEditor/utils/mapcolors.hpp"
-#include "LegacyEditor/utils/picture.hpp"
 #include "LegacyEditor/utils/time.hpp"
 
 
-void compareNBT(NBTBase* first, NBTBase* second) {
-    auto* firstNBT = NBTBase::toType<NBTTagCompound>(first)->getCompoundTag("Data");
-    auto* secondNBT = NBTBase::toType<NBTTagCompound>(second)->getCompoundTag("Data");;
-
-    for (const auto& tag : firstNBT->tagMap) {
-        if (!secondNBT->hasKey(tag.first)) {
-            printf("second does not contain tag '%s'\n", tag.first.c_str());
-        }
-    }
-
-    for (const auto& tag : secondNBT->tagMap) {
-        if (!firstNBT->hasKey(tag.first)) {
-            printf("first does not contain tag '%s'\n", tag.first.c_str());
-        }
-    }
-}
-
-
-int toBlock(int x, int y, int z) {
-    return y + 256 * z + 4096 * x;
-}
-
-
-// DataManager in_ext;
-// in_ext.readFromFile(dir_path + R"(tests\WiiU Save\231008144148.ext)");
-// in_ext.data = in_ext.data + 0x100;
-// in_ext.ptr = in_ext.data;
-// in_ext.size -= 0x100;
-// WorldOptions options = getTagsInImage(in_ext);
-
-
-
-void processRegion(int regionIndex, CONSOLE parserConsole, FileListing& fileListing) {
-    const CONSOLE console = parserConsole;
+void processRegion(int regionIndex, FileListing& fileListing) {
+    const CONSOLE console = fileListing.console;
+    if (regionIndex >= fileListing.region_overworld.size()) return;
 
     // read a region file
-    RegionManager region(fileListing.console);
+    RegionManager region(console);
     region.read(fileListing.region_overworld[regionIndex]);
 
-    int h = -1;
+    int h = 0;
     for (ChunkManager& chunkManager : region.chunks) {
+        if (chunkManager.size == 0) continue;
         h++;
-        if (chunkManager.size == 0) { continue; }
 
         chunkManager.ensure_decompress(console);
-        chunkManager.readChunk(DIM::OVERWORLD);
+        chunkManager.readChunk(console, DIM::OVERWORLD);
         auto* chunkData = chunkManager.chunkData;
-
-        std::cout << "Chunk: " << chunkData->getCoords() << " " << chunkData->lastVersion;
-        if (chunkData->hasSubmerged) { std::cout << " (Submerged)"; }
-        std::cout << std::endl;
-
-        /*
-        // chunkParser.convertOldToNew();
-        i32 chunkX = chunkData.chunkX, chunkZ = chunkData.chunkZ;
-        if (chunkX == -11 && chunkZ == 2) {
-            for (int x = 0; x < 65536; x++) {
-                u16 block = chunkData.newBlocks[x];
-
-                // above 150
-                if (block >> 4 > 30) {
-                    if ((block & 15) != 0) {
-                        std::cout << (block >> 4) << ":" << (block & 15) << std::endl;
-                    }
-                    chunkData.newBlocks[x] = 0;
-                }
-
-
-                _n11_2_blocks.insert(chunkData.newBlocks[x]);
-            }
-            int ertgije; std::cin >> ertgije;
-        } else if (chunkX > -13 && chunkX < -9 && chunkZ < 4 && chunkZ > -3) {
-            for (int x = 0; x < 65536; x++) {
-                allBlocks.insert(chunkData.newBlocks[x]);
-            }
-        }
-        // std::cout << chunkData.NBTData->toString() << std::endl;
-        // chunkDataIn.writeToFile(dir_path + "chunk_read.bin");
-        // /
-        */
-
 
         u16 blocks[65536];
         for (u16 x = 0; x < 16; x++) {
@@ -121,18 +55,7 @@ void processRegion(int regionIndex, CONSOLE parserConsole, FileListing& fileList
                             block1 = (block1 & 0x7FFF) | 0b1111;
                         }
                     }
-
-                    u16 compare2;
-                    if (block2 & 0x8000) {
-                        block2 &= 0x1FFF;
-                        compare2 = (block2 & 0x1FF0) >> 4;
-                        if (compare2 == 271) { // sea pickle
-                            // block2 = 0;
-                        }
-                        if (compare2 == 272) { // bubble column
-                            // block2 = 0;
-                        }
-                    }*/
+                     */
 
                     block1 = BlockID::AIR_ID;
                     if (y == 0) { block1 = BlockID::BEDROCK_ID; }
@@ -179,9 +102,7 @@ void processRegion(int regionIndex, CONSOLE parserConsole, FileListing& fileList
                 }
             }
         }
-
         memcpy(&chunkData->newBlocks[0], &blocks[0], 131072);
-
         memset(&chunkData->biomes[0], 0x0B, 256);
         memset(&chunkData->blockLight[0], 0xFF, 32768);
         memset(&chunkData->heightMap[0], 0xFF, 256);
@@ -190,90 +111,71 @@ void processRegion(int regionIndex, CONSOLE parserConsole, FileListing& fileList
         chunkData->lastUpdate = 100;
         chunkData->inhabitedTime = 200;
 
-        int x;
-
-
-        /*
-        // chunkParser.placeBlock(4, 158, 4, 8, 0, true);
-        // chunkParser.placeBlock(4, 158, 8, 9, 0, true);
-        // chunkParser.placeBlock(8, 158, 8, 10, 0, true);
-        // chunkParser.placeBlock(8, 158, 4, 11, 0, true);
-
-        // for (u16 y = 0; y < 256; y++) {
-        //     blocks[y] = 2 << 4;
-        // }
-
-        // memset(&chunkData.blockLight[0], 0xFF, 32768);
-        // memset(&chunkData.skyLight[0], 0xFF, 32768);
-        */
-
-        if (chunkData->NBTData != nullptr) {
-            chunkData->NBTData->toType<NBTTagCompound>()->deleteAll();
-            delete chunkData->NBTData;
-        }
-
-        chunkData->NBTData = new NBTBase(new NBTTagCompound(), TAG_COMPOUND);
-        auto* chunkRootNbtData = static_cast<NBTTagCompound*>(chunkData->NBTData->data);
-        auto* entities = new NBTTagList();
-        auto* tileEntities = new NBTTagList();
-        auto* tileTicks = new NBTTagList();
-        chunkRootNbtData->setListTag("Entities", entities);
-        chunkRootNbtData->setListTag("TileEntities", tileEntities);
-        chunkRootNbtData->setListTag("TileTicks", tileTicks);
-        chunkManager.writeChunk(DIM::OVERWORLD);
+        chunkData->defaultNBT();
+        chunkManager.writeChunk(console, DIM::OVERWORLD);
         chunkManager.ensure_compressed(console);
-
     }
 
     fileListing.region_overworld[regionIndex]->data.deallocate();
     fileListing.region_overworld[regionIndex]->data = region.write(console);
-
 }
 
 
-int main() {
 
-    typedef std::pair<std::string, std::string> strPair_t;
+typedef std::pair<std::string, std::string> strPair_t;
+std::map<std::string, strPair_t> TESTS;
+
+void PREPARE_TESTS() {
+
+    auto TEST_PAIR = [](stringRef_t key, stringRef_t in, stringRef_t out) {
+        TESTS.insert(std::make_pair(key, std::make_pair(tst_path + in, out_path + out)));
+    };
+
     dir_path = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\)";
     tst_path = dir_path + R"(tests\)";
     out_path = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\)";
 
-    std::map<std::string, strPair_t> TESTS = {
-        {"superflat",   std::make_pair(tst_path + R"(superflat)",                                     out_path + R"(231105133853)")},
-        {"aquatic_tut", std::make_pair(tst_path + R"(aquatic_tutorial)",                              out_path + R"(231105133853)")},
-        {"vita",        std::make_pair(tst_path + R"(Vita Save\PCSB00560-231005063840\GAMEDATA.bin)", out_path + R"(BLANK_SAVE)")},
-        {"elytra_tut",  std::make_pair(tst_path + R"()",                                              out_path + R"(BLANK_SAVE)")},
-    };
-    strPair_t TEST = TESTS["vita"];
+    TEST_PAIR("superflat",   R"(superflat)"                                    , R"(231105133853)");
+    TEST_PAIR("aquatic_tut", R"(aquatic_tutorial)"                             , R"(231105133853)");
+    TEST_PAIR("vita",        R"(Vita Save\PCSB00560-231005063840\GAMEDATA.bin)", R"(BLANK_SAVE)");
+    TEST_PAIR("elytra_tut",  R"()"                                             , R"(BLANK_SAVE)");
+    TEST_PAIR("NS_save1"  ,  R"(NS\180809114549.dat)"                          , R"(BLANK_SAVE)");
+    TEST_PAIR("fortnite",    R"(fortnite_world)"                               , R"(BLANK_SAVE)");
+}
+
+
+int main() {
+    PREPARE_TESTS();
+    strPair_t TEST = TESTS["fortnite"];
     const CONSOLE consoleOut = CONSOLE::WIIU;
 
     // read savedata
-    ConsoleParser parser;
-    int statusIn = parser.readConsoleFile(TEST.first);
+    FileListing fileListing;
+    int statusIn = fileListing.readFile(TEST.first);
     if (statusIn) return printf_err("failed to load file\n");
 
     // edit fileListing
-    FileListing fileListing(parser);
-    fileListing.removeFileTypes({FileType::PLAYER, FileType::DATA_MAPPING, FileType::STRUCTURE});
-    fileListing.saveToFolder(dir_path + "dump_" + consoleToStr(parser.console)); // debugging
+    // fileListing.removeFileTypes({FileType::PLAYER, FileType::DATA_MAPPING, FileType::STRUCTURE});
+    fileListing.saveToFolder(); // debugging
+
 
     // edit regions (threaded)
     auto start = getNanoSeconds();
-    run_parallel<4>(processRegion, parser.console, std::ref(fileListing));
+    run_parallel<4>(processRegion, std::ref(fileListing));
+    /* for (int ri = 0; ri < 4; ri++) processRegion(ri, parser.console, fileListing); */
     auto end = getNanoSeconds();
     printf("Total Time: %.3f\n", float(end - start) / float(1000000000));
 
     // convert to fileListing
     fileListing.convertRegions(consoleOut);
-    Data dataOut = fileListing.write(consoleOut);
-    int statusOut = ConsoleParser::saveWiiU(TEST.second, dataOut);
+    int statusOut = fileListing.writeFile(consoleOut, TEST.second);
     if (statusOut) {
         return printf_err("converting to wiiu failed...\n");
     } else {
         printf("Finished!\nile Out: %s", TEST.second.c_str());
     }
 
-    return 0;
+    return statusOut;
 }
 
 

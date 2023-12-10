@@ -554,7 +554,7 @@ void NBTTagCompound::setString(const std::string& key, const std::string& value)
 
 void NBTTagCompound::setByteArray(const std::string& key, uint8_t* value, int size) {
     if (tagMap.find(key) != tagMap.end()) tagMap[key].NbtFree();
-    auto* data = (u8*) malloc(size);//so the original can be safely deleted
+    auto* data = (u8*) malloc(size); // so the original can be safely deleted
     memcpy(data, value, size);
     tagMap[key] = NBTBase(new NBTTagByteArray(data, size), NBTType::TAG_BYTE_ARRAY);
 }
@@ -570,8 +570,8 @@ void NBTTagCompound::setIntArray(const std::string& key, int* value, int size) {
 
 void NBTTagCompound::setLongArray(const std::string& key, i64* value, int size) {
     if (tagMap.find(key) != tagMap.end()) tagMap[key].NbtFree();
-    auto* data = (i64*) malloc(size * 8);//so the original can be safely deleted
-    memcpy((void*) data, value, size * 8);   //the endianness is maintained because it is copied raw
+    auto* data = (i64*) malloc(size * 8); //so the original can be safely deleted
+    memcpy((void*) data, value, size * 8); //the endianness is maintained because it is copied raw
     tagMap[key] = NBTBase(new NBTTagLongArray(data, size), NBTType::TAG_LONG_ARRAY);
 }
 
@@ -716,6 +716,7 @@ void NBTTagCompound::removeTag(const std::string& key) {
 
 
 bool NBTTagCompound::hasNoTags() const { return tagMap.empty(); }
+
 
 void NBTTagCompound::merge(NBTTagCompound* other) {
     auto it = other->tagMap.begin();
@@ -865,6 +866,7 @@ NBTType NBTTagList::getTagType() const {
     return tagType;
 }
 
+
 /*
 UUIDJava NBTUtil::getUUIDFromTag(NBTTagCompound* tag) {
     return {tag->getPrimitive<i64>("M"), tag->getPrimitive<i64>("L")};
@@ -894,6 +896,7 @@ NBTTagCompound* NBTUtil::createPosTag(BlockPos pos) {
 }
 */
 
+
 void NBT::writeTag(NBTBase* tag, DataManager& output) {
     output.writeInt8(tag->getId());
 
@@ -920,6 +923,7 @@ NBTBase* NBT::readNBT(NBTType id, const std::string& key, DataManager& input) {
     pNbtBase->read(input);
     return pNbtBase;
 }
+
 
 /*
 uint8_t* NBT::writeCompressedTag(NBTBase* rootData, i64* outSize) {

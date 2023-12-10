@@ -3,7 +3,7 @@
 #include "LegacyEditor/utils/enums.hpp"
 #include "LegacyEditor/utils/data.hpp"
 
-#include "LegacyEditor/LCE/Region/Chunk/ChunkData.hpp"
+#include "LegacyEditor/LCE/Region/Chunk/chunkData.hpp"
 
 class ChunkManager : public Data {
 private:
@@ -22,7 +22,7 @@ public:
         managerData.decSize = 0;
         managerData.isCompressed = 1;
         managerData.rleFlag = 1;
-        managerData.unknownFlag = 1; //
+        managerData.unknownFlag = 1;
         managerData.timestamp = 0;
         chunkData = new chunk::ChunkData();
     }
@@ -54,6 +54,6 @@ public:
     void ensure_decompress(CONSOLE console);
     void ensure_compressed(CONSOLE console);
 
-    MU void readChunk(DIM dim);
-    MU void writeChunk(DIM dim);
+    MU void readChunk(CONSOLE console, DIM dim);
+    MU void writeChunk(CONSOLE console, DIM dim);
 };

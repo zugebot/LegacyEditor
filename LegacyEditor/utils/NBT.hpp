@@ -361,8 +361,8 @@ static NBTBase convertType(NBTBase baseData, NBTType toType) {
 }
 
 
-inline NBTBase* createNewByType(NBTType id) {
-    switch (id) {
+inline NBTBase* createNewByType(NBTType type) {
+    switch (type) {
         case NBTType::NBT_NONE:
         case NBTType::NBT_INT8:
         case NBTType::NBT_INT16:
@@ -371,18 +371,36 @@ inline NBTBase* createNewByType(NBTType id) {
         case NBTType::NBT_FLOAT:
         case NBTType::NBT_DOUBLE:
         default:
-            return new NBTBase(nullptr, id);
+            return new NBTBase(nullptr, type);
         case NBTType::TAG_BYTE_ARRAY:
-            return new NBTBase(new NBTTagByteArray(), id);
+            return new NBTBase(new NBTTagByteArray(), type);
         case NBTType::TAG_STRING:
-            return new NBTBase(new NBTTagString(), id);
+            return new NBTBase(new NBTTagString(), type);
         case NBTType::TAG_LIST:
-            return new NBTBase(new NBTTagList(), id);
+            return new NBTBase(new NBTTagList(), type);
         case NBTType::TAG_COMPOUND:
-            return new NBTBase(new NBTTagCompound(), id);
+            return new NBTBase(new NBTTagCompound(), type);
         case NBTType::TAG_INT_ARRAY:
-            return new NBTBase(new NBTTagIntArray(), id);
+            return new NBTBase(new NBTTagIntArray(), type);
         case NBTType::TAG_LONG_ARRAY:
-            return new NBTBase(new NBTTagLongArray(), id);
+            return new NBTBase(new NBTTagLongArray(), type);
+    }
+}
+
+
+static void compareNBT(NBTBase* first, NBTBase* second) {
+    auto* firstNBT = NBTBase::toType<NBTTagCompound>(first)->getCompoundTag("Data");
+    auto* secondNBT = NBTBase::toType<NBTTagCompound>(second)->getCompoundTag("Data");;
+
+    for (const auto& tag : firstNBT->tagMap) {
+        if (!secondNBT->hasKey(tag.first)) {
+            printf("second does not contain tag '%s'\n", tag.first.c_str());
+        }
+    }
+
+    for (const auto& tag : secondNBT->tagMap) {
+        if (!firstNBT->hasKey(tag.first)) {
+            printf("first does not contain tag '%s'\n", tag.first.c_str());
+        }
     }
 }

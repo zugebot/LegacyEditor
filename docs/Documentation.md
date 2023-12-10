@@ -6,8 +6,8 @@ The following Table gives you Important information the structure of a Save file
 | :-:|:-:|:-:|
 | Offset(Int) | 0x04 | offset of File information
 | NumberOfFiles(Int) | 0x04 | Number of Files in list of File Info
-| Filedata | variable | bytes of each file contained inside the save
-| [FileInfo](./Documentation.md#File-Information) | variable | Filenames, offsets within save, and size in bytes of files.
+| Filedata | variable | bytes of each file contained inside the saver
+| [FileInfo](./Documentation.md#File-Information) | variable | Filenames, offsets within saver, and size in bytes of files.
 
 
 ### File Information

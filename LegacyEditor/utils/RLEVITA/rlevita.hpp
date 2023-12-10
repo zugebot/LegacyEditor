@@ -7,7 +7,7 @@
 #include "LegacyEditor/utils/dataManager.hpp"
 
 
-static void RLEVITA_DECOMPRESS(u8* dataIn, u32 sizeIn, u8* dataOut, u32 sizeOut) {
+static u32 RLEVITA_DECOMPRESS(u8* dataIn, u32 sizeIn, u8* dataOut, u32 sizeOut) {
     DataManager managerIn(dataIn, sizeIn);
     DataManager managerOut(dataOut, sizeOut);
 
@@ -16,7 +16,7 @@ static void RLEVITA_DECOMPRESS(u8* dataIn, u32 sizeIn, u8* dataOut, u32 sizeOut)
     while (managerIn.getPosition() < sizeIn) {
         value = managerIn.readInt8();
 
-        if (value != 0) {
+        if (value != 0x00) {
             managerOut.writeInt8(value);
         } else {
             int numZeros = managerIn.readInt8();
@@ -24,6 +24,7 @@ static void RLEVITA_DECOMPRESS(u8* dataIn, u32 sizeIn, u8* dataOut, u32 sizeOut)
             managerOut.incrementPointer(numZeros);
         }
     }
+    return managerOut.getPosition();
 }
 
 

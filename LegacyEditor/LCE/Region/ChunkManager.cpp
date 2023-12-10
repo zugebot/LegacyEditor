@@ -12,11 +12,10 @@
 #include "LegacyEditor/LCE/Region/Chunk/v12.hpp"
 
 
-
-
-MU void ChunkManager::readChunk(DIM dim) {
+MU void ChunkManager::readChunk(CONSOLE console, DIM dim) {
     DataManager managerIn = DataManager(this->data, this->size);
     managerIn.seekStart();
+
     chunkData->lastVersion = managerIn.readInt16();
     
     switch(chunkData->lastVersion) {
@@ -42,7 +41,7 @@ MU void ChunkManager::readChunk(DIM dim) {
 }
 
 
-MU void ChunkManager::writeChunk(DIM dim) {
+MU void ChunkManager::writeChunk(CONSOLE console, DIM dim) {
     Data outBuffer(CHUNK_BUFFER_SIZE);
     memset(outBuffer.data, 0, CHUNK_BUFFER_SIZE);
     auto managerOut = DataManager(outBuffer);
@@ -101,6 +100,7 @@ void ChunkManager::ensure_decompress(CONSOLE console) {
         case CONSOLE::PS3:
             tinf_uncompress(decompData.start(), &decompData.size, data, size);
             break;
+        case CONSOLE::SWITCH:
         case CONSOLE::WIIU:
         case CONSOLE::VITA:
             tinf_zlib_uncompress(decompData.start(), &decompData.size, data, size);
@@ -170,6 +170,7 @@ void ChunkManager::ensure_compressed(CONSOLE console) {
             break;
         }
 
+        case CONSOLE::SWITCH:
         case CONSOLE::WIIU:
         case CONSOLE::VITA: {
             int status = ::compress(comp_ptr, &comp_size, data, size);

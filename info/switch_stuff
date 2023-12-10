@@ -1,0 +1,118 @@
+std::string extractFileName(const std::string& path) {
+    size_t dotDatPos = path.find('.');
+    if (dotDatPos != std::string::npos) {
+        return path.substr(0, dotDatPos);
+    }
+    return "";
+}
+
+
+std::string extractPart(const std::string& path) {
+    size_t lastBackslashPos = path.find_last_of("\\");
+
+    if (lastBackslashPos != std::string::npos) {
+        // Return the substring from the character after the last backslash to the end
+        return path.substr(lastBackslashPos + 1);
+    }
+
+    return ""; // Return empty string if the backslash is not found
+}
+
+
+
+namespace fs = std::filesystem;
+
+    if (fileListing.console == CONSOLE::SWITCH) {
+        std::string path = extractFileName(TEST.first);
+        path += ".sub\\";
+
+        /*
+        std::map<std::string, int> compStart;
+        std::map<std::string, int> index1Start;
+        std::map<std::string, int> index2Start;
+
+        try {
+            // Check if the provided path is a directory
+            if (fs::is_directory(path)) {
+                for (const auto& entry : fs::directory_iterator(path)) {
+                    // Check if the entry is a file
+                    if (fs::is_regular_file(entry)) {
+                        std::cout << "File: " << entry.path() << std::endl;
+
+
+                        Data comp;
+                        DataManager region(comp);
+                        std::string name = entry.path().string();
+
+                        region.readFromFile(name);
+
+                        Data out(8000000);
+
+                        u32 sizeOut = RLEVITA_DECOMPRESS(region.start(), region.size, out.start(), out.size);
+                        comp.deallocate();
+                        Data GAMEDATA;
+                        GAMEDATA.allocate(sizeOut);
+                        memcpy(GAMEDATA.start(), out.start(), sizeOut);
+                        out.deallocate();
+
+                        DataManager GAMEDATA_MANAGER(GAMEDATA);
+                        GAMEDATA_MANAGER.writeToFile(path + "DEC\\" + extractPart(name));
+
+                        index1Start.insert(std::make_pair(name, swapEndian32(GAMEDATA_MANAGER.readInt32AtOffset(4))));
+                        index2Start.insert(std::make_pair(name, swapEndian32(GAMEDATA_MANAGER.readInt32AtOffset(8))));
+
+                        for (int x = 0; x < 4096; x++) {
+                            if (GAMEDATA_MANAGER.data[x] == 0x78 && GAMEDATA_MANAGER.data[x + 1] == 0x9C) {
+                                compStart.insert(std::make_pair(name, x));
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else {
+                std::cout << "The provided path is not a directory." << std::endl;
+            }
+        } catch (const fs::filesystem_error& e) {
+            std::cerr << e.what() << std::endl;
+        }
+
+
+        for (auto pair : compStart) {
+            std::cout << pair.first << " " << pair.second << " " << index1Start[pair.first] << " " <<
+                    index2Start[pair.first] << std::endl;
+        }
+        */
+
+        Data data;
+        DataManager managerIn(data);
+        managerIn.readFromFile(path + "GAMEDATA_00020000");
+        managerIn.setLittleEndian();
+
+
+        u32 pos;
+        for (int x = 0; x < 4096; x++) {
+            if (managerIn.data[x] == 0x78 && managerIn.data[x + 1] == 0x9C) {
+                pos = x - 4;
+            }
+        }
+
+        managerIn.seek(pos);
+
+        ChunkManager chunk;
+        chunk.size = managerIn.readInt32();
+        chunk.setRLE(chunk.size & 1);
+        chunk.setUnknown((chunk.size >> 1) & 1);
+        chunk.size = (chunk.size & 0xFFFFFFFC) >> 8;
+        chunk.allocate(chunk.size);
+        chunk.setDecSize(10000);
+        // chunk.setDecSize(managerIn.readInt32());
+        memcpy(chunk.start(), managerIn.ptr, chunk.size);
+
+        chunk.ensure_decompress(CONSOLE::SWITCH);
+        chunk.readChunk(CONSOLE::SWITCH, DIM::OVERWORLD);
+
+
+
+
+        return 0;
+    }

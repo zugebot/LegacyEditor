@@ -1,6 +1,6 @@
 #pragma once
 
-#include "LegacyEditor/LCE/Region/Chunk/ChunkData.hpp"
+#include "LegacyEditor/LCE/Region/Chunk/chunkData.hpp"
 
 
 namespace chunk {
