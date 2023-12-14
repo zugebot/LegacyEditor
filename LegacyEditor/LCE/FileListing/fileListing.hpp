@@ -53,6 +53,7 @@ public:
 
     void saveToFolder(stringRef_t folderIn = "");
     MU void convertRegions(CONSOLE consoleOut);
+    void ensureAllRegionFilesExist();
 
     /// Modify State
 
@@ -81,14 +82,14 @@ private:
     MU ND int readVita(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
     MU ND int readPs3(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
     MU ND int readRpcs3(FILE* f_in, Data& data, u64 source_binary_size);
-    MU ND int readXbox360_DAT(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size, u32 src_size);
-    MU ND int readXbox360_BIN(FILE* f_in, Data& data, u64 source_binary_size);
+    MU ND int readXbox360DAT(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size, u32 src_size);
+    MU ND int readXbox360BIN(FILE* f_in, Data& data, u64 source_binary_size);
     MU   void readData(Data& dataIn);
 
     /// writer
     MU ND int writeWiiU(stringRef_t outfileStr, Data& dataOut);
     MU ND int writeVita(stringRef_t outfileStr, Data& dataOut);
-    MU ND int writePS3Uncompressed();
+    MU ND int writeRPCS3(stringRef_t outfileStr, Data& dataOut);
     MU ND int writePS3Compressed();
     MU ND int writeXbox360_DAT();
     MU ND int writeXbox360_BIN();

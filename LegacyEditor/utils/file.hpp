@@ -45,6 +45,12 @@ public:
     File(u32 sizeIn, u64 timestampIn) : data(Data(sizeIn)), timestamp(timestampIn) {}
     File(u8* dataIn, u32 sizeIn, u64 timestampIn) : data(dataIn, sizeIn), timestamp(timestampIn) {}
 
+    bool isRegionType() {
+        return fileType == FileType::REGION_NETHER ||
+               fileType == FileType::REGION_OVERWORLD ||
+               fileType == FileType::REGION_END;
+    }
+
     void deleteData();
     void steal(Data& other) { data.steal(other); }
 

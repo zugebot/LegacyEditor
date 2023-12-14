@@ -12,7 +12,7 @@ void StfsVD::readStfsVD(DataManager& input) {
     fileTableBlockNum = input.readInt24();
     input.incrementPointer(0x14); // skip the hash
     input.setBigEndian();
-    allocatedBlockCount = input.readInt32();
+    allocBlockCount = input.readInt32();
     unallocatedBlockCount = input.readInt32();
 }
 
@@ -62,7 +62,7 @@ int BINHeader::readHeader(DataManager& binFile) {
 
 
 
-void StfsPackage::extract(StfsFileEntry* entry, DataManager& out) {
+void StfsPackage::extractFile(StfsFileEntry* entry, DataManager& out) {
     if (entry->nameLen == 0) { entry->name = "default"; }
 
     // get the file size that we are extracting
@@ -157,7 +157,6 @@ void StfsPackage::extract(StfsFileEntry* entry, DataManager& out) {
 
 /// convert a block into an address in the file
 ND u32 StfsPackage::blockToAddress(u32 blockNum) {
-    // check for invalid block number
     if (blockNum >= 0xFFFFFF) throw std::runtime_error("STFS: Block number must be less than 0xFFFFFF.\n");
     return (computeBackingDataBlockNumber(blockNum) << 0x0C) + firstHashTableAddress;
 }
@@ -165,7 +164,7 @@ ND u32 StfsPackage::blockToAddress(u32 blockNum) {
 
 /// get the address of a hash for a data block
 ND u32 StfsPackage::getHashAddressOfBlock(u32 blockNum) {
-    if (blockNum >= metaData.stfsVD.allocatedBlockCount)
+    if (blockNum >= metaData.stfsVD.allocBlockCount)
         throw std::runtime_error("STFS: Reference to illegal block number.\n");
     
     u32 hashAddr = (computeLevel0BackingHashBlockNumber(blockNum) << 0xC) + firstHashTableAddress;
@@ -232,11 +231,12 @@ void StfsPackage::readFileListing() {
             }
 
             // check for a mismatch in the total allocated blocks for the file
-            fe.blocksForFile = data.readInt24(true);
+            fe.blocksForFile = data.readInt24();
             data.incrementPointer(3);
 
             // read more information
-            fe.startingBlockNum = data.readInt24(true);
+            fe.startingBlockNum = data.readInt24();
+
             fe.pathIndicator = data.readInt16();
             fe.fileSize = data.readInt32();
             fe.createdTimeStamp = data.readInt32();
@@ -260,9 +260,9 @@ void StfsPackage::readFileListing() {
 }
 
 
-/// extract a block's data
+/// extractFile a block's data
 void StfsPackage::extractBlock(u32 blockNum, u8* inputData, u32 length) {
-    if (blockNum >= metaData.stfsVD.allocatedBlockCount)
+    if (blockNum >= metaData.stfsVD.allocBlockCount)
         throw std::runtime_error("STFS: Reference to illegal block number.\n");
     
     // check for an invalid block length
@@ -289,7 +289,7 @@ ND u32 StfsPackage::computeBackingDataBlockNumber(u32 blockNum) const {
 
 /// get a block's hash entry
 HashEntry StfsPackage::getBlockHashEntry(u32 blockNum) {
-    if (blockNum >= metaData.stfsVD.allocatedBlockCount) {
+    if (blockNum >= metaData.stfsVD.allocBlockCount) {
         throw std::runtime_error("STFS: Reference to illegal block number.\n");
     }
     
@@ -372,10 +372,10 @@ void StfsPackage::addToListing(StfsFileListing* fullListing, StfsFileListing* ou
 
 /// calculateOffset the level of the topmost hash table
 ND int StfsPackage::calculateTopLevel() const {
-    if (metaData.stfsVD.allocatedBlockCount <= 0xAA) return 0;
-    else if (metaData.stfsVD.allocatedBlockCount <= 0x70E4)
+    if (metaData.stfsVD.allocBlockCount <= 0xAA) return 0;
+    else if (metaData.stfsVD.allocBlockCount <= 0x70E4)
         return 1;
-    else if (metaData.stfsVD.allocatedBlockCount <= 0x4AF768)
+    else if (metaData.stfsVD.allocBlockCount <= 0x4AF768)
         return 2;
     else
         throw std::runtime_error("STFS: Invalid number of allocated blocks.\n");
@@ -411,7 +411,7 @@ void StfsPackage::parse() {
         return; // SaveFileInfo();
     }
     metaData = header;
-    packageSex = ((~metaData.stfsVD.blockSeparation) & 1);
+    packageSex = (~metaData.stfsVD.blockSeparation) & 1;
     
     if (packageSex == 0) { // female
         blockStep[0] = 0xAB;
@@ -425,12 +425,9 @@ void StfsPackage::parse() {
     firstHashTableAddress = (metaData.headerSize + 0x0FFF) & 0xFFFFF000;
 
     // calculateOffset the number of tables per level
-    tablesPerLevel[0] = (metaData.stfsVD.allocatedBlockCount / 0xAA) +
-                        ((metaData.stfsVD.allocatedBlockCount % 0xAA != 0) ? 1 : 0);
-    tablesPerLevel[1] = (tablesPerLevel[0] / 0xAA) +
-                        ((tablesPerLevel[0] % 0xAA != 0 && metaData.stfsVD.allocatedBlockCount > 0xAA) ? 1 : 0);
-    tablesPerLevel[2] = (tablesPerLevel[1] / 0xAA) +
-                        ((tablesPerLevel[1] % 0xAA != 0 && metaData.stfsVD.allocatedBlockCount > 0x70E4) ? 1 : 0);
+    tablesPerLvl[0] = (metaData.stfsVD.allocBlockCount / 0xAA) + ((metaData.stfsVD.allocBlockCount % 0xAA != 0) ? 1 : 0);
+    tablesPerLvl[1] = (tablesPerLvl[0] / 0xAA) + ((tablesPerLvl[0] % 0xAA != 0 && metaData.stfsVD.allocBlockCount > 0xAA) ? 1 : 0);
+    tablesPerLvl[2] = (tablesPerLvl[1] / 0xAA) + ((tablesPerLvl[1] % 0xAA != 0 && metaData.stfsVD.allocBlockCount > 0x70E4) ? 1 : 0);
 
     // calculateOffset the level of the top table
     topLevel = calculateTopLevel();
@@ -446,10 +443,10 @@ void StfsPackage::parse() {
     u32 dataBlocksPerHashTreeLevel[3] = {1, 0xAA, 0x70E4};
 
     // load the information
-    topTable.entryCount = metaData.stfsVD.allocatedBlockCount / dataBlocksPerHashTreeLevel[topLevel];
-    if (metaData.stfsVD.allocatedBlockCount > 0x70E4 && (metaData.stfsVD.allocatedBlockCount % 0x70E4 != 0))
+    topTable.entryCount = metaData.stfsVD.allocBlockCount / dataBlocksPerHashTreeLevel[topLevel];
+    if (metaData.stfsVD.allocBlockCount > 0x70E4 && (metaData.stfsVD.allocBlockCount % 0x70E4 != 0))
         topTable.entryCount++;
-    else if (metaData.stfsVD.allocatedBlockCount > 0xAA && (metaData.stfsVD.allocatedBlockCount % 0xAA != 0))
+    else if (metaData.stfsVD.allocBlockCount > 0xAA && (metaData.stfsVD.allocBlockCount % 0xAA != 0))
         topTable.entryCount++;
 
     for (u32 i = 0; i < topTable.entryCount; i++) {
@@ -633,7 +630,7 @@ FileInfo extractSaveGameDat(u8* inputData, i64 inputSize) {
     }
 
     DataManager out;
-    stfsInfo.extract(entry, out);
+    stfsInfo.extractFile(entry, out);
     
     FileInfo saveGame;
     // saveGame.createdTime = TimePointFromFatTimestamp(entry->createdTimeStamp);

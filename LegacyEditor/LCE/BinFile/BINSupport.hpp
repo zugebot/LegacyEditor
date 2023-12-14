@@ -39,7 +39,7 @@ struct StfsVD {
     u16 fileTableBlockCount;
     int fileTableBlockNum;
     //u8 topHashTableHash[0x14];
-    u32 allocatedBlockCount;
+    u32 allocBlockCount;
     u32 unallocatedBlockCount;
 
     void readStfsVD(DataManager& input);
@@ -75,12 +75,12 @@ public:
 };
 
 
-/// extract a file (by FileEntry) to a designated file path
+/// extractFile a file (by FileEntry) to a designated file path
 class StfsPackage {
 public:
     explicit StfsPackage(DataManager& input) : data(input) {}
     
-    void extract(StfsFileEntry* entry, DataManager& out);
+    void extractFile(StfsFileEntry* entry, DataManager& out);
     ND u32 blockToAddress(u32 blockNum);
     ND u32 getHashAddressOfBlock(u32 blockNum);
 
@@ -100,7 +100,7 @@ private:
     u32 firstHashTableAddress{};
     u8 topLevel{};
     HashTable topTable{};
-    u32 tablesPerLevel[3]{};
+    u32 tablesPerLvl[3]{};
     
     void readFileListing();
     void extractBlock(u32 blockNum, u8* inputData, u32 length = 0x1000);

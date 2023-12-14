@@ -40,12 +40,16 @@ static int XDecompress(u8* output, const u32* sizeOut, u8* input, u32 sizeIn) {
     i64 bytes = 0;
     i64 bytesRead = 0;
     while (bytes < *sizeOut) {
-        if (hasOverFlow(bytesRead, sizeIn, 1)) { goto DECOMP_ERROR; }
+        if (hasOverFlow(bytesRead, sizeIn, 1)) {
+            goto DECOMP_ERROR;
+        }
         int src_size, dst_size, hi, lo;
         hi = *input;
         input++;
         if (hi == 0xFF) {
-            if (hasOverFlow(bytesRead, sizeIn, 4)) { goto DECOMP_ERROR; }
+            if (hasOverFlow(bytesRead, sizeIn, 4)) {
+                goto DECOMP_ERROR;
+            }
             hi = *input;
             input++;
             lo = *input;
@@ -62,7 +66,9 @@ static int XDecompress(u8* output, const u32* sizeOut, u8* input, u32 sizeIn) {
             input++;
             src_size = (hi << 8) | lo;
         } else {
-            if (hasOverFlow(bytesRead, sizeIn, 1)) { goto DECOMP_ERROR; }
+            if (hasOverFlow(bytesRead, sizeIn, 1)) {
+                goto DECOMP_ERROR;
+            }
             dst_size = 0x8000;
 
             lo = *input;
@@ -96,7 +102,9 @@ static int XDecompress(u8* output, const u32* sizeOut, u8* input, u32 sizeIn) {
                 goto DECOMP_ERROR;
             }
         }
-        if (hasOverFlow(bytesRead, sizeIn, src_size)) { goto DECOMP_ERROR; }
+        if (hasOverFlow(bytesRead, sizeIn, src_size)) {
+            goto DECOMP_ERROR;
+        }
         memcpy(src, input, src_size);
         input += src_size;
         int error = lzx_decompress(strm, src, dst, src_size, dst_size);

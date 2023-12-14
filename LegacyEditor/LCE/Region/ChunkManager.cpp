@@ -13,7 +13,7 @@
 
 
 MU void ChunkManager::readChunk(CONSOLE console, DIM dim) {
-    DataManager managerIn = DataManager(this->data, this->size);
+    DataManager managerIn = DataManager(data, size);
     managerIn.seekStart();
 
     chunkData->lastVersion = managerIn.readInt16();
@@ -49,22 +49,19 @@ MU void ChunkManager::writeChunk(CONSOLE console, DIM dim) {
     managerOut.seekStart();
     switch(chunkData->lastVersion) {
         case 0x0a00: {
-            chunk::ChunkV10 v10Chunk;
-            v10Chunk.writeChunk(chunkData, &managerOut, dim);
+            chunk::ChunkV10().writeChunk(chunkData, &managerOut, dim);
             break;
         }
         case 0x0008:
         case 0x0009:
         case 0x000B: {
             managerOut.writeInt16(chunkData->lastVersion);
-            chunk::ChunkV11 v11Chunk;
-            v11Chunk.writeChunk(chunkData, &managerOut, dim);
+            chunk::ChunkV11().writeChunk(chunkData, &managerOut, dim);
             break;
         }
         case 0x000C: {
             managerOut.writeInt16(chunkData->lastVersion);
-            chunk::ChunkV12 v12Chunk;
-            v12Chunk.writeChunk(chunkData, &managerOut, dim);
+            chunk::ChunkV12().writeChunk(chunkData, &managerOut, dim);
             break;
         }
     }
@@ -93,17 +90,19 @@ void ChunkManager::ensure_decompress(CONSOLE console) {
     u32 dec_size_copy = getDecSize();
     Data decompData(getDecSize());
 
+    int result;
     switch (console) {
         case CONSOLE::XBOX360:
             dec_size_copy = XDecompress(decompData.start(), &decompData.size, data, size);
             break;
+        case CONSOLE::RPCS3:
         case CONSOLE::PS3:
-            tinf_uncompress(decompData.start(), &decompData.size, data, size);
+            result = tinf_uncompress(decompData.start(), &decompData.size, data, size);
             break;
         case CONSOLE::SWITCH:
         case CONSOLE::WIIU:
         case CONSOLE::VITA:
-            tinf_zlib_uncompress(decompData.start(), &decompData.size, data, size);
+            result = tinf_zlib_uncompress(decompData.start(), &decompData.size, data, size);
             break;
         default:
             break;
@@ -158,7 +157,7 @@ void ChunkManager::ensure_compressed(CONSOLE console) {
             break;
 
         case CONSOLE::RPCS3: {
-            int status = ::def(data, comp_ptr, size, (uLongf*)&comp_size, -15);
+            int status = ::compress(comp_ptr, &comp_size, data, size); // ::def(data, comp_ptr, size, (uLongf*)&comp_size, 15);
             if (status != 0) {
                 printf("error has occurred compressing chunk\n");
             }

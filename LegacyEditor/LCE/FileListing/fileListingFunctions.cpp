@@ -68,6 +68,63 @@ File_vec FileListing::collectFiles(FileType fileType) {
 }
 
 
+void FileListing::ensureAllRegionFilesExist() {
+    bool dim[3][2][2] = {false};
+    {
+        int dimCount = 0;
+        for (auto fileList : dimFileLists) {
+            for (auto* regionFile: *fileList) {
+                if (regionFile->data.size != 0) {
+                    i16 x = regionFile->getNBTCompound()->getTag("x").toPrimitiveType<i16>();
+                    i16 z = regionFile->getNBTCompound()->getTag("z").toPrimitiveType<i16>();
+                    dim[dimCount][x + 1][z + 1] = true;
+                }
+            }
+            dimCount++;
+        }
+    }
+
+    int filesAdded = 0;
+    for (size_t dim_i = 0; dim_i < 3; dim_i++) {
+        for (size_t x = 2; x --> 0;) {
+            for (size_t z = 2; z --> 0;) {
+                if (dim[dim_i][x][z])
+                    continue;
+
+                filesAdded++;
+                allFiles.emplace_back(nullptr, 0, 0);
+                File &file = allFiles.back();
+
+                auto* nbt = file.createNBTTagCompound();
+                nbt->setTag("x", createNBT_INT16((i16)(x - 1)));
+                nbt->setTag("z", createNBT_INT16((i16)(z - 1)));
+                switch (dim_i) {
+                    case 0:
+                        file.fileType = FileType::REGION_NETHER;
+                        region_nether.push_back(&file);
+                        break;
+                    case 1:
+                        file.fileType = FileType::REGION_OVERWORLD;
+                        region_overworld.push_back(&file);
+                        break;
+                    case 2:
+                        file.fileType = FileType::REGION_END;
+                        region_end.push_back(&file);
+                        break;
+                    default:
+                        file.fileType = FileType::NONE;
+                }
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
 void FileListing::deallocate() {
     for (File& file : allFiles) {
         delete[] file.data.data;

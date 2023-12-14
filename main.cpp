@@ -3,19 +3,42 @@
 #include <iostream>
 #include <thread>
 
+#include <zlib.h>
+
 #include "LegacyEditor/LCE/BinFile/BINSupport.hpp"
 #include "LegacyEditor/LCE/Map/map.hpp"
 #include "LegacyEditor/utils/dataManager.hpp"
 #include "LegacyEditor/utils/picture.hpp"
 
+#include "LegacyEditor/LCE/FileListing/fileListing.hpp"
 #include "LegacyEditor/LCE/MC/blocks.hpp"
 #include "LegacyEditor/LCE/Region/Chunk/modifiers.hpp"
 #include "LegacyEditor/LCE/Region/ChunkManager.hpp"
 #include "LegacyEditor/LCE/Region/RegionManager.hpp"
-#include "LegacyEditor/LCE/FileListing/fileListing.hpp"
 #include "LegacyEditor/utils/NBT.hpp"
+#include "LegacyEditor/utils/RLE/rle.hpp"
+#include "LegacyEditor/utils/RLESWITCH/rleswitch.hpp"
+#include "LegacyEditor/utils/RLEVITA/rlevita.hpp"
+#include "LegacyEditor/utils/endian.hpp"
 #include "LegacyEditor/utils/mapcolors.hpp"
 #include "LegacyEditor/utils/time.hpp"
+
+
+ /*
+DataManager dat;
+    dat.readFromFile(TEST_OUT);
+    unsigned long crc = crc32(0L, Z_NULL, 0);
+    crc = crc32(crc, (const unsigned char*)dat.data, dat.size);
+    DataManager metadata;
+    metadata.readFromFile(ps3_ + "METADATA");
+    metadata.writeInt32AtOffset(0x04, dat.size);
+    metadata.writeInt32AtOffset(0x0C, crc);
+    metadata.writeToFile(ps3_ + "METADATA");
+  */
+
+
+
+
 
 
 void processRegion(int regionIndex, FileListing& fileListing) {
@@ -32,6 +55,7 @@ void processRegion(int regionIndex, FileListing& fileListing) {
         if (chunkManager.size == 0) {
             continue;
         }
+
 
         chunkManager.ensure_decompress(console);
         chunkManager.readChunk(console, DIM::OVERWORLD);
@@ -129,54 +153,193 @@ void processRegion(int regionIndex, FileListing& fileListing) {
     fileListing.region_overworld[regionIndex]->data = region.write(console);
 }
 
+std::string extractFileName(const std::string& path) {
+    size_t dotDatPos = path.find('.');
+    if (dotDatPos != std::string::npos) {
+        return path.substr(0, dotDatPos);
+    }
+    return "";
+}
+
+
+std::string extractPart(const std::string& path) {
+    size_t lastBackslashPos = path.find_last_of("\\");
+
+    if (lastBackslashPos != std::string::npos) {
+        // Return the substring from the character after the last backslash to the end
+        return path.substr(lastBackslashPos + 1);
+    }
+
+    return ""; // Return empty string if the backslash is not found
+}
+
+namespace fs = std::filesystem;
 
 
 typedef std::pair<std::string, std::string> strPair_t;
 std::map<std::string, strPair_t> TESTS;
 
+std::string wiiu = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\)";
+std::string ps3_ = R"(D:\Emulator Folders\rpcs3-v0.0.18-12904-12efd291_win64\dev_hdd0\home\00000001\savedata\NPUB31419--231212220825\)";
+
 void TEST_PAIR(stringRef_t key, stringRef_t in, stringRef_t out) {
     std::string pathIn = dir_path + R"(tests\)" + in;
-    std::string pathOut = out_path + out;
-    TESTS.insert(std::make_pair(key, std::make_pair(pathIn, pathOut)));
+    TESTS.insert(std::make_pair(key, std::make_pair(pathIn, out)));
 }
 
 int main() {
 
-    TEST_PAIR("superflat",   R"(superflat)"                                    , R"(231105133853)");
-    TEST_PAIR("aquatic_tut", R"(aquatic_tutorial)"                             , R"(230918230206)");
-    TEST_PAIR("vita",        R"(Vita Save\PCSB00560-231005063840\GAMEDATA.bin)", R"(BLANK_SAVE)");
-    TEST_PAIR("elytra_tut",  R"()"                                             , R"(BLANK_SAVE)");
-    TEST_PAIR("NS_save1"  ,  R"(NS\180809114549.dat)"                          , R"(BLANK_SAVE)");
-    TEST_PAIR("fortnite",    R"(fortnite_world)"                               , R"(BLANK_SAVE)");
+    TEST_PAIR("superflat",   R"(superflat)"                                    , wiiu + R"(231105133853)");
+    TEST_PAIR("aquatic_tut", R"(aquatic_tutorial)"                             , wiiu + R"(230918230206)");
+    TEST_PAIR("vita",        R"(Vita Save\PCSB00560-231005063840\GAMEDATA.bin)", wiiu + R"(BLANK_SAVE)");
+    TEST_PAIR("elytra_tut",  R"()"                                             , wiiu + R"(BLANK_SAVE)");
+    TEST_PAIR("NS_save1"  ,  R"(NS\190809160532.dat)"                          , wiiu + R"(BLANK_SAVE)");
+    TEST_PAIR("fortnite",    R"(fortnite_world)"                               , wiiu + R"(BLANK_SAVE)");
+    TEST_PAIR("rpcs3_flat",  R"(RPCS3_GAMEDATA)"                               , ps3_ + R"(GAMEDATA)");
+    TEST_PAIR("X360_TU69",   R"(XBOX360_TU69.bin)"                             , dir_path + R"(tests\XBOX360_TU69.bin)" );
+    TEST_PAIR("X360_TU74",   R"(XBOX360_TU74.dat)"                             , dir_path + R"(tests\XBOX360_TU74.dat)" );
 
-    strPair_t TEST = TESTS["aquatic_tut"];
+
+    std::string TEST_IN = TESTS["X360_TU69"].first;
+    std::string TEST_OUT = TESTS["X360_TU69"].second;
     const CONSOLE consoleOut = CONSOLE::WIIU;
+
 
     // read savedata
     FileListing fileListing;
-    int statusIn = fileListing.readFile(TEST.first);
+    int statusIn = fileListing.readFile(TEST_IN);
     if (statusIn) return printf_err("failed to load file\n");
 
     // edit fileListing
-    // fileListing.removeFileTypes({FileType::PLAYER, FileType::DATA_MAPPING, FileType::STRUCTURE});
+    /*
+    fileListing.removeFileTypes({FileType::PLAYER,
+                                 FileType::DATA_MAPPING,
+                                 FileType::STRUCTURE});
+                                 */
     fileListing.saveToFolder(); // debugging
+
+
+
+    /*
+    if (fileListing.console == CONSOLE::SWITCH) {
+        std::string path = extractFileName(TEST.first);
+        path += ".sub\\";
+
+
+        std::map<std::string, int> compStart;
+        std::map<std::string, int> index1Start;
+        std::map<std::string, int> index2Start;
+
+        try {
+            // Check if the provided path is a directory
+            if (fs::is_directory(path)) {
+                for (const auto& entry : fs::directory_iterator(path)) {
+                    // Check if the entry is a file
+                    if (fs::is_regular_file(entry)) {
+                        std::cout << "\nFile: " << entry.path() << std::endl;
+
+
+                        Data comp;
+                        DataManager region(comp, false);
+                        std::string name = entry.path().string();
+
+                        region.readFromFile(name);
+
+                        u32 mem_size = region.readInt32();
+
+
+                        Data out(mem_size);
+                        u32 sizeOut = RLESWITCH_DECOMPRESS(region.ptr, region.size -  4,
+                                                           out.start(), out.size);
+
+                        comp.deallocate();
+                        Data GAMEDATA;
+                        GAMEDATA.allocate(sizeOut);
+                        memcpy(GAMEDATA.start(), out.start(), sizeOut);
+                        out.deallocate();
+
+                        DataManager GAMEDATA_MANAGER(GAMEDATA);
+                        GAMEDATA_MANAGER.writeToFile(path + "DEC\\" + extractPart(name));
+
+                        index1Start.insert(std::make_pair(name, swapEndian32(GAMEDATA_MANAGER.readInt32AtOffset(4))));
+                        index2Start.insert(std::make_pair(name, swapEndian32(GAMEDATA_MANAGER.readInt32AtOffset(8))));
+
+                        for (int x = 0; x < 4096; x++) {
+                            if (GAMEDATA_MANAGER.data[x] == 0x78 && GAMEDATA_MANAGER.data[x + 1] == 0x9C) {
+                                compStart.insert(std::make_pair(name, x));
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else {
+                std::cout << "The provided path is not a directory." << std::endl;
+            }
+        } catch (const fs::filesystem_error& e) {
+            std::cerr << e.what() << std::endl;
+        }
+
+
+        for (auto pair : compStart) {
+            std::cout << pair.first << " " << pair.second << " " << index1Start[pair.first] << " " <<
+                    index2Start[pair.first] << std::endl;
+        }
+
+
+        Data data;
+        DataManager managerIn(data);
+        managerIn.readFromFile(path + "GAMEDATA_00020000");
+        managerIn.setLittleEndian();
+
+
+        u32 pos;
+        for (int x = 0; x < 4096; x++) {
+            if (managerIn.data[x] == 0x78 && managerIn.data[x + 1] == 0x9C) {
+                pos = x - 4;
+            }
+        }
+
+        managerIn.seek(pos);
+
+        ChunkManager chunk;
+        chunk.size = managerIn.readInt32();
+        chunk.setRLE(chunk.size & 1);
+        chunk.setUnknown((chunk.size >> 1) & 1);
+        chunk.size = (chunk.size & 0xFFFFFFFC) >> 8;
+        chunk.allocate(chunk.size);
+        chunk.setDecSize(10000);
+        // chunk.setDecSize(managerIn.readInt32());
+        memcpy(chunk.start(), managerIn.ptr, chunk.size);
+
+        chunk.ensure_decompress(CONSOLE::SWITCH);
+        chunk.readChunk(CONSOLE::SWITCH, DIM::OVERWORLD);
+
+
+
+
+        return 0;
+    }
+    */
 
 
     // edit regions (threaded)
     auto start = getNanoSeconds();
-    run_parallel<4>(processRegion, std::ref(fileListing));
+    // run_parallel<4>(processRegion, std::ref(fileListing));
     // for (int ri = 0; ri < 4; ri++) processRegion(ri, fileListing);
     auto end = getNanoSeconds();
     printf("Total Time: %.3f\n", float(end - start) / float(1000000000));
 
+
+    // fileListing.convertRegions(consoleOut);
     // convert to fileListing
-    fileListing.convertRegions(consoleOut);
-    int statusOut = fileListing.writeFile(consoleOut, TEST.second);
+    int statusOut = fileListing.writeFile(consoleOut, TEST_OUT);
     if (statusOut) {
-        return printf_err("converting to wiiu failed...\n");
+        std::string str = "converting to " + consoleToStr(consoleOut) + " failed...\n";
+        return printf_err(str.c_str());
     } else {
-        printf("Finished!\nile Out: %s", TEST.second.c_str());
+        printf("Finished!\nFile Out: %s", TEST_OUT.c_str());
     }
+
 
     return statusOut;
 }

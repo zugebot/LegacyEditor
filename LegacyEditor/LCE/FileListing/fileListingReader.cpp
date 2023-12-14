@@ -221,21 +221,22 @@ int FileListing::readFile(stringRef_t inFileStr) {
         /// file, but there won't be 2 files in a savegame file for PS3
         u32 file_size = headerUnion.getDATFileSize();
         u32 src_size = headerUnion.getDATSrcSize();
-        result = readXbox360_DAT(f_in, data, source_bin_size, file_size, src_size);
+        result = readXbox360DAT(f_in, data, source_bin_size, file_size, src_size);
     } else if (headerUnion.getInt2() < 100) {
         /// otherwise if (int2) > 50 then it is a random file
         /// because likely ps3 won't have more than 50 files
         result = readRpcs3(f_in, data, source_bin_size);
     } else if (headerUnion.getInt1() == CON_MAGIC) {
-        result = readXbox360_BIN(f_in, data, source_bin_size);
+        result = readXbox360BIN(f_in, data, source_bin_size);
     } else {
         printf("%s", error3);
         result = STATUS::INVALID_SAVE;
     }
 
     fclose(f_in);
-    readData(data);
-
+    if (result == STATUS::SUCCESS) {
+        readData(data);
+    }
     return result;
 }
 
@@ -365,7 +366,7 @@ int FileListing::readRpcs3(FILE* f_in, Data& data, u64 source_binary_size) {
 }
 
 
-int FileListing::readXbox360_DAT(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size, u32 src_size) {
+int FileListing::readXbox360DAT(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size, u32 src_size) {
     printf("Detected Xbox360 .dat savefile, converting\n");
     console = CONSOLE::XBOX360;
 
@@ -390,7 +391,7 @@ int FileListing::readXbox360_DAT(FILE* f_in, Data& data, u64 source_binary_size,
 }
 
 
-int FileListing::readXbox360_BIN(FILE* f_in, Data& data, u64 source_binary_size) {
+int FileListing::readXbox360BIN(FILE* f_in, Data& data, u64 source_binary_size) {
     console = CONSOLE::XBOX360;
     printf("Detected Xbox360 .bin savefile, converting\n");
 

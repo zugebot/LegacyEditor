@@ -11,11 +11,11 @@ class File;
 class RegionManager {
 private:
     static constexpr u32 REGION_WIDTH = 32;
-    static constexpr u32 CHUNK_COUNT = 1024;
-    static constexpr u32 SECTOR_SIZE = 4096;
+    static constexpr u32 SECTOR_BYTES = 4096;
+    static constexpr u32 SECTOR_INTS = SECTOR_BYTES / 4;
 
 public:
-    ChunkManager chunks[CHUNK_COUNT] = {};
+    ChunkManager chunks[SECTOR_INTS] = {};
     CONSOLE console = CONSOLE::NONE;
 
     explicit RegionManager(CONSOLE consoleIn) : console(consoleIn) {}

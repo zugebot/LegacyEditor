@@ -13,6 +13,8 @@
 
 Data FileListing::writeData(CONSOLE consoleOut) {
 
+    ensureAllRegionFilesExist();
+
     // step 1: get the file count and size of all sub-files
     u32 fileCount = 0, fileDataSize = 0;
     for (const File &file: allFiles) {
@@ -34,23 +36,51 @@ Data FileListing::writeData(CONSOLE consoleOut) {
     managerOut.writeInt16(currentVersion);
 
 
-    // step 4: write each files data
+    // step 4: create the correct file list order
+    std::vector<File*> fileOrder;
+    {
+        std::vector<File*> regions;
+        File* levelFile = nullptr;
+        std::vector<File*> regionsEmpty;
+        std::vector<File*> otherFiles;
+        for (File &fileIter: allFiles) {
+            if (fileIter.isRegionType()) {
+                if (fileIter.data.size == 0) {
+                    regionsEmpty.push_back(&fileIter);
+                } else {
+                    regions.push_back(&fileIter);
+                }
+
+            } else if (fileIter.fileType == FileType::LEVEL) {
+                levelFile = &fileIter;
+            } else {
+                otherFiles.push_back(&fileIter);
+            }
+        }
+
+        fileOrder.insert(fileOrder.end(), regions.begin(), regions.end());
+        fileOrder.push_back(levelFile);
+        fileOrder.insert(fileOrder.end(), regionsEmpty.begin(), regionsEmpty.end());
+        fileOrder.insert(fileOrder.end(), otherFiles.begin(), otherFiles.end());
+    }
+
+    // step 5: write each files data
     // I am using additionalData as the offset into the file its data is at
     u32 index = 12;
-    for (File &fileIter: allFiles) {
-        fileIter.additionalData = index;
-        index += fileIter.data.getSize();
+    for (File* fileIter: fileOrder) {
+        fileIter->additionalData = index;
+        index += fileIter->data.getSize();
         managerOut.writeFile(fileIter);
     }
 
-    // step 5: write file metadata
-    for (File &fileIter: allFiles) {
+    // step 6: write file metadata
+    for (File* fileIter: fileOrder) {
         // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter.additionalData, fileIter.size, fileIter.name.c_str());
-        std::string fileIterName = fileIter.constructFileName(consoleOut);
+        std::string fileIterName = fileIter->constructFileName(consoleOut);
         managerOut.writeWString(fileIterName, 64);
-        managerOut.writeInt32(fileIter.data.getSize());
-        managerOut.writeInt32(fileIter.additionalData);
-        managerOut.writeInt64(fileIter.timestamp);
+        managerOut.writeInt32(fileIter->data.getSize());
+        managerOut.writeInt32(fileIter->additionalData);
+        managerOut.writeInt64(fileIter->timestamp);
     }
 
     return dataOut;
@@ -65,7 +95,7 @@ MU int FileListing::writeFile(CONSOLE consoleOut, stringRef_t outfileStr) {
             status = writePS3Compressed();
             break;
         case CONSOLE::RPCS3:
-            status = writePS3Uncompressed();
+            status = writeRPCS3(outfileStr, dataOut);
             break;
         case CONSOLE::XBOX360:
             status = writeXbox360_BIN();
@@ -142,7 +172,14 @@ int FileListing::writeVita(stringRef_t outfileStr, Data& dataOut) {
 }
 
 
-MU int FileListing::writePS3Uncompressed() {
+MU int FileListing::writeRPCS3(stringRef_t outfileStr, Data& dataOut) {
+    FILE* f_out = fopen(outfileStr.c_str(), "wb");
+    if (!f_out) { return STATUS::FILE_NOT_FOUND; }
+
+
+    printf("Writing final size: %u\n", dataOut.size);
+    fwrite(dataOut.data, 1, dataOut.size, f_out);
+    fclose(f_out);
     return STATUS::SUCCESS;
 }
 

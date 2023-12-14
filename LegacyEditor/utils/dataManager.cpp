@@ -72,9 +72,9 @@ u16 DataManager::readInt16() {
 i32 DataManager::readInt24() {
     u32 value = readInt32();
     if (isBig) {
-        value = (value & 0xFFFFFF00) >> 8;
+        value = value & 0xFFFFFF00 >> 8;
     } else {
-        value = value & 0x00FFFFFF;
+        value = (value & 0x00FFFFFF);
     }
     decrementPointer(1);
     return (i32) value;

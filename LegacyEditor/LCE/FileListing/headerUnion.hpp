@@ -34,7 +34,9 @@ public:
         struct {
             /// bytes 0-3
             u32 src_size;
-            /// bytes 4-11
+            /// bytes 4-7
+            u32 bla_bla_bla;
+            /// bytes 8-11
             u64 file_size;
         } DAT;
         /// header size: 8 bytes
@@ -65,7 +67,7 @@ public:
     /// bytes 0-3
     ND u32 getDATSrcSize() const { return isSystemLittle() ? ::swapEndian32(DAT.src_size) : DAT.src_size; }
     /// bytes 4-11
-    ND u64 getDATFileSize() const { return isSystemLittle() ? ::swapEndian64(DAT.file_size) : DAT.file_size; }
+    ND u64 getDATFileSize() const { return isSystemLittle() ? ::swapEndian32(DAT.file_size) : DAT.file_size; }
     /// bytes 4-7
     ND u32 getVitaFileSize() const { return isSystemLittle() ? VITA.file_size : ::swapEndian32(VITA.file_size) ; }
     /// bytes 8-11

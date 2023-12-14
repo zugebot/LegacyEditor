@@ -81,7 +81,7 @@ std::string File::constructFileName(MU CONSOLE console) const {
         case FileType::MAP: {
             auto tag = getNBTCompound()->getTag("#");
             i16 mapNum = tag.toPrimitiveType<i16>();
-            name = "data/map" + to_string(mapNum) + ".dat";
+            name = "data/map_" + to_string(mapNum) + ".dat";
             break;
         }
         case FileType::PLAYER:

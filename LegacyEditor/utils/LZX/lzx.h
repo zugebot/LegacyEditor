@@ -39,18 +39,17 @@ extern "C" {
 /* opaque state structure */
     struct lzx_state;
 
-    /* create an lzx state object */
+    /* create a lzx state object */
     struct lzx_state* lzx_init(int window);
 
-    /* destroy an lzx state object */
+    /* destroy a lzx state object */
     void lzx_teardown(struct lzx_state* pState);
 
-    /* reset an lzx stream */
+    /* reset a lzx stream */
     void lzx_reset(struct lzx_state* pState);
 
     /* decompress an LZX compressed block */
-    int lzx_decompress(struct lzx_state* pState, unsigned char* inpos, unsigned char* outpos, int inlen,
-        int outlen);
+    int lzx_decompress(struct lzx_state* pState, unsigned char* inpos, unsigned char* outpos, int inlen, int outlen);
 
 #ifdef __cplusplus
 }
