@@ -407,8 +407,7 @@ namespace editor {
 
     void StfsPackage::parse() {
         BINHeader header;
-        int result = header.readHeader(data);
-        if (!result) {
+        if (const int result = header.readHeader(data); !result) {
             // free(inputData);
             return; // SaveFileInfo();
         }
@@ -438,11 +437,11 @@ namespace editor {
         topTable.trueBlockNumber = computeLevelNBackingHashBlockNumber(0, topLevel);
         topTable.level = topLevel;
 
-        u32 baseAddress = (topTable.trueBlockNumber << 0xC) + firstHashTableAddress;
+        const u32 baseAddress = (topTable.trueBlockNumber << 0xC) + firstHashTableAddress;
         topTable.addressInFile = baseAddress + ((metaData.stfsVD.blockSeparation & 2) << 0xB);
         data.seek(topTable.addressInFile);
 
-        u32 dataBlocksPerHashTreeLevel[3] = {1, 0xAA, 0x70E4};
+        const u32 dataBlocksPerHashTreeLevel[3] = {1, 0xAA, 0x70E4};
 
         // load the information
         topTable.entryCount = metaData.stfsVD.allocBlockCount / dataBlocksPerHashTreeLevel[topLevel];
@@ -481,10 +480,10 @@ namespace editor {
     }
 
 
-    static u32 c2n(char c) {
-        if (c >= '0' && c <= '9') return c - '0';
-        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-        if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    static u32 c2n(const char character) {
+        if (character >= '0' && character <= '9') { return character - '0'; }
+        if (character >= 'a' && character <= 'f') { return character - 'a' + 10; }
+        if (character >= 'A' && character <= 'F') { return character - 'A' + 10; }
         return 0;
     }
 
@@ -492,7 +491,7 @@ namespace editor {
     static i64 stringToHex(const std::string& str) {
         i64 result = 0;
         size_t i = 0;
-        int stringSize = (int) str.size() - 1; // terminating value doesn't count
+        int stringSize = static_cast<int>(str.size()) - 1; // terminating value doesn't count
         for (; i < stringSize; i++) { result = result * 16 + c2n(str[i]); }
         return result;
     }
@@ -507,7 +506,7 @@ namespace editor {
             sign = -1;
             i++;
         }
-        int stringSize = (int) str.size() - 1; // terminating value doesn't count
+        const int stringSize = static_cast<int>(str.size()) - 1; // terminating value doesn't count
         for (; i < stringSize; i++) { result = result * 10 + (str[i] - '0'); }
 
         return result * sign;
@@ -522,7 +521,7 @@ namespace editor {
 
     WorldOptions getTagsInImage(DataManager& image) {
         WorldOptions options;
-        u8_vec PNGHeader = image.readIntoVector(8);
+        const u8_vec PNGHeader = image.readIntoVector(8);
         if (PNGHeader != u8_vec{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}) {
             printf("File in thumbnail block is not PNG header, the first 8 bytes are:\n");
             // for (const u8& byte: PNGHeader) { std::cout << std::hex << byte << " "; }
@@ -532,13 +531,16 @@ namespace editor {
         std::vector<TextChunk> chunks;
 
         while (!image.isEndOfData()) {
-            u32 chunkLength = image.readInt32(); // Read chunk length
+            // Read chunk length
+            const u32 chunkLength = image.readInt32();
             std::string chunkType = image.readString(4);
 
-            if (chunkType == "IEND") break; // check if end
+            // check if end
+            if (chunkType == "IEND") { break; }
 
             if (chunkType != "tEXt") {
-                image.incrementPointer(u32(chunkLength + 4)); // the extra 4 is the crc
+                // the extra 4 is the crc
+                image.incrementPointer(chunkLength + 4);
                 continue;
             }
 
@@ -565,21 +567,21 @@ namespace editor {
         }
 
         // get keys and store them
-        for (const TextChunk& chunk: chunks) {
-            if (chunk.keyword == "4J_SEED") {
-                options.displaySeed = stringToInt64(chunk.text);
-            } else if (chunk.keyword == "4J_#LOADS") {
-                options.numLoads = stringToHex(chunk.text);
-            } else if (chunk.keyword == "4J_HOSTOPTIONS") {
-                options.hostOptions = stringToHex(chunk.text);
-            } else if (chunk.keyword == "4J_TEXTUREPACK") {
-                options.texturePack = stringToHex(chunk.text);
-            } else if (chunk.keyword == "4J_EXTRADATA") {
-                options.extraData = stringToHex(chunk.text);
-            } else if (chunk.keyword == "4J_EXPLOREDCHUNKS") {
-                options.numExploredChunks = stringToHex(chunk.text);
-            } else if (chunk.keyword == "4J_BASESAVENAME") {
-                options.baseSaveName = chunk.text;
+        for (const auto& [keyword, text]: chunks) {
+            if (keyword == "4J_SEED") {
+                options.displaySeed = stringToInt64(text);
+            } else if (keyword == "4J_#LOADS") {
+                options.numLoads = stringToHex(text);
+            } else if (keyword == "4J_HOSTOPTIONS") {
+                options.hostOptions = stringToHex(text);
+            } else if (keyword == "4J_TEXTUREPACK") {
+                options.texturePack = stringToHex(text);
+            } else if (keyword == "4J_EXTRADATA") {
+                options.extraData = stringToHex(text);
+            } else if (keyword == "4J_EXPLOREDCHUNKS") {
+                options.numExploredChunks = stringToHex(text);
+            } else if (keyword == "4J_BASESAVENAME") {
+                options.baseSaveName = text;
             }
         }
 
@@ -626,7 +628,7 @@ namespace editor {
         StfsFileListing listing = stfsInfo.getFileListing();
 
         StfsFileEntry* entry = findSavegameFileEntry(listing);
-        if (!entry) {
+        if (entry == nullptr) {
             free(inputData);
             return {};
         }

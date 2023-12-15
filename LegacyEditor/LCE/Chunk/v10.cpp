@@ -32,27 +32,27 @@ namespace editor::chunk {
         chunkData->chunkZ = chunkNBT->getPrimitive<i32>("zPos");
         chunkData->lastUpdate = chunkNBT->getPrimitive<i64>("LastUpdate");
 
-        auto* blockArray = chunkNBT->getByteArray("Blocks");
-        memcpy(&chunkData->oldBlocks[0], blockArray->array, 65536);
+        const auto* blockArray = chunkNBT->getByteArray("Blocks");
+        memcpy(chunkData->oldBlocks.data(), blockArray->array, 65536);
 
-        auto* blockDataArray = chunkNBT->getByteArray("Data");
-        memcpy(&chunkData->blockData[0], blockDataArray->array, 32768);
+        const auto* blockDataArray = chunkNBT->getByteArray("Data");
+        memcpy(chunkData->blockData.data(), blockDataArray->array, 32768);
 
-        auto* heightMapArray = chunkNBT->getByteArray("HeightMap");
-        memcpy(&chunkData->heightMap[0], heightMapArray->array, 256);
+        const auto* heightMapArray = chunkNBT->getByteArray("HeightMap");
+        memcpy(chunkData->heightMap.data(), heightMapArray->array, 256);
 
-        auto* biomeArray = chunkNBT->getByteArray("Biomes");
-        memcpy(&chunkData->biomes[0], biomeArray->array, 256);
+        const auto* biomeArray = chunkNBT->getByteArray("Biomes");
+        memcpy(chunkData->biomes.data(), biomeArray->array, 256);
 
-        auto* skyLightArray = chunkNBT->getByteArray("SkyLight");
-        memcpy(&chunkData->skyLight[0], skyLightArray->array, 32768);
+        const auto* skyLightArray = chunkNBT->getByteArray("SkyLight");
+        memcpy(chunkData->skyLight.data(), skyLightArray->array, 32768);
 
-        auto* blockLightArray = chunkNBT->getByteArray("BlockLight");
-        memcpy(&chunkData->blockLight[0], blockLightArray->array, 32768);
+        const auto* blockLightArray = chunkNBT->getByteArray("BlockLight");
+        memcpy(chunkData->blockLight.data(), blockLightArray->array, 32768);
 
-        auto createAndCopy = [](const auto* byteArray, size_t size) {
+        auto createAndCopy = [](const auto* byteArray, const size_t size) {
             u8_vec result(size);
-            memcpy(&result[0], byteArray->array, size);
+            memcpy(result.data(), byteArray->array, size);
             return result;
         };
 

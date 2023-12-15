@@ -10,7 +10,6 @@ namespace editor::chunk {
 
     /// "NBT" chunks.
     class ChunkV10 {
-    private:
         ChunkData* chunkData = nullptr;
         DataManager* dataManager = nullptr;
 

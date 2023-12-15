@@ -39,9 +39,9 @@ namespace editor {
 
         ~File();
         File() = default;
-        explicit File(u32 sizeIn) : data(Data(sizeIn)) {}
-        File(u32 sizeIn, u64 timestampIn) : data(Data(sizeIn)), timestamp(timestampIn) {}
-        File(u8* dataIn, u32 sizeIn, u64 timestampIn) : data(dataIn, sizeIn), timestamp(timestampIn) {}
+        explicit File(const u32 sizeIn) : data(Data(sizeIn)) {}
+        File(const u32 sizeIn, const u64 timestampIn) : data(Data(sizeIn)), timestamp(timestampIn) {}
+        File(u8* dataIn, const u32 sizeIn, const u64 timestampIn) : data(dataIn, sizeIn), timestamp(timestampIn) {}
 
         MU ND bool isRegionType() const {
             return fileType == FileType::REGION_NETHER ||
@@ -56,7 +56,7 @@ namespace editor {
         }
 
         void deleteData();
-        MU void steal(Data& other) { data.steal(other); }
+        MU void steal(const Data& other) { data.steal(other); }
 
         ND NBTTagCompound* createNBTTagCompound();
         ND NBTTagCompound* getNBTCompound() const;

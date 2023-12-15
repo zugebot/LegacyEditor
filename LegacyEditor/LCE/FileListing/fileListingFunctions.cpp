@@ -22,8 +22,7 @@ namespace editor {
         }
 
         namespace fs = std::filesystem;
-        fs::path _dir_path{folder};
-        if (fs::exists(_dir_path) && fs::is_directory(_dir_path)) {
+        if (const fs::path _dir_path{folder}; fs::exists(_dir_path) && fs::is_directory(_dir_path)) {
             for (const auto &entry: fs::directory_iterator(_dir_path)) {
                 try {
                     fs::remove_all(entry.path());
@@ -35,9 +34,8 @@ namespace editor {
 
         for (File &file: allFiles) {
             std::string fullPath = folder + "\\" + file.constructFileName(console);
-            fs::path path(fullPath);
 
-            if (!fs::exists(path.parent_path())) {
+            if (fs::path path(fullPath); !fs::exists(path.parent_path())) {
                 fs::create_directories(path.parent_path());
             }
 
@@ -55,7 +53,7 @@ namespace editor {
                         allFiles.begin(),
                         allFiles.end(),
                         [&collectedFiles, &fileType](const File& file) {
-                            bool isType = file.fileType == fileType;
+                            const bool isType = file.fileType == fileType;
                             if (isType) {
                                 collectedFiles.push_back(file);
                             }
@@ -73,12 +71,12 @@ namespace editor {
         bool dim[3][2][2] = {false};
         {
             int dimCount = 0;
-            for (auto fileList : dimFileLists) {
-                for (auto* regionFile: *fileList) {
+            for (const auto *fileList : dimFileLists) {
+                for (const auto* regionFile: *fileList) {
                     if (regionFile->data.size != 0) {
-                        i16 x = regionFile->getNBTCompound()->getTag("x").toPrimitiveType<i16>();
-                        i16 z = regionFile->getNBTCompound()->getTag("z").toPrimitiveType<i16>();
-                        dim[dimCount][x + 1][z + 1] = true;
+                        const i16 regionX = regionFile->getNBTCompound()->getTag("x").toPrimitiveType<i16>();
+                        const i16 regionZ = regionFile->getNBTCompound()->getTag("z").toPrimitiveType<i16>();
+                        dim[dimCount][regionX + 1][regionZ + 1] = true;
                     }
                 }
                 dimCount++;
@@ -89,16 +87,17 @@ namespace editor {
         for (size_t dim_i = 0; dim_i < 3; dim_i++) {
             for (size_t x = 2; x --> 0;) {
                 for (size_t z = 2; z --> 0;) {
-                    if (dim[dim_i][x][z])
+                    if (dim[dim_i][x][z]) {
                         continue;
+                    }
 
                     filesAdded++;
                     allFiles.emplace_back(nullptr, 0, 0);
                     File &file = allFiles.back();
 
                     auto* nbt = file.createNBTTagCompound();
-                    nbt->setTag("x", createNBT_INT16((i16)(x - 1)));
-                    nbt->setTag("z", createNBT_INT16((i16)(z - 1)));
+                    nbt->setTag("x", createNBT_INT16(static_cast<i16>(x - 1)));
+                    nbt->setTag("z", createNBT_INT16(static_cast<i16>(z - 1)));
                     switch (dim_i) {
                         case 0:
                             file.fileType = FileType::REGION_NETHER;
@@ -236,11 +235,11 @@ namespace editor {
 
 
     MU void FileListing::convertRegions(CONSOLE consoleOut) {
-        for (FileList* fileList : dimFileLists) {
+        for (const FileList* fileList : dimFileLists) {
             for (File* file : *fileList) {
                 RegionManager region(console);
                 region.read(file);
-                Data data = region.write(consoleOut);
+                const Data data = region.write(consoleOut);
                 file->data.steal(data);
             }
         }
@@ -249,7 +248,7 @@ namespace editor {
 
     MU ND int FileListing::convertTo(stringRef_t inFileStr, stringRef_t outFileStr, CONSOLE consoleOut) {
         int status = readFile(inFileStr);
-        if (status != STATUS::SUCCESS) return status;
+        if (status != STATUS::SUCCESS) { return status; }
 
         saveToFolder(dir_path + "dump_" + consoleToStr(console));
 
@@ -273,14 +272,14 @@ namespace editor {
 
     MU ND int FileListing::convertAndReplaceRegions(stringRef_t inFileStr,
                                                     stringRef_t inFileRegionReplacementStr,
-                                                    stringRef_t outFileStr, CONSOLE consoleOut) {
+                                                    stringRef_t outFileStr, const CONSOLE consoleOut) {
 
         int status = readFile(inFileStr);
-        if (status != STATUS::SUCCESS) return status;
+        if (status != STATUS::SUCCESS) { return status; }
 
         FileListing replace;
         status = replace.readFile(inFileRegionReplacementStr);
-        if (status != STATUS::SUCCESS) return status;
+        if (status != STATUS::SUCCESS) { return status; }
 
         removeFileTypes({FileType::REGION_NETHER,
                          FileType::REGION_OVERWORLD,
@@ -290,11 +289,11 @@ namespace editor {
         addFiles(replace.collectFiles(FileType::REGION_OVERWORLD));
         addFiles(replace.collectFiles(FileType::REGION_END));
 
-        for (auto* fileList : dimFileLists) {
+        for (const auto* fileList : dimFileLists) {
             for (File* file: *fileList) {
                 RegionManager region(replace.console);
                 region.read(file);
-                Data data1 = region.write(consoleOut);
+                const Data data1 = region.write(consoleOut);
                 file->data.steal(data1);
             }
         }

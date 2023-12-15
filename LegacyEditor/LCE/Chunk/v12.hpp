@@ -11,7 +11,7 @@ class DataManager;
 namespace editor::chunk {
 
 
-    enum V12_GRID_STATE {
+    enum V12_GRID_STATE : u8 {
         V12_0_UNO = 0,
         V12_1_BIT = 2,
         V12_1_BIT_SUBMERGED = 3,
@@ -67,7 +67,7 @@ namespace editor::chunk {
         void writeBlockData() const;
         template<size_t BitsPerBlock, size_t BlockCount, size_t EmptyCount>
         void writeGrid(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[65536]) const;
-        void writeWithMaxBlocks(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[65536]) const;
+        void writeWithMaxBlocks(const u16_vec& blockVector, const u16_vec& blockLocations, u8 blockMap[65536]) const;
         void writeLightSection(u32& readOffset, u8_vec& light) const;
         void writeLightData() const;
     };

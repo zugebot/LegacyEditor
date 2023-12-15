@@ -5,8 +5,8 @@ namespace editor {
 
 
     File::~File() {
-        if (nbt == nullptr) return;
-        if (nbt->data == nullptr) return;
+        if (nbt == nullptr) { return; }
+        if (nbt->data == nullptr) { return; }
         getNBTCompound()->deleteAll();
         nbt->data = nullptr;
         delete nbt;
@@ -22,22 +22,22 @@ namespace editor {
 
 
     NBTTagCompound* File::createNBTTagCompound() {
-        if (nbt != nullptr) return nullptr;
+        if (nbt != nullptr) { return nullptr; }
         nbt = new NBTBase(new NBTTagCompound(), TAG_COMPOUND);
         return static_cast<NBTTagCompound*>(nbt->data);
     }
 
 
     ND NBTTagCompound* File::getNBTCompound() const {
-        if (nbt == nullptr) return nullptr;
-        if (nbt->data == nullptr) return nullptr;
+        if (nbt == nullptr) { return nullptr; }
+        if (nbt->data == nullptr) { return nullptr; }
         return static_cast<NBTTagCompound*>(nbt->data);
     }
 
 
     void File::deleteNBTCompound() {
-        if (nbt == nullptr) return;
-        if (nbt->data == nullptr) return;
+        if (nbt == nullptr) { return; }
+        if (nbt->data == nullptr) { return; }
         getNBTCompound()->deleteAll();
         nbt->data = nullptr;
         delete nbt;
@@ -72,8 +72,7 @@ namespace editor {
                 break;
             }
             case FileType::STRUCTURE: {
-                auto* compound = getNBTCompound();
-                if (compound == nullptr) {
+                if (const auto* compound = getNBTCompound(); compound == nullptr) {
                     name = "NULL";
                     break;
                 }
@@ -82,7 +81,7 @@ namespace editor {
             }
             case FileType::MAP: {
                 auto tag = getNBTCompound()->getTag("#");
-                i16 mapNum = tag.toPrimitiveType<i16>();
+                const i16 mapNum = tag.toPrimitiveType<i16>();
                 name = "data/map_" + to_string(mapNum) + ".dat";
                 break;
             }
@@ -92,8 +91,8 @@ namespace editor {
             case FileType::REGION_NETHER:
             case FileType::REGION_OVERWORLD:
             case FileType::REGION_END: {
-                i16 x = getNBTCompound()->getTag("x").toPrimitiveType<i16>();
-                i16 z = getNBTCompound()->getTag("z").toPrimitiveType<i16>();
+                const i16 regionX = getNBTCompound()->getTag("x").toPrimitiveType<i16>();
+                const i16 regionZ = getNBTCompound()->getTag("z").toPrimitiveType<i16>();
                 if (fileType == FileType::REGION_NETHER) {
                     name = "DIM-1";
                 } else if (fileType == FileType::REGION_OVERWORLD) {
@@ -101,7 +100,7 @@ namespace editor {
                 } else {
                     name = "DIM1/";
                 }
-                name += "r." + to_string(x) + "." + to_string(z) + ".mcr";
+                name += "r." + to_string(regionX) + "." + to_string(regionZ) + ".mcr";
                 break;
             }
         }

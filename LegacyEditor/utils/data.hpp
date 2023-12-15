@@ -10,14 +10,14 @@ public:
 
     Data() = default;
 
-    explicit Data(u32 sizeIn) : size(sizeIn) {
+    explicit Data(const u32 sizeIn) : size(sizeIn) {
         data = new u8[sizeIn];
     }
 
-    explicit Data(u8* dataIn, u32 sizeIn) : data(dataIn), size(sizeIn) {}
+    explicit Data(u8* dataIn, const u32 sizeIn) : size(sizeIn), data(dataIn) {}
 
 
-    bool allocate(u32 sizeIn) {
+    bool allocate(const u32 sizeIn) {
         size = sizeIn;
         delete[] data;
 
@@ -46,6 +46,6 @@ public:
         size = 0;
     }
 
-    ND inline u8* start() const { return data; }
-    ND inline u32 getSize() const { return size; }
+    ND u8* start() const { return data; }
+    ND u32 getSize() const { return size; }
 };

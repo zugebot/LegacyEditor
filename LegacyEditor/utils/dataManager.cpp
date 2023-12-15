@@ -15,9 +15,9 @@ void DataManager::seekEnd() {
 }
 
 
-void DataManager::seek(i64 position) {
+void DataManager::seek(const i64 position) {
     seekStart();
-    incrementPointer((i32)position);
+    incrementPointer(static_cast<i32>(position));
 }
 
 bool DataManager::isEndOfData() const {
@@ -51,7 +51,7 @@ void DataManager::decrementPointer(u32 amount) {
 
 
 u8 DataManager::readInt8() {
-    u8 value = ptr[0];
+    const u8 value = ptr[0];
     incrementPointer1();
     return value;
 }
@@ -77,14 +77,14 @@ i32 DataManager::readInt24() {
         value = (value & 0x00FFFFFF);
     }
     decrementPointer(1);
-    return (i32) value;
+    return static_cast<i32>(value);
 
 }
 
 
 // TODO: remove this function its bad
 i32 DataManager::readInt24(bool isLittleIn) {
-    bool originalEndianType = isBig;
+    const bool originalEndianType = isBig;
     isBig = isLittleIn;
     u32 val = readInt32();
     if (isLittleIn) {
@@ -94,7 +94,7 @@ i32 DataManager::readInt24(bool isLittleIn) {
     }
     decrementPointer(1); // 3 = 4 - 1
     isBig = originalEndianType;
-    return (int) val;
+    return static_cast<int>(val);
 }
 
 
@@ -113,39 +113,37 @@ u32 DataManager::readInt32() {
 u64 DataManager::readInt64() {
     i64 val;
     if (isBig) {
-        val = (i64) (
-                ((u64) ptr[0] << 56) |
-                ((u64) ptr[1] << 48) |
-                ((u64) ptr[2] << 40) |
-                ((u64) ptr[3] << 32) |
-                ((u64) ptr[4] << 24) |
-                ((u64) ptr[5] << 16) |
-                ((u64) ptr[6] <<  8) |
-                ((u64) ptr[7]));
+        val = static_cast<i64>((static_cast<u64>(ptr[0]) << 56) |
+                               (static_cast<u64>(ptr[1]) << 48) |
+                               (static_cast<u64>(ptr[2]) << 40) |
+                               (static_cast<u64>(ptr[3]) << 32) |
+                               (static_cast<u64>(ptr[4]) << 24) |
+                               (static_cast<u64>(ptr[5]) << 16) |
+                               (static_cast<u64>(ptr[6]) << 8) |
+                               static_cast<u64>(ptr[7]));
     } else {
-        val = (i64) (
-                ((u64) ptr[7] << 56) |
-                ((u64) ptr[6] << 48) |
-                ((u64) ptr[5] << 40) |
-                ((u64) ptr[4] << 32) |
-                ((u64) ptr[3] << 24) |
-                ((u64) ptr[2] << 16) |
-                ((u64) ptr[1] <<  8) |
-                ((u64) ptr[0]));
+        val = static_cast<i64>((static_cast<u64>(ptr[7]) << 56) |
+                               (static_cast<u64>(ptr[6]) << 48) |
+                               (static_cast<u64>(ptr[5]) << 40) |
+                               (static_cast<u64>(ptr[4]) << 32) |
+                               (static_cast<u64>(ptr[3]) << 24) |
+                               (static_cast<u64>(ptr[2]) << 16) |
+                               (static_cast<u64>(ptr[1]) << 8) |
+                               static_cast<u64>(ptr[0]));
     }
     incrementPointer8();
     return val;
 }
 
 
-u8 DataManager::readInt8AtOffset(u32 offset) const {
+u8 DataManager::readInt8AtOffset(const u32 offset) const {
     u8 value = data[offset];
     return value;
 }
 
 
-u16 DataManager::readInt16AtOffset(u32 offset) const {
-    u8* ptrOff = data + offset;
+u16 DataManager::readInt16AtOffset(const u32 offset) const {
+    const u8* ptrOff = data + offset;
     u16 value;
     if (isBig) {
         value = ((ptrOff[0] << 8) | (ptrOff[1]));
@@ -156,8 +154,8 @@ u16 DataManager::readInt16AtOffset(u32 offset) const {
 }
 
 
-u32 DataManager::readInt32AtOffset(u32 offset) const {
-    u8* ptrOff = data + offset;
+u32 DataManager::readInt32AtOffset(const u32 offset) const {
+    const u8* ptrOff = data + offset;
     u32 value;
     if (isBig) {
         value = ((ptrOff[0] << 24) | (ptrOff[1] << 16) | (ptrOff[2] << 8) | (ptrOff[3]));
@@ -168,29 +166,27 @@ u32 DataManager::readInt32AtOffset(u32 offset) const {
 }
 
 
-u64 DataManager::readInt64AtOffset(u32 offset) const {
-    u8* ptrOff = data + offset;
+u64 DataManager::readInt64AtOffset(const u32 offset) const {
+    const u8* ptrOff = data + offset;
     i64 val;
     if (isBig) {
-        val = (i64) (
-                ((u64) ptrOff[0] << 56) |
-                ((u64) ptrOff[1] << 48) |
-                ((u64) ptrOff[2] << 40) |
-                ((u64) ptrOff[3] << 32) |
-                ((u64) ptrOff[4] << 24) |
-                ((u64) ptrOff[5] << 16) |
-                ((u64) ptrOff[6] <<  8) |
-                ((u64) ptrOff[7]));
+        val = static_cast<i64>((static_cast<u64>(ptrOff[0]) << 56) |
+                               (static_cast<u64>(ptrOff[1]) << 48) |
+                               (static_cast<u64>(ptrOff[2]) << 40) |
+                               (static_cast<u64>(ptrOff[3]) << 32) |
+                               (static_cast<u64>(ptrOff[4]) << 24) |
+                               (static_cast<u64>(ptrOff[5]) << 16) |
+                               (static_cast<u64>(ptrOff[6]) << 8) |
+                               static_cast<u64>(ptrOff[7]));
     } else {
-        val = (i64) (
-                ((u64) ptrOff[7] << 56) |
-                ((u64) ptrOff[6] << 48) |
-                ((u64) ptrOff[5] << 40) |
-                ((u64) ptrOff[4] << 32) |
-                ((u64) ptrOff[3] << 24) |
-                ((u64) ptrOff[2] << 16) |
-                ((u64) ptrOff[1] <<  8) |
-                ((u64) ptrOff[0]));
+        val = static_cast<i64>((static_cast<u64>(ptrOff[7]) << 56) |
+                               (static_cast<u64>(ptrOff[6]) << 48) |
+                               (static_cast<u64>(ptrOff[5]) << 40) |
+                               (static_cast<u64>(ptrOff[4]) << 32) |
+                               (static_cast<u64>(ptrOff[3]) << 24) |
+                               (static_cast<u64>(ptrOff[2]) << 16) |
+                               (static_cast<u64>(ptrOff[1]) << 8) |
+                               static_cast<u64>(ptrOff[0]));
     }
     return val;
 }
@@ -202,22 +198,21 @@ bool DataManager::readBool() {
 
 
 std::string DataManager::readUTF() {
-    u8 length = readInt16();
-    std::string return_string((char*) ptr, length);
+    const u8 length = readInt16();
+    std::string return_string(reinterpret_cast<char*>(ptr), length);
     incrementPointer(length);
     return return_string;
 }
 
 
-std::string DataManager::readString(i32 length) {
-    std::string returnString;
+std::string DataManager::readString(const i32 length) {
     std::vector<char> strVec;
     strVec.resize(length + 1);
     char* str = strVec.data();
     str[length] = 0;
 
-    readOntoData(length, (u8*) str);
-    returnString = std::string(str);
+    readOntoData(length, reinterpret_cast<u8*>(str));
+    auto returnString = std::string(str);
     return returnString;
 }
 
@@ -232,19 +227,17 @@ std::wstring DataManager::readWString() {
 }
 
 
-std::wstring DataManager::readWString(u32 length) {
+std::wstring DataManager::readWString(const u32 length) {
     std::wstring returnString;
     for (u32 i = 0; i < length; i++) {
-        auto c = static_cast<wchar_t>(this->readInt16());
-        if (c != 0) { returnString += c; }
+        if (const auto c = static_cast<wchar_t>(this->readInt16()); c != 0) { returnString += c; }
     }
     return returnString;
 }
 
 
-std::string DataManager::readWAsString(u32 length) {
-    u8 empty = 0;
-    u8* letters = new u8[length + 1];
+std::string DataManager::readWAsString(const u32 length) {
+    auto *const letters = new u8[length + 1];
     letters[length] = 0;
 
     u32 i;
@@ -256,8 +249,8 @@ std::string DataManager::readWAsString(u32 length) {
             letters[i] = readInt8();
             readInt8();
         }
-        if (letters[i] == empty) {
-            incrementPointer(i32(2 * (length - i - 1)));
+        if (constexpr u8 empty = 0; letters[i] == empty) {
+            incrementPointer(static_cast<i32>(2 * (length - i - 1)));
             break;
         }
     }
@@ -281,18 +274,18 @@ u8_vec DataManager::readIntoVector(u32 amount) {
 
 float DataManager::readFloat() {
     u32 val = readInt32();
-    return *(float*) &val;
+    return *reinterpret_cast<float*>(&val);
 }
 
 
 double DataManager::readDouble() {
     u64 val = readInt64();
-    return *(double*) &val;
+    return *reinterpret_cast<double*>(&val);
 }
 
 
-u8* DataManager::readWithOffset(i32 offset, i32 amount) {
-    u8* val = new u8[amount];
+u8* DataManager::readWithOffset(const i32 offset, const i32 amount) {
+    auto *const val = new u8[amount];
     incrementPointer(offset);
     memcpy(val, data, amount);
     incrementPointer(amount);
@@ -300,17 +293,17 @@ u8* DataManager::readWithOffset(i32 offset, i32 amount) {
 }
 
 
-u8* DataManager::readBytes(u32 length) {
-    u8* val = new u8[length];
+u8* DataManager::readBytes(const u32 length) {
+    auto *val = new u8[length];
     memcpy(val, ptr, length);
-    incrementPointer((i32) length);
+    incrementPointer(static_cast<i32>(length));
     return val;
 }
 
 
-void DataManager::readOntoData(u32 length, u8* dataIn) {
+void DataManager::readOntoData(const u32 length, u8* dataIn) {
     memcpy(dataIn, ptr, length);
-    incrementPointer((i32)length);
+    incrementPointer(static_cast<i32>(length));
 }
 
 int DataManager::readFromFile(const std::string& fileStrIn) {
@@ -321,7 +314,7 @@ int DataManager::readFromFile(const std::string& fileStrIn) {
     }
 
     fseek(file, 0, SEEK_END);
-    u64 newSize = ftell(file);
+    const u64 newSize = ftell(file);
     fseek(file, 0, SEEK_SET);
 
     data = new u8[newSize];
@@ -349,7 +342,7 @@ void DataManager::writeInt8(u8 byteIn) {
 }
 
 
-void DataManager::writeInt16(u16 shortIn) {
+void DataManager::writeInt16(const u16 shortIn) {
     if (isBig) {
         ptr[0] = (shortIn >> 8) & 0xff;
         ptr[1] =  shortIn       & 0xff;
@@ -362,7 +355,7 @@ void DataManager::writeInt16(u16 shortIn) {
 
 
 
-void DataManager::writeInt24(u32 intIn) {
+void DataManager::writeInt24(const u32 intIn) {
     if (isBig) {
         // Write the most significant 3 bytes for big-endian
         ptr[0] = (intIn >> 16) & 0xff;
@@ -379,7 +372,7 @@ void DataManager::writeInt24(u32 intIn) {
 
 
 
-void DataManager::writeInt32(u32 intIn) {
+void DataManager::writeInt32(const u32 intIn) {
     if (isBig) {
         ptr[0] = (intIn >> 24) & 0xff;
         ptr[1] = (intIn >> 16) & 0xff;
@@ -395,7 +388,7 @@ void DataManager::writeInt32(u32 intIn) {
 }
 
 
-void DataManager::writeInt64(u64 longIn) {
+auto DataManager::writeInt64(u64 longIn) -> void {
     if (isBig) {
         ptr[0] = (longIn >> 56) & 0xff;
         ptr[1] = (longIn >> 48) & 0xff;
@@ -419,13 +412,13 @@ void DataManager::writeInt64(u64 longIn) {
 }
 
 
-void DataManager::writeInt8AtOffset(u32 offset, u8 byteIn) {
+void DataManager::writeInt8AtOffset(const u32 offset, const u8 byteIn) const {
     u8* ptrOff = data + offset;
     ptrOff[0] = byteIn;
 }
 
 
-void DataManager::writeInt16AtOffset(u32 offset, u16 shortIn) {
+void DataManager::writeInt16AtOffset(const u32 offset, const u16 shortIn) const {
     u8* ptrOff = data + offset;
     if (isBig) {
         ptrOff[0] = (shortIn >> 8) & 0xff;
@@ -437,7 +430,7 @@ void DataManager::writeInt16AtOffset(u32 offset, u16 shortIn) {
 }
 
 
-void DataManager::writeInt32AtOffset(u32 offset, u32 intIn) {
+void DataManager::writeInt32AtOffset(const u32 offset, const u32 intIn) const {
     u8* ptrOff = data + offset;
     if (isBig) {
         ptrOff[0] = (intIn >> 24) & 0xff;
@@ -453,7 +446,7 @@ void DataManager::writeInt32AtOffset(u32 offset, u32 intIn) {
 }
 
 
-void DataManager::writeInt64AtOffset(u32 offset, u64 longIn) {
+void DataManager::writeInt64AtOffset(const u32 offset, const u64 longIn) const {
     u8* ptrOff = data + offset;
     if (isBig) {
         ptrOff[0] = (longIn >> 56) & 0xff;
@@ -482,48 +475,48 @@ void DataManager::writeInt64AtOffset(u32 offset, u64 longIn) {
 
 
 void DataManager::writeFloat(float floatIn) {
-    writeInt32(*(u32*) &floatIn);
+    writeInt32(*reinterpret_cast<u32*>(&floatIn));
 }
 
 
 void DataManager::writeDouble(double doubleIn) {
-    writeInt64(*(u64*) &doubleIn);
+    writeInt64(*reinterpret_cast<u64*>(&doubleIn));
 }
 
 
-void DataManager::writeBytes(u8* dataPtrIn, u32 length) {
+void DataManager::writeBytes(const u8* dataPtrIn, const u32 length) {
     memcpy(ptr, dataPtrIn, length);
-    incrementPointer((i32)length);
+    incrementPointer(static_cast<i32>(length));
 }
 
 
-void DataManager::writeData(Data* dataIn) {
+void DataManager::writeData(const Data* dataIn) {
     writeBytes(dataIn->start(), dataIn->size);
 }
 
 
-void DataManager::writeFile(editor::File* fileIn) {
+void DataManager::writeFile(const editor::File* fileIn) {
     writeBytes(fileIn->data.start(), fileIn->data.size);
 }
 
 
-void DataManager::writeFile(editor::File& fileIn) {
+void DataManager::writeFile(const editor::File& fileIn) {
     writeBytes(fileIn.data.start(), fileIn.data.size);
 }
 
 
 void DataManager::writeUTF(std::string str) {
-    u32 str_size = str.size();
+    const u32 str_size = str.size();
     writeInt16(str_size);
-    writeBytes((u8*) str.data(), str_size);
+    writeBytes(reinterpret_cast<u8*>(str.data()), str_size);
 }
 
 
-void DataManager::writeWString(const std::string& str, u32 length) {
+void DataManager::writeWString(const std::string& str, const u32 length) {
     u8 empty = 0;
-    u8* emptyPtr = &empty;
+    const u8* emptyPtr = &empty;
 
-    for (u32 i = 0; i < length && i < std::min((u32)str.size(), length); ++i) {
+    for (u32 i = 0; i < length && i < std::min(static_cast<u32>(str.size()), length); ++i) {
         if (isBig) {
             writeBytes(emptyPtr, 1);
             writeInt8(str[i]);
@@ -552,7 +545,7 @@ int DataManager::writeToFile(const std::string& fileName) const {
 }
 
 
-int DataManager::writeToFile(u8* ptrIn, u32 sizeIn, const std::string& fileName) const {
+int DataManager::writeToFile(const u8* ptrIn, const u32 sizeIn, const std::string& fileName) const {
     FILE* f_out = fopen(fileName.c_str(), "wb");
     if (f_out == nullptr) {
         printf("Failed to writeBytes to output file '%s'", fileName.c_str());

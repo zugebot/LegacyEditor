@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <utility>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -21,11 +22,11 @@ public:
 
     void allocate() {
         delete[] data;
-        data = new u8[width * height * RGB_SIZE];
+        data = new u8[static_cast<size_t>(width * height * RGB_SIZE)];
         memset(data, 0, width * height * RGB_SIZE);
     }
 
-    Picture(int width, int height) : width(width), height(height) {
+    Picture(const int width, const int height) : width(width), height(height) {
         data = nullptr;
         allocate();
     }
@@ -36,46 +37,46 @@ public:
 
     MU ND inline u32 getWidth() const { return width; }
     MU ND inline u32 getHeight() const { return height; }
-    ND inline u32 getIndex(u32 x, u32 y) const { return x + y * height; }
+    ND inline u32 getIndex(const u32 x, const u32 y) const { return x + y * height; }
 
-    MU void drawPixel(unsigned char* rgb, u32 x, u32 y) const {
-        u32 index = getIndex(x, y);
-        memcpy(&data[index * 3], rgb, 3);
+    MU void drawPixel(const unsigned char* rgb, const u32 x, const u32 y) const {
+        const u32 index = getIndex(x, y);
+        memcpy(&data[static_cast<size_t>(index * 3)], rgb, 3);
     }
 
-    MU ND bool drawBox(u32 startX, u32 startY, u32 endX, u32 endY, u8 red, u8 green, u8 blue) const {
+    MU ND bool drawBox(const u32 startX, const u32 startY, const u32 endX, const u32 endY, const u8 red, const u8 green, const u8 blue) const {
 
-        if (startX > width || startY > height) return false;
-        if (endX > width || endY > height) return false;
-        if (endX < startX || endY < startY) return false;
+        if (startX > width || startY > height) { return false; }
+        if (endX > width || endY > height) { return false; }
+        if (endX < startX || endY < startY) { return false; }
 
         for (u32 x = startX; x < endX; x++) {
-            u32 index = getIndex(x, startY) * RGB_SIZE;
+            const u32 index = getIndex(x, startY) * RGB_SIZE;
             data[index] = red;
             data[index + 1] = green;
             data[index + 2] = blue;
         }
 
-        u32 rowSize = (endX - startX) * RGB_SIZE;
-        u32 firstRowIndex = getIndex(startX, startY) * RGB_SIZE;
+        const u32 rowSize = (endX - startX) * RGB_SIZE;
+        const u32 firstRowIndex = getIndex(startX, startY) * RGB_SIZE;
         for (u32 y = startY + 1; y < endY; y++) {
-            u32 index = getIndex(startX, y) * RGB_SIZE;
+            const u32 index = getIndex(startX, y) * RGB_SIZE;
             memcpy(&data[index], &data[firstRowIndex], rowSize);
         }
         return true;
     }
 
-    MU void fillColor(u8 red, u8 green, u8 blue) const {
+    MU void fillColor(const u8 red, const u8 green, const u8 blue) const {
         for (u32 x = 0; x < width; x++) {
-            u32 index = getIndex(x, 0) * RGB_SIZE;
+            const u32 index = getIndex(x, 0) * RGB_SIZE;
             data[index] = red;
             data[index + 1] = green;
             data[index + 2] = blue;
         }
 
-        u32 rowSize = (width) *RGB_SIZE;
+        const u32 rowSize = (width) *RGB_SIZE;
         for (u32 y = 0; y < height; y++) {
-            u32 index = getIndex(0, y) * RGB_SIZE;
+            const u32 index = getIndex(0, y) * RGB_SIZE;
             memcpy(&data[index], &data[0], rowSize);
         }
     }
@@ -83,7 +84,13 @@ public:
 
     void saveWithName(std::string filename, const std::string& directory) const {
         filename = directory + filename;
-        stbi_write_png(filename.c_str(), (int) width, (int) height, RGB_SIZE, data, (int) width * RGB_SIZE);
+        stbi_write_png(filename.c_str(),
+            static_cast<int>(width),
+            static_cast<int>(height),
+            RGB_SIZE,
+            data,
+            static_cast<int>(width) * RGB_SIZE
+        );
     }
 
 

@@ -36,11 +36,11 @@ namespace editor {
 
         // setters
 
-        MU void setTimestamp(u32 val) { managerData.timestamp = val; }
-        MU void setDecSize(u64 val) { managerData.decSize = val; }
-        MU void setRLE(u64 val) { managerData.rleFlag = val; }
-        MU void setUnknown(u64 val) { managerData.unknownFlag = val; }
-        MU void setCompressed(u64 val) { managerData.isCompressed = val; }
+        MU void setTimestamp(const u32 val) { managerData.timestamp = val; }
+        MU void setDecSize(const u64 val) { managerData.decSize = val; }
+        MU void setRLE(const u64 val) { managerData.rleFlag = val; }
+        MU void setUnknown(const u64 val) { managerData.unknownFlag = val; }
+        MU void setCompressed(const u64 val) { managerData.isCompressed = val; }
 
         // getters
 
@@ -55,7 +55,7 @@ namespace editor {
         void ensureDecompress(CONSOLE console);
         void ensureCompressed(CONSOLE console);
 
-        MU void readChunk(CONSOLE console);
+        MU void readChunk(CONSOLE console) const;
         MU void writeChunk(CONSOLE console);
     };
 

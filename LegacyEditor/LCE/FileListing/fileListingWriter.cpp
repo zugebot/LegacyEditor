@@ -14,20 +14,21 @@
 namespace editor {
 
 
-    Data FileListing::writeData(CONSOLE consoleOut) {
+    Data FileListing::writeData(const CONSOLE consoleOut) {
 
         ensureAllRegionFilesExist();
 
         // step 1: get the file count and size of all sub-files
-        u32 fileCount = 0, fileDataSize = 0;
-        for (const File &file: allFiles) {
+        u32 fileCount = 0;
+        u32 fileDataSize = 0;
+        for (const File& file: allFiles) {
             fileCount++;
             fileDataSize += file.data.getSize();
         }
-        u32 fileInfoOffset = fileDataSize + 12;
+        const u32 fileInfoOffset = fileDataSize + 12;
 
         // step 2: find total binary size and create its data buffer
-        u32 totalFileSize = fileInfoOffset + FILE_HEADER_SIZE * fileCount;
+        const u32 totalFileSize = fileInfoOffset + FILE_HEADER_SIZE * fileCount;
 
         Data dataOut(totalFileSize);
         DataManager managerOut(dataOut, consoleIsBigEndian(consoleOut));
@@ -77,7 +78,7 @@ namespace editor {
         }
 
         // step 6: write file metadata
-        for (File* fileIter: fileOrder) {
+        for (const File* fileIter: fileOrder) {
             // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter.additionalData, fileIter.size, fileIter.name.c_str());
             std::string fileIterName = fileIter->constructFileName(consoleOut);
             managerOut.writeWString(fileIterName, 64);
@@ -90,7 +91,7 @@ namespace editor {
     }
 
 
-    MU int FileListing::writeFile(CONSOLE consoleOut, stringRef_t outfileStr) {
+    MU int FileListing::writeFile(const CONSOLE consoleOut, stringRef_t outfileStr) {
         Data dataOut = writeData(consoleOut);
         int status;
         switch (consoleOut) {
@@ -118,11 +119,11 @@ namespace editor {
 
 
     int FileListing::writeWiiU(stringRef_t outfileStr, Data& dataOut) {
-        DataManager managerOut(dataOut);
+        const DataManager managerOut(dataOut);
         u64 src_size = managerOut.size;
 
         FILE* f_out = fopen(outfileStr.c_str(), "wb");
-        if (!f_out) { return STATUS::FILE_NOT_FOUND; }
+        if (f_out == nullptr) { return STATUS::FILE_NOT_FOUND; }
 
         // Write src_size to the file
         uLong compressedSize = compressBound(src_size);
@@ -150,16 +151,16 @@ namespace editor {
     }
 
 
-    int FileListing::writeVita(stringRef_t outfileStr, Data& dataOut) {
+    int FileListing::writeVita(stringRef_t outfileStr, const Data& dataOut) {
         FILE* f_out = fopen(outfileStr.c_str(), "wb");
-        if (!f_out) { return STATUS::FILE_NOT_FOUND; }
+        if (f_out == nullptr) { return STATUS::FILE_NOT_FOUND; }
 
         Data self;
         self.allocate(dataOut.size + 2);
 
         self.size = RLEVITA_COMPRESS(dataOut.data, dataOut.size, self.data, self.size);
 
-        int num = 0;
+        const int num = 0;
         fwrite(&num, sizeof(u32), 1, f_out);
 
         u32 val;
@@ -175,9 +176,9 @@ namespace editor {
     }
 
 
-    MU int FileListing::writeRPCS3(stringRef_t outfileStr, Data& dataOut) {
+    MU int FileListing::writeRPCS3(stringRef_t outfileStr, const Data& dataOut) {
         FILE* f_out = fopen(outfileStr.c_str(), "wb");
-        if (!f_out) { return STATUS::FILE_NOT_FOUND; }
+        if (f_out == nullptr) { return STATUS::FILE_NOT_FOUND; }
 
 
         printf("Writing final size: %u\n", dataOut.size);

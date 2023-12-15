@@ -14,7 +14,7 @@
 
 namespace editor {
 
-    MU void ChunkManager::readChunk(CONSOLE console) {
+    MU void ChunkManager::readChunk(CONSOLE console) const {
         DataManager managerIn = DataManager(data, size);
         managerIn.seekStart();
 
@@ -39,6 +39,7 @@ namespace editor {
                 v12Chunk.readChunk(chunkData, &managerIn);
                 break;
             }
+            default:;
         }
     }
 
@@ -66,6 +67,7 @@ namespace editor {
                 chunk::ChunkV12().writeChunk(chunkData, &managerOut);
                 break;
             }
+            default:;
         }
 
         Data outData(managerOut.getPosition());
@@ -79,15 +81,15 @@ namespace editor {
     }
 
 
-    void ChunkManager::ensureDecompress(CONSOLE console) {
-        if (!getCompressed() || console == CONSOLE::NONE || data == nullptr || size == 0) {
+    void ChunkManager::ensureDecompress(const CONSOLE console) {
+        if ((getCompressed() == 0u) || console == CONSOLE::NONE || data == nullptr || size == 0) {
             // printf("cannot Chunk.ensure_decompress the chunk if its already decompressed\n");
             // printf("passed CONSOLE::NONE to Chunk.ensure_decompress, results will not work\n");
             // printf("chunk data is nullptr, cannot Chunk.ensure_decompress nothing\n");
             // printf("cannot decompress data of chunk that has not been loaded");
             return;
         }
-        setCompressed(false);
+        setCompressed(0u);
 
         u32 dec_size_copy = getDecSize();
         Data decompData(getDecSize());
@@ -112,7 +114,7 @@ namespace editor {
 
         deallocate();
 
-        if (getRLE()) {
+        if (getRLE() != 0u) {
             allocate(getDecSize());
             RLE_decompress(decompData.start(), decompData.size, start(), dec_size_copy);
             decompData.deallocate();
@@ -125,16 +127,16 @@ namespace editor {
 
 
     void ChunkManager::ensureCompressed(CONSOLE console) {
-        if (getCompressed() || console == CONSOLE::NONE || data == nullptr || size == 0) {
+        if ((getCompressed() != 0u) || console == CONSOLE::NONE || data == nullptr || size == 0) {
             // printf("cannot Chunk.ensure_compress if the chunk is already compressed\n");
             // printf("passed CONSOLE::NONE to Chunk.ensure_compress, results will not work\n");
             // printf("chunk data is nullptr, cannot Chunk.ensure_compress nothing\n");
             return;
         }
-        setCompressed(true);
+        setCompressed(1u);
         setDecSize(size);
 
-        if (getRLE()) {
+        if (getRLE() != 0u) {
             Data rleBuffer(size);
             RLE_compress(data, size, rleBuffer.data, rleBuffer.size);
             deallocate();
@@ -159,8 +161,7 @@ namespace editor {
                 break;
 
             case CONSOLE::RPCS3: {
-                int status = ::compress(comp_ptr, &comp_size, data, size); // ::def(data, comp_ptr, size, (uLongf*)&comp_size, 15);
-                if (status != 0) {
+                if (const int status = ::compress(comp_ptr, &comp_size, data, size); status != 0) {
                     printf("error has occurred compressing chunk\n");
                 }
 
@@ -174,8 +175,7 @@ namespace editor {
             case CONSOLE::SWITCH:
             case CONSOLE::WIIU:
             case CONSOLE::VITA: {
-                int status = ::compress(comp_ptr, &comp_size, data, size);
-                if (status != 0) {
+                if (const int status = ::compress(comp_ptr, &comp_size, data, size); status != 0) {
                     printf("error has occurred compressing chunk\n");
                 }
 

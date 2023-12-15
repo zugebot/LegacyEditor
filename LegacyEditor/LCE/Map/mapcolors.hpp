@@ -7,11 +7,11 @@ namespace editor::map {
 
     struct RGB {
         uint8_t r, g, b;
-        RGB(uint8_t r, uint8_t g, uint8_t b) : r(r), g(g), b(b) {}
+        RGB(const uint8_t r, const uint8_t g, const uint8_t b) : r(r), g(g), b(b) {}
     };
 
 
-    inline RGB getRGB(int mapRgb) {
+    inline RGB getRGB(const int mapRgb) {
         static const std::vector<RGB> mapColors {
                 {0, 0, 0},
                 {0, 0, 0},

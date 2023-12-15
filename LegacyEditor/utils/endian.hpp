@@ -5,15 +5,15 @@
 
 static bool isSystemLittleEndian() {
     static int num = 1;
-    static bool isLittle = *(char*) &num == 1;
+    static bool isLittle = *reinterpret_cast<char*>(&num) == 1;
     return isLittle;
 }
 
-static u16 swapEndian16(u16 value) {
+static u16 swapEndian16(const u16 value) {
     return (value << 8) | (value >> 8);
 }
 
-static u32 swapEndian32(u32 value) {
+static u32 swapEndian32(const u32 value) {
     return ((value & 0xFF000000) >> 24) |
            ((value & 0x00FF0000) >>  8) |
            ((value & 0x0000FF00) <<  8) |

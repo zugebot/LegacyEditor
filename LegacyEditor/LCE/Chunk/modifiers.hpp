@@ -5,12 +5,12 @@
 
 namespace editor::chunk {
 
-    static inline int toPos(int x, int y, int z) {
-        return y + 256 * z + 4096 * x;
+    static inline int toPos(const int xIn, const int yIn, const int zIn) {
+        return yIn + 256 * zIn + 4096 * xIn;
     }
 
 
-    MU void convertOldToNew(ChunkData* chunkData) {
+    MU inline void convertOldToNew(ChunkData* chunkData) {
         chunkData->newBlocks = u16_vec(65536);
 
         int count = 0;
@@ -18,7 +18,7 @@ namespace editor::chunk {
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
                     for (int y = 0; y < 128; y++) {
-                        int index = toPos(x, y + offset, z);
+                        const int index = toPos(x, y + offset, z);
 
                         u16 data = 0; // chunkData.blockData[count / 2];
                         if (count % 2 == 0) {
@@ -27,7 +27,7 @@ namespace editor::chunk {
                             data &= 15;
                         }
 
-                        u16 oldBlock = chunkData->oldBlocks[count];
+                        const u16 oldBlock = chunkData->oldBlocks[count];
                         chunkData->newBlocks[index] = (oldBlock << 4) | data;
                         count++;
                     }
@@ -53,8 +53,8 @@ namespace editor::chunk {
         u8_vec().swap(chunkData->oldBlocks);
     }
 
-    MU void placeBlock(ChunkData* chunkData, int x, int y, int z, u16 block, u16 data, bool waterlogged) {
-        int offset = toPos(x, y, z);
+    MU inline void placeBlock(ChunkData* chunkData, const int xIn, const int yIn, const int zIn, const u16 block, const u16 data, const bool waterlogged) {
+        const int offset = toPos(xIn, yIn, zIn);
         u16 value = block << 4 | data;
         if (waterlogged) {
             value |= 0x8000;
@@ -62,8 +62,8 @@ namespace editor::chunk {
         chunkData->newBlocks[offset] = value;
     }
 
-    u16 getBlock(ChunkData* chunkData, int x, int y, int z) {
-        int offset = toPos(x, y, z);
+    inline u16 getBlock(const ChunkData* chunkData, const int xIn, const int yIn, const int zIn) {
+        const int offset = toPos(xIn, yIn, zIn);
         return chunkData->newBlocks[offset];
     }
 

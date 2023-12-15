@@ -1,6 +1,9 @@
 #pragma once
 
-enum BlockID {
+#include <cstdint>
+
+
+enum BlockID : uint16_t {
     AIR_ID = 0,
     STONE_ID = 1,
     GRASS_ID = 2,

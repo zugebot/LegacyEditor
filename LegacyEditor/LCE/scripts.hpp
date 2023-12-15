@@ -10,7 +10,7 @@ namespace editor {
 
     void processRegion(int regionIndex, editor::FileListing& fileListing) {
         const CONSOLE console = fileListing.console;
-        if (regionIndex >= fileListing.region_overworld.size()) return;
+        if (regionIndex >= fileListing.region_overworld.size()) { return; }
 
         // read a region file
         editor::RegionManager region(console);
@@ -38,10 +38,10 @@ namespace editor {
                     for (u16 y = 0; y < 256; y++) {
                         u16 block1 = chunk::getBlock(chunkManager.chunkData, x, y, z);
                         u16 data_1 = 0;
-                        int offset1 = y + 256 * z + 4096 * x;
+                        const int offset1 = y + 256 * z + 4096 * x;
 
-                        u16 compare1 = (block1 & 0x1FF0) >> 4;
-                        if (block1 & 0x8000) { // fix stupid blocks
+                        const u16 compare1 = (block1 & 0x1FF0) >> 4;
+                        if ((block1 & 0x8000) != 0) { // fix stupid blocks
                             if (compare1 == 271) { // sea pickle
                                 block1 = (block1 & 0x9FF7) | 0x08;
                             }
@@ -129,7 +129,7 @@ namespace editor {
  */
     void removeNetherrack(int regionIndex, editor::FileListing& fileListing) {
         const CONSOLE console = fileListing.console;
-        if (regionIndex >= fileListing.region_nether.size()) return;
+        if (regionIndex >= fileListing.region_nether.size()) { return; }
 
         // read a region file
         editor::RegionManager region(console);
@@ -166,9 +166,9 @@ namespace editor {
                 }
             }
 
-            memcpy(&chunkData->newBlocks[0], &blocks[0], 131072);
-            memset(&chunkData->blockLight[0], 0xFF, 32768);
-            memset(&chunkData->skyLight[0], 0xFF, 32768);
+            memcpy(chunkData->newBlocks.data(), &blocks[0], 131072);
+            memset(chunkData->blockLight.data(), 0xFF, 32768);
+            memset(chunkData->skyLight.data(), 0xFF, 32768);
             chunkData->terrainPopulated = 2046;
 
             chunkData->defaultNBT();

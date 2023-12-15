@@ -20,12 +20,12 @@ namespace editor {
         ChunkManager chunks[SECTOR_INTS] = {};
         CONSOLE console = CONSOLE::NONE;
 
-        explicit RegionManager(CONSOLE consoleIn) : console(consoleIn) {}
+        explicit RegionManager(const CONSOLE consoleIn) : console(consoleIn) {}
         ~RegionManager() = default;
 
         /// FUNCTIONS
 
-        MU ChunkManager* getChunk(int x, int z);
+        MU ChunkManager* getChunk(int xIn, int zIn);
         MU ChunkManager* getChunk(int index);
         MU ChunkManager* getNonEmptyChunk();
 

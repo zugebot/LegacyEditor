@@ -11,15 +11,12 @@ static u32 RLEVITA_DECOMPRESS(u8* dataIn, u32 sizeIn, u8* dataOut, u32 sizeOut) 
     DataManager managerIn(dataIn, sizeIn);
     DataManager managerOut(dataOut, sizeOut);
 
-    u8 value;
-
     while (managerIn.getPosition() < sizeIn) {
-        value = managerIn.readInt8();
 
-        if (value != 0x00) {
+        if (const u8 value = managerIn.readInt8(); value != 0x00) {
             managerOut.writeInt8(value);
         } else {
-            int numZeros = managerIn.readInt8();
+            const int numZeros = managerIn.readInt8();
             memset(managerOut.ptr, 0, numZeros);
             managerOut.incrementPointer(numZeros);
         }
@@ -47,9 +44,8 @@ static u32 RLEVITA_COMPRESS(u8* dataIn, u32 sizeIn, u8* dataOut, u32 sizeOut) {
     u8 zeroCount = 0;
 
     for (u32 i = 0; i < sizeIn; ++i) {
-        u8 value = managerIn.readInt8();
 
-        if (value != 0) {
+        if (const u8 value = managerIn.readInt8(); value != 0) {
             if (zeroCount > 0) {
                 managerOut.writeInt8(0);
                 managerOut.writeInt8(zeroCount);

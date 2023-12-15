@@ -3,21 +3,21 @@
 #include "LegacyEditor/utils/processor.hpp"
 
 
-static void RLE_decompress(u8* dataIn, u32 sizeIn, u8* dataOut, u32& sizeOut) {
+static void RLE_decompress(u8* dataIn, const u32 sizeIn, u8* dataOut, u32& sizeOut) {
     DataManager in(dataIn, sizeIn);
     DataManager out(dataOut, sizeOut);
 
     while (in.getPosition() < sizeIn) {
-        u8 b = in.readInt8();
+        const u8 b = in.readInt8();
         if (b != 255) {
             out.writeInt8(b);
         } else {
-            u8 b2 = in.readInt8();
+            const u8 b2 = in.readInt8();
             u8 value = 255;
             if (b2 >= 3) {
                 value = in.readInt8();
             }
-            for (int j = 0; j <= (int) b2; j++) {
+            for (int j = 0; j <= static_cast<int>(b2); j++) {
                 out.writeInt8(value);
             }
         }
@@ -26,12 +26,12 @@ static void RLE_decompress(u8* dataIn, u32 sizeIn, u8* dataOut, u32& sizeOut) {
 }
 
 
-static void RLE_compress(const u8* dataIn, u32 sizeIn, u8* dataOut, u32& sizeOut) {
+static void RLE_compress(const u8* dataIn, const u32 sizeIn, u8* dataOut, u32& sizeOut) {
     u32 dataIndex = 0;
     sizeOut = 0;
 
     while (dataIndex < sizeIn) {
-        u8 value = dataIn[dataIndex];
+        const u8 value = dataIn[dataIndex];
         u32 count = 1;
 
         // Count the run of the same byte

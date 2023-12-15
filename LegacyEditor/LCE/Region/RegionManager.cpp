@@ -7,15 +7,15 @@
 
 namespace editor {
 
-    MU ChunkManager* RegionManager::getChunk(int x, int z) {
-        u32 index = x + z * REGION_WIDTH;
-        if (index > SECTOR_INTS) return nullptr;
+    MU ChunkManager* RegionManager::getChunk(const int xIn, const int zIn) {
+        const u32 index = xIn + zIn * REGION_WIDTH;
+        if (index > SECTOR_INTS) { return nullptr; }
         return &chunks[index];
     }
 
 
-    MU ChunkManager* RegionManager::getChunk(int index) {
-        if (index > SECTOR_INTS) return nullptr;
+    MU ChunkManager* RegionManager::getChunk(const int index) {
+        if (index > SECTOR_INTS) { return nullptr; }
         return &chunks[index];
     }
 
@@ -46,7 +46,7 @@ namespace editor {
  * @param dataIn
  */
     void RegionManager::read(Data* dataIn) {
-        u32 totalSectors = dataIn->size / SECTOR_BYTES + 1;
+        const u32 totalSectors = dataIn->size / SECTOR_BYTES + 1;
 
         size_t chunkIndex;
         u8 sectors[SECTOR_INTS];
@@ -65,7 +65,7 @@ namespace editor {
         }
 
         for (chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
-            if (sectors[chunkIndex] == 0) continue;
+            if (sectors[chunkIndex] == 0) { continue; }
 
             ChunkManager& chunk = chunks[chunkIndex];
 
@@ -85,14 +85,14 @@ namespace editor {
 
             switch (console) {
                 case CONSOLE::PS3: {
-                    u32 x1 = managerIn.readInt32();
-                    u32 x2 = managerIn.readInt32();
+                    const u32 x1 = managerIn.readInt32();
+                    const u32 x2 = managerIn.readInt32();
                     chunk.setDecSize(x1); // rle dec size
                     break;
                 }
                 case CONSOLE::RPCS3: {
-                    u32 x1 = managerIn.readInt32();
-                    u32 x2 = managerIn.readInt32();
+                    const u32 x1 = managerIn.readInt32();
+                    const u32 x2 = managerIn.readInt32();
                     chunk.setDecSize(x1); // final dec size
                     break;
                 }
@@ -121,14 +121,13 @@ namespace editor {
  * @param consoleIn
  * @return
  */
-    Data RegionManager::write(CONSOLE consoleIn) {
+    Data RegionManager::write(const CONSOLE consoleIn) {
         u32 locations[SECTOR_INTS] = {0};
         u8 sectors[SECTOR_INTS] = {0};
 
         int total_sectors = 2;
         for (int chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
-            ChunkManager& chunk = chunks[chunkIndex];
-            if (chunk.size == 0) {
+            if (ChunkManager& chunk = chunks[chunkIndex]; chunk.size == 0) {
                 sectors[chunkIndex] = 0;
                 locations[chunkIndex] = 0;
             } else {
@@ -139,8 +138,8 @@ namespace editor {
             }
         }
 
-        u32 data_size = total_sectors * SECTOR_BYTES;
-        Data dataOut = Data(data_size);
+        const u32 data_size = total_sectors * SECTOR_BYTES;
+        auto dataOut = Data(data_size);
         DataManager managerOut(dataOut, consoleIsBigEndian(consoleIn));
 
         for (int chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
@@ -152,14 +151,14 @@ namespace editor {
         }
 
         for (int chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
-            if (sectors[chunkIndex] == 0) continue;
+            if (sectors[chunkIndex] == 0) { continue; }
 
             ChunkManager& chunk = chunks[chunkIndex];
             managerOut.seek(locations[chunkIndex] * SECTOR_BYTES);
 
             u32 size = chunk.size;
-            if (chunk.getRLE())     size |= 0x80000000;
-            if (chunk.getUnknown()) size |= 0x40000000;
+            if (chunk.getRLE()     != 0u) size |= 0x80000000;
+            if (chunk.getUnknown() != 0u) size |= 0x40000000;
             managerOut.writeInt32(size);
 
             switch (console) {

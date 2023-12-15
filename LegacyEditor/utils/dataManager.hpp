@@ -20,19 +20,19 @@ public:
 
     DataManager() = default;
 
-    explicit DataManager(Data& dataIn) : data(dataIn.start()), size(dataIn.size), ptr(data) {}
-    explicit DataManager(Data& dataIn, bool isBig) : data(dataIn.start()), size(dataIn.size), ptr(data), isBig(isBig) {}
+    explicit DataManager(const Data& dataIn) : data(dataIn.start()), ptr(data), size(dataIn.size) {}
+    explicit DataManager(const Data& dataIn, const bool isBig) : isBig(isBig), data(dataIn.start()), ptr(data), size(dataIn.size) {}
 
-    explicit DataManager(Data* dataIn) : data(dataIn->start()), size(dataIn->size), ptr(data) {}
-    explicit DataManager(Data* dataIn, bool isBig) : data(dataIn->start()), size(dataIn->size), ptr(data), isBig(isBig) {}
+    explicit DataManager(const Data* dataIn) : data(dataIn->start()), ptr(data), size(dataIn->size) {}
+    explicit DataManager(const Data* dataIn, const bool isBig) : isBig(isBig), data(dataIn->start()), ptr(data), size(dataIn->size) {}
 
-    explicit DataManager(u8* dataIn, u32 sizeIn) : data(dataIn), size(sizeIn), ptr(dataIn) {}
-    explicit DataManager(u8* dataIn, u32 sizeIn, bool isBig) : data(dataIn), size(sizeIn), ptr(dataIn), isBig(isBig) {}
+    explicit DataManager(u8* dataIn, const u32 sizeIn) : data(dataIn), ptr(dataIn), size(sizeIn) {}
+    explicit DataManager(u8* dataIn, const u32 sizeIn, const bool isBig) : isBig(isBig), data(dataIn), ptr(dataIn), size(sizeIn) {}
 
-    inline void setBigEndian() { isBig = true; }
-    inline void setLittleEndian() { isBig = false; }
+    void setBigEndian() const { isBig = true; }
+    void setLittleEndian() const { isBig = false; }
 
-    ND inline u8* start() const { return data; }
+    ND u8* start() const { return data; }
 
 
     void seekStart();
@@ -45,10 +45,10 @@ public:
     void incrementPointer(u32 amount);
     void decrementPointer(u32 amount);
 
-    inline void incrementPointer1() { ptr += 1; }
-    inline void incrementPointer2() { ptr += 2; }
-    inline void incrementPointer4() { ptr += 4; }
-    inline void incrementPointer8() { ptr += 8; }
+    void incrementPointer1() { ptr += 1; }
+    void incrementPointer2() { ptr += 2; }
+    void incrementPointer4() { ptr += 4; }
+    void incrementPointer8() { ptr += 8; }
 
     // READING SECTION
 
@@ -97,22 +97,22 @@ public:
     void writeDouble(double doubleIn);
 
     /// writes at offset from .data, not .ptr! Does not increment .ptr.
-    void writeInt8AtOffset(u32 offset, u8 byteIn);
+    void writeInt8AtOffset(u32 offset, u8 byteIn) const;
     /// writes at offset from .data, not .ptr! Does not increment .ptr.
-    void writeInt16AtOffset(u32 offset, u16 shortIn);
+    void writeInt16AtOffset(u32 offset, u16 shortIn) const;
     /// writes at offset from .data, not .ptr! Does not increment .ptr.
-    void writeInt32AtOffset(u32 offset, u32 intIn);
+    void writeInt32AtOffset(u32 offset, u32 intIn) const;
     /// writes at offset from .data, not .ptr! Does not increment .ptr.
-    void writeInt64AtOffset(u32 offset, u64 longIn);
+    void writeInt64AtOffset(u32 offset, u64 longIn) const;
 
-    void writeData(Data* dataIn);
-    void writeFile(editor::File* fileIn);
-    void writeFile(editor::File& fileIn);
-    void writeBytes(u8* dataPtrIn, u32 length);
+    void writeData(const Data* dataIn);
+    void writeFile(const editor::File* fileIn);
+    void writeFile(const editor::File& fileIn);
+    void writeBytes(const u8* dataPtrIn, u32 length);
 
     void writeUTF(std::string str);
     void writeWString(const std::string& str, u32 length);
 
     int writeToFile(const std::string& fileName) const;
-    int writeToFile(u8* ptrIn, u32 sizeIn, const std::string& fileName) const;
+    int writeToFile(const u8* ptrIn, u32 sizeIn, const std::string& fileName) const;
 };

@@ -9,6 +9,8 @@ namespace editor::chunk {
 
     /// "Elytra" chunks.
     class ChunkV11 {
+        static constexpr i32 GRID_HEADER_SIZE = 1024;
+
     public:
         ChunkData* chunkData = nullptr;
         DataManager* dataManager = nullptr;
@@ -19,7 +21,6 @@ namespace editor::chunk {
         MU void writeChunk(ChunkData* chunkDataIn, DataManager* managerOut);
 
     private:
-        static constexpr i32 GRID_HEADER_SIZE = 1024;
         MU void readBlocks() const;
         template<size_t BitsPerBlock>
         MU bool readGrid(u8 const* buffer, u8 grid[128]) const;

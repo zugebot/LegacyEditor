@@ -21,7 +21,7 @@ enum class DIM : i8 {
 };
 
 
-enum STATUS : int {
+enum STATUS : i8 {
     SUCCESS = 0,
     COMPRESS = -1,
     DECOMPRESS = -2,
@@ -32,7 +32,7 @@ enum STATUS : int {
 };
 
 
-static std::string consoleToStr(CONSOLE console) {
+static std::string consoleToStr(const CONSOLE console) {
     switch (console) {
         case CONSOLE::XBOX360:
             return "xbox360";
@@ -53,7 +53,7 @@ static std::string consoleToStr(CONSOLE console) {
 }
 
 
-static bool consoleIsBigEndian(CONSOLE console) {
+static bool consoleIsBigEndian(const CONSOLE console) {
     switch (console) {
         case CONSOLE::NONE:
         case CONSOLE::XBOX360:

@@ -45,8 +45,9 @@ namespace editor::chunk {
         chunkData->terrainPopulated = (i16) dataManager->readInt16();
         dataManager->readOntoData(256, chunkData->biomes.data());
 
-        if (*dataManager->ptr == 0x0A)
+        if (*dataManager->ptr == 0x0A) {
             chunkData->NBTData = NBT::readTag(*dataManager);
+        }
 
         chunkData->validChunk = true;
     }

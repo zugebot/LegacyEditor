@@ -49,7 +49,7 @@ MU typedef std::vector<std::vector<int64_t>> i64_vec_vec;
 
 
 /// printf, but returns -1.
-static int inline printf_err(const char* format, ...) {
+static int printf_err(const char* format, ...) {
     va_list args;
     va_start(args, format);
     vprintf(format, args);
@@ -59,7 +59,7 @@ static int inline printf_err(const char* format, ...) {
 
 
 /// printf, but returns -1.
-static int inline printf_err(std::string format, ...) {
+static int printf_err(const std::string& format, ...) {
     va_list args;
     va_start(args, format);
     vprintf(format.c_str(), args);
@@ -72,7 +72,7 @@ static int inline printf_err(std::string format, ...) {
 static void shuffleArray(uint16_t arr[], int size) {
     std::srand(static_cast<unsigned int>(time(nullptr)));
     for (int i = size - 1; i > 0; --i) {
-        int j = std::rand() % (i + 1);
+        const int j = std::rand() % (i + 1);
         std::swap(arr[i], arr[j]);
     }
 }

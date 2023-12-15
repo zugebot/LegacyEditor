@@ -3,6 +3,7 @@
 #include <cstring>
 #include <unordered_map>
 #include <vector>
+#include <ranges>
 
 #include "LegacyEditor/utils/processor.hpp"
 
@@ -38,10 +39,10 @@ public:
     classType* array = nullptr;
     int size = 0;
 
-    NBTTagTypeArray(classType* dataIn, int sizeIn) : array(dataIn), size(sizeIn) {}
+    NBTTagTypeArray(classType* dataIn, const size_t sizeIn) : array(dataIn), size(sizeIn) {}
     NBTTagTypeArray() = default;
 
-    MU ND inline classType* getArray() const { return array; }
+    MU ND classType* getArray() const { return array; }
 };
 
 
@@ -68,11 +69,11 @@ public:
     void* data;
     NBTType type;
 
-    NBTBase(void* dataIn, NBTType typeIn) : data(dataIn), type(typeIn) {}
+    NBTBase(void* dataIn, const NBTType typeIn) : data(dataIn), type(typeIn) {}
 
-    NBTBase() : NBTBase(nullptr, NBTType::NBT_NONE) {}
+    NBTBase() : NBTBase(nullptr, NBT_NONE) {}
 
-    NBTBase(void* dataIn, int dataSizeIn, NBTType typeIn) : NBTBase(dataIn, typeIn) {
+    NBTBase(void* dataIn, const int dataSizeIn, const NBTType typeIn) : NBTBase(dataIn, typeIn) {
         memcpy(data, dataIn, dataSizeIn);
     }
 
@@ -88,22 +89,22 @@ public:
 
     static bool equals(NBTBase check);
 
-    ND inline NBTType getId() const { return type; }
+    ND NBTType getId() const { return type; }
 
     template<class classType>
     classType toPrimitiveType() {
         switch (type) {
-            case NBTType::NBT_INT8:
+            case NBT_INT8:
                 return (classType) *(u8*) data;
-            case NBTType::NBT_INT16:
+            case NBT_INT16:
                 return (classType) *(i16*) data;
-            case NBTType::NBT_INT32:
+            case NBT_INT32:
                 return (classType) *(i32*) data;
-            case NBTType::NBT_INT64:
+            case NBT_INT64:
                 return (classType) *(i64*) data;
-            case NBTType::NBT_FLOAT:
+            case NBT_FLOAT:
                 return (classType) *(float*) data;
-            case NBTType::NBT_DOUBLE:
+            case NBT_DOUBLE:
                 return (classType) *(double*) data;
             default:
                 return 0;
@@ -135,22 +136,21 @@ public:
     NBTTagString() : data(nullptr), size(0) {}
 
     explicit NBTTagString(const std::string& dataIn) {
-        size = (int) dataIn.size();
-        data = (char*) malloc(size);
+        size = static_cast<int>(dataIn.size());
+        data = static_cast<char*>(malloc(size));
         memcpy(data, dataIn.c_str(), size);
     }
 
-    ND inline bool hasNoTags() const { return size; }
+    ND inline bool hasNoTags() const { return size != 0; }
 
     ND std::string getString() const { return std::string(data, size); }
 
     ND std::string toStringNBT() const {
         std::string stringBuilder = "\"";
-        std::string currentString = getString();
-        for (char c0: currentString) {
-            if (c0 == '\\' || c0 == '"') { stringBuilder.append("\\"); }
+        for (const std::string currentString = getString(); const char ch : currentString) {
+            if (ch == '\\' || ch == '"') { stringBuilder.append("\\"); }
 
-            stringBuilder.push_back(c0);
+            stringBuilder.push_back(ch);
         }
         return stringBuilder.append("\"");
     }
@@ -160,7 +160,6 @@ public:
 class NBTTagList;
 
 class NBTTagCompound {
-private:
     typedef const std::string& STR;
 
 public:
@@ -178,9 +177,9 @@ public:
     void setFloat(STR key, float value);
     void setDouble(STR key, double value);
     void setString(STR key, STR value);
-    void setByteArray(STR key, u8* value, int size);
-    void setIntArray(STR key, int* value, int size);
-    void setLongArray(STR key, i64* value, int size);
+    void setByteArray(STR key, const u8* value, int size);
+    void setIntArray(STR key, const int* value, int size);
+    void setLongArray(STR key, const i64* value, int size);
     void setCompoundTag(STR key, NBTTagCompound* compoundTag);
     void setListTag(STR key, NBTTagList* listTag);
     void setBool(STR key, u8 value);
@@ -189,16 +188,16 @@ public:
     NBTBase getTag(STR key);
     NBTType getTagId(STR key);
 
-    bool hasKey(STR key);
+    bool hasKey(STR key) const;
     bool hasKey(STR key, int type);
     bool hasKey(STR key, NBTType type);
     std::vector<std::string> getKeySet();
     template<typename classType>
     classType getPrimitive(STR key) {
-        if (hasKey(key, NBTType::TAG_PRIMITIVE)) {
+        if (hasKey(key, TAG_PRIMITIVE)) {
             return tagMap.at(key).toPrimitiveType<classType>();
         }
-        return (classType) 0;
+        return static_cast<classType>(0);
     }
     std::string getString(STR key);
     NBTTagByteArray* getByteArray(STR key);
@@ -222,7 +221,7 @@ public:
     std::vector<NBTBase> tagList;
     NBTType tagType;
 
-    NBTTagList() : tagType(NBTType::NBT_NONE) {}
+    NBTTagList() : tagType(NBT_NONE) {}
 
     void appendTag(NBTBase nbt);
     void set(int index, NBTBase nbt);
@@ -232,7 +231,7 @@ public:
     ND bool hasNoTags() const;
 
     template<typename classType>
-    classType getPrimitiveAt(int index) {
+    classType getPrimitiveAt(const int index) {
         if (tagType < 7 && tagType > 0) {
             if (index >= 0 && index < tagList.size()) {
                 NBTBase nbtBase = tagList.at(index);
@@ -240,16 +239,16 @@ public:
             }
         }
 
-        return (classType) 0;
+        return static_cast<classType>(0);
     }
 
-    NBTTagByteArray* getByteArrayAt(int index);
-    std::string getStringTagAt(int index);
-    NBTTagList* getListTagAt(int index);
-    NBTTagCompound* getCompoundTagAt(int index);
-    NBTTagIntArray* getIntArrayAt(int index);
-    NBTTagLongArray* getLongArrayAt(int index);
-    NBTBase get(int index);
+    NBTTagByteArray* getByteArrayAt(int index) const;
+    std::string getStringTagAt(int index) const;
+    NBTTagList* getListTagAt(int index) const;
+    NBTTagCompound* getCompoundTagAt(int index) const;
+    NBTTagIntArray* getIntArrayAt(int index) const;
+    NBTTagLongArray* getLongArrayAt(int index) const;
+    NBTBase get(int index) const;
     ND int tagCount() const;
     ND NBTType getTagType() const;
 };
@@ -267,63 +266,63 @@ public:
 
 class NBT {
 public:
-    static inline bool isCompoundTag(NBTType type) { return type == NBTType::TAG_COMPOUND; }
-    static void writeTag(NBTBase* tag, DataManager& output);
+    static bool isCompoundTag(const NBTType type) { return type == TAG_COMPOUND; }
+    static void writeTag(const NBTBase* tag, DataManager& output);
     static NBTBase* readTag(DataManager& input);
-    static NBTBase* readNBT(NBTType id, const std::string& key, DataManager& input);
+    static NBTBase* readNBT(NBTType tagID, const std::string& key, DataManager& input);
 };
 
 
-static NBTBase createNBT_INT8(int8_t dataIn) {
+static NBTBase createNBT_INT8(const int8_t dataIn) {
     NBTBase nbtBase;
     nbtBase.data = malloc(sizeof(dataIn));
     memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
-    nbtBase.type = NBTType::NBT_INT8;
+    nbtBase.type = NBT_INT8;
     return nbtBase;
 }
 
 
-static NBTBase createNBT_INT16(i16 dataIn) {
+static NBTBase createNBT_INT16(const i16 dataIn) {
     NBTBase nbtBase;
     nbtBase.data = malloc(sizeof(dataIn));
     memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
-    nbtBase.type = NBTType::NBT_INT16;
+    nbtBase.type = NBT_INT16;
     return nbtBase;
 }
 
 
-static NBTBase createNBT_INT32(i32 dataIn) {
+static NBTBase createNBT_INT32(const i32 dataIn) {
     NBTBase nbtBase;
     nbtBase.data = malloc(sizeof(dataIn));
     memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
-    nbtBase.type = NBTType::NBT_INT32;
+    nbtBase.type = NBT_INT32;
     return nbtBase;
 }
 
 
-static NBTBase createNBT_INT64(i64 dataIn) {
+static NBTBase createNBT_INT64(const i64 dataIn) {
     NBTBase nbtBase;
     nbtBase.data = malloc(sizeof(dataIn));
     memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
-    nbtBase.type = NBTType::NBT_INT64;
+    nbtBase.type = NBT_INT64;
     return nbtBase;
 }
 
 
-static NBTBase createNBT_FLOAT(float dataIn) {
+static NBTBase createNBT_FLOAT(const float dataIn) {
     NBTBase nbtBase;
     nbtBase.data = malloc(sizeof(dataIn));
     memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
-    nbtBase.type = NBTType::NBT_FLOAT;
+    nbtBase.type = NBT_FLOAT;
     return nbtBase;
 }
 
 
-static NBTBase createNBT_DOUBLE(double dataIn) {
+static NBTBase createNBT_DOUBLE(const double dataIn) {
     NBTBase nbtBase;
     nbtBase.data = malloc(sizeof(dataIn));
     memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
-    nbtBase.type = NBTType::NBT_DOUBLE;
+    nbtBase.type = NBT_DOUBLE;
     return nbtBase;
 }
 
@@ -362,44 +361,44 @@ static NBTBase convertType(NBTBase baseData, NBTType toType) {
 
 inline NBTBase* createNewByType(NBTType type) {
     switch (type) {
-        case NBTType::NBT_NONE:
-        case NBTType::NBT_INT8:
-        case NBTType::NBT_INT16:
-        case NBTType::NBT_INT32:
-        case NBTType::NBT_INT64:
-        case NBTType::NBT_FLOAT:
-        case NBTType::NBT_DOUBLE:
+        case NBT_NONE:
+        case NBT_INT8:
+        case NBT_INT16:
+        case NBT_INT32:
+        case NBT_INT64:
+        case NBT_FLOAT:
+        case NBT_DOUBLE:
         default:
             return new NBTBase(nullptr, type);
-        case NBTType::TAG_BYTE_ARRAY:
+        case TAG_BYTE_ARRAY:
             return new NBTBase(new NBTTagByteArray(), type);
-        case NBTType::TAG_STRING:
+        case TAG_STRING:
             return new NBTBase(new NBTTagString(), type);
-        case NBTType::TAG_LIST:
+        case TAG_LIST:
             return new NBTBase(new NBTTagList(), type);
-        case NBTType::TAG_COMPOUND:
+        case TAG_COMPOUND:
             return new NBTBase(new NBTTagCompound(), type);
-        case NBTType::TAG_INT_ARRAY:
+        case TAG_INT_ARRAY:
             return new NBTBase(new NBTTagIntArray(), type);
-        case NBTType::TAG_LONG_ARRAY:
+        case TAG_LONG_ARRAY:
             return new NBTBase(new NBTTagLongArray(), type);
     }
 }
 
 
-static void compareNBT(NBTBase* first, NBTBase* second) {
+static void compareNBT(const NBTBase* first, const NBTBase* second) {
     auto* firstNBT = NBTBase::toType<NBTTagCompound>(first)->getCompoundTag("Data");
     auto* secondNBT = NBTBase::toType<NBTTagCompound>(second)->getCompoundTag("Data");;
 
-    for (const auto& tag : firstNBT->tagMap) {
-        if (!secondNBT->hasKey(tag.first)) {
-            printf("second does not contain tag '%s'\n", tag.first.c_str());
+    for (const auto& key : firstNBT->tagMap | std::views::keys) {
+        if (!secondNBT->hasKey(key)) {
+            printf("second does not contain tag '%s'\n", key.c_str());
         }
     }
 
-    for (const auto& tag : secondNBT->tagMap) {
-        if (!firstNBT->hasKey(tag.first)) {
-            printf("first does not contain tag '%s'\n", tag.first.c_str());
+    for (const auto& key : secondNBT->tagMap | std::views::keys) {
+        if (!firstNBT->hasKey(key)) {
+            printf("first does not contain tag '%s'\n", key.c_str());
         }
     }
 }

@@ -30,21 +30,21 @@ namespace editor {
         static const std::string start = "map_";
         static const std::string end = ".dat";
         size_t startPos = str.find(start);
-        size_t endPos = str.find(end);
+        const size_t endPos = str.find(end);
 
         if (startPos != std::string::npos && endPos != std::string::npos) {
             startPos += start.length();
 
-            std::string numberStr = str.substr(startPos, endPos - startPos);
-            return (i16)std::stoi(numberStr);
+            const std::string numberStr = str.substr(startPos, endPos - startPos);
+            return static_cast<i16>(std::stoi(numberStr));
         }
         return 32767;
     }
 
 
     std::pair<int, int> extractRegionCoords(stringRef_t filename) {
-        size_t lastDot = filename.find_last_of('.');
-        std::string relevantPart = filename.substr(0, lastDot);
+        const size_t lastDot = filename.find_last_of('.');
+        const std::string relevantPart = filename.substr(0, lastDot);
 
         std::istringstream iss(relevantPart);
         std::string part;
@@ -63,8 +63,8 @@ namespace editor {
     void FileListing::readData(Data &dataIn) {
         DataManager managerIn(dataIn, consoleIsBigEndian(console));
 
-        u32 indexOffset = managerIn.readInt32();
-        u32 fileCount = managerIn.readInt32();
+        const u32 indexOffset = managerIn.readInt32();
+        const u32 fileCount = managerIn.readInt32();
         oldestVersion = managerIn.readInt16();
         currentVersion = managerIn.readInt16();
 
@@ -81,10 +81,10 @@ namespace editor {
             u32 fileSize = managerIn.readInt32();
             total_size += fileSize;
 
-            u32 index = managerIn.readInt32();
+            const u32 index = managerIn.readInt32();
             u64 timestamp = managerIn.readInt64();
 
-            if (!fileSize) {
+            if (fileSize == 0u) {
                 printf("Skipping empty file \"%s\"\n", fileName.c_str());
                 continue;
             }
@@ -108,9 +108,9 @@ namespace editor {
                     file.fileType = FileType::REGION_OVERWORLD;
                 }
                 auto* nbt = file.createNBTTagCompound();
-                auto pair = extractRegionCoords(fileName);
-                nbt->setTag("x", createNBT_INT16((i16)pair.first));
-                nbt->setTag("z", createNBT_INT16((i16)pair.second));
+                const auto [fst, snd] = extractRegionCoords(fileName);
+                nbt->setTag("x", createNBT_INT16(static_cast<i16>(fst)));
+                nbt->setTag("z", createNBT_INT16(static_cast<i16>(snd)));
                 continue;
             }
 
@@ -135,7 +135,7 @@ namespace editor {
             if (fileName.starts_with("data/map_")) {
                 file.fileType = FileType::MAP;
                 auto* nbt = file.createNBTTagCompound();
-                i16 mapNumber = extractMapNumber(fileName);
+                const i16 mapNumber = extractMapNumber(fileName);
                 nbt->setTag("#", createNBT_INT16(mapNumber));
                 continue;
             }
@@ -189,7 +189,7 @@ namespace editor {
         }
 
         fseek(f_in, 0, SEEK_END);
-        u64 source_bin_size = ftell(f_in);
+        const u64 source_bin_size = ftell(f_in);
         fseek(f_in, 0, SEEK_SET);
 
         HeaderUnion headerUnion{};
@@ -211,7 +211,7 @@ namespace editor {
                 /// idk utter coded it
             } else if (indexFromSaveFile = headerUnion.getVitaFileSize() - headerUnion.getVitaFileListing(),
                        indexFromSaveFile > 0 && indexFromSaveFile < 65536) {
-                std::cout << indexFromSaveFile << std::endl;
+                std::cout << indexFromSaveFile << '\n';
                 file_size = headerUnion.getVitaFileSize();
                 result = readVita(f_in, data, source_bin_size, file_size);
             } else {
@@ -220,8 +220,8 @@ namespace editor {
         } else if (headerUnion.getInt2() <= 2) {
             /// if (int2 == 0) it is an xbox savefile unless it's a massive
             /// file, but there won't be 2 files in a savegame file for PS3
-            u32 file_size = headerUnion.getDATFileSize();
-            u32 src_size = headerUnion.getDATSrcSize();
+            const u32 file_size = headerUnion.getDATFileSize();
+            const u32 src_size = headerUnion.getDATSrcSize();
             result = readXbox360DAT(f_in, data, source_bin_size, file_size, src_size);
         } else if (headerUnion.getInt2() < 100) {
             /// otherwise if (int2) > 50 then it is a random file
@@ -250,7 +250,7 @@ namespace editor {
  * @return
  */
 
-    int FileListing::readVita(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size) {
+    int FileListing::readVita(FILE* f_in, Data& data, u64 source_binary_size, const u32 file_size) {
         printf("Detected Vita savefile, converting\n");
         console = CONSOLE::VITA;
 
@@ -274,7 +274,7 @@ namespace editor {
         return STATUS::SUCCESS;
     }
 
-    int FileListing::readWiiU(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size) {
+    int FileListing::readWiiU(FILE* f_in, Data& data, u64 source_binary_size, const u32 file_size) {
         printf("Detected WiiU savefile, converting\n");
         console = CONSOLE::WIIU;
 
@@ -290,18 +290,16 @@ namespace editor {
         fseek(f_in, 8, SEEK_SET);
         fread(src.start(), 1, source_binary_size, f_in);
 
-        if (tinf_zlib_uncompress((Bytef*) data.start(), &data.size, (Bytef*) src.start(), source_binary_size)) {
+        if (tinf_zlib_uncompress((Bytef*) data.start(), &data.size, (Bytef*) src.start(), source_binary_size) != 0) {
             src.deallocate();
             return STATUS::DECOMPRESS;
-        } else {
-            src.deallocate();
-            return STATUS::SUCCESS;
         }
-
+        src.deallocate();
+        return STATUS::SUCCESS;
     }
 
 
-    int FileListing::readSwitch(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size) {
+    int FileListing::readSwitch(FILE* f_in, Data& data, u64 source_binary_size, const u32 file_size) {
         printf("Detected WiiU savefile, converting\n");
         console = CONSOLE::SWITCH;
 
@@ -315,24 +313,23 @@ namespace editor {
         fread(src.start(), 1, source_binary_size, f_in);
 
         if (tinf_zlib_uncompress((Bytef*) data.start(), &data.size,
-                                 (Bytef*) src.start(), source_binary_size)) {
+                                 (Bytef*) src.start(), source_binary_size) != 0) {
             src.deallocate();
             return STATUS::DECOMPRESS;
-        } else {
-            src.deallocate();
-            return STATUS::SUCCESS;
         }
+        src.deallocate();
+        return STATUS::SUCCESS;
     }
 
 
     /// ps3 writeFile files don't need decompressing\n
     /// TODO: IMPORTANT check from a region file chunk what console it is if it is uncompressed
-    int FileListing::readPs3(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size) {
+    int FileListing::readPs3(FILE* f_in, Data& data, const u64 source_binary_size, u32 file_size) {
         printf("Detected compressed PS3 savefile, converting\n");
         console = CONSOLE::PS3;
 
         // source
-        Data src = Data(source_binary_size);
+        auto src = Data(source_binary_size);
 
         // destination
         if (!data.allocate(file_size)) {
@@ -367,7 +364,7 @@ namespace editor {
     }
 
 
-    int FileListing::readXbox360DAT(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size, u32 src_size) {
+    int FileListing::readXbox360DAT(FILE* f_in, Data& data, u64 source_binary_size, const u32 file_size, const u32 src_size) {
         printf("Detected Xbox360 .dat savefile, converting\n");
         console = CONSOLE::XBOX360;
 
@@ -400,10 +397,10 @@ namespace editor {
 
         Data bin(source_binary_size);
         fread(bin.start(), 1, source_binary_size, f_in);
-        saveGameInfo = extractSaveGameDat(bin.start(), (i64) source_binary_size);
+        saveGameInfo = extractSaveGameDat(bin.start(), static_cast<i64>(source_binary_size));
         bin.deallocate(); // TODO: IDK if it should but it is for now
 
-        u32 src_size = saveGameInfo.saveFileData.readInt32() - 8;
+        const u32 src_size = saveGameInfo.saveFileData.readInt32() - 8;
 
         data.size = saveGameInfo.saveFileData.readInt64(); // at offset 8
 

@@ -22,6 +22,6 @@ Timer::Timer() {
 }
 
 float Timer::getSeconds() const {
-    u64 end = getNanoSeconds();
-    return float(end - time) / float(1000000000);
+    const u64 end = getNanoSeconds();
+    return static_cast<float>(end - time) / static_cast<float>(1000000000);
 }

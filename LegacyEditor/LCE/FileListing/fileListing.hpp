@@ -88,8 +88,8 @@ namespace editor {
 
         /// writer
         MU ND static int writeWiiU(stringRef_t outfileStr, Data& dataOut);
-        MU ND static int writeVita(stringRef_t outfileStr, Data& dataOut);
-        MU ND static int writeRPCS3(stringRef_t outfileStr, Data& dataOut);
+        MU ND static int writeVita(stringRef_t outfileStr, const Data& dataOut);
+        MU ND static int writeRPCS3(stringRef_t outfileStr, const Data& dataOut);
         MU ND static int writePS3();
         MU ND static int writeXbox360_DAT();
         MU ND static int writeXbox360_BIN();
