@@ -1,6 +1,7 @@
 #include "BINSupport.hpp"
 
 #include <cstring>
+#include <stdexcept>
 
 
 namespace editor {

@@ -34,8 +34,8 @@ int main() {
     TEST_PAIR("X360_TU69",   R"(XBOX360_TU69.bin)"                             , dir_path + R"(tests\XBOX360_TU69.bin)" );
     TEST_PAIR("X360_TU74",   R"(XBOX360_TU74.dat)"                             , dir_path + R"(tests\XBOX360_TU74.dat)" );
     TEST_PAIR("nether"   ,   R"(nether)"                                       , wiiu + R"(231114151239)");
-    std::string TEST_IN = TESTS["nether"].first;
-    std::string TEST_OUT = TESTS["nether"].second;
+    std::string TEST_IN = TESTS["nether"].first;   // file to read from
+    std::string TEST_OUT = TESTS["nether"].second; // file to write to
     const CONSOLE consoleOut = CONSOLE::WIIU;
 
 
@@ -56,8 +56,7 @@ int main() {
     // convert to fileListing
     int statusOut = fileListing.writeFile(consoleOut, TEST_OUT);
     if (statusOut) {
-        std::string str = "converting to " + consoleToStr(consoleOut) + " failed...\n";
-        return printf_err(str);
+        return printf_err({"converting to " + consoleToStr(consoleOut) + " failed...\n"});
     } else {
         printf("Finished!\nFile Out: %s", TEST_OUT.c_str());
     }

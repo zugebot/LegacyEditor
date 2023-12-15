@@ -4,8 +4,9 @@
 
 
 static bool isSystemLittleEndian() {
-    int num = 1;
-    return *(char*) &num == 1;
+    static int num = 1;
+    static bool isLittle = *(char*) &num == 1;
+    return isLittle;
 }
 
 static u16 swapEndian16(u16 value) {
