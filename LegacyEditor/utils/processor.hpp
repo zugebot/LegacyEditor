@@ -4,6 +4,7 @@
 #include <cstdarg>
 #include <string>
 #include <vector>
+#include <ctime>
 
 extern std::string dir_path;
 extern std::string out_path;

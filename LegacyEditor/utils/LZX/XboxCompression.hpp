@@ -2,6 +2,7 @@
 
 #include "lzx.h"
 #include <iostream>
+#include <cstring>
 
 #include "LegacyEditor/utils/dataManager.hpp"
 #include "LegacyEditor/utils/processor.hpp"

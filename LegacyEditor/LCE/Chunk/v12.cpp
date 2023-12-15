@@ -1,6 +1,7 @@
 #include "v12.hpp"
 
 #include <cstring>
+#include <algorithm>
 
 #include "LegacyEditor/utils/NBT.hpp"
 #include "LegacyEditor/utils/dataManager.hpp"

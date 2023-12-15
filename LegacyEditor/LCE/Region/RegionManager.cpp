@@ -1,5 +1,7 @@
 #include "RegionManager.hpp"
 
+#include <stdexcept>
+
 #include "LegacyEditor/LCE/FileListing/file.hpp"
 
 
