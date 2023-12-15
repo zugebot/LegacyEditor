@@ -128,7 +128,7 @@ Data RegionManager::write(CONSOLE consoleIn) {
             sectors[chunkIndex] = 0;
             locations[chunkIndex] = 0;
         } else {
-            chunk.ensure_compressed(consoleIn);
+            chunk.ensureCompressed(consoleIn);
             sectors[chunkIndex] = (chunk.size + 12) / SECTOR_BYTES + 1;
             locations[chunkIndex] = total_sectors;
             total_sectors += sectors[chunkIndex];

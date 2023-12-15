@@ -17,6 +17,7 @@ namespace chunk {
         u16_vec submerged;
         bool hasSubmerged = false;
 
+        // all versions
         u8_vec blockLight;          //
         u8_vec skyLight;            //
         u8_vec heightMap;           //
@@ -33,20 +34,11 @@ namespace chunk {
         i32 chunkZ = 0;
 
         i32 lastVersion = 0;
-        DIM dimension = DIM::OVERWORLD;
         bool validChunk = false;
 
-        ~ChunkData() {
-            if (NBTData != nullptr) {
-                NBTData->NbtFree();
-                delete NBTData;
-                NBTData = nullptr;
-            }
-        }
+        ~ChunkData();
 
-        ND std::string getCoords() const {
-            return "(" + std::to_string(chunkX) + ", " + std::to_string(chunkZ) + ")";
-        }
+        MU ND std::string getCoords() const;
 
         void defaultNBT();
     };

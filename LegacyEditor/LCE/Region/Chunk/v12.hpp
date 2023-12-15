@@ -38,10 +38,11 @@ namespace chunk {
         ChunkData* chunkData = nullptr;
         DataManager* dataManager = nullptr;
 
-        MU void readChunk(ChunkData* chunkDataIn, DataManager* managerIn, DIM dim);
-        MU void writeChunk(ChunkData* chunkDataIn, DataManager* managerOut, DIM dim);
-
         ChunkV12() = default;
+        MU void allocChunk() const;
+        MU void readChunk(ChunkData* chunkDataIn, DataManager* managerIn);
+        MU void writeChunk(ChunkData* chunkDataIn, DataManager* managerOut);
+
 
     private:
 

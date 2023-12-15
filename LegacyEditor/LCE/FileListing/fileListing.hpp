@@ -87,12 +87,12 @@ private:
     MU   void readData(Data& dataIn);
 
     /// writer
-    MU ND int writeWiiU(stringRef_t outfileStr, Data& dataOut);
-    MU ND int writeVita(stringRef_t outfileStr, Data& dataOut);
-    MU ND int writeRPCS3(stringRef_t outfileStr, Data& dataOut);
-    MU ND int writePS3Compressed();
-    MU ND int writeXbox360_DAT();
-    MU ND int writeXbox360_BIN();
+    MU ND static int writeWiiU(stringRef_t outfileStr, Data& dataOut);
+    MU ND static int writeVita(stringRef_t outfileStr, Data& dataOut);
+    MU ND static int writeRPCS3(stringRef_t outfileStr, Data& dataOut);
+    MU ND static int writePS3();
+    MU ND static int writeXbox360_DAT();
+    MU ND static int writeXbox360_BIN();
     Data writeData(CONSOLE consoleOut);
 
 

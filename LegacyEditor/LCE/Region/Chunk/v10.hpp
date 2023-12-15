@@ -11,12 +11,12 @@ namespace chunk {
     private:
         ChunkData* chunkData = nullptr;
         DataManager* dataManager = nullptr;
+
     public:
-
-        MU void readChunk(ChunkData* chunkDataIn, DataManager* managerIn, DIM dim);
-        MU void writeChunk(ChunkData* chunkDataIn, DataManager* managerOut, DIM dim);
-
         ChunkV10() = default;
+        MU void allocChunk() const;
+        MU void readChunk(ChunkData* chunkDataIn, DataManager* managerIn);
+        MU void writeChunk(ChunkData* chunkDataIn, DataManager* managerOut);
     };
 
 }

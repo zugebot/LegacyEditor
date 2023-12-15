@@ -8,7 +8,6 @@
 class ChunkManager : public Data {
 private:
     static constexpr u32 CHUNK_BUFFER_SIZE = 0xFFFFFF; // 4,194,303
-
     struct {
         u32 timestamp;
         u64 decSize : 29;
@@ -51,9 +50,9 @@ public:
 
     // funcs
 
-    void ensure_decompress(CONSOLE console);
-    void ensure_compressed(CONSOLE console);
+    void ensureDecompress(CONSOLE console);
+    void ensureCompressed(CONSOLE console);
 
-    MU void readChunk(CONSOLE console, DIM dim);
-    MU void writeChunk(CONSOLE console, DIM dim);
+    MU void readChunk(CONSOLE console);
+    MU void writeChunk(CONSOLE console);
 };

@@ -92,7 +92,7 @@ MU int FileListing::writeFile(CONSOLE consoleOut, stringRef_t outfileStr) {
     int status;
     switch (consoleOut) {
         case CONSOLE::PS3:
-            status = writePS3Compressed();
+            status = writePS3();
             break;
         case CONSOLE::RPCS3:
             status = writeRPCS3(outfileStr, dataOut);
@@ -184,7 +184,7 @@ MU int FileListing::writeRPCS3(stringRef_t outfileStr, Data& dataOut) {
 }
 
 
-MU int FileListing::writePS3Compressed() {
+MU int FileListing::writePS3() {
     return STATUS::SUCCESS;
 }
 

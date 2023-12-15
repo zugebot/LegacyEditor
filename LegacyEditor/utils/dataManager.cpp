@@ -279,7 +279,6 @@ u8_vec DataManager::readIntoVector(u32 amount) {
 }
 
 
-
 float DataManager::readFloat() {
     u32 val = readInt32();
     return *(float*) &val;

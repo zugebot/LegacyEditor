@@ -23,6 +23,8 @@
 #include "LegacyEditor/utils/mapcolors.hpp"
 #include "LegacyEditor/utils/time.hpp"
 
+#include "LegacyEditor/scripts/scripts.hpp"
+
 
  /*
 DataManager dat;
@@ -37,122 +39,6 @@ DataManager dat;
   */
 
 
-
-
-
-
-void processRegion(int regionIndex, FileListing& fileListing) {
-    const CONSOLE console = fileListing.console;
-    if (regionIndex >= fileListing.region_overworld.size()) return;
-
-    // read a region file
-    RegionManager region(console);
-    region.read(fileListing.region_overworld[regionIndex]);
-
-    int h = -1;
-    for (ChunkManager& chunkManager : region.chunks) {
-        h++;
-        if (chunkManager.size == 0) {
-            continue;
-        }
-
-
-        chunkManager.ensure_decompress(console);
-        chunkManager.readChunk(console, DIM::OVERWORLD);
-        auto* chunkData = chunkManager.chunkData;
-
-        if (!chunkData->validChunk) {
-            continue;
-        }
-
-        u16 blocks[65536];
-        for (u16 x = 0; x < 16; x++) {
-            for (u16 z = 0; z < 16; z++) {
-                for (u16 y = 0; y < 256; y++) {
-                    u16 block1 = chunk::getBlock(chunkManager.chunkData, x, y, z);
-                    u16 data_1 = 0;
-                    int offset1 = y + 256 * z + 4096 * x;
-
-                    u16 compare1 = (block1 & 0x1FF0) >> 4;
-                    if (block1 & 0x8000) { // fix stupid blocks
-                        if (compare1 == 271) { // sea pickle
-                            block1 = (block1 & 0x9FF7) | 0x08;
-                        }
-                        if (compare1 == 272) { // bubble column
-                            block1 = (block1 & 0x7FFF) | 0b1111;
-                        }
-                    }
-
-                    blocks[offset1] = block1 | data_1;
-
-
-                    /*
-                    block1 = BlockID::AIR_ID;
-                    if (y == 0) { block1 = BlockID::BEDROCK_ID; }
-
-                    u32 jumpBL, jumpDA;
-
-                    if (y == 1) {
-                        if (x % 2 != 0 || z % 2 != 0) {
-                            if (chunkData->chunkX < -16 || chunkData->chunkX > 16 ||
-                                chunkData->chunkZ <   0 || chunkData->chunkZ >  1) {
-                                block1 = BlockID::AIR_ID;
-                                goto END;
-                            }
-                            block1 = BlockID::BEDROCK_ID;
-                            goto END;
-                        }
-                    }
-
-                    if (y == 2) {
-                        if (chunkData->chunkX < -16 || chunkData->chunkX > 16 ||
-                            chunkData->chunkZ <   0 || chunkData->chunkZ >  1) {
-                            goto END;
-                        }
-
-                        if (x % 2 != 0 || z % 2 != 0) {
-                            goto END;
-                        }
-
-                        jumpBL = 8 * (chunkData->chunkX + 16);
-                        jumpDA = 8 *  chunkData->chunkZ;
-
-                        block1 = (jumpBL + x / 2) << 4;
-                        data_1 = jumpDA + z / 2;
-
-                        if (block1 > 252 << 4 || block1 == BlockID::BEACON_ID) {
-                            block1 = 0;
-                            data_1 = 0;
-                        }
-                    }
-
-                    END:
-
-                    blocks[offset1] = block1 | data_1;
-                     */
-                }
-            }
-        }
-
-        memcpy(&chunkData->newBlocks[0], &blocks[0], 131072);
-        // shuffleArray(&chunkData->newBlocks[0], 65535);
-        memset(&chunkData->biomes[0], 0x0B, 256);
-        memset(&chunkData->blockLight[0], 0xFF, 32768);
-        memset(&chunkData->heightMap[0], 0xFF, 256);
-        memset(&chunkData->skyLight[0], 0xFF, 32768);
-        chunkData->terrainPopulated = 2046;
-        chunkData->lastUpdate = 100;
-        chunkData->inhabitedTime = 200;
-
-        chunkData->defaultNBT();
-        chunkManager.writeChunk(console, DIM::OVERWORLD);
-        chunkManager.ensure_compressed(console);
-    }
-
-    fileListing.region_overworld[regionIndex]->data.deallocate();
-    fileListing.region_overworld[regionIndex]->data = region.write(console);
-}
-
 std::string extractFileName(const std::string& path) {
     size_t dotDatPos = path.find('.');
     if (dotDatPos != std::string::npos) {
@@ -163,7 +49,7 @@ std::string extractFileName(const std::string& path) {
 
 
 std::string extractPart(const std::string& path) {
-    size_t lastBackslashPos = path.find_last_of("\\");
+    size_t lastBackslashPos = path.find_last_of('\\');
 
     if (lastBackslashPos != std::string::npos) {
         // Return the substring from the character after the last backslash to the end
@@ -173,8 +59,8 @@ std::string extractPart(const std::string& path) {
     return ""; // Return empty string if the backslash is not found
 }
 
-namespace fs = std::filesystem;
 
+namespace fs = std::filesystem;
 
 typedef std::pair<std::string, std::string> strPair_t;
 std::map<std::string, strPair_t> TESTS;
@@ -198,10 +84,10 @@ int main() {
     TEST_PAIR("rpcs3_flat",  R"(RPCS3_GAMEDATA)"                               , ps3_ + R"(GAMEDATA)");
     TEST_PAIR("X360_TU69",   R"(XBOX360_TU69.bin)"                             , dir_path + R"(tests\XBOX360_TU69.bin)" );
     TEST_PAIR("X360_TU74",   R"(XBOX360_TU74.dat)"                             , dir_path + R"(tests\XBOX360_TU74.dat)" );
+    TEST_PAIR("nether"   ,   R"(nether)"                                       , wiiu + R"(231114151239)");
 
-
-    std::string TEST_IN = TESTS["X360_TU69"].first;
-    std::string TEST_OUT = TESTS["X360_TU69"].second;
+    std::string TEST_IN = TESTS["nether"].first;
+    std::string TEST_OUT = TESTS["nether"].second;
     const CONSOLE consoleOut = CONSOLE::WIIU;
 
 
@@ -324,7 +210,7 @@ int main() {
 
     // edit regions (threaded)
     auto start = getNanoSeconds();
-    // run_parallel<4>(processRegion, std::ref(fileListing));
+    run_parallel<4>(removeNetherrack, std::ref(fileListing));
     // for (int ri = 0; ri < 4; ri++) processRegion(ri, fileListing);
     auto end = getNanoSeconds();
     printf("Total Time: %.3f\n", float(end - start) / float(1000000000));

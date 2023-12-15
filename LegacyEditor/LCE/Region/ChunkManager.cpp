@@ -12,7 +12,7 @@
 #include "LegacyEditor/LCE/Region/Chunk/v12.hpp"
 
 
-MU void ChunkManager::readChunk(CONSOLE console, DIM dim) {
+MU void ChunkManager::readChunk(CONSOLE console) {
     DataManager managerIn = DataManager(data, size);
     managerIn.seekStart();
 
@@ -22,26 +22,26 @@ MU void ChunkManager::readChunk(CONSOLE console, DIM dim) {
         case 0x0a00: {
             chunkData->lastVersion = 0x000A;
             chunk::ChunkV10 v10Chunk;
-            v10Chunk.readChunk(chunkData, &managerIn, dim);
+            v10Chunk.readChunk(chunkData, &managerIn);
             break;
         }
         case 0x0008:
         case 0x0009:
         case 0x000B: {
             chunk::ChunkV11 v11Chunk;
-            v11Chunk.readChunk(chunkData, &managerIn, dim);
+            v11Chunk.readChunk(chunkData, &managerIn);
             break;
         }
         case 0x000C: {
             chunk::ChunkV12 v12Chunk;
-            v12Chunk.readChunk(chunkData, &managerIn, dim);
+            v12Chunk.readChunk(chunkData, &managerIn);
             break;
         }
     }
 }
 
 
-MU void ChunkManager::writeChunk(CONSOLE console, DIM dim) {
+MU void ChunkManager::writeChunk(CONSOLE console) {
     Data outBuffer(CHUNK_BUFFER_SIZE);
     memset(outBuffer.data, 0, CHUNK_BUFFER_SIZE);
     auto managerOut = DataManager(outBuffer);
@@ -49,19 +49,19 @@ MU void ChunkManager::writeChunk(CONSOLE console, DIM dim) {
     managerOut.seekStart();
     switch(chunkData->lastVersion) {
         case 0x0a00: {
-            chunk::ChunkV10().writeChunk(chunkData, &managerOut, dim);
+            chunk::ChunkV10().writeChunk(chunkData, &managerOut);
             break;
         }
         case 0x0008:
         case 0x0009:
         case 0x000B: {
             managerOut.writeInt16(chunkData->lastVersion);
-            chunk::ChunkV11().writeChunk(chunkData, &managerOut, dim);
+            chunk::ChunkV11().writeChunk(chunkData, &managerOut);
             break;
         }
         case 0x000C: {
             managerOut.writeInt16(chunkData->lastVersion);
-            chunk::ChunkV12().writeChunk(chunkData, &managerOut, dim);
+            chunk::ChunkV12().writeChunk(chunkData, &managerOut);
             break;
         }
     }
@@ -77,7 +77,7 @@ MU void ChunkManager::writeChunk(CONSOLE console, DIM dim) {
 }
 
 
-void ChunkManager::ensure_decompress(CONSOLE console) {
+void ChunkManager::ensureDecompress(CONSOLE console) {
     if (!getCompressed() || console == CONSOLE::NONE || data == nullptr || size == 0) {
         // printf("cannot Chunk.ensure_decompress the chunk if its already decompressed\n");
         // printf("passed CONSOLE::NONE to Chunk.ensure_decompress, results will not work\n");
@@ -122,7 +122,7 @@ void ChunkManager::ensure_decompress(CONSOLE console) {
 }
 
 
-void ChunkManager::ensure_compressed(CONSOLE console) {
+void ChunkManager::ensureCompressed(CONSOLE console) {
     if (getCompressed() || console == CONSOLE::NONE || data == nullptr || size == 0) {
         // printf("cannot Chunk.ensure_compress if the chunk is already compressed\n");
         // printf("passed CONSOLE::NONE to Chunk.ensure_compress, results will not work\n");

@@ -9,37 +9,40 @@ static inline u32 toIndex(u32 num) {
 
 namespace chunk {
 
+    void ChunkV11::allocChunk() const {
+        chunkData->newBlocks = u16_vec(65536);
+        chunkData->blockData = u8_vec(32768);
+        chunkData->skyLight = u8_vec(32768);
+        chunkData->blockLight = u8_vec(32768);
+    }
+
     // #####################################################
     // #               Read Section
     // #####################################################
 
-    void ChunkV11::readChunk(ChunkData* chunkDataIn, DataManager* managerIn, DIM dim) {
+    void ChunkV11::readChunk(ChunkData* chunkDataIn, DataManager* managerIn) {
         dataManager = managerIn;
         chunkData = chunkDataIn;
+        allocChunk();
 
-        chunkData->dimension = dim;
         chunkData->chunkX = (i32) dataManager->readInt32();
         chunkData->chunkZ = (i32) dataManager->readInt32();
         chunkData->lastUpdate = (i64) dataManager->readInt64();
+
+        chunkData->DataGroupCount = 0;
         if (chunkData->lastVersion > 8) // Potions
             chunkData->inhabitedTime = (i64) dataManager->readInt64();
 
-        chunkData->newBlocks = u16_vec(65536);
         readBlocks();
-
-        chunkData->DataGroupCount = 0;
-        chunkData->blockData = u8_vec(32768);
-        chunkData->skyLight = u8_vec(32768);
-        chunkData->blockLight = u8_vec(32768);
         readData();
 
-        chunkData->heightMap = dataManager->readIntoVector(256);
+        dataManager->readOntoData(256, chunkData->heightMap.data());
         chunkData->terrainPopulated = (i16) dataManager->readInt16();
-        chunkData->biomes = dataManager->readIntoVector(256);
+        dataManager->readOntoData(256, chunkData->biomes.data());
 
-        if (*dataManager->ptr == 0x0A) {
+        if (*dataManager->ptr == 0x0A)
             chunkData->NBTData = NBT::readTag(*dataManager);
-        }
+
         chunkData->validChunk = true;
     }
 
@@ -185,8 +188,9 @@ namespace chunk {
     // #####################################################
 
 
-    void ChunkV11::writeChunk(ChunkData* chunkDataIn, DataManager* managerOut, DIM dim) {
-
+    void ChunkV11::writeChunk(ChunkData* chunkDataIn, DataManager* managerOut) {
+        dataManager = managerOut;
+        chunkData = chunkDataIn;
     }
 
 

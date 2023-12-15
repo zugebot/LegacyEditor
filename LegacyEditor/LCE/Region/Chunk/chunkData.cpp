@@ -2,6 +2,13 @@
 
 namespace chunk {
 
+    ChunkData::~ChunkData() {
+        if (NBTData != nullptr) {
+            NBTData->NbtFree();
+            delete NBTData;
+            NBTData = nullptr;
+        }
+    }
 
     void ChunkData::defaultNBT() {
         if (NBTData != nullptr) {
@@ -17,6 +24,10 @@ namespace chunk {
         chunkRootNbtData->setListTag("Entities", entities);
         chunkRootNbtData->setListTag("TileEntities", tileEntities);
         chunkRootNbtData->setListTag("TileTicks", tileTicks);
+    }
+
+    ND std::string ChunkData::getCoords() const {
+        return "(" + std::to_string(chunkX) + ", " + std::to_string(chunkZ) + ")";
     }
 
 
