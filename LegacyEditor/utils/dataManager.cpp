@@ -3,6 +3,8 @@
 #include "LegacyEditor/LCE/FileListing/file.hpp"
 
 
+static constexpr u8 FF_MASK = 0xFF;
+
 // SEEK
 
 void DataManager::seekStart() {
@@ -60,9 +62,9 @@ u8 DataManager::readInt8() {
 u16 DataManager::readInt16() {
     u16 value;
     if (isBig) {
-        value = ((ptr[0] << 8) | (ptr[1]));
+        value = ptr[0] << 8 | ptr[1];
     } else {
-        value = ((ptr[1] << 8) | (ptr[0]));
+        value = ptr[1] << 8 | ptr[0];
     }
     incrementPointer2();
     return value;
@@ -74,7 +76,7 @@ i32 DataManager::readInt24() {
     if (isBig) {
         value = value & 0xFFFFFF00 >> 8;
     } else {
-        value = (value & 0x00FFFFFF);
+        value = value & 0x00FFFFFF;
     }
     decrementPointer(1);
     return static_cast<i32>(value);
@@ -92,7 +94,7 @@ i32 DataManager::readInt24(bool isLittleIn) {
     } else {
         val = (val & 0xFFFFFF00) >> 8;
     }
-    decrementPointer(1); // 3 = 4 - 1
+    decrementPointer(1);
     isBig = originalEndianType;
     return static_cast<int>(val);
 }
@@ -101,9 +103,9 @@ i32 DataManager::readInt24(bool isLittleIn) {
 u32 DataManager::readInt32() {
     u32 value;
     if (isBig) {
-        value = ((ptr[0] << 24) | (ptr[1] << 16) | (ptr[2] << 8) | (ptr[3]));
+        value = ptr[0] << 24 | ptr[1] << 16 | ptr[2] << 8 | ptr[3];
     } else {
-        value = ((ptr[3] << 24) | (ptr[2] << 16) | (ptr[1] << 8) | (ptr[0]));
+        value = ptr[3] << 24 | ptr[2] << 16 | ptr[1] << 8 | ptr[0];
     }
     incrementPointer4();
     return value;
@@ -113,22 +115,22 @@ u32 DataManager::readInt32() {
 u64 DataManager::readInt64() {
     i64 val;
     if (isBig) {
-        val = static_cast<i64>((static_cast<u64>(ptr[0]) << 56) |
-                               (static_cast<u64>(ptr[1]) << 48) |
-                               (static_cast<u64>(ptr[2]) << 40) |
-                               (static_cast<u64>(ptr[3]) << 32) |
-                               (static_cast<u64>(ptr[4]) << 24) |
-                               (static_cast<u64>(ptr[5]) << 16) |
-                               (static_cast<u64>(ptr[6]) << 8) |
+        val = static_cast<i64>(static_cast<u64>(ptr[0]) << 56 |
+                               static_cast<u64>(ptr[1]) << 48 |
+                               static_cast<u64>(ptr[2]) << 40 |
+                               static_cast<u64>(ptr[3]) << 32 |
+                               static_cast<u64>(ptr[4]) << 24 |
+                               static_cast<u64>(ptr[5]) << 16 |
+                               static_cast<u64>(ptr[6]) << 8 |
                                static_cast<u64>(ptr[7]));
     } else {
-        val = static_cast<i64>((static_cast<u64>(ptr[7]) << 56) |
-                               (static_cast<u64>(ptr[6]) << 48) |
-                               (static_cast<u64>(ptr[5]) << 40) |
-                               (static_cast<u64>(ptr[4]) << 32) |
-                               (static_cast<u64>(ptr[3]) << 24) |
-                               (static_cast<u64>(ptr[2]) << 16) |
-                               (static_cast<u64>(ptr[1]) << 8) |
+        val = static_cast<i64>(static_cast<u64>(ptr[7]) << 56 |
+                               static_cast<u64>(ptr[6]) << 48 |
+                               static_cast<u64>(ptr[5]) << 40 |
+                               static_cast<u64>(ptr[4]) << 32 |
+                               static_cast<u64>(ptr[3]) << 24 |
+                               static_cast<u64>(ptr[2]) << 16 |
+                               static_cast<u64>(ptr[1]) << 8 |
                                static_cast<u64>(ptr[0]));
     }
     incrementPointer8();
@@ -146,9 +148,9 @@ u16 DataManager::readInt16AtOffset(const u32 offset) const {
     const u8* ptrOff = data + offset;
     u16 value;
     if (isBig) {
-        value = ((ptrOff[0] << 8) | (ptrOff[1]));
+        value = ptrOff[0] << 8 | ptrOff[1];
     } else {
-        value = ((ptrOff[1] << 8) | (ptrOff[0]));
+        value = ptrOff[1] << 8 | ptrOff[0];
     }
     return value;
 }
@@ -158,9 +160,9 @@ u32 DataManager::readInt32AtOffset(const u32 offset) const {
     const u8* ptrOff = data + offset;
     u32 value;
     if (isBig) {
-        value = ((ptrOff[0] << 24) | (ptrOff[1] << 16) | (ptrOff[2] << 8) | (ptrOff[3]));
+        value = ptrOff[0] << 24 | ptrOff[1] << 16 | ptrOff[2] << 8 | ptrOff[3];
     } else {
-        value = ((ptrOff[3] << 24) | (ptrOff[2] << 16) | (ptrOff[1] << 8) | (ptrOff[0]));
+        value = ptrOff[3] << 24 | ptrOff[2] << 16 | ptrOff[1] << 8 | ptrOff[0];
     }
     return value;
 }
@@ -170,22 +172,22 @@ u64 DataManager::readInt64AtOffset(const u32 offset) const {
     const u8* ptrOff = data + offset;
     i64 val;
     if (isBig) {
-        val = static_cast<i64>((static_cast<u64>(ptrOff[0]) << 56) |
-                               (static_cast<u64>(ptrOff[1]) << 48) |
-                               (static_cast<u64>(ptrOff[2]) << 40) |
-                               (static_cast<u64>(ptrOff[3]) << 32) |
-                               (static_cast<u64>(ptrOff[4]) << 24) |
-                               (static_cast<u64>(ptrOff[5]) << 16) |
-                               (static_cast<u64>(ptrOff[6]) << 8) |
+        val = static_cast<i64>(static_cast<u64>(ptrOff[0]) << 56 |
+                               static_cast<u64>(ptrOff[1]) << 48 |
+                               static_cast<u64>(ptrOff[2]) << 40 |
+                               static_cast<u64>(ptrOff[3]) << 32 |
+                               static_cast<u64>(ptrOff[4]) << 24 |
+                               static_cast<u64>(ptrOff[5]) << 16 |
+                               static_cast<u64>(ptrOff[6]) << 8 |
                                static_cast<u64>(ptrOff[7]));
     } else {
-        val = static_cast<i64>((static_cast<u64>(ptrOff[7]) << 56) |
-                               (static_cast<u64>(ptrOff[6]) << 48) |
-                               (static_cast<u64>(ptrOff[5]) << 40) |
-                               (static_cast<u64>(ptrOff[4]) << 32) |
-                               (static_cast<u64>(ptrOff[3]) << 24) |
-                               (static_cast<u64>(ptrOff[2]) << 16) |
-                               (static_cast<u64>(ptrOff[1]) << 8) |
+        val = static_cast<i64>(static_cast<u64>(ptrOff[7]) << 56 |
+                               static_cast<u64>(ptrOff[6]) << 48 |
+                               static_cast<u64>(ptrOff[5]) << 40 |
+                               static_cast<u64>(ptrOff[4]) << 32 |
+                               static_cast<u64>(ptrOff[3]) << 24 |
+                               static_cast<u64>(ptrOff[2]) << 16 |
+                               static_cast<u64>(ptrOff[1]) << 8 |
                                static_cast<u64>(ptrOff[0]));
     }
     return val;
@@ -240,29 +242,29 @@ std::string DataManager::readWAsString(const u32 length) {
     auto *const letters = new u8[length + 1];
     letters[length] = 0;
 
-    u32 i;
-    for (i = 0; i < length; i++) {
+    u32 iter;
+    for (iter = 0; iter < length; iter++) {
         if (isBig) {
             readInt8();
-            letters[i] = readInt8();
+            letters[iter] = readInt8();
         } else {
-            letters[i] = readInt8();
+            letters[iter] = readInt8();
             readInt8();
         }
-        if (constexpr u8 empty = 0; letters[i] == empty) {
-            incrementPointer(static_cast<i32>(2 * (length - i - 1)));
+        if (constexpr u8 empty = 0; letters[iter] == empty) {
+            incrementPointer(static_cast<i32>(2 * (length - iter - 1)));
             break;
         }
     }
 
-    std::string result(reinterpret_cast<char*>(letters), i);
+    std::string result(reinterpret_cast<char*>(letters), iter);
     delete[] letters;
     return result;
 }
 
 
 
-u8_vec DataManager::readIntoVector(u32 amount) {
+u8_vec DataManager::readIntoVector(const u32 amount) {
     if EXPECT_FALSE(getPosition() + amount > size) {
         return u8_vec(amount, 0);
     }
@@ -336,7 +338,7 @@ int DataManager::readFromFile(const std::string& fileStrIn) {
 }
 
 
-void DataManager::writeInt8(u8 byteIn) {
+void DataManager::writeInt8(const u8 byteIn) {
     ptr[0] = byteIn;
     incrementPointer1();
 }
@@ -344,11 +346,11 @@ void DataManager::writeInt8(u8 byteIn) {
 
 void DataManager::writeInt16(const u16 shortIn) {
     if (isBig) {
-        ptr[0] = (shortIn >> 8) & 0xff;
-        ptr[1] =  shortIn       & 0xff;
+        ptr[0] = (shortIn >> 8) & FF_MASK;
+        ptr[1] =  shortIn       & FF_MASK;
     } else {
-        ptr[0] =  shortIn       & 0xff;
-        ptr[1] = (shortIn >> 8) & 0xff;
+        ptr[0] =  shortIn       & FF_MASK;
+        ptr[1] = (shortIn >> 8) & FF_MASK;
     }
     incrementPointer2();
 }
@@ -358,14 +360,14 @@ void DataManager::writeInt16(const u16 shortIn) {
 void DataManager::writeInt24(const u32 intIn) {
     if (isBig) {
         // Write the most significant 3 bytes for big-endian
-        ptr[0] = (intIn >> 16) & 0xff;
-        ptr[1] = (intIn >>  8) & 0xff;
-        ptr[2] =  intIn        & 0xff;
+        ptr[0] = (intIn >> 16) & FF_MASK;
+        ptr[1] = (intIn >>  8) & FF_MASK;
+        ptr[2] =  intIn        & FF_MASK;
     } else {
         // Write the least significant 3 bytes for little-endian
-        ptr[0] =  intIn        & 0xff;
-        ptr[1] = (intIn >>  8) & 0xff;
-        ptr[2] = (intIn >> 16) & 0xff;
+        ptr[0] =  intIn        & FF_MASK;
+        ptr[1] = (intIn >>  8) & FF_MASK;
+        ptr[2] = (intIn >> 16) & FF_MASK;
     }
     incrementPointer(3);
 }
@@ -374,39 +376,39 @@ void DataManager::writeInt24(const u32 intIn) {
 
 void DataManager::writeInt32(const u32 intIn) {
     if (isBig) {
-        ptr[0] = (intIn >> 24) & 0xff;
-        ptr[1] = (intIn >> 16) & 0xff;
-        ptr[2] = (intIn >> 8)  & 0xff;
-        ptr[3] =  intIn        & 0xff;
+        ptr[0] = (intIn >> 24) & FF_MASK;
+        ptr[1] = (intIn >> 16) & FF_MASK;
+        ptr[2] = (intIn >> 8)  & FF_MASK;
+        ptr[3] =  intIn        & FF_MASK;
     } else {
-        ptr[0] =  intIn        & 0xff;
-        ptr[1] = (intIn >>  8) & 0xff;
-        ptr[2] = (intIn >> 16) & 0xff;
-        ptr[3] = (intIn >> 24) & 0xff;
+        ptr[0] =  intIn        & FF_MASK;
+        ptr[1] = (intIn >>  8) & FF_MASK;
+        ptr[2] = (intIn >> 16) & FF_MASK;
+        ptr[3] = (intIn >> 24) & FF_MASK;
     }
     incrementPointer4();
 }
 
 
-auto DataManager::writeInt64(u64 longIn) -> void {
+auto DataManager::writeInt64(const u64 longIn) -> void {
     if (isBig) {
-        ptr[0] = (longIn >> 56) & 0xff;
-        ptr[1] = (longIn >> 48) & 0xff;
-        ptr[2] = (longIn >> 40) & 0xff;
-        ptr[3] = (longIn >> 32) & 0xff;
-        ptr[4] = (longIn >> 24) & 0xff;
-        ptr[5] = (longIn >> 16) & 0xff;
-        ptr[6] = (longIn >>  8) & 0xff;
-        ptr[7] =  longIn        & 0xff;
+        ptr[0] = (longIn >> 56) & FF_MASK;
+        ptr[1] = (longIn >> 48) & FF_MASK;
+        ptr[2] = (longIn >> 40) & FF_MASK;
+        ptr[3] = (longIn >> 32) & FF_MASK;
+        ptr[4] = (longIn >> 24) & FF_MASK;
+        ptr[5] = (longIn >> 16) & FF_MASK;
+        ptr[6] = (longIn >>  8) & FF_MASK;
+        ptr[7] =  longIn        & FF_MASK;
     } else {
-        ptr[0] =  longIn        & 0xff;
-        ptr[1] = (longIn >>  8) & 0xff;
-        ptr[2] = (longIn >> 16) & 0xff;
-        ptr[3] = (longIn >> 24) & 0xff;
-        ptr[4] = (longIn >> 32) & 0xff;
-        ptr[5] = (longIn >> 40) & 0xff;
-        ptr[6] = (longIn >> 48) & 0xff;
-        ptr[7] = (longIn >> 56) & 0xff;
+        ptr[0] =  longIn        & FF_MASK;
+        ptr[1] = (longIn >>  8) & FF_MASK;
+        ptr[2] = (longIn >> 16) & FF_MASK;
+        ptr[3] = (longIn >> 24) & FF_MASK;
+        ptr[4] = (longIn >> 32) & FF_MASK;
+        ptr[5] = (longIn >> 40) & FF_MASK;
+        ptr[6] = (longIn >> 48) & FF_MASK;
+        ptr[7] = (longIn >> 56) & FF_MASK;
     }
     incrementPointer8();
 }
@@ -421,11 +423,11 @@ void DataManager::writeInt8AtOffset(const u32 offset, const u8 byteIn) const {
 void DataManager::writeInt16AtOffset(const u32 offset, const u16 shortIn) const {
     u8* ptrOff = data + offset;
     if (isBig) {
-        ptrOff[0] = (shortIn >> 8) & 0xff;
-        ptrOff[1] =  shortIn       & 0xff;
+        ptrOff[0] = (shortIn >> 8) & FF_MASK;
+        ptrOff[1] =  shortIn       & FF_MASK;
     } else {
-        ptrOff[0] =  shortIn       & 0xff;
-        ptrOff[1] = (shortIn >> 8) & 0xff;
+        ptrOff[0] =  shortIn       & FF_MASK;
+        ptrOff[1] = (shortIn >> 8) & FF_MASK;
     }
 }
 
@@ -433,15 +435,15 @@ void DataManager::writeInt16AtOffset(const u32 offset, const u16 shortIn) const 
 void DataManager::writeInt32AtOffset(const u32 offset, const u32 intIn) const {
     u8* ptrOff = data + offset;
     if (isBig) {
-        ptrOff[0] = (intIn >> 24) & 0xff;
-        ptrOff[1] = (intIn >> 16) & 0xff;
-        ptrOff[2] = (intIn >> 8)  & 0xff;
-        ptrOff[3] =  intIn        & 0xff;
+        ptrOff[0] = (intIn >> 24) & FF_MASK;
+        ptrOff[1] = (intIn >> 16) & FF_MASK;
+        ptrOff[2] = (intIn >> 8)  & FF_MASK;
+        ptrOff[3] =  intIn        & FF_MASK;
     } else {
-        ptrOff[0] =  intIn        & 0xff;
-        ptrOff[1] = (intIn >>  8) & 0xff;
-        ptrOff[2] = (intIn >> 16) & 0xff;
-        ptrOff[3] = (intIn >> 24) & 0xff;
+        ptrOff[0] =  intIn        & FF_MASK;
+        ptrOff[1] = (intIn >>  8) & FF_MASK;
+        ptrOff[2] = (intIn >> 16) & FF_MASK;
+        ptrOff[3] = (intIn >> 24) & FF_MASK;
     }
 }
 
@@ -449,23 +451,23 @@ void DataManager::writeInt32AtOffset(const u32 offset, const u32 intIn) const {
 void DataManager::writeInt64AtOffset(const u32 offset, const u64 longIn) const {
     u8* ptrOff = data + offset;
     if (isBig) {
-        ptrOff[0] = (longIn >> 56) & 0xff;
-        ptrOff[1] = (longIn >> 48) & 0xff;
-        ptrOff[2] = (longIn >> 40) & 0xff;
-        ptrOff[3] = (longIn >> 32) & 0xff;
-        ptrOff[4] = (longIn >> 24) & 0xff;
-        ptrOff[5] = (longIn >> 16) & 0xff;
-        ptrOff[6] = (longIn >>  8) & 0xff;
-        ptrOff[7] =  longIn        & 0xff;
+        ptrOff[0] = (longIn >> 56) & FF_MASK;
+        ptrOff[1] = (longIn >> 48) & FF_MASK;
+        ptrOff[2] = (longIn >> 40) & FF_MASK;
+        ptrOff[3] = (longIn >> 32) & FF_MASK;
+        ptrOff[4] = (longIn >> 24) & FF_MASK;
+        ptrOff[5] = (longIn >> 16) & FF_MASK;
+        ptrOff[6] = (longIn >>  8) & FF_MASK;
+        ptrOff[7] =  longIn        & FF_MASK;
     } else {
-        ptrOff[0] =  longIn        & 0xff;
-        ptrOff[1] = (longIn >>  8) & 0xff;
-        ptrOff[2] = (longIn >> 16) & 0xff;
-        ptrOff[3] = (longIn >> 24) & 0xff;
-        ptrOff[4] = (longIn >> 32) & 0xff;
-        ptrOff[5] = (longIn >> 40) & 0xff;
-        ptrOff[6] = (longIn >> 48) & 0xff;
-        ptrOff[7] = (longIn >> 56) & 0xff;
+        ptrOff[0] =  longIn        & FF_MASK;
+        ptrOff[1] = (longIn >>  8) & FF_MASK;
+        ptrOff[2] = (longIn >> 16) & FF_MASK;
+        ptrOff[3] = (longIn >> 24) & FF_MASK;
+        ptrOff[4] = (longIn >> 32) & FF_MASK;
+        ptrOff[5] = (longIn >> 40) & FF_MASK;
+        ptrOff[6] = (longIn >> 48) & FF_MASK;
+        ptrOff[7] = (longIn >> 56) & FF_MASK;
     }
 }
 
@@ -513,7 +515,7 @@ void DataManager::writeUTF(std::string str) {
 
 
 void DataManager::writeWString(const std::string& str, const u32 length) {
-    u8 empty = 0;
+    constexpr u8 empty = 0;
     const u8* emptyPtr = &empty;
 
     for (u32 i = 0; i < length && i < std::min(static_cast<u32>(str.size()), length); ++i) {

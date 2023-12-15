@@ -60,7 +60,7 @@ namespace editor {
     }
 
 
-    void FileListing::readData(Data &dataIn) {
+    void FileListing::readData(const Data &dataIn) {
         DataManager managerIn(dataIn, consoleIsBigEndian(console));
 
         const u32 indexOffset = managerIn.readInt32();
@@ -76,7 +76,7 @@ namespace editor {
         for (int fileIndex = 0; fileIndex < fileCount; fileIndex++) {
             managerIn.seek(indexOffset + fileIndex * FILE_HEADER_SIZE);
 
-            std::string fileName = managerIn.readWAsString(64);
+            std::string fileName = managerIn.readWAsString(WSTRING_SIZE);
 
             u32 fileSize = managerIn.readInt32();
             total_size += fileSize;
@@ -84,7 +84,7 @@ namespace editor {
             const u32 index = managerIn.readInt32();
             u64 timestamp = managerIn.readInt64();
 
-            if (fileSize == 0u) {
+            if (fileSize == 0U) {
                 printf("Skipping empty file \"%s\"\n", fileName.c_str());
                 continue;
             }
@@ -185,7 +185,7 @@ namespace editor {
         FILE *f_in = fopen(inFileCStr, "rb");
         if (f_in == nullptr) {
             printf("Cannot open infile %s", inFileCStr);
-            return STATUS::FILE_NOT_FOUND;
+            return FILE_NOT_FOUND;
         }
 
         fseek(f_in, 0, SEEK_END);
@@ -193,7 +193,7 @@ namespace editor {
         fseek(f_in, 0, SEEK_SET);
 
         HeaderUnion headerUnion{};
-        fread(&headerUnion, 1, 12, f_in);
+        fread(&headerUnion, 1, UNION_HEADER_SIZE, f_in);
 
         int result;
 
@@ -222,7 +222,7 @@ namespace editor {
             /// file, but there won't be 2 files in a savegame file for PS3
             const u32 file_size = headerUnion.getDATFileSize();
             const u32 src_size = headerUnion.getDATSrcSize();
-            result = readXbox360DAT(f_in, data, source_bin_size, file_size, src_size);
+            result = readXbox360DAT(f_in, data, file_size, src_size);
         } else if (headerUnion.getInt2() < 100) {
             /// otherwise if (int2) > 50 then it is a random file
             /// because likely ps3 won't have more than 50 files
@@ -231,11 +231,11 @@ namespace editor {
             result = readXbox360BIN(f_in, data, source_bin_size);
         } else {
             printf("%s", error3);
-            result = STATUS::INVALID_SAVE;
+            result = INVALID_SAVE;
         }
 
         fclose(f_in);
-        if (result == STATUS::SUCCESS) {
+        if (result == SUCCESS) {
             readData(data);
         }
         return result;
@@ -271,7 +271,7 @@ namespace editor {
 
         src.deallocate();
 
-        return STATUS::SUCCESS;
+        return SUCCESS;
     }
 
     int FileListing::readWiiU(FILE* f_in, Data& data, u64 source_binary_size, const u32 file_size) {
@@ -284,18 +284,18 @@ namespace editor {
         Data src = Data(source_binary_size * 2);
 
         if(!data.allocate(file_size)) {
-            return STATUS::MALLOC_FAILED;
+            return MALLOC_FAILED;
         }
 
         fseek(f_in, 8, SEEK_SET);
         fread(src.start(), 1, source_binary_size, f_in);
 
-        if (tinf_zlib_uncompress((Bytef*) data.start(), &data.size, (Bytef*) src.start(), source_binary_size) != 0) {
+        if (tinf_zlib_uncompress(data.start(), &data.size, src.start(), source_binary_size) != 0) {
             src.deallocate();
-            return STATUS::DECOMPRESS;
+            return DECOMPRESS;
         }
         src.deallocate();
-        return STATUS::SUCCESS;
+        return SUCCESS;
     }
 
 
@@ -304,7 +304,7 @@ namespace editor {
         console = CONSOLE::SWITCH;
 
         if(!data.allocate(file_size)) {
-            return STATUS::MALLOC_FAILED;
+            return MALLOC_FAILED;
         }
 
         source_binary_size -= 8;
@@ -312,13 +312,13 @@ namespace editor {
         fseek(f_in, 8, SEEK_SET);
         fread(src.start(), 1, source_binary_size, f_in);
 
-        if (tinf_zlib_uncompress((Bytef*) data.start(), &data.size,
-                                 (Bytef*) src.start(), source_binary_size) != 0) {
+        if (tinf_zlib_uncompress(data.start(), &data.size,
+                                 src.start(), source_binary_size) != 0) {
             src.deallocate();
-            return STATUS::DECOMPRESS;
+            return DECOMPRESS;
         }
         src.deallocate();
-        return STATUS::SUCCESS;
+        return SUCCESS;
     }
 
 
@@ -333,22 +333,22 @@ namespace editor {
 
         // destination
         if (!data.allocate(file_size)) {
-            return STATUS::MALLOC_FAILED;
+            return MALLOC_FAILED;
         }
 
         // decompress src -> data
-        fseek(f_in, 12, SEEK_SET);
-        src.size -= 12;
+        fseek(f_in, UNION_HEADER_SIZE, SEEK_SET);
+        src.size -= UNION_HEADER_SIZE;
         fread(src.start(), 1, src.size, f_in);
         tinf_uncompress(data.start(), &file_size, src.start(), src.getSize());
         src.deallocate();
 
         if (file_size == 0) {
             printf_err("%s", error3);
-            return STATUS::DECOMPRESS;
+            return DECOMPRESS;
         }
 
-        return STATUS::SUCCESS;
+        return SUCCESS;
     }
 
 
@@ -356,15 +356,15 @@ namespace editor {
         printf("Detected uncompressed PS3 / RPCS3 savefile, converting\n");
         console = CONSOLE::RPCS3;
         if (!data.allocate(source_binary_size)) {
-            return STATUS::MALLOC_FAILED;
+            return MALLOC_FAILED;
         }
         fseek(f_in, 0, SEEK_SET);
         fread(data.start(), 1, data.size, f_in);
-        return STATUS::SUCCESS;
+        return SUCCESS;
     }
 
 
-    int FileListing::readXbox360DAT(FILE* f_in, Data& data, u64 source_binary_size, const u32 file_size, const u32 src_size) {
+    int FileListing::readXbox360DAT(FILE* f_in, Data& data, const u32 file_size, const u32 src_size) {
         printf("Detected Xbox360 .dat savefile, converting\n");
         console = CONSOLE::XBOX360;
 
@@ -373,7 +373,7 @@ namespace editor {
 
         // allocate destination memory
         if (!data.allocate(file_size)) {
-            return STATUS::MALLOC_FAILED;
+            return MALLOC_FAILED;
         }
 
         // decompress src -> data
@@ -382,10 +382,10 @@ namespace editor {
         src.deallocate();
         if (data.size == 0) {
             printf_err("%s", error3);
-            return STATUS::DECOMPRESS;
+            return DECOMPRESS;
         }
 
-        return STATUS::SUCCESS;
+        return SUCCESS;
     }
 
 
@@ -402,13 +402,14 @@ namespace editor {
 
         const u32 src_size = saveGameInfo.saveFileData.readInt32() - 8;
 
-        data.size = saveGameInfo.saveFileData.readInt64(); // at offset 8
+        // at offset 8
+        data.size = saveGameInfo.saveFileData.readInt64();
 
         if (!data.allocate(data.size)) {
-            return STATUS::MALLOC_FAILED;
+            return MALLOC_FAILED;
         }
         data.size = XDecompress(data.start(), &data.size, saveGameInfo.saveFileData.data, src_size);
-        return STATUS::SUCCESS;
+        return SUCCESS;
     }
 
 

@@ -25,7 +25,9 @@ namespace editor {
 
 
     class FileListing {
-    private:
+        static constexpr u32 WSTRING_SIZE = 64;
+        static constexpr u32 UNION_HEADER_SIZE = 12;
+        static constexpr u32 FILELISTING_HEADER_SIZE = 12;
         static constexpr u32 FILE_HEADER_SIZE = 144;
 
     public:
@@ -51,7 +53,7 @@ namespace editor {
 
         /// Functions
 
-        void saveToFolder(stringRef_t folderIn = "");
+        void saveToFolder(stringRef_t folderIn = "") const;
         MU void convertRegions(CONSOLE consoleOut);
         void ensureAllRegionFilesExist();
 
@@ -82,12 +84,12 @@ namespace editor {
         MU ND int readVita(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
         MU ND int readPs3(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
         MU ND int readRpcs3(FILE* f_in, Data& data, u64 source_binary_size);
-        MU ND int readXbox360DAT(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size, u32 src_size);
+        MU ND int readXbox360DAT(FILE* f_in, Data& data, const u32 file_size, const u32 src_size);
         MU ND int readXbox360BIN(FILE* f_in, Data& data, u64 source_binary_size);
-        MU   void readData(Data& dataIn);
+        MU   void readData(const Data& dataIn);
 
         /// writer
-        MU ND static int writeWiiU(stringRef_t outfileStr, Data& dataOut);
+        MU ND static int writeWiiU(stringRef_t outfileStr, const Data& dataOut);
         MU ND static int writeVita(stringRef_t outfileStr, const Data& dataOut);
         MU ND static int writeRPCS3(stringRef_t outfileStr, const Data& dataOut);
         MU ND static int writePS3();

@@ -14,29 +14,28 @@
 
 namespace editor {
 
-    MU void ChunkManager::readChunk(CONSOLE console) const {
-        DataManager managerIn = DataManager(data, size);
+    
+
+    MU void ChunkManager::readChunk(MU CONSOLE console) const {
+        auto managerIn = DataManager(data, size);
         managerIn.seekStart();
 
         chunkData->lastVersion = managerIn.readInt16();
 
         switch(chunkData->lastVersion) {
-            case 0x0a00: {
-                chunkData->lastVersion = 0x000A;
-                chunk::ChunkV10 v10Chunk;
-                v10Chunk.readChunk(chunkData, &managerIn);
+            case HEADER_NBT: {
+                chunkData->lastVersion = V_NBT;
+                chunk::ChunkV10().readChunk(chunkData, &managerIn);
                 break;
             }
-            case 0x0008:
-            case 0x0009:
-            case 0x000B: {
-                chunk::ChunkV11 v11Chunk;
-                v11Chunk.readChunk(chunkData, &managerIn);
+            case V_8:
+            case V_9:
+            case V_11: {
+                chunk::ChunkV11().readChunk(chunkData, &managerIn);
                 break;
             }
-            case 0x000C: {
-                chunk::ChunkV12 v12Chunk;
-                v12Chunk.readChunk(chunkData, &managerIn);
+            case V_12: {
+                chunk::ChunkV12().readChunk(chunkData, &managerIn);
                 break;
             }
             default:;
@@ -44,25 +43,25 @@ namespace editor {
     }
 
 
-    MU void ChunkManager::writeChunk(CONSOLE console) {
+    MU void ChunkManager::writeChunk(MU CONSOLE console) {
         Data outBuffer(CHUNK_BUFFER_SIZE);
         memset(outBuffer.data, 0, CHUNK_BUFFER_SIZE);
         auto managerOut = DataManager(outBuffer);
 
         managerOut.seekStart();
-        switch(chunkData->lastVersion) {
-            case 0x0a00: {
+        switch (chunkData->lastVersion) {
+            case HEADER_NBT: {
                 chunk::ChunkV10().writeChunk(chunkData, &managerOut);
                 break;
             }
-            case 0x0008:
-            case 0x0009:
-            case 0x000B: {
+            case V_8:
+            case V_9:
+            case V_11: {
                 managerOut.writeInt16(chunkData->lastVersion);
                 chunk::ChunkV11().writeChunk(chunkData, &managerOut);
                 break;
             }
-            case 0x000C: {
+            case V_12: {
                 managerOut.writeInt16(chunkData->lastVersion);
                 chunk::ChunkV12().writeChunk(chunkData, &managerOut);
                 break;
@@ -70,7 +69,7 @@ namespace editor {
             default:;
         }
 
-        Data outData(managerOut.getPosition());
+        const Data outData(managerOut.getPosition());
         memcpy(outData.data, outBuffer.data, outData.size);
         outBuffer.deallocate();
         deallocate();
@@ -81,15 +80,12 @@ namespace editor {
     }
 
 
+    // TODO: rewrite to return status
     void ChunkManager::ensureDecompress(const CONSOLE console) {
-        if ((getCompressed() == 0u) || console == CONSOLE::NONE || data == nullptr || size == 0) {
-            // printf("cannot Chunk.ensure_decompress the chunk if its already decompressed\n");
-            // printf("passed CONSOLE::NONE to Chunk.ensure_decompress, results will not work\n");
-            // printf("chunk data is nullptr, cannot Chunk.ensure_decompress nothing\n");
-            // printf("cannot decompress data of chunk that has not been loaded");
+        if (getCompressed() == 0U || console == CONSOLE::NONE || data == nullptr || size == 0) {
             return;
         }
-        setCompressed(0u);
+        setCompressed(0U);
 
         u32 dec_size_copy = getDecSize();
         Data decompData(getDecSize());
@@ -114,7 +110,7 @@ namespace editor {
 
         deallocate();
 
-        if (getRLE() != 0u) {
+        if (getRLE() != 0U) {
             allocate(getDecSize());
             RLE_decompress(decompData.start(), decompData.size, start(), dec_size_copy);
             decompData.deallocate();
@@ -126,17 +122,15 @@ namespace editor {
     }
 
 
-    void ChunkManager::ensureCompressed(CONSOLE console) {
-        if ((getCompressed() != 0u) || console == CONSOLE::NONE || data == nullptr || size == 0) {
-            // printf("cannot Chunk.ensure_compress if the chunk is already compressed\n");
-            // printf("passed CONSOLE::NONE to Chunk.ensure_compress, results will not work\n");
-            // printf("chunk data is nullptr, cannot Chunk.ensure_compress nothing\n");
+    // TODO: rewrite to return status
+    void ChunkManager::ensureCompressed(const CONSOLE console) {
+        if (getCompressed() != 0U || console == CONSOLE::NONE || data == nullptr || size == 0) {
             return;
         }
-        setCompressed(1u);
+        setCompressed(1U);
         setDecSize(size);
 
-        if (getRLE() != 0u) {
+        if (getRLE() != 0U) {
             Data rleBuffer(size);
             RLE_compress(data, size, rleBuffer.data, rleBuffer.size);
             deallocate();
@@ -146,7 +140,7 @@ namespace editor {
         }
 
         // allocate memory and recompress
-        u8* comp_ptr = new u8[size];
+        auto *const comp_ptr = new u8[size];
         uLongf comp_size = size;
 
         // TODO: Does it work for vita?
@@ -161,7 +155,7 @@ namespace editor {
                 break;
 
             case CONSOLE::RPCS3: {
-                if (const int status = ::compress(comp_ptr, &comp_size, data, size); status != 0) {
+                if (const int status = compress(comp_ptr, &comp_size, data, size); status != 0) {
                     printf("error has occurred compressing chunk\n");
                 }
 
@@ -175,7 +169,7 @@ namespace editor {
             case CONSOLE::SWITCH:
             case CONSOLE::WIIU:
             case CONSOLE::VITA: {
-                if (const int status = ::compress(comp_ptr, &comp_size, data, size); status != 0) {
+                if (const int status = compress(comp_ptr, &comp_size, data, size); status != 0) {
                     printf("error has occurred compressing chunk\n");
                 }
 

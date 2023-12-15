@@ -11,7 +11,6 @@ namespace editor {
     class File;
 
     class RegionManager {
-    private:
         static constexpr u32 REGION_WIDTH = 32;
         static constexpr u32 SECTOR_BYTES = 4096;
         static constexpr u32 SECTOR_INTS = SECTOR_BYTES / 4;
@@ -31,8 +30,8 @@ namespace editor {
 
         /// READ
 
-        void read(File* fileIn);
-        void read(Data* dataIn);
+        void read(const File* fileIn);
+        void read(const Data* dataIn);
 
         /// WRITE
 

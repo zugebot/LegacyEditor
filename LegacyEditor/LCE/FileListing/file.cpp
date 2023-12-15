@@ -54,7 +54,7 @@ namespace editor {
                 {FileType::ENTITY_NETHER, "DIM-1entities.dat"},
                 {FileType::ENTITY_OVERWORLD, "entities.dat"},
                 {FileType::ENTITY_END, "DIM1/entities.dat"}};
-        std::string name;
+        std::string name = "NULL";
         switch (fileType) {
             using std::to_string;
             case FileType::VILLAGE:
@@ -72,25 +72,25 @@ namespace editor {
                 break;
             }
             case FileType::STRUCTURE: {
-                if (const auto* compound = getNBTCompound(); compound == nullptr) {
-                    name = "NULL";
-                    break;
-                }
+                if (const auto* compound = getNBTCompound(); compound == nullptr) { break; }
                 name = getNBTCompound()->getString("filename");
                 break;
             }
             case FileType::MAP: {
+                if (const auto* compound = getNBTCompound(); compound == nullptr) { break; }
                 auto tag = getNBTCompound()->getTag("#");
                 const i16 mapNum = tag.toPrimitiveType<i16>();
                 name = "data/map_" + to_string(mapNum) + ".dat";
                 break;
             }
             case FileType::PLAYER:
+                if (const auto* compound = getNBTCompound(); compound == nullptr) { break; }
                 name = getNBTCompound()->getString("filename");
                 break;
             case FileType::REGION_NETHER:
             case FileType::REGION_OVERWORLD:
             case FileType::REGION_END: {
+                if (const auto* compound = getNBTCompound(); compound == nullptr) { break; }
                 const i16 regionX = getNBTCompound()->getTag("x").toPrimitiveType<i16>();
                 const i16 regionZ = getNBTCompound()->getTag("z").toPrimitiveType<i16>();
                 if (fileType == FileType::REGION_NETHER) {

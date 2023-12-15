@@ -24,7 +24,7 @@ namespace editor::chunk {
         allocChunk();
 
         dataManager->readInt8();
-        auto* nbt = NBT::readTag(*dataManager);
+        const auto* nbt = NBT::readTag(*dataManager);
         auto* chunkNBT = nbt->toType<NBTTagCompound>();
 
         chunkData->lastVersion = 10;

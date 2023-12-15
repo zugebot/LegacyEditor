@@ -69,10 +69,10 @@ static int printf_err(const std::string& format, ...) {
 
 
 /// Function to shuffle an array using Fisher-Yates algorithm
-static void shuffleArray(uint16_t arr[], int size) {
+static void shuffleArray(uint16_t arr[], const int size) {
     std::srand(static_cast<unsigned int>(time(nullptr)));
     for (int i = size - 1; i > 0; --i) {
-        const int j = std::rand() % (i + 1);
-        std::swap(arr[i], arr[j]);
+        const int randIndex = std::rand() % (i + 1);
+        std::swap(arr[i], arr[randIndex]);
     }
 }

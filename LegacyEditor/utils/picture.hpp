@@ -1,14 +1,11 @@
 #pragma once
 
 #include <cstddef>
-#include <utility>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
 #include "LegacyEditor/libs/stb_image_write.h"
 #include "LegacyEditor/utils/processor.hpp"
-
-
 
 
 class Picture {
@@ -37,10 +34,10 @@ public:
 
     MU ND inline u32 getWidth() const { return width; }
     MU ND inline u32 getHeight() const { return height; }
-    ND inline u32 getIndex(const u32 x, const u32 y) const { return x + y * height; }
+    ND inline u32 getIndex(const u32 xIn, const u32 yIn) const { return xIn + yIn * height; }
 
-    MU void drawPixel(const unsigned char* rgb, const u32 x, const u32 y) const {
-        const u32 index = getIndex(x, y);
+    MU void drawPixel(const unsigned char* rgb, const u32 xIn, const u32 yIn) const {
+        const u32 index = getIndex(xIn, yIn);
         memcpy(&data[static_cast<size_t>(index * 3)], rgb, 3);
     }
 
@@ -50,8 +47,8 @@ public:
         if (endX > width || endY > height) { return false; }
         if (endX < startX || endY < startY) { return false; }
 
-        for (u32 x = startX; x < endX; x++) {
-            const u32 index = getIndex(x, startY) * RGB_SIZE;
+        for (u32 xIter = startX; xIter < endX; xIter++) {
+            const u32 index = getIndex(xIter, startY) * RGB_SIZE;
             data[index] = red;
             data[index + 1] = green;
             data[index + 2] = blue;
@@ -59,24 +56,24 @@ public:
 
         const u32 rowSize = (endX - startX) * RGB_SIZE;
         const u32 firstRowIndex = getIndex(startX, startY) * RGB_SIZE;
-        for (u32 y = startY + 1; y < endY; y++) {
-            const u32 index = getIndex(startX, y) * RGB_SIZE;
+        for (u32 yIter = startY + 1; yIter < endY; yIter++) {
+            const u32 index = getIndex(startX, yIter) * RGB_SIZE;
             memcpy(&data[index], &data[firstRowIndex], rowSize);
         }
         return true;
     }
 
     MU void fillColor(const u8 red, const u8 green, const u8 blue) const {
-        for (u32 x = 0; x < width; x++) {
-            const u32 index = getIndex(x, 0) * RGB_SIZE;
+        for (u32 xIter = 0; xIter < width; xIter++) {
+            const u32 index = getIndex(xIter, 0) * RGB_SIZE;
             data[index] = red;
             data[index + 1] = green;
             data[index + 2] = blue;
         }
 
         const u32 rowSize = (width) *RGB_SIZE;
-        for (u32 y = 0; y < height; y++) {
-            const u32 index = getIndex(0, y) * RGB_SIZE;
+        for (u32 yIter = 0; yIter < height; yIter++) {
+            const u32 index = getIndex(0, yIter) * RGB_SIZE;
             memcpy(&data[index], &data[0], rowSize);
         }
     }

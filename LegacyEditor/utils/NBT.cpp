@@ -1,7 +1,7 @@
 #include "NBT.hpp"
 
 
-inline int TO_STRING_MAX_LIST_SIZE = 128;
+static constexpr int TO_STRING_MAX_LIST_SIZE = 128;
 
 void NBTBase::write(DataManager& output) const {
     switch (type) {
@@ -351,7 +351,7 @@ void NBTBase::read(DataManager& input) {
         case TAG_INT_ARRAY: {
             auto* val = toType<NBTTagIntArray>();
             const int size = static_cast<int>(input.readInt32());
-            val->array = static_cast<int*>(malloc(size * 4)); //i * size of int
+            val->array = static_cast<int*>(malloc(size * 4)); // i * size of int
 
             for (int j = 0; j < size; ++j) {
                 val->array[j] = static_cast<int>(input.readInt32());
@@ -362,7 +362,7 @@ void NBTBase::read(DataManager& input) {
         case TAG_LONG_ARRAY: {
             auto* val = toType<NBTTagLongArray>();
             const int size = static_cast<int>(input.readInt32());
-            val->array = static_cast<i64*>(malloc(size * 8)); //i * size of long
+            val->array = static_cast<i64*>(malloc(size * 8)); // i * size of long
 
             for (int j = 0; j < size; ++j) {
                 val->array[j] = static_cast<int>(input.readInt64());

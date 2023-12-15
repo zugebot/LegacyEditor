@@ -30,7 +30,7 @@ namespace editor {
         // step 2: find total binary size and create its data buffer
         const u32 totalFileSize = fileInfoOffset + FILE_HEADER_SIZE * fileCount;
 
-        Data dataOut(totalFileSize);
+        const Data dataOut(totalFileSize);
         DataManager managerOut(dataOut, consoleIsBigEndian(consoleOut));
 
         // step 3: write start
@@ -70,7 +70,7 @@ namespace editor {
 
         // step 5: write each files data
         // I am using additionalData as the offset into the file its data is at
-        u32 index = 12;
+        u32 index = FILELISTING_HEADER_SIZE;
         for (File* fileIter: fileOrder) {
             fileIter->additionalData = index;
             index += fileIter->data.getSize();
@@ -81,7 +81,7 @@ namespace editor {
         for (const File* fileIter: fileOrder) {
             // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter.additionalData, fileIter.size, fileIter.name.c_str());
             std::string fileIterName = fileIter->constructFileName(consoleOut);
-            managerOut.writeWString(fileIterName, 64);
+            managerOut.writeWString(fileIterName, WSTRING_SIZE);
             managerOut.writeInt32(fileIter->data.getSize());
             managerOut.writeInt32(fileIter->additionalData);
             managerOut.writeInt64(fileIter->timestamp);
@@ -92,7 +92,7 @@ namespace editor {
 
 
     MU int FileListing::writeFile(const CONSOLE consoleOut, stringRef_t outfileStr) {
-        Data dataOut = writeData(consoleOut);
+        const Data dataOut = writeData(consoleOut);
         int status;
         switch (consoleOut) {
             case CONSOLE::PS3:
@@ -111,19 +111,19 @@ namespace editor {
                 status = writeVita(outfileStr, dataOut);
                 break;
             default:
-                status = STATUS::INVALID_CONSOLE;
+                status = INVALID_CONSOLE;
                 break;
         }
         return status;
     }
 
 
-    int FileListing::writeWiiU(stringRef_t outfileStr, Data& dataOut) {
+    int FileListing::writeWiiU(stringRef_t outfileStr, const Data& dataOut) {
         const DataManager managerOut(dataOut);
         u64 src_size = managerOut.size;
 
         FILE* f_out = fopen(outfileStr.c_str(), "wb");
-        if (f_out == nullptr) { return STATUS::FILE_NOT_FOUND; }
+        if (f_out == nullptr) { return FILE_NOT_FOUND; }
 
         // Write src_size to the file
         uLong compressedSize = compressBound(src_size);
@@ -132,7 +132,7 @@ namespace editor {
         u8_vec compressedData(compressedSize);
         if (compress(compressedData.data(), &compressedSize,
                      managerOut.data, managerOut.size) != Z_OK) {
-            return STATUS::COMPRESS;
+            return COMPRESS;
         }
         compressedData.resize(compressedSize);
 
@@ -147,58 +147,59 @@ namespace editor {
 
         fclose(f_out);
 
-        return STATUS::SUCCESS;
+        return SUCCESS;
     }
 
 
     int FileListing::writeVita(stringRef_t outfileStr, const Data& dataOut) {
         FILE* f_out = fopen(outfileStr.c_str(), "wb");
-        if (f_out == nullptr) { return STATUS::FILE_NOT_FOUND; }
+        if (f_out == nullptr) { return FILE_NOT_FOUND; }
 
         Data self;
         self.allocate(dataOut.size + 2);
 
         self.size = RLEVITA_COMPRESS(dataOut.data, dataOut.size, self.data, self.size);
 
-        const int num = 0;
+        constexpr int num = 0;
         fwrite(&num, sizeof(u32), 1, f_out);
 
         u32 val;
         memcpy(&val, &self.data[0], 4);
-        val += 0x0900;
+        static constexpr u32 NUM = 0x0900;
+        val += NUM;
 
         // might need to swap endianness
         fwrite(&val, sizeof(u32), 1, f_out);
         fwrite(self.data, sizeof(u8), self.size, f_out);
         fclose(f_out);
 
-        return STATUS::SUCCESS;
+        return SUCCESS;
     }
 
 
     MU int FileListing::writeRPCS3(stringRef_t outfileStr, const Data& dataOut) {
         FILE* f_out = fopen(outfileStr.c_str(), "wb");
-        if (f_out == nullptr) { return STATUS::FILE_NOT_FOUND; }
+        if (f_out == nullptr) { return FILE_NOT_FOUND; }
 
 
         printf("Writing final size: %u\n", dataOut.size);
         fwrite(dataOut.data, 1, dataOut.size, f_out);
         fclose(f_out);
-        return STATUS::SUCCESS;
+        return SUCCESS;
     }
 
 
     MU int FileListing::writePS3() {
-        return STATUS::SUCCESS;
+        return SUCCESS;
     }
 
 
     MU int FileListing::writeXbox360_DAT() {
-        return STATUS::SUCCESS;
+        return SUCCESS;
     }
 
 
     MU int FileListing::writeXbox360_BIN() {
-        return STATUS::SUCCESS;
+        return SUCCESS;
     }
 }

@@ -10,14 +10,14 @@ static bool isSystemLittleEndian() {
 }
 
 static u16 swapEndian16(const u16 value) {
-    return (value << 8) | (value >> 8);
+    return value << 8 | value >> 8;
 }
 
 static u32 swapEndian32(const u32 value) {
-    return ((value & 0xFF000000) >> 24) |
-           ((value & 0x00FF0000) >>  8) |
-           ((value & 0x0000FF00) <<  8) |
-           ((value & 0x000000FF) << 24);
+    return (value & 0xFF000000) >> 24 |
+           (value & 0x00FF0000) >>  8 |
+           (value & 0x0000FF00) <<  8 |
+           (value & 0x000000FF) << 24;
 }
 
 // FIXME: this supposedly does not work?

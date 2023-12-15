@@ -30,22 +30,22 @@ namespace editor {
     }
 
 
-    void RegionManager::read(File* fileIn) {
+    void RegionManager::read(const File* fileIn) {
         read(&fileIn->data);
     }
 
 
     /**
- * step 1: copying data from file
- * step 2: read timestamps [CHUNK_COUNT]
- * step 3: read chunk size, decompressed size
- * step 4: read chunk info
- * step 5: allocates memory for the chunk
- * step 6: set chunk's decompressed size attribute
- * step 7: each chunk gets its own memory
- * @param dataIn
- */
-    void RegionManager::read(Data* dataIn) {
+     * step 1: copying data from file
+     * step 2: read timestamps [CHUNK_COUNT]
+     * step 3: read chunk size, decompressed size
+     * step 4: read chunk info
+     * step 5: allocates memory for the chunk
+     * step 6: set chunk's decompressed size attribute
+     * step 7: each chunk gets its own memory
+     * @param dataIn
+     */
+    void RegionManager::read(const Data* dataIn) {
         const u32 totalSectors = dataIn->size / SECTOR_BYTES + 1;
 
         size_t chunkIndex;
@@ -79,21 +79,21 @@ namespace editor {
 
             chunk.size = managerIn.readInt32();
             chunk.setRLE(chunk.size >> 31);
-            chunk.setUnknown((chunk.size >> 30) & 1);
+            chunk.setUnknown(chunk.size >> 30 & 1);
             chunk.size &= 0x00FFFFFF;
             chunk.allocate(chunk.size);
 
             switch (console) {
                 case CONSOLE::PS3: {
-                    const u32 x1 = managerIn.readInt32();
-                    const u32 x2 = managerIn.readInt32();
-                    chunk.setDecSize(x1); // rle dec size
+                    const u32 num1 = managerIn.readInt32();
+                    const u32 num2 = managerIn.readInt32();
+                    chunk.setDecSize(num1); // rle dec size
                     break;
                 }
                 case CONSOLE::RPCS3: {
-                    const u32 x1 = managerIn.readInt32();
-                    const u32 x2 = managerIn.readInt32();
-                    chunk.setDecSize(x1); // final dec size
+                    const u32 num1 = managerIn.readInt32();
+                    const u32 num2 = managerIn.readInt32();
+                    chunk.setDecSize(num1); // final dec size
                     break;
                 }
                 case CONSOLE::XBOX360:
@@ -139,7 +139,7 @@ namespace editor {
         }
 
         const u32 data_size = total_sectors * SECTOR_BYTES;
-        auto dataOut = Data(data_size);
+        const auto dataOut = Data(data_size);
         DataManager managerOut(dataOut, consoleIsBigEndian(consoleIn));
 
         for (int chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
@@ -157,8 +157,8 @@ namespace editor {
             managerOut.seek(locations[chunkIndex] * SECTOR_BYTES);
 
             u32 size = chunk.size;
-            if (chunk.getRLE()     != 0u) size |= 0x80000000;
-            if (chunk.getUnknown() != 0u) size |= 0x40000000;
+            if (chunk.getRLE()     != 0U) size |= 0x80000000;
+            if (chunk.getUnknown() != 0U) size |= 0x40000000;
             managerOut.writeInt32(size);
 
             switch (console) {

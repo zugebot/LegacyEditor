@@ -10,7 +10,7 @@ namespace editor {
     namespace map {
 
 
-        MU void saveMapToPng(File* map,
+        MU void saveMapToPng(const File* map,
                              const std::string& path,
                              const std::string& filename = "map_0.png");
     }

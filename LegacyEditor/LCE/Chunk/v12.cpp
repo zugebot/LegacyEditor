@@ -8,7 +8,7 @@
 
 
 
-static inline u32 toIndex(const u32 num) {
+static u32 toIndex(const u32 num) {
     return (num + 1) * 128;
 }
 
@@ -81,13 +81,13 @@ namespace editor::chunk {
 
     static void placeBlocks(u16_vec& writeVec, const u8* grid, int writeOffset) {
         int readOffset = 0;
-        for (int x = 0; x < 4; x++) {
-            for (int z = 0; z < 4; z++) {
-                for (int y = 0; y < 4; y++) {
-                    const int currentOffset = y + z * 256 + x * 4096;
-                    const u8 v1 = grid[readOffset++];
-                    const u8 v2 = grid[readOffset++];
-                    writeVec[currentOffset + writeOffset] = static_cast<u16>(v1) | (static_cast<u16>(v2) << 8);
+        for (int xIter = 0; xIter < 4; xIter++) {
+            for (int zIter = 0; zIter < 4; zIter++) {
+                for (int yIter = 0; yIter < 4; yIter++) {
+                    const int currentOffset = yIter + zIter * 256 + xIter * 4096;
+                    const u8 num1 = grid[readOffset++];
+                    const u8 num2 = grid[readOffset++];
+                    writeVec[currentOffset + writeOffset] = static_cast<u16>(num1) | (static_cast<u16>(num2) << 8);
                 }
             }
         }
@@ -100,22 +100,22 @@ namespace editor::chunk {
 
 
     void ChunkV12::readBlockData() const {
-        u32 maxSectionAddress = dataManager->readInt16() << 8;
+        const u32 maxSectionAddress = dataManager->readInt16() << 8;
 
         u16_vec sectionJumpTable(16);
         for (int i = 0; i < 16; i++) {
-            u16 address = dataManager->readInt16();
+            const u16 address = dataManager->readInt16();
             sectionJumpTable[i] = address;
         }
 
-        u8_vec sizeOfSubChunks = dataManager->readIntoVector(16);
+        const u8_vec sizeOfSubChunks = dataManager->readIntoVector(16);
 
         if (maxSectionAddress == 0) {
             return;
         }
 
         for (int section = 0; section < 16; section++) {
-            int address = sectionJumpTable[section];
+            const int address = sectionJumpTable[section];
             dataManager->seek(76 + address); // 26 chunk header + 50 section header
             if (address == maxSectionAddress) {
                 break;
@@ -133,15 +133,15 @@ namespace editor::chunk {
             for (int gridX = 0; gridX < 4; gridX++) {
                 for (int gridZ = 0; gridZ < 4; gridZ++) {
                     for (int gridY = 0; gridY < 4; gridY++) {
-                        int gridIndex = gridX * 16 + gridZ * 4 + gridY;
-                        u8 blockGrid[128] = {0};
-                        u8 sbmrgGrid[128] = {0};
+                        const int gridIndex = gridX * 16 + gridZ * 4 + gridY;
+                        u8 blockGrid[GRID_SIZE] = {0};
+                        u8 sbmrgGrid[GRID_SIZE] = {0};
 
-                        u8 v1 = sectionHeader[gridIndex * 2];
-                        u8 v2 = sectionHeader[gridIndex * 2 + 1];
+                        const u8 num1 = sectionHeader[gridIndex * 2];
+                        const u8 num2 = sectionHeader[gridIndex * 2 + 1];
 
-                        const u16 format = (v2 >> 4);
-                        const u16 offset = ((0x0f & v2) << 8 | v1) * 4;
+                        const u16 format = (num2 >> 4);
+                        const u16 offset = ((0x0f & num2) << 8 | num1) * 4;
 
                         // 0x4c for start and 0x80 for header (26 chunk header, 50 section header, 128 grid header)
                         const u16 gridPosition = 0xcc + address + offset;
@@ -162,8 +162,8 @@ namespace editor::chunk {
                         switch(format) {
                             case V12_0_UNO:
                                 for (int i = 0; i < 128; i += 2) {
-                                    blockGrid[i] = v1;
-                                    blockGrid[i + 1] = v2;
+                                    blockGrid[i] = num1;
+                                    blockGrid[i + 1] = num2;
                                 }
                                 break;
                             case V12_1_BIT:
@@ -226,7 +226,7 @@ namespace editor::chunk {
      * @return
      */
     template<size_t BitsPerBlock>
-    bool ChunkV12::readGrid(const u8* buffer, u8 grid[128]) const {
+    bool ChunkV12::readGrid(const u8* buffer, u8 grid[GRID_SIZE]) const {
         const int size = (1 << BitsPerBlock) * 2;
         u16_vec palette(size);
         std::copy_n(buffer, size, palette.begin());
@@ -276,7 +276,7 @@ namespace editor::chunk {
      * @return
      */
     template<size_t BitsPerBlock>
-    bool ChunkV12::readGridSubmerged(u8 const* buffer, u8 blockGrid[128], u8 SbmrgGrid[128]) const {
+    bool ChunkV12::readGridSubmerged(u8 const* buffer, u8 blockGrid[GRID_SIZE], u8 SbmrgGrid[GRID_SIZE]) const {
         const int size = (1 << BitsPerBlock) * 2;
         u16_vec palette(size);
         std::copy_n(buffer, size, palette.begin());
@@ -339,15 +339,15 @@ namespace editor::chunk {
         }
 
         auto processLightData = [](const u8_vec& data, u8_vec& lightData, int& offset) {
-            for (int k = 0; k < 128; k++) {
-                if (data[k] == 128) {
-                    memset(&lightData[offset], 0, 128);
-                } else if (data[k] == 129) {
-                    memset(&lightData[offset], 255, 128);
+            for (int k = 0; k < DATA_SECTION_SIZE; k++) {
+                if (data[k] == DATA_SECTION_SIZE) {
+                    memset(&lightData[offset], 0, DATA_SECTION_SIZE);
+                } else if (data[k] == DATA_SECTION_SIZE + 1) {
+                    memset(&lightData[offset], 255, DATA_SECTION_SIZE);
                 } else {
-                    std::memcpy(&lightData[offset], &data[toIndex(data[k])], 128);
+                    std::memcpy(&lightData[offset], &data[toIndex(data[k])], DATA_SECTION_SIZE);
                 }
-                offset += 128;
+                offset += DATA_SECTION_SIZE;
             }
         };
 
@@ -392,13 +392,13 @@ namespace editor::chunk {
 
         std::vector<u16> blockVector;
         std::vector<u16> blockLocations;
-        u16 gridHeader[64];
-        u16 sectJumpTable[16] = {0};
-        u8 sectSizeTable[16] = {0};
+        u16 gridHeader[GRID_COUNT];
+        u16 sectJumpTable[SECTION_COUNT] = {0};
+        u8 sectSizeTable[SECTION_COUNT] = {0};
         u8 blockMap[65536] = {0};
 
-        blockVector.reserve(64);
-        blockLocations.reserve(64);
+        blockVector.reserve(GRID_COUNT);
+        blockLocations.reserve(GRID_COUNT);
 
         // header ptr offsets from start
         constexpr u32 H_BEGIN           =           26;
@@ -412,7 +412,7 @@ namespace editor::chunk {
         u32 last_section_jump = 0;
         u32 last_section_size;
 
-        for (u32 sectionIndex = 0; sectionIndex < 16; sectionIndex++) {
+        for (u32 sectionIndex = 0; sectionIndex < SECTION_COUNT; sectionIndex++) {
             constexpr u32 V_GRID_SIZE = 128;
             const u32 CURRENT_INC_SECT_JUMP = last_section_jump * 256;
             const u32 CURRENT_SECTION_START = H_SECT_START + CURRENT_INC_SECT_JUMP;
@@ -486,7 +486,7 @@ namespace editor::chunk {
 
             // write grid header in subsection
             dataManager->setLittleEndian();
-            for (size_t index = 0; index < 64; index++) {
+            for (size_t index = 0; index < GRID_COUNT; index++) {
                 dataManager->writeInt16AtOffset(CURRENT_SECTION_START + 2 * index, gridHeader[index]);
             }
             dataManager->setBigEndian();
@@ -503,12 +503,12 @@ namespace editor::chunk {
         }
 
         // at root header, write section jump and size tables
-        for (size_t sectionIndex = 0; sectionIndex < 16; sectionIndex++) {
+        for (size_t sectionIndex = 0; sectionIndex < SECTION_COUNT; sectionIndex++) {
             dataManager->writeInt16AtOffset(H_SECT_JUMP_TABLE + 2 * sectionIndex, sectJumpTable[sectionIndex]);
-            dataManager->writeInt8AtOffset( H_SECT_SIZE_TABLE +     sectionIndex, sectSizeTable[sectionIndex]);
+            dataManager->writeInt8AtOffset(H_SECT_SIZE_TABLE + sectionIndex, sectSizeTable[sectionIndex]);
         }
 
-        u32 final_val = last_section_jump * 256;
+        const u32 final_val = last_section_jump * 256;
 
         // at root header, write total file size
         dataManager->writeInt16AtOffset(H_BEGIN, final_val >> 8);
@@ -547,9 +547,9 @@ namespace editor::chunk {
         //  then the second, third etc. N times, where N is BitsPerBlock
         for (size_t bitIndex = 0; bitIndex < BitsPerBlock; bitIndex++) {
             u64 position = 0;
-            for (size_t locIndex = 0; locIndex < 64; locIndex++) {
-                u64 pos = blockLocations[locIndex];
-                position |= ((pos >> bitIndex) & 1) << (63 - locIndex);
+            for (size_t locIndex = 0; locIndex < GRID_COUNT; locIndex++) {
+                const u64 pos = blockLocations[locIndex];
+                position |= (pos >> bitIndex & 1) << (GRID_COUNT - locIndex - 1);
             }
             dataManager->writeInt64(position);
         }
@@ -567,7 +567,7 @@ namespace editor::chunk {
     /// used to writeData full block data, instead of using palette.
     void ChunkV12::writeWithMaxBlocks(const u16_vec& blockVector, const u16_vec& blockLocations, u8 blockMap[65536]) const {
         dataManager->setLittleEndian();
-        for (size_t i = 0; i < 64; i++) {
+        for (size_t i = 0; i < GRID_COUNT; i++) {
             const u16 blockPos = blockLocations[i];
             dataManager->writeInt16(blockVector[blockPos]);
         }
@@ -579,9 +579,9 @@ namespace editor::chunk {
     }
 
 
-    void ChunkV12::writeLightSection(u32& readOffset, u8_vec& light) const {
+    void ChunkV12::writeLightSection(u32& readOffset, const u8_vec& light) const {
         static u32_vec sectionOffsets;
-        sectionOffsets.reserve(64);
+        sectionOffsets.reserve(GRID_COUNT);
 
         const u32 start = dataManager->getPosition();
         dataManager->writeInt32(0);
@@ -590,22 +590,22 @@ namespace editor::chunk {
         // Write headers
         u32 sectionOffsetSize = 0;
         const u8* ptr = light.data() + readOffset;
-        for (int i = 0; i < 128; i++) {
+        for (int i = 0; i < DATA_SECTION_SIZE; i++) {
             if (is0_128_slow(ptr)) {
-                dataManager->writeInt8(128);
+                dataManager->writeInt8(DATA_SECTION_SIZE);
             } else if (is255_128_slow(ptr)) {
-                dataManager->writeInt8(129);
+                dataManager->writeInt8(DATA_SECTION_SIZE + 1);
             } else {
                 sectionOffsets.push_back(readOffset);
                 dataManager->writeInt8(sectionOffsetSize++);
             }
-            ptr += 128;
-            readOffset += 128;
+            ptr += DATA_SECTION_SIZE;
+            readOffset += DATA_SECTION_SIZE;
         }
 
         // Write light data sections
         for (const u32 offset : sectionOffsets) {
-            dataManager->writeBytes(&light[offset], 128);
+            dataManager->writeBytes(&light[offset], DATA_SECTION_SIZE);
         }
 
         // Calculate and write the size

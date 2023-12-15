@@ -37,6 +37,12 @@ namespace editor::chunk {
 
     /// "Aquatic" chunks.
     class ChunkV12 {
+        static constexpr int SECTION_COUNT = 16;
+        static constexpr int GRID_COUNT = 64;
+        static constexpr int GRID_SIZE = 128;
+        static constexpr int DATA_SECTION_SIZE = 128;
+        static constexpr int MAP_SIZE = 65536;
+
     public:
         ChunkData* chunkData = nullptr;
         DataManager* dataManager = nullptr;
@@ -55,9 +61,9 @@ namespace editor::chunk {
 
         void readBlockData() const;
         template<size_t BitsPerBlock>
-        bool readGrid(const u8* buffer, u8 grid[128]) const;
+        bool readGrid(const u8* buffer, u8 grid[GRID_SIZE]) const;
         template<size_t BitsPerBlock>
-        bool readGridSubmerged(u8 const* buffer, u8 blockGrid[128], u8 SbmrgGrid[128]) const;
+        bool readGridSubmerged(u8 const* buffer, u8 blockGrid[GRID_SIZE], u8 SbmrgGrid[GRID_SIZE]) const;
         void readLightData() const;
 
         // #####################################################
@@ -66,9 +72,9 @@ namespace editor::chunk {
 
         void writeBlockData() const;
         template<size_t BitsPerBlock, size_t BlockCount, size_t EmptyCount>
-        void writeGrid(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[65536]) const;
-        void writeWithMaxBlocks(const u16_vec& blockVector, const u16_vec& blockLocations, u8 blockMap[65536]) const;
-        void writeLightSection(u32& readOffset, u8_vec& light) const;
+        void writeGrid(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[MAP_SIZE]) const;
+        void writeWithMaxBlocks(const u16_vec& blockVector, const u16_vec& blockLocations, u8 blockMap[MAP_SIZE]) const;
+        void writeLightSection(u32& readOffset, const u8_vec& light) const;
         void writeLightData() const;
     };
 }

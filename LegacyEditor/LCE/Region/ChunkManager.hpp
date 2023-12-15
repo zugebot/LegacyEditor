@@ -8,8 +8,17 @@
 namespace editor {
 
     class ChunkManager : public Data {
-    private:
         static constexpr u32 CHUNK_BUFFER_SIZE = 0xFFFFFF; // 4,194,303
+
+        enum CHUNK_HEADER : i16 {
+            HEADER_NBT = 0x0a00,
+            V_NBT = 0x000A,
+            V_8 = 0x0008,
+            V_9 = 0x0009,
+            V_11 = 0x000B,
+            V_12 = 0x000C,
+        };
+
         struct {
             u32 timestamp;
             u64 decSize : 29;

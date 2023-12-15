@@ -7,7 +7,7 @@
 #include "LegacyEditor/utils/dataManager.hpp"
 
 
-static u16 swapEndian16_2(const u16 value) { return (value << 8) | (value >> 8); }
+MU static u16 swapEndian16_2(const u16 value) { return (value << 8) | (value >> 8); }
 
 
 static u32 RLESWITCH_DECOMPRESS(u8* dataIn, const u32 sizeIn, u8* dataOut, const u32 sizeOut) {

@@ -155,7 +155,7 @@ namespace editor {
                 for (u16 z = 0; z < 16; z++) {
                     for (u16 y = 0; y < 256; y++) {
                         u16 block1 = chunk::getBlock(chunkManager.chunkData, x, y, z);
-                        int offset1 = y + 256 * z + 4096 * x;
+                        const int offset1 = y + 256 * z + 4096 * x;
 
                         if ((block1 & 0x1FF0) >> 4 != 7) {
                             block1 = 0;

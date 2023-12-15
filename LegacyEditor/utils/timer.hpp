@@ -10,10 +10,8 @@ MU static u64 getSeconds();
 
 
 class Timer {
-public:
     u64 time = 0;
-
+public:
     Timer();
     MU ND float getSeconds() const;
-
 };

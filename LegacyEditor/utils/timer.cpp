@@ -22,6 +22,7 @@ Timer::Timer() {
 }
 
 float Timer::getSeconds() const {
+    static constexpr int NANO_TO_SEC = 1000000000;
     const u64 end = getNanoSeconds();
-    return static_cast<float>(end - time) / static_cast<float>(1000000000);
+    return static_cast<float>(end - time) / static_cast<float>(NANO_TO_SEC);
 }

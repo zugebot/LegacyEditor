@@ -5,7 +5,7 @@
 
 namespace editor::chunk {
 
-    static inline int toPos(const int xIn, const int yIn, const int zIn) {
+    static int toPos(const int xIn, const int yIn, const int zIn) {
         return yIn + 256 * zIn + 4096 * xIn;
     }
 
@@ -15,10 +15,10 @@ namespace editor::chunk {
 
         int count = 0;
         for (int offset = 0; offset < 256; offset += 128) {
-            for (int x = 0; x < 16; x++) {
-                for (int z = 0; z < 16; z++) {
-                    for (int y = 0; y < 128; y++) {
-                        const int index = toPos(x, y + offset, z);
+            for (int xIter = 0; xIter < 16; xIter++) {
+                for (int zIter = 0; zIter < 16; zIter++) {
+                    for (int yIter = 0; yIter < 128; yIter++) {
+                        const int index = toPos(xIter, yIter + offset, zIter);
 
                         u16 data = 0; // chunkData.blockData[count / 2];
                         if (count % 2 == 0) {

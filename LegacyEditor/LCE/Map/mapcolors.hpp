@@ -7,7 +7,7 @@ namespace editor::map {
 
     struct RGB {
         uint8_t r, g, b;
-        RGB(const uint8_t r, const uint8_t g, const uint8_t b) : r(r), g(g), b(b) {}
+        RGB(const uint8_t rIn, const uint8_t gIn, const uint8_t bIn) : r(rIn), g(gIn), b(bIn) {}
     };
 
 
