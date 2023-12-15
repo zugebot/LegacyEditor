@@ -2,12 +2,12 @@
 
 #include <utility>
 
-#include "LegacyEditor/utils/mapcolors.hpp"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+
+#include "LegacyEditor/libs/stb_image_write.h"
 #include "LegacyEditor/utils/processor.hpp"
 
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "LegacyEditor/utils/stb_image_write.h"
 
 
 class Picture {
@@ -15,9 +15,8 @@ public:
     static constexpr int RGB_SIZE = 3;
     u32 width = 0;
     u32 height = 0;
-    /**
-     * goes left to right, top to bottom I think
-     */
+
+    /// goes left to right, top to bottom I think
     u8* data;
 
     void allocate() {

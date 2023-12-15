@@ -2,37 +2,41 @@
 
 #include "ChunkManager.hpp"
 
+#include "LegacyEditor/LCE/MC/enums.hpp"
 #include "LegacyEditor/utils/processor.hpp"
-#include "LegacyEditor/utils/enums.hpp"
 
 
-class File;
+namespace editor {
 
-class RegionManager {
-private:
-    static constexpr u32 REGION_WIDTH = 32;
-    static constexpr u32 SECTOR_BYTES = 4096;
-    static constexpr u32 SECTOR_INTS = SECTOR_BYTES / 4;
+    class File;
 
-public:
-    ChunkManager chunks[SECTOR_INTS] = {};
-    CONSOLE console = CONSOLE::NONE;
+    class RegionManager {
+    private:
+        static constexpr u32 REGION_WIDTH = 32;
+        static constexpr u32 SECTOR_BYTES = 4096;
+        static constexpr u32 SECTOR_INTS = SECTOR_BYTES / 4;
 
-    explicit RegionManager(CONSOLE consoleIn) : console(consoleIn) {}
-    ~RegionManager() = default;
+    public:
+        ChunkManager chunks[SECTOR_INTS] = {};
+        CONSOLE console = CONSOLE::NONE;
 
-    /// FUNCTIONS
+        explicit RegionManager(CONSOLE consoleIn) : console(consoleIn) {}
+        ~RegionManager() = default;
 
-    MU ChunkManager* getChunk(int x, int z);
-    MU ChunkManager* getChunk(int index);
-    MU ChunkManager* getNonEmptyChunk();
+        /// FUNCTIONS
 
-    /// READ
+        MU ChunkManager* getChunk(int x, int z);
+        MU ChunkManager* getChunk(int index);
+        MU ChunkManager* getNonEmptyChunk();
 
-    void read(File* fileIn);
-    void read(Data* dataIn);
+        /// READ
 
-    /// WRITE
+        void read(File* fileIn);
+        void read(Data* dataIn);
 
-    Data write(CONSOLE consoleIn);
-};
+        /// WRITE
+
+        Data write(CONSOLE consoleIn);
+    };
+
+}

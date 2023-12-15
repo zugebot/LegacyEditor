@@ -1,5 +1,10 @@
-#include "LegacyEditor/utils/time.hpp"
 #include "v12.hpp"
+
+#include <cstring>
+
+#include "LegacyEditor/utils/NBT.hpp"
+#include "LegacyEditor/utils/dataManager.hpp"
+
 
 
 static inline u32 toIndex(u32 num) {
@@ -33,7 +38,7 @@ static bool is255_128_slow(const u8* ptr) {
 }
 
 
-namespace chunk {
+namespace editor::chunk {
 
     void ChunkV12::allocChunk() const {
         chunkData->newBlocks = u16_vec(65536);

@@ -29,7 +29,6 @@
   ***************************************************************************/
 
 #include "lzx.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
@@ -345,7 +344,7 @@ void lzx_reset(struct lzx_state* pState) {
     *
     * Returns 0 for OK or 1 for error
     */
-static int make_decode_table(uint32_t nsyms, uint32_t nbits, uint8_t* length, uint16_t* table) {
+static int make_decode_table(uint32_t nsyms, uint32_t nbits, const uint8_t* length, uint16_t* table) {
     uint16_t sym;
     uint32_t leaf;
     uint8_t bit_num = 1;

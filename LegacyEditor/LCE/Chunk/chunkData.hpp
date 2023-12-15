@@ -1,9 +1,10 @@
 #pragma once
 
-#include "LegacyEditor/utils/NBT.hpp"
-#include "LegacyEditor/utils/enums.hpp"
+#include "LegacyEditor/LCE/MC/enums.hpp"
 
-namespace chunk {
+class NBTBase;
+
+namespace editor::chunk {
 
 
     class ChunkData {

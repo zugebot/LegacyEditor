@@ -1,11 +1,14 @@
 #pragma once
 
-#include "LegacyEditor/utils/enums.hpp"
-
 #include "chunkData.hpp"
 
+#include "LegacyEditor/LCE/MC/enums.hpp"
 
-namespace chunk {
+
+
+class DataManager;
+
+namespace editor::chunk {
 
 
     enum V12_GRID_STATE {

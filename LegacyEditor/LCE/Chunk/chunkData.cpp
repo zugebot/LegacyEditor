@@ -1,6 +1,10 @@
 #include "chunkData.hpp"
 
-namespace chunk {
+#include "LegacyEditor/utils/NBT.hpp"
+
+
+namespace editor::chunk {
+
 
     ChunkData::~ChunkData() {
         if (NBTData != nullptr) {
@@ -9,6 +13,7 @@ namespace chunk {
             NBTData = nullptr;
         }
     }
+
 
     void ChunkData::defaultNBT() {
         if (NBTData != nullptr) {
@@ -26,11 +31,10 @@ namespace chunk {
         chunkRootNbtData->setListTag("TileTicks", tileTicks);
     }
 
+
     ND std::string ChunkData::getCoords() const {
         return "(" + std::to_string(chunkX) + ", " + std::to_string(chunkZ) + ")";
     }
 
 
 }
-
-

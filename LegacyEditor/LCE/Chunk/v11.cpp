@@ -1,5 +1,10 @@
 #include "v11.hpp"
+
+#include <cstring>
 #include <algorithm>
+
+#include "LegacyEditor/utils/NBT.hpp"
+#include "LegacyEditor/utils/dataManager.hpp"
 
 
 static inline u32 toIndex(u32 num) {
@@ -7,7 +12,7 @@ static inline u32 toIndex(u32 num) {
 }
 
 
-namespace chunk {
+namespace editor::chunk {
 
     void ChunkV11::allocChunk() const {
         chunkData->newBlocks = u16_vec(65536);

@@ -1,6 +1,6 @@
 #include "dataManager.hpp"
 
-#include "LegacyEditor/utils/file.hpp"
+#include "LegacyEditor/LCE/FileListing/file.hpp"
 
 
 // SEEK
@@ -502,12 +502,12 @@ void DataManager::writeData(Data* dataIn) {
 }
 
 
-void DataManager::writeFile(File* fileIn) {
+void DataManager::writeFile(editor::File* fileIn) {
     writeBytes(fileIn->data.start(), fileIn->data.size);
 }
 
 
-void DataManager::writeFile(File& fileIn) {
+void DataManager::writeFile(editor::File& fileIn) {
     writeBytes(fileIn.data.start(), fileIn.data.size);
 }
 

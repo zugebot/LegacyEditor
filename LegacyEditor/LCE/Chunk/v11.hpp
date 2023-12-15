@@ -3,7 +3,9 @@
 #include "chunkData.hpp"
 
 
-namespace chunk {
+class DataManager;
+
+namespace editor::chunk {
 
     /// "Elytra" chunks.
     class ChunkV11 {

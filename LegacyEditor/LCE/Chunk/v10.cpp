@@ -1,7 +1,8 @@
 #include "v10.hpp"
+#include "LegacyEditor/utils/NBT.hpp"
 
 
-namespace chunk {
+namespace editor::chunk {
 
     void ChunkV10::allocChunk() const {
         chunkData->oldBlocks = u8_vec(65536);

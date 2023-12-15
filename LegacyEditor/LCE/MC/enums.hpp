@@ -1,6 +1,6 @@
 #pragma once
 
-#include "processor.hpp"
+#include "LegacyEditor/utils/processor.hpp"
 
 
 enum class CONSOLE : i8 {

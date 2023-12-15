@@ -1,14 +1,14 @@
 #pragma once
 
-#include <cstdarg>
 #include <cstdint>
-#include <functional>
+#include <cstdarg>
 #include <string>
-#include <thread>
 #include <vector>
 
-static inline std::string dir_path = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\)";
-static inline std::string out_path = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\)";
+extern std::string dir_path;
+extern std::string out_path;
+extern std::string wiiu;
+extern std::string ps3_;
 
 #define ND [[nodiscard]]
 #define MU [[maybe_unused]]
@@ -47,35 +47,6 @@ MU typedef std::vector<std::vector<int32_t>> i32_vec_vec;
 MU typedef std::vector<std::vector<int64_t>> i64_vec_vec;
 
 
-/**
- * \n
- * It is a requirement that the first argument passed to the
- * function is an index based on the maximum thread count.
- * \n
- * \n
- * use 'std::ref' for references.
- * @tparam threadCount how many threads to create
- * @tparam Function
- * @tparam Args
- * @param func the function to call
- * @param args the arguments to pass to the function
- * @return
- */
-template<int threadCount, typename Function, typename... Args>
-static int inline run_parallel(Function func, Args... args) {
-    std::vector<std::thread> threads;
-    for (int i = 0; i < threadCount; ++i) {
-        threads.emplace_back(std::bind(func, i, args...));
-    }
-    for (auto& thread : threads) {
-        if (thread.joinable()) {
-            thread.join();
-        }
-    }
-    return 0;
-}
-
-
 /// printf, but returns -1.
 static int inline printf_err(const char* format, ...) {
     va_list args;
@@ -86,9 +57,19 @@ static int inline printf_err(const char* format, ...) {
 }
 
 
+/// printf, but returns -1.
+static int inline printf_err(std::string format, ...) {
+    va_list args;
+    va_start(args, format);
+    vprintf(format.c_str(), args);
+    va_end(args);
+    return -1;
+}
+
+
 /// Function to shuffle an array using Fisher-Yates algorithm
 static void shuffleArray(uint16_t arr[], int size) {
-    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+    std::srand(static_cast<unsigned int>(time(nullptr)));
     for (int i = size - 1; i > 0; --i) {
         int j = std::rand() % (i + 1);
         std::swap(arr[i], arr[j]);

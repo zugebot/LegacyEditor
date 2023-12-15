@@ -8,11 +8,11 @@
 #include "LegacyEditor/utils/processor.hpp"
 
 
-class File;
+namespace editor {
+    class File;
+}
 
-/**
- * Starts writing in "Big Endian".
- */
+/// Starts writing in "Big Endian".
 class DataManager {
 public:
     mutable bool isBig = true;
@@ -107,8 +107,8 @@ public:
     void writeInt64AtOffset(u32 offset, u64 longIn);
 
     void writeData(Data* dataIn);
-    void writeFile(File* fileIn);
-    void writeFile(File& fileIn);
+    void writeFile(editor::File* fileIn);
+    void writeFile(editor::File& fileIn);
     void writeBytes(u8* dataPtrIn, u32 length);
 
     void writeUTF(std::string str);

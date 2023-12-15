@@ -2,8 +2,10 @@
 
 #include "chunkData.hpp"
 
+class DataManager;
 
-namespace chunk {
+
+namespace editor::chunk {
 
 
     /// "NBT" chunks.

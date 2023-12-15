@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include "LegacyEditor/utils/Enums.hpp"
+#include "LegacyEditor/LCE/MC/enums.hpp"
 #include "LegacyEditor/utils/NBT.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 

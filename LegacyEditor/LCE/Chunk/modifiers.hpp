@@ -1,9 +1,9 @@
 #pragma once
 
-#include "LegacyEditor/LCE/Region/Chunk/chunkData.hpp"
+#include "chunkData.hpp"
 
 
-namespace chunk {
+namespace editor::chunk {
 
     static inline int toPos(int x, int y, int z) {
         return y + 256 * z + 4096 * x;
