@@ -141,7 +141,7 @@ public:
         memcpy(data, dataIn.c_str(), size);
     }
 
-    ND inline bool hasNoTags() const { return size != 0; }
+    ND bool hasNoTags() const { return size != 0; }
 
     ND std::string getString() const { return std::string(data, size); }
 
@@ -242,13 +242,13 @@ public:
         return static_cast<classType>(0);
     }
 
-    NBTTagByteArray* getByteArrayAt(int index) const;
-    std::string getStringTagAt(int index) const;
-    NBTTagList* getListTagAt(int index) const;
-    NBTTagCompound* getCompoundTagAt(int index) const;
-    NBTTagIntArray* getIntArrayAt(int index) const;
-    NBTTagLongArray* getLongArrayAt(int index) const;
-    NBTBase get(int index) const;
+    ND NBTTagByteArray* getByteArrayAt(int index) const;
+    ND std::string getStringTagAt(int index) const;
+    ND NBTTagList* getListTagAt(int index) const;
+    ND NBTTagCompound* getCompoundTagAt(int index) const;
+    ND NBTTagIntArray* getIntArrayAt(int index) const;
+    ND NBTTagLongArray* getLongArrayAt(int index) const;
+    ND NBTBase get(int index) const;
     ND int tagCount() const;
     ND NBTType getTagType() const;
 };
@@ -388,7 +388,7 @@ inline NBTBase* createNewByType(NBTType type) {
 
 static void compareNBT(const NBTBase* first, const NBTBase* second) {
     auto* firstNBT = NBTBase::toType<NBTTagCompound>(first)->getCompoundTag("Data");
-    auto* secondNBT = NBTBase::toType<NBTTagCompound>(second)->getCompoundTag("Data");;
+    auto* secondNBT = NBTBase::toType<NBTTagCompound>(second)->getCompoundTag("Data");
 
     for (const auto& key : firstNBT->tagMap | std::views::keys) {
         if (!secondNBT->hasKey(key)) {

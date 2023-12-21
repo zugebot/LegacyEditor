@@ -27,31 +27,42 @@ int main() {
     TEST_PAIR("superflat",   R"(superflat)"                                    , wiiu + R"(231105133853)");
     TEST_PAIR("aquatic_tut", R"(aquatic_tutorial)"                             , wiiu + R"(230918230206)");
     TEST_PAIR("vita",        R"(Vita Save\PCSB00560-231005063840\GAMEDATA.bin)", wiiu + R"(BLANK_SAVE)");
-    TEST_PAIR("elytra_tut",  R"()"                                             , wiiu + R"(BLANK_SAVE)");
+    TEST_PAIR("elytra_tut",  R"(elytra_tutorial)"                              , wiiu + R"(230918230206)");
     TEST_PAIR("NS_save1"  ,  R"(NS\190809160532.dat)"                          , wiiu + R"(BLANK_SAVE)");
     TEST_PAIR("fortnite",    R"(fortnite_world)"                               , wiiu + R"(BLANK_SAVE)");
     TEST_PAIR("rpcs3_flat",  R"(RPCS3_GAMEDATA)"                               , ps3_ + R"(GAMEDATA)");
     TEST_PAIR("X360_TU69",   R"(XBOX360_TU69.bin)"                             , dir_path + R"(tests\XBOX360_TU69.bin)" );
     TEST_PAIR("X360_TU74",   R"(XBOX360_TU74.dat)"                             , dir_path + R"(tests\XBOX360_TU74.dat)" );
     TEST_PAIR("nether", R"(nether)", wiiu + R"(231114151239)");
-    const std::string TEST_IN = TESTS["nether"].first;   // file to read from
-    const std::string TEST_OUT = TESTS["nether"].second; // file to write to
+    const std::string TEST_IN = TESTS["elytra_tut"].first;   // file to read from
+    const std::string TEST_OUT = TESTS["elytra_tut"].second; // file to write to
     constexpr auto consoleOut = CONSOLE::WIIU;
 
 
     // read savedata
     editor::FileListing fileListing;
-    const int statusIn = fileListing.readFile(TEST_IN);
-    if (statusIn != 0) { return printf_err("failed to load file\n"); }
-    fileListing.saveToFolder();
 
+    if (fileListing.readFile(TEST_IN) != 0) {
+        return printf_err("failed to load file\n");
+    }
+
+    fileListing.printFileList();
+    fileListing.printDetails();
+
+    if (fileListing.saveToFolder() != 0) {
+        return printf_err("failed to save files to folder\n");
+    }
 
     // edit regions (threaded)
     // add functions to "LegacyEditor/LCE/scripts.hpp"
     const auto timer = Timer();
-    run_parallel<4>(editor::removeNetherrack, std::ref(fileListing));
+    // run_parallel<4>(editor::convertElytraToAquaticChunks, std::ref(fileListing));
+    // for (int x = 0; x < 4; x++) {
+    convertElytraToAquaticChunks(0, fileListing); // }
     printf("Total Time: %.3f\n", timer.getSeconds());
 
+    fileListing.oldestVersion = 11;
+    fileListing.currentVersion = 11;
 
     // convert to fileListing
     const int statusOut = fileListing.writeFile(consoleOut, TEST_OUT);

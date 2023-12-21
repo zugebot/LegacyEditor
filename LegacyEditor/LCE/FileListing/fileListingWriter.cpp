@@ -92,6 +92,10 @@ namespace editor {
 
 
     MU int FileListing::writeFile(const CONSOLE consoleOut, stringRef_t outfileStr) {
+        if (outfileStr.empty()) {
+            return INVALID_ARGUMENT;
+        }
+
         const Data dataOut = writeData(consoleOut);
         int status;
         switch (consoleOut) {
@@ -123,7 +127,7 @@ namespace editor {
         u64 src_size = managerOut.size;
 
         FILE* f_out = fopen(outfileStr.c_str(), "wb");
-        if (f_out == nullptr) { return FILE_NOT_FOUND; }
+        if (f_out == nullptr) { return FILE_ERROR; }
 
         // Write src_size to the file
         uLong compressedSize = compressBound(src_size);
@@ -153,7 +157,7 @@ namespace editor {
 
     int FileListing::writeVita(stringRef_t outfileStr, const Data& dataOut) {
         FILE* f_out = fopen(outfileStr.c_str(), "wb");
-        if (f_out == nullptr) { return FILE_NOT_FOUND; }
+        if (f_out == nullptr) { return FILE_ERROR; }
 
         Data self;
         self.allocate(dataOut.size + 2);
@@ -179,7 +183,7 @@ namespace editor {
 
     MU int FileListing::writeRPCS3(stringRef_t outfileStr, const Data& dataOut) {
         FILE* f_out = fopen(outfileStr.c_str(), "wb");
-        if (f_out == nullptr) { return FILE_NOT_FOUND; }
+        if (f_out == nullptr) { return FILE_ERROR; }
 
 
         printf("Writing final size: %u\n", dataOut.size);

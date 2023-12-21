@@ -17,7 +17,7 @@ namespace editor::chunk {
         ChunkV10() = default;
         MU void allocChunk() const;
         MU void readChunk(ChunkData* chunkDataIn, DataManager* managerIn);
-        MU void writeChunk(ChunkData* chunkDataIn, DataManager* managerOut);
+        MU static void writeChunk(ChunkData* chunkDataIn, DataManager* managerOut);
     };
 
 }

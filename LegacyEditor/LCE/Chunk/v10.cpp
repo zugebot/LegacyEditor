@@ -64,7 +64,7 @@ namespace editor::chunk {
         chunkData->blockLight = createAndCopy(chunkNBT->getByteArray("BlockLight"), 32768);
 
 
-        chunkData->NBTData = new NBTBase(new NBTTagCompound(), NBTType::TAG_COMPOUND);
+        chunkData->NBTData = new NBTBase(new NBTTagCompound(), TAG_COMPOUND);
         chunkData->NBTData->toType<NBTTagCompound>()->setTag("Entities", chunkNBT->getTag("Entities").copy());
         chunkData->NBTData->toType<NBTTagCompound>()->setTag("TileEntities", chunkNBT->getTag("TileEntities").copy());
         chunkData->NBTData->toType<NBTTagCompound>()->setTag("TileTicks", chunkNBT->getTag("TileTicks").copy());
@@ -79,7 +79,7 @@ namespace editor::chunk {
     }
 
 
-    void ChunkV10::writeChunk(ChunkData* chunkDataIn, DataManager* managerOut) {
+    void ChunkV10::writeChunk(MU ChunkData* chunkDataIn, MU DataManager* managerOut) {
 
     }
 

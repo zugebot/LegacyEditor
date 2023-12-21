@@ -649,7 +649,7 @@ namespace editor {
         }
 
         if (out.size) {
-            u8* saveFile = new u8[out.size];
+            auto saveFile = new u8[out.size];
             memcpy(saveFile, out.data, out.size);
             saveGame.saveFileData = DataManager(saveFile, out.size);
         }

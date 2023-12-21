@@ -10,8 +10,7 @@ namespace editor {
      * uses many struct unions to interpret header for different consoles
      */
     class HeaderUnion {
-    private:
-        static inline bool isSystemLittle() {
+        static bool isSystemLittle() {
             return isSystemLittleEndian();
         }
 
@@ -59,25 +58,25 @@ namespace editor {
             } SWITCH;
         };
         /// bytes 0-3
-        ND u32 getInt1() const { return isSystemLittle() ? ::swapEndian32(INT_VIEW.int1) : INT_VIEW.int1; }
+        ND u32 getInt1() const { return isSystemLittle() ? swapEndian32(INT_VIEW.int1) : INT_VIEW.int1; }
         /// bytes 4-7
-        ND u32 getInt2() const { return isSystemLittle() ? ::swapEndian32(INT_VIEW.int2) : INT_VIEW.int2; }
+        ND u32 getInt2() const { return isSystemLittle() ? swapEndian32(INT_VIEW.int2) : INT_VIEW.int2; }
         /// bytes 0-7
-        ND u64 getDestSize() const { return isSystemLittle() ? ::swapEndian64(ZLIB.dest_size) : ZLIB.dest_size; }
+        ND u64 getDestSize() const { return isSystemLittle() ? swapEndian64(ZLIB.dest_size) : ZLIB.dest_size; }
         /// bytes 8-9
-        ND u16 getZlibMagic() const { return isSystemLittle() ? ::swapEndian16(ZLIB.zlib_magic) : ZLIB.zlib_magic; }
+        ND u16 getZlibMagic() const { return isSystemLittle() ? swapEndian16(ZLIB.zlib_magic) : ZLIB.zlib_magic; }
         /// bytes 0-3
-        ND u32 getDATSrcSize() const { return isSystemLittle() ? ::swapEndian32(DAT.src_size) : DAT.src_size; }
+        ND u32 getDATSrcSize() const { return isSystemLittle() ? swapEndian32(DAT.src_size) : DAT.src_size; }
         /// bytes 4-11
-        ND u64 getDATFileSize() const { return isSystemLittle() ? ::swapEndian32(DAT.file_size) : DAT.file_size; }
+        ND u64 getDATFileSize() const { return isSystemLittle() ? swapEndian32(DAT.file_size) : DAT.file_size; }
         /// bytes 4-7
-        ND u32 getVitaFileSize() const { return isSystemLittle() ? VITA.file_size : ::swapEndian32(VITA.file_size) ; }
+        ND u32 getVitaFileSize() const { return isSystemLittle() ? VITA.file_size : swapEndian32(VITA.file_size) ; }
         /// bytes 8-11
-        ND u32 getVitaFileListing() const { return isSystemLittle() ? VITA.file_listing_offset : ::swapEndian32(VITA.file_listing_offset); }
+        ND u32 getVitaFileListing() const { return isSystemLittle() ? VITA.file_listing_offset : swapEndian32(VITA.file_listing_offset); }
         /// bytes 0-3
-        MU ND u32 getSwitchFileSize() const { return isSystemLittle() ? SWITCH.file_size : ::swapEndian32(SWITCH.file_size) ; }
+        MU ND u32 getSwitchFileSize() const { return isSystemLittle() ? SWITCH.file_size : swapEndian32(SWITCH.file_size) ; }
         /// bytes 4-7
-        MU ND u32 getSwitchSomething() const { return isSystemLittle() ? SWITCH.something : ::swapEndian32(SWITCH.something); }
+        MU ND u32 getSwitchSomething() const { return isSystemLittle() ? SWITCH.something : swapEndian32(SWITCH.something); }
 
 
     };

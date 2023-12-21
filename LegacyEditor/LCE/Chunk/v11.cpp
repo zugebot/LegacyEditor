@@ -11,6 +11,8 @@ static u32 toIndex(const u32 num) {
     return (num + 1) * 128;
 }
 
+// TODO: I think I need to rewrite this all to place blocks as only u8's,
+// TODO: and to switch it to use oldBlocks instead of newBlocks
 
 namespace editor::chunk {
 

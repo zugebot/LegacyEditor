@@ -28,13 +28,13 @@ public:
         allocate();
     }
 
-    MU explicit Picture(int size) : Picture(size, size) {}
+    MU explicit Picture(const int size) : Picture(size, size) {}
 
     ~Picture() { delete[] data; }
 
-    MU ND inline u32 getWidth() const { return width; }
-    MU ND inline u32 getHeight() const { return height; }
-    ND inline u32 getIndex(const u32 xIn, const u32 yIn) const { return xIn + yIn * height; }
+    MU ND u32 getWidth() const { return width; }
+    MU ND u32 getHeight() const { return height; }
+    ND u32 getIndex(const u32 xIn, const u32 yIn) const { return xIn + yIn * height; }
 
     MU void drawPixel(const unsigned char* rgb, const u32 xIn, const u32 yIn) const {
         const u32 index = getIndex(xIn, yIn);

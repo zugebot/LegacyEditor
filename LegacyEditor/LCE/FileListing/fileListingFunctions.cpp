@@ -4,12 +4,30 @@
 #include <iostream>
 #include <algorithm>
 
-#include "LegacyEditor/utils/endian.hpp"
 #include "LegacyEditor/LCE/Region/RegionManager.hpp"
+
 
 namespace editor {
 
-    void FileListing::saveToFolder(stringRef_t folderIn) const {
+
+    void FileListing::printDetails() const {
+        printf("> FileListing Details:\n");
+        printf("1. Filename: %s\n", filename.c_str());
+        printf("2. Oldest Version: %d\n", oldestVersion);
+        printf("3. Current Version: %d\n", currentVersion);
+        printf("4. Total File Count: %llu\n", allFiles.size());
+        printf("5. Player File Count: %llu\n\n", players.size());
+    }
+
+    void FileListing::printFileList() const {
+        for (int index = 0; index < allFiles.size(); index++) {
+            printf("%.2d: %s\n", index, allFiles[index].constructFileName(console).c_str());
+        }
+        printf("\n");
+    }
+
+
+    int FileListing::saveToFolder(stringRef_t folderIn) const {
 
         std::string folder = folderIn;
         if (folderIn.empty()) {
@@ -17,8 +35,8 @@ namespace editor {
         }
 
         if (folder.length() < 20) {
-            printf("tried to delete short directory, will not risk");
-            return;
+            printf("tried to delete short directory, will not risk\n");
+            return FILE_ERROR;
         }
 
         namespace fs = std::filesystem;
@@ -39,9 +57,12 @@ namespace editor {
                 create_directories(path.parent_path());
             }
 
-            DataManager fileOut(file.data);
-            fileOut.writeToFile(fullPath);
+            if (DataManager fileOut(file.data); fileOut.writeToFile(fullPath)) {
+                return FILE_ERROR;
+            }
         }
+
+        return SUCCESS;
     }
 
 

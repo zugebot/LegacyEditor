@@ -27,8 +27,9 @@ enum STATUS : i8 {
     DECOMPRESS = -2,
     MALLOC_FAILED = -3,
     INVALID_SAVE = -4,
-    FILE_NOT_FOUND = -5,
-    INVALID_CONSOLE = -6
+    FILE_ERROR = -5,
+    INVALID_CONSOLE = -6,
+    INVALID_ARGUMENT = -7,
 };
 
 

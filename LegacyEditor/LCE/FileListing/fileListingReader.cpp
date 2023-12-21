@@ -89,16 +89,14 @@ namespace editor {
                 continue;
             }
 
-            non_empty_file_count++;
-
             managerIn.seek(index);
             u8* data = managerIn.readBytes(fileSize);
 
             allFiles.emplace_back(data, fileSize, timestamp);
             File &file = allFiles.back();
-            printf("%s\n", fileName.c_str());
 
             // region file
+            non_empty_file_count++;
             if (fileName.ends_with(".mcr")) {
                 if (fileName.starts_with("DIM-1")) {
                     file.fileType = FileType::REGION_NETHER;
@@ -184,9 +182,10 @@ namespace editor {
         const char* inFileCStr = inFileStr.c_str();
         FILE *f_in = fopen(inFileCStr, "rb");
         if (f_in == nullptr) {
-            printf("Cannot open infile %s", inFileCStr);
-            return FILE_NOT_FOUND;
+            printf("Cannot open infile %s\n\n", inFileCStr);
+            return FILE_ERROR;
         }
+        filename = inFileStr;
 
         fseek(f_in, 0, SEEK_END);
         const u64 source_bin_size = ftell(f_in);
@@ -244,14 +243,13 @@ namespace editor {
 
 
     /**
- * 0- 3 bytes: 00 00 00 00
- * 4- 7 bytes: file size
- * 8-11 bytes: file listing?
- * @return
- */
-
+     * 0- 3 bytes: 00 00 00 00
+     * 4- 7 bytes: file size
+     * 8-11 bytes: file listing?
+     * @return
+     */
     int FileListing::readVita(FILE* f_in, Data& data, u64 source_binary_size, const u32 file_size) {
-        printf("Detected Vita savefile, converting\n");
+        printf("Detected Vita savefile, converting\n\n");
         console = CONSOLE::VITA;
 
         // total size of file
@@ -274,14 +272,15 @@ namespace editor {
         return SUCCESS;
     }
 
+
     int FileListing::readWiiU(FILE* f_in, Data& data, u64 source_binary_size, const u32 file_size) {
-        printf("Detected WiiU savefile, converting\n");
+        printf("Detected WiiU savefile, converting\n\n");
         console = CONSOLE::WIIU;
 
         // total size of file
         source_binary_size -= 8;
 
-        Data src = Data(source_binary_size * 2);
+        auto src = Data(source_binary_size * 2);
 
         if(!data.allocate(file_size)) {
             return MALLOC_FAILED;
@@ -300,7 +299,7 @@ namespace editor {
 
 
     int FileListing::readSwitch(FILE* f_in, Data& data, u64 source_binary_size, const u32 file_size) {
-        printf("Detected WiiU savefile, converting\n");
+        printf("Detected WiiU savefile, converting\n\n");
         console = CONSOLE::SWITCH;
 
         if(!data.allocate(file_size)) {
@@ -308,7 +307,7 @@ namespace editor {
         }
 
         source_binary_size -= 8;
-        Data src = Data(source_binary_size);
+        auto src = Data(source_binary_size);
         fseek(f_in, 8, SEEK_SET);
         fread(src.start(), 1, source_binary_size, f_in);
 
@@ -325,7 +324,7 @@ namespace editor {
     /// ps3 writeFile files don't need decompressing\n
     /// TODO: IMPORTANT check from a region file chunk what console it is if it is uncompressed
     int FileListing::readPs3(FILE* f_in, Data& data, const u64 source_binary_size, u32 file_size) {
-        printf("Detected compressed PS3 savefile, converting\n");
+        printf("Detected compressed PS3 savefile, converting\n\n");
         console = CONSOLE::PS3;
 
         // source
@@ -353,7 +352,7 @@ namespace editor {
 
 
     int FileListing::readRpcs3(FILE* f_in, Data& data, u64 source_binary_size) {
-        printf("Detected uncompressed PS3 / RPCS3 savefile, converting\n");
+        printf("Detected uncompressed PS3 / RPCS3 savefile, converting\n\n");
         console = CONSOLE::RPCS3;
         if (!data.allocate(source_binary_size)) {
             return MALLOC_FAILED;
@@ -365,7 +364,7 @@ namespace editor {
 
 
     int FileListing::readXbox360DAT(FILE* f_in, Data& data, const u32 file_size, const u32 src_size) {
-        printf("Detected Xbox360 .dat savefile, converting\n");
+        printf("Detected Xbox360 .dat savefile, converting\n\n");
         console = CONSOLE::XBOX360;
 
         // allocate source memory
@@ -391,7 +390,7 @@ namespace editor {
 
     int FileListing::readXbox360BIN(FILE* f_in, Data& data, u64 source_binary_size) {
         console = CONSOLE::XBOX360;
-        printf("Detected Xbox360 .bin savefile, converting\n");
+        printf("Detected Xbox360 .bin savefile, converting\n\n");
 
         fseek(f_in, 0, SEEK_SET);
 

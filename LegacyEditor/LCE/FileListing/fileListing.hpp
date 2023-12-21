@@ -32,7 +32,9 @@ namespace editor {
 
     public:
 
-        // data
+        // Data
+
+        std::string filename;
         File_vec allFiles;
         i32 oldestVersion{};
         i32 currentVersion{};
@@ -41,35 +43,43 @@ namespace editor {
         bool separateEntities = false;
         bool separateRegions = false;
 
-        // pointers
+        // Pointers
+
         FileList* dimFileLists[3] = {&region_nether, &region_overworld, &region_end};
         FileList region_nether, region_overworld, region_end;
         FileList maps, structures, players;
         File *entity_nether{}, *entity_overworld{}, *entity_end{};
         File *largeMapDataMappings{}, *level{}, *grf{}, *village{};
 
+        // Constructors
+
         FileListing() = default;
         ~FileListing() { deallocate(); }
 
-        /// Functions
+        // Details
 
-        void saveToFolder(stringRef_t folderIn = "") const;
+        void printDetails() const;
+        void printFileList() const;
+
+        // Functions
+
+        int saveToFolder(stringRef_t folderIn = "") const;
         MU void convertRegions(CONSOLE consoleOut);
         void ensureAllRegionFilesExist();
 
-        /// Modify State
+        // Modify State
 
         void deallocate();
         void removeFileTypes(const std::set<FileType>& typesToRemove);
         MU void addFiles(File_vec filesIn);
         File_vec collectFiles(FileType fileType);
 
-        /// read / write from console files
+        // Read / Write from console files
 
         MU ND int readFile(stringRef_t inFileStr);
         MU ND int writeFile(CONSOLE consoleOut, stringRef_t outfileStr);
 
-        /// conversion
+        // Conversion
 
         MU ND int convertTo(stringRef_t inFileStr, stringRef_t outFileStr, CONSOLE consoleOut);
         MU ND int convertAndReplaceRegions(stringRef_t inFileStr, stringRef_t inFileRegionReplacementStr,
@@ -77,18 +87,19 @@ namespace editor {
 
     private:
 
+        // Reader
 
-        /// reader
         MU ND int readWiiU(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
         MU ND int readSwitch(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
         MU ND int readVita(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
         MU ND int readPs3(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
         MU ND int readRpcs3(FILE* f_in, Data& data, u64 source_binary_size);
-        MU ND int readXbox360DAT(FILE* f_in, Data& data, const u32 file_size, const u32 src_size);
+        MU ND int readXbox360DAT(FILE* f_in, Data& data, u32 file_size, u32 src_size);
         MU ND int readXbox360BIN(FILE* f_in, Data& data, u64 source_binary_size);
         MU   void readData(const Data& dataIn);
 
-        /// writer
+        // Writer
+
         MU ND static int writeWiiU(stringRef_t outfileStr, const Data& dataOut);
         MU ND static int writeVita(stringRef_t outfileStr, const Data& dataOut);
         MU ND static int writeRPCS3(stringRef_t outfileStr, const Data& dataOut);
@@ -98,42 +109,44 @@ namespace editor {
         Data writeData(CONSOLE consoleOut);
 
 
-        /// file pointer stuff
+        // File pointer stuff
+
         void clearPointers();
         void updatePointers();
 
-        /// For use in removeFileTypes
+        // For use in removeFileTypes
+
         std::map<FileType, std::function<void()>> clearActionsDelete = {
-                {FileType::STRUCTURE, [this]() { structures.removeAll(); }},
-                {FileType::MAP, [this]() { maps.removeAll(); }},
-                {FileType::PLAYER, [this]() { players.removeAll(); }},
-                {FileType::REGION_NETHER, [this]() { region_nether.removeAll(); }},
-                {FileType::REGION_OVERWORLD, [this]() { region_overworld.removeAll(); }},
-                {FileType::REGION_END, [this]() { region_end.removeAll(); }},
-                {FileType::ENTITY_NETHER, [this]() { entity_nether->deleteData(); entity_nether = nullptr; }},
-                {FileType::ENTITY_OVERWORLD, [this]() { entity_overworld->deleteData(); entity_overworld = nullptr; }},
-                {FileType::ENTITY_END, [this]() { entity_end->deleteData(); entity_end = nullptr; }},
-                {FileType::VILLAGE, [this]() { village->deleteData(); village = nullptr; }},
-                {FileType::DATA_MAPPING, [this]() { largeMapDataMappings->deleteData(); largeMapDataMappings = nullptr; }},
-                {FileType::LEVEL, [this]() { level->deleteData(); level = nullptr; }},
-                {FileType::GRF, [this]() { grf->deleteData(); grf = nullptr; }},
+                {FileType::STRUCTURE, [this] { structures.removeAll(); }},
+                {FileType::MAP, [this] { maps.removeAll(); }},
+                {FileType::PLAYER, [this] { players.removeAll(); }},
+                {FileType::REGION_NETHER, [this] { region_nether.removeAll(); }},
+                {FileType::REGION_OVERWORLD, [this] { region_overworld.removeAll(); }},
+                {FileType::REGION_END, [this] { region_end.removeAll(); }},
+                {FileType::ENTITY_NETHER, [this] { entity_nether->deleteData(); entity_nether = nullptr; }},
+                {FileType::ENTITY_OVERWORLD, [this] { entity_overworld->deleteData(); entity_overworld = nullptr; }},
+                {FileType::ENTITY_END, [this] { entity_end->deleteData(); entity_end = nullptr; }},
+                {FileType::VILLAGE, [this] { village->deleteData(); village = nullptr; }},
+                {FileType::DATA_MAPPING, [this] { largeMapDataMappings->deleteData(); largeMapDataMappings = nullptr; }},
+                {FileType::LEVEL, [this] { level->deleteData(); level = nullptr; }},
+                {FileType::GRF, [this] { grf->deleteData(); grf = nullptr; }},
         };
 
 
         std::map<FileType, std::function<void()>> clearActionsRemove = {
-                {FileType::STRUCTURE, [this]() { structures.clear(); }},
-                {FileType::MAP, [this]() { maps.clear(); }},
-                {FileType::PLAYER, [this]() { players.clear(); }},
-                {FileType::REGION_NETHER, [this]() { region_nether.clear(); }},
-                {FileType::REGION_OVERWORLD, [this]() { region_overworld.clear(); }},
-                {FileType::REGION_END, [this]() { region_end.clear(); }},
-                {FileType::ENTITY_NETHER, [this]() { entity_nether = nullptr; }},
-                {FileType::ENTITY_OVERWORLD, [this]() { entity_overworld = nullptr; }},
-                {FileType::ENTITY_END, [this]() { entity_end = nullptr; }},
-                {FileType::VILLAGE, [this]() { village = nullptr; }},
-                {FileType::DATA_MAPPING, [this]() { largeMapDataMappings = nullptr; }},
-                {FileType::LEVEL, [this]() { level = nullptr; }},
-                {FileType::GRF, [this]() { grf = nullptr; }},
+                {FileType::STRUCTURE, [this] { structures.clear(); }},
+                {FileType::MAP, [this] { maps.clear(); }},
+                {FileType::PLAYER, [this] { players.clear(); }},
+                {FileType::REGION_NETHER, [this] { region_nether.clear(); }},
+                {FileType::REGION_OVERWORLD, [this] { region_overworld.clear(); }},
+                {FileType::REGION_END, [this] { region_end.clear(); }},
+                {FileType::ENTITY_NETHER, [this] { entity_nether = nullptr; }},
+                {FileType::ENTITY_OVERWORLD, [this] { entity_overworld = nullptr; }},
+                {FileType::ENTITY_END, [this] { entity_end = nullptr; }},
+                {FileType::VILLAGE, [this] { village = nullptr; }},
+                {FileType::DATA_MAPPING, [this] { largeMapDataMappings = nullptr; }},
+                {FileType::LEVEL, [this] { level = nullptr; }},
+                {FileType::GRF, [this] { grf = nullptr; }},
         };
     };
 }

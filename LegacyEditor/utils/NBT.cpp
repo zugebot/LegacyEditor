@@ -3,6 +3,7 @@
 
 static constexpr int TO_STRING_MAX_LIST_SIZE = 128;
 
+
 void NBTBase::write(DataManager& output) const {
     switch (type) {
         case NBT_INT8: {
@@ -87,10 +88,8 @@ void NBTBase::write(DataManager& output) const {
             for (int sizeIter = 0; sizeIter < val->size; sizeIter++) {
                 output.writeInt64(val->array[sizeIter]);
             }
-            return;
         }
-        default:
-            return;
+        default:;
     }
 }
 
@@ -372,6 +371,7 @@ void NBTBase::read(DataManager& input) {
         default:;
     }
 }
+
 
 NBTBase NBTBase::copy() const {
     switch (type) {

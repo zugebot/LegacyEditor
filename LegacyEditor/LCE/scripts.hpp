@@ -8,17 +8,17 @@
 
 namespace editor {
 
-    void processRegion(int regionIndex, editor::FileListing& fileListing) {
+    void processRegion(int regionIndex, FileListing& fileListing) {
         const CONSOLE console = fileListing.console;
         if (regionIndex >= fileListing.region_overworld.size()) { return; }
 
         // read a region file
-        editor::RegionManager region(console);
+        RegionManager region(console);
         region.read(fileListing.region_overworld[regionIndex]);
 
         int h = -1;
 
-        for (editor::ChunkManager& chunkManager : region.chunks) {
+        for (ChunkManager& chunkManager : region.chunks) {
             h++;
             if (chunkManager.size == 0) {
                 continue;
@@ -36,7 +36,7 @@ namespace editor {
             for (u16 x = 0; x < 16; x++) {
                 for (u16 z = 0; z < 16; z++) {
                     for (u16 y = 0; y < 256; y++) {
-                        u16 block1 = chunk::getBlock(chunkManager.chunkData, x, y, z);
+                        u16 block1 = getBlock(chunkManager.chunkData, x, y, z);
                         u16 data_1 = 0;
                         const int offset1 = y + 256 * z + 4096 * x;
 
@@ -123,21 +123,19 @@ namespace editor {
 
 
     /**
- * Removes all blocks in the nether except for netherrack
- * @param regionIndex
- * @param fileListing
- */
-    void removeNetherrack(int regionIndex, editor::FileListing& fileListing) {
+     * Removes all blocks in the nether except for netherrack
+     * @param regionIndex
+     * @param fileListing
+     */
+    void removeNetherrack(int regionIndex, FileListing& fileListing) {
         const CONSOLE console = fileListing.console;
         if (regionIndex >= fileListing.region_nether.size()) { return; }
 
         // read a region file
-        editor::RegionManager region(console);
+        RegionManager region(console);
         region.read(fileListing.region_nether[regionIndex]);
 
-        int h = -1;
-        for (editor::ChunkManager& chunkManager : region.chunks) {
-            h++;
+        for (ChunkManager& chunkManager : region.chunks) {
             if (chunkManager.size == 0) {
                 continue;
             }
@@ -154,7 +152,7 @@ namespace editor {
             for (u16 x = 0; x < 16; x++) {
                 for (u16 z = 0; z < 16; z++) {
                     for (u16 y = 0; y < 256; y++) {
-                        u16 block1 = chunk::getBlock(chunkManager.chunkData, x, y, z);
+                        u16 block1 = getBlock(chunkManager.chunkData, x, y, z);
                         const int offset1 = y + 256 * z + 4096 * x;
 
                         if ((block1 & 0x1FF0) >> 4 != 7) {
@@ -174,6 +172,48 @@ namespace editor {
             chunkData->defaultNBT();
             chunkManager.writeChunk(console);
             chunkManager.ensureCompressed(console);
+        }
+
+        fileListing.region_nether[regionIndex]->data.deallocate();
+        fileListing.region_nether[regionIndex]->data = region.write(console);
+    }
+
+
+
+    /**
+     * Removes all blocks in the nether except for netherrack
+     * @param regionIndex
+     * @param fileListing
+     */
+    void convertElytraToAquaticChunks(int regionIndex, FileListing& fileListing) {
+        const CONSOLE console = fileListing.console;
+        if (regionIndex >= fileListing.region_nether.size()) { return; }
+
+        // read a region file
+        RegionManager region(console);
+        region.read(fileListing.region_nether[regionIndex]);
+
+        for (int index = 0; index < 1024; index++) {
+            ChunkManager *chunkManager = &region.chunks[index];
+
+            if (chunkManager->size == 0) {
+                continue;
+            }
+
+            chunkManager->ensureDecompress(console);
+            chunkManager->readChunk(console);
+            auto* chunkData = chunkManager->chunkData;
+
+            if (!chunkData->validChunk) {
+                continue;
+            }
+
+            convertOldToNew(chunkData);
+
+
+            chunkData->defaultNBT();
+            chunkManager->writeChunk(console);
+            chunkManager->ensureCompressed(console);
         }
 
         fileListing.region_nether[regionIndex]->data.deallocate();

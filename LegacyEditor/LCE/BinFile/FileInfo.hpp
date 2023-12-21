@@ -23,7 +23,6 @@ namespace editor {
 
 
     class FileInfo {
-    private:
         typedef std::chrono::system_clock::time_point timePoint_t;
 
     public:

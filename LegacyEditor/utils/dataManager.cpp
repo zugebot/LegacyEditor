@@ -538,8 +538,8 @@ void DataManager::writeWString(const std::string& str, const u32 length) {
 int DataManager::writeToFile(const std::string& fileName) const {
     FILE* f_out = fopen(fileName.c_str(), "wb");
     if (f_out == nullptr) {
-        printf("Failed to writeBytes to output file '%s'", fileName.c_str());
-        return 1;
+        printf("Failed to write data to output file '%s'\n", fileName.c_str());
+        return -1;
     }
     fwrite(data, 1, size, f_out);
     fclose(f_out);
@@ -550,11 +550,11 @@ int DataManager::writeToFile(const std::string& fileName) const {
 int DataManager::writeToFile(const u8* ptrIn, const u32 sizeIn, const std::string& fileName) const {
     FILE* f_out = fopen(fileName.c_str(), "wb");
     if (f_out == nullptr) {
-        printf("Failed to writeBytes to output file '%s'", fileName.c_str());
+        printf("Failed to write data to output file '%s'", fileName.c_str());
         return 1;
     }
     if (ptrIn < data || ptrIn + sizeIn > data + size) {
-        printf("Tried to writeBytes data from out of bounds '%s'", fileName.c_str());
+        printf("Tried to write data out of bounds '%s'", fileName.c_str());
         return 1;
     }
 
