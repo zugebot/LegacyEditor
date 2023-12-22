@@ -4,7 +4,7 @@
 #include <map>
 #include <set>
 
-#include "LegacyEditor/LCE/BinFile/FileInfo.hpp"
+#include "LegacyEditor/LCE/FileInfo/FileInfo.hpp"
 #include "LegacyEditor/LCE/MC/enums.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 #include "file.hpp"
@@ -39,7 +39,7 @@ namespace editor {
         i32 oldestVersion{};
         i32 currentVersion{};
         CONSOLE console = CONSOLE::NONE;
-        FileInfo saveGameInfo;
+        FileInfo fileInfo;
         bool separateEntities = false;
         bool separateRegions = false;
 
@@ -63,7 +63,7 @@ namespace editor {
 
         // Functions
 
-        int saveToFolder(stringRef_t folderIn = "") const;
+        MU ND int saveToFolder(stringRef_t folderIn = "") const;
         MU void convertRegions(CONSOLE consoleOut);
         void ensureAllRegionFilesExist();
 
@@ -76,8 +76,9 @@ namespace editor {
 
         // Read / Write from console files
 
-        MU ND int readFile(stringRef_t inFileStr);
-        MU ND int writeFile(CONSOLE consoleOut, stringRef_t outfileStr);
+        MU ND int read(stringRef_t inFileStr);
+        MU ND int write(stringRef_t outfileStr, CONSOLE consoleOut);
+
 
         // Conversion
 
@@ -88,7 +89,8 @@ namespace editor {
     private:
 
         // Reader
-
+        MU ND int readFile(stringRef_t inFileStr);
+        MU ND int readFileInfo(stringRef_t inFilePath);
         MU ND int readWiiU(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
         MU ND int readSwitch(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
         MU ND int readVita(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
@@ -100,6 +102,8 @@ namespace editor {
 
         // Writer
 
+        MU ND int writeFile(stringRef_t outfileStr, CONSOLE consoleOut);
+        MU ND int writeFileInfo(stringRef_t outFilePath, CONSOLE consoleOut) const;
         MU ND static int writeWiiU(stringRef_t outfileStr, const Data& dataOut);
         MU ND static int writeVita(stringRef_t outfileStr, const Data& dataOut);
         MU ND static int writeRPCS3(stringRef_t outfileStr, const Data& dataOut);

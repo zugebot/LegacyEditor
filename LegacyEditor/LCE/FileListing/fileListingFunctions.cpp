@@ -280,7 +280,7 @@ namespace editor {
             }
         }
 
-        status = writeFile(consoleOut, outFileStr);
+        status = writeFile(outFileStr, consoleOut);
         return status;
     }
 
@@ -315,7 +315,7 @@ namespace editor {
 
         replace.deallocate();
 
-        status = writeFile(consoleOut, outFileStr);
+        status = writeFile(outFileStr, consoleOut);
         return status;
     }
 }

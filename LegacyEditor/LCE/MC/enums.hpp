@@ -11,6 +11,7 @@ enum class CONSOLE : i8 {
     VITA = 3,
     RPCS3 = 4,
     SWITCH = 5,
+    PS4 = 6,
 };
 
 
@@ -47,6 +48,8 @@ static std::string consoleToStr(const CONSOLE console) {
             return "vita";
         case CONSOLE::SWITCH:
             return "switch";
+        case CONSOLE::PS4:
+            return "ps4";
         case CONSOLE::NONE:
         default:
             return "NONE";
@@ -55,6 +58,7 @@ static std::string consoleToStr(const CONSOLE console) {
 
 
 static bool consoleIsBigEndian(const CONSOLE console) {
+    // TODO: idk endian of ps4 save files
     switch (console) {
         case CONSOLE::NONE:
         case CONSOLE::XBOX360:

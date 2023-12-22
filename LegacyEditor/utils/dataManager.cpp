@@ -5,6 +5,21 @@
 
 static constexpr u8 FF_MASK = 0xFF;
 
+
+void DataManager::take(const Data& dataIn) {
+    data = dataIn.data;
+    size = dataIn.size;
+    ptr = data;
+}
+
+
+void DataManager::take(const Data* dataIn) {
+    data = dataIn->data;
+    size = dataIn->size;
+    ptr = data;
+}
+
+
 // SEEK
 
 void DataManager::seekStart() {
@@ -23,7 +38,7 @@ void DataManager::seek(const i64 position) {
 }
 
 bool DataManager::isEndOfData() const {
-    return ptr == data + size - 1;
+    return ptr >= data + size - 1;
 }
 
 u32 DataManager::getPosition() const {
@@ -207,6 +222,16 @@ std::string DataManager::readUTF() {
 }
 
 
+std::string DataManager::readNullTerminatedString() {
+    std::string returnString;
+    u8 nextChar;
+    while ((nextChar = readInt8()) != 0) {
+        returnString += static_cast<char>(nextChar);
+    }
+    return returnString;
+}
+
+
 std::string DataManager::readString(const i32 length) {
     std::vector<char> strVec;
     strVec.resize(length + 1);
@@ -219,7 +244,7 @@ std::string DataManager::readString(const i32 length) {
 }
 
 
-std::wstring DataManager::readWString() {
+std::wstring DataManager::readNullTerminatedWString() {
     std::wstring returnString;
     wchar_t nextChar;
     while ((nextChar = readInt16()) != 0) {
@@ -514,11 +539,20 @@ void DataManager::writeUTF(std::string str) {
 }
 
 
-void DataManager::writeWString(const std::string& str, const u32 length) {
+void DataManager::writeWString(const std::wstring& wstr, const u32 upperbounds) {
+    const u32 wstr_size_min = std::min(static_cast<u32>(wstr.size()), upperbounds);
+    for (u32 i = 0; i < upperbounds && i < wstr_size_min; ++i) {
+        writeInt16(wstr[i]);
+    }
+}
+
+
+
+void DataManager::writeWStringFromString(const std::string& str, const u32 upperbounds) {
     constexpr u8 empty = 0;
     const u8* emptyPtr = &empty;
 
-    for (u32 i = 0; i < length && i < std::min(static_cast<u32>(str.size()), length); ++i) {
+    for (u32 i = 0; i < upperbounds && i < std::min(static_cast<u32>(str.size()), upperbounds); ++i) {
         if (isBig) {
             writeBytes(emptyPtr, 1);
             writeInt8(str[i]);
@@ -529,7 +563,7 @@ void DataManager::writeWString(const std::string& str, const u32 length) {
     }
 
     // If the given length is greater than the string size, add padding
-    for (size_t i = str.size(); i < length; ++i) {
+    for (size_t i = str.size(); i < upperbounds; ++i) {
         writeBytes(emptyPtr, 1);
         writeBytes(emptyPtr, 1);
     }

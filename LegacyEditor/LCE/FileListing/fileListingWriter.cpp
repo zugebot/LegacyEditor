@@ -7,8 +7,12 @@
 #include "LegacyEditor/libs/zlib-1.2.12/zlib.h"
 // #include "LegacyEditor/utils/LZX/XboxCompression.hpp"
 // #include "LegacyEditor/utils/tinf/tinf.h"
+#include <filesystem>
 
 #include "LegacyEditor/utils/endian.hpp"
+
+
+namespace fs = std::filesystem;
 
 
 namespace editor {
@@ -81,7 +85,7 @@ namespace editor {
         for (const File* fileIter: fileOrder) {
             // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter.additionalData, fileIter.size, fileIter.name.c_str());
             std::string fileIterName = fileIter->constructFileName(consoleOut);
-            managerOut.writeWString(fileIterName, WSTRING_SIZE);
+            managerOut.writeWStringFromString(fileIterName, WSTRING_SIZE);
             managerOut.writeInt32(fileIter->data.getSize());
             managerOut.writeInt32(fileIter->additionalData);
             managerOut.writeInt64(fileIter->timestamp);
@@ -91,10 +95,24 @@ namespace editor {
     }
 
 
-    MU int FileListing::writeFile(const CONSOLE consoleOut, stringRef_t outfileStr) {
+    int FileListing::write(stringRef_t outfileStr, const CONSOLE consoleOut) {
         if (outfileStr.empty()) {
             return INVALID_ARGUMENT;
         }
+
+        const int status = writeFile(outfileStr, consoleOut);
+
+        if (fileInfo.isLoaded) {
+            MU const int status2 = writeFileInfo(outfileStr, consoleOut);
+        }
+
+
+        return status;
+    }
+
+
+    int FileListing::writeFile(stringRef_t outfileStr, const CONSOLE consoleOut) {
+
 
         const Data dataOut = writeData(consoleOut);
         int status;
@@ -118,6 +136,39 @@ namespace editor {
                 status = INVALID_CONSOLE;
                 break;
         }
+        return status;
+    }
+
+
+    int FileListing::writeFileInfo(stringRef_t outFilePath, const CONSOLE consoleOut) const {
+        std::string filepath = outFilePath;
+        while (!(filepath.back() == '\\' || filepath.back() == '/')) {
+            filepath.pop_back();
+        }
+
+        switch (consoleOut) {
+            case CONSOLE::XBOX360:
+
+            case CONSOLE::PS3:
+            case CONSOLE::RPCS3:
+            case CONSOLE::PS4:
+                filepath += "THUMB";
+            break;
+            case CONSOLE::VITA:
+                filepath += "THUMBDATA.BIN";
+            break;
+            case CONSOLE::WIIU:
+            case CONSOLE::SWITCH: {
+                filepath = outFilePath + ".ext";
+                break;
+            }
+            case CONSOLE::NONE:
+                default:
+                    return INVALID_CONSOLE;
+        }
+
+
+        const int status = fileInfo.writeFile(filepath, consoleOut);
         return status;
     }
 

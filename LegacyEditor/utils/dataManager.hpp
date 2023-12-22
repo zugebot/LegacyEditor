@@ -34,6 +34,8 @@ public:
 
     ND u8* start() const { return data; }
 
+    void take(const Data& dataIn);
+    void take(const Data* dataIn);
 
     void seekStart();
     void seekEnd();
@@ -73,8 +75,10 @@ public:
 
     std::string readUTF();
     std::string readString(i32 length);
+    std::string readNullTerminatedString();
 
-    std::wstring readWString();
+
+    std::wstring readNullTerminatedWString();
     std::wstring readWString(u32 length);
     std::string readWAsString(u32 length);
 
@@ -111,7 +115,13 @@ public:
     void writeBytes(const u8* dataPtrIn, u32 length);
 
     void writeUTF(std::string str);
-    void writeWString(const std::string& str, u32 length);
+    /**
+     * \brief note that upperbounds is per 2 bytes, so use 64 for 128 bytes.
+     * \param wstr
+     * \param upperbounds
+     */
+    void writeWString(const std::wstring& wstr, u32 upperbounds);
+    void writeWStringFromString(const std::string& str, u32 upperbounds);
 
     int writeToFile(const std::string& fileName) const;
     int writeToFile(const u8* ptrIn, u32 sizeIn, const std::string& fileName) const;

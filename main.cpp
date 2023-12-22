@@ -2,6 +2,7 @@
 #include <iostream>
 #include <thread>
 
+#include "LegacyEditor/LCE/FileInfo/FileInfo.hpp"
 #include "LegacyEditor/LCE/include.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 #include "LegacyEditor/utils/threaded.hpp"
@@ -33,21 +34,41 @@ int main() {
     TEST_PAIR("rpcs3_flat",  R"(RPCS3_GAMEDATA)"                               , ps3_ + R"(GAMEDATA)");
     TEST_PAIR("X360_TU69",   R"(XBOX360_TU69.bin)"                             , dir_path + R"(tests\XBOX360_TU69.bin)" );
     TEST_PAIR("X360_TU74",   R"(XBOX360_TU74.dat)"                             , dir_path + R"(tests\XBOX360_TU74.dat)" );
-    TEST_PAIR("nether", R"(nether)", wiiu + R"(231114151239)");
-    const std::string TEST_IN = TESTS["elytra_tut"].first;   // file to read from
-    const std::string TEST_OUT = TESTS["elytra_tut"].second; // file to write to
+    TEST_PAIR("nether",      R"(nether)", wiiu + R"(231114151239)");
+    TEST_PAIR("corrupt_save",R"(CODY_UUAS_2017010800565100288444\GAMEDATA)", wiiu + R"(231000000000)");
+    const std::string TEST_IN = TESTS["corrupt_save"].first;   // file to read from
+    const std::string TEST_OUT = TESTS["corrupt_save"].second; // file to write to
     constexpr auto consoleOut = CONSOLE::WIIU;
+
+
+    // /*
+    const std::string fileIn  = R"(C:\Users\jerrin\CLionProjects\LegacyEditor\tests\CODY_UUAS_2017010800565100288444\THUMB)";
+    const std::string fileOut = dir_path + R"(230918230206_out.ext)";
+    editor::FileInfo save_info;
+    save_info.readFile(fileIn);
+    const DataManager manager(save_info.thumbnail);
+    int status = manager.writeToFile(dir_path + "thumbnail.png");
+    const int result = save_info.writeFile(fileOut, CONSOLE::PS3);
+    if (result) {
+        return result;
+    }
+    // */
 
 
     // read savedata
     editor::FileListing fileListing;
 
-    if (fileListing.readFile(TEST_IN) != 0) {
+    if (fileListing.read(TEST_IN) != 0) {
         return printf_err("failed to load file\n");
     }
 
+    fileListing.fileInfo.basesavename = L"FORTNITE BALLS";
+    fileListing.fileInfo.seed = 0;
+
     fileListing.printFileList();
     fileListing.printDetails();
+
+    editor::map::saveMapToPng(fileListing.maps[0], R"(C:\Users\jerrin\CLionProjects\LegacyEditor\)");
 
     if (fileListing.saveToFolder() != 0) {
         return printf_err("failed to save files to folder\n");
@@ -57,15 +78,18 @@ int main() {
     // add functions to "LegacyEditor/LCE/scripts.hpp"
     const auto timer = Timer();
     // run_parallel<4>(editor::convertElytraToAquaticChunks, std::ref(fileListing));
-    // for (int x = 0; x < 4; x++) {
-    convertElytraToAquaticChunks(0, fileListing); // }
+    for (int x = 0; x < 4; x++) {
+        convertElytraToAquaticChunks(0, fileListing);
+    }
+
+    fileListing.convertRegions(consoleOut);
     printf("Total Time: %.3f\n", timer.getSeconds());
 
-    fileListing.oldestVersion = 11;
+    // fileListing.oldestVersion = 11;
     fileListing.currentVersion = 11;
 
     // convert to fileListing
-    const int statusOut = fileListing.writeFile(consoleOut, TEST_OUT);
+    const int statusOut = fileListing.write(TEST_OUT, consoleOut);
     if (statusOut != 0) {
         return printf_err({"converting to " + consoleToStr(consoleOut) + " failed...\n"});
     }

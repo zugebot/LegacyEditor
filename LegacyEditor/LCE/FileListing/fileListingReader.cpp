@@ -176,6 +176,22 @@ namespace editor {
     }
 
 
+    int FileListing::read(stringRef_t inFileStr) {
+
+        const int status = readFile(inFileStr);
+
+        // create file path / root
+        std::string filepath = filename;
+        while (!(filepath.back() == '\\' || filepath.back() == '/')) {
+            filepath.pop_back();
+        }
+
+        MU const int status2 = readFileInfo(filepath);
+
+        return status;
+    }
+
+
     int FileListing::readFile(stringRef_t inFileStr) {
         Data data;
 
@@ -238,6 +254,43 @@ namespace editor {
             readData(data);
         }
         return result;
+    }
+
+
+    int FileListing::readFileInfo(stringRef_t inFilePath) {
+        std::string filepath = inFilePath;
+
+        switch (console) {
+            case CONSOLE::XBOX360:
+
+            case CONSOLE::PS3:
+            case CONSOLE::RPCS3:
+            case CONSOLE::PS4:
+                filepath += "THUMB";
+                break;
+            case CONSOLE::VITA:
+                filepath += "THUMBDATA.BIN";
+                break;
+            case CONSOLE::WIIU:
+            case CONSOLE::SWITCH: {
+                const u32 num = filename.size() - filepath.size();
+                const std::string filenamedat = filename.substr(filename.size(), num);
+                filepath += filenamedat;
+                filepath += ".ext";
+                break;
+            }
+            case CONSOLE::NONE:
+            default:
+                return INVALID_CONSOLE;
+        }
+
+        if (fs::exists(filepath)) {
+            fileInfo.readFile(filepath);
+        } else {
+            printf("FileInfo file not found...\n");
+        }
+
+        return SUCCESS;
     }
 
 
@@ -390,24 +443,26 @@ namespace editor {
 
     int FileListing::readXbox360BIN(FILE* f_in, Data& data, u64 source_binary_size) {
         console = CONSOLE::XBOX360;
+        /**
         printf("Detected Xbox360 .bin savefile, converting\n\n");
 
         fseek(f_in, 0, SEEK_SET);
 
         Data bin(source_binary_size);
         fread(bin.start(), 1, source_binary_size, f_in);
-        saveGameInfo = extractSaveGameDat(bin.start(), static_cast<i64>(source_binary_size));
+        fileInfo = extractSaveGameDat(bin.start(), static_cast<i64>(source_binary_size));
         bin.deallocate(); // TODO: IDK if it should but it is for now
 
-        const u32 src_size = saveGameInfo.saveFileData.readInt32() - 8;
+        const u32 src_size = fileInfo.saveFileData.readInt32() - 8;
 
         // at offset 8
-        data.size = saveGameInfo.saveFileData.readInt64();
+        data.size = fileInfo.saveFileData.readInt64();
 
         if (!data.allocate(data.size)) {
             return MALLOC_FAILED;
         }
-        data.size = XDecompress(data.start(), &data.size, saveGameInfo.saveFileData.data, src_size);
+        data.size = XDecompress(data.start(), &data.size, fileInfo.saveFileData.data, src_size);
+        */
         return SUCCESS;
     }
 

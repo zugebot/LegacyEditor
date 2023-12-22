@@ -43,7 +43,7 @@ namespace editor {
         binFile.seek(0x0411);
 
         //read the savegame name
-        displayName = binFile.readWString();
+        displayName = binFile.readNullTerminatedWString();
 
         //skip all the irrelevant data to extract the savegame
         binFile.seek(0x1712);
@@ -480,6 +480,7 @@ namespace editor {
     }
 
 
+    /*
     static u32 c2n(const char character) {
         if (character >= '0' && character <= '9') { return character - '0'; }
         if (character >= 'a' && character <= 'f') { return character - 'a' + 10; }
@@ -517,7 +518,6 @@ namespace editor {
         std::string keyword;
         std::string text;
     };
-
 
     WorldOptions getTagsInImage(DataManager& image) {
         WorldOptions options;
@@ -621,6 +621,7 @@ namespace editor {
      */
 
 
+    /*
     FileInfo extractSaveGameDat(u8* inputData, i64 inputSize) {
         DataManager binFile(inputData, inputSize);
         StfsPackage stfsInfo(binFile);
@@ -657,5 +658,6 @@ namespace editor {
         free(inputData);
         return saveGame;
     }
+    */
 
 }

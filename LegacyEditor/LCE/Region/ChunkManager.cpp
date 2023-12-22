@@ -23,13 +23,13 @@ namespace editor {
         chunkData->lastVersion = managerIn.readInt16();
 
         switch(chunkData->lastVersion) {
-            case HEADER_NBT: {
-                chunkData->lastVersion = V_NBT;
+            case HEADER_NBT:
+                chunkData->lastVersion = V_11;
                 chunk::ChunkV10().readChunk(chunkData, &managerIn);
                 break;
-            }
             case V_8:
             case V_9:
+            // case V_10:
             case V_11: {
                 chunk::ChunkV11().readChunk(chunkData, &managerIn);
                 break;

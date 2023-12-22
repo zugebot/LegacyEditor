@@ -1,7 +1,7 @@
 #pragma once
 
-#include "FileInfo.hpp"
 #include "LegacyEditor/utils/dataManager.hpp"
+#include "__remove__.hpp"
 
 
 namespace editor {
@@ -115,10 +115,10 @@ namespace editor {
 
     StfsFileEntry* findSavegameFileEntry(StfsFileListing& listing);
 
-    WorldOptions getTagsInImage(DataManager& image);
+    // WorldOptions getTagsInImage(DataManager& image);
 
     // std::optional<std::chrono::system_clock::time_point> TimePointFromFatTimestamp(u32 fat);
 
-    FileInfo extractSaveGameDat(u8* inputData, i64 inputSize);
+    // FileInfo extractSaveGameDat(u8* inputData, i64 inputSize);
 
 }
