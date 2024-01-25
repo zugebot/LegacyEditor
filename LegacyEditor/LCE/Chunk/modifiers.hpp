@@ -6,6 +6,9 @@
 namespace editor::chunk {
 
 
+
+
+
     /// Order: YZX
     static int toPos(const int xIn, const int yIn, const int zIn) {
         return yIn + 256 * zIn + 4096 * xIn;
@@ -119,6 +122,7 @@ namespace editor::chunk {
                 return 0;
         }
     }
+
 
 }
 

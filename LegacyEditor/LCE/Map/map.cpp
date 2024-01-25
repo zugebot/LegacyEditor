@@ -11,9 +11,17 @@ namespace editor::map {
                          const std::string& path,
                          const std::string& filename) {
         static constexpr int MAP_BYTE_SIZE = 16384;
+
+        if (map->data.data == nullptr) {
+            return;
+        }
+
         DataManager mapManager(map->data);
         const auto *const data = NBT::readTag(mapManager);
-        const auto* byteArray = NBTBase::toType<NBTTagCompound>(data)->getCompoundTag("data")->getByteArray("colors");
+        const auto* byteArray = NBTBase
+                ::toType<NBTTagCompound>(data)
+                ->getCompoundTag("data")
+                ->getByteArray("colors");
 
         const Picture picture(128, 128);
         int count = 0;

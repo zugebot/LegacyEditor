@@ -18,9 +18,7 @@ namespace editor::chunk {
     // TODO: The pointer a vector points to... I will look that up later.
 
     // TODO: add cases for when tags are not found
-    void ChunkV10::readChunk(ChunkData* chunkDataIn, DataManager* managerIn) {
-        dataManager = managerIn;
-        chunkData = chunkDataIn;
+    void ChunkV10::readChunk() {
         allocChunk();
 
         dataManager->readInt8();
@@ -79,7 +77,7 @@ namespace editor::chunk {
     }
 
 
-    void ChunkV10::writeChunk(MU ChunkData* chunkDataIn, MU DataManager* managerOut) {
+    void ChunkV10::writeChunk() {
 
     }
 

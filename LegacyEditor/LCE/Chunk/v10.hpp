@@ -14,10 +14,12 @@ namespace editor::chunk {
         DataManager* dataManager = nullptr;
 
     public:
-        ChunkV10() = default;
+        ChunkV10(ChunkData* chunkDataIn, DataManager* managerIn) :
+           chunkData(chunkDataIn), dataManager(managerIn) {}
+
         MU void allocChunk() const;
-        MU void readChunk(ChunkData* chunkDataIn, DataManager* managerIn);
-        MU static void writeChunk(ChunkData* chunkDataIn, DataManager* managerOut);
+        MU void readChunk();
+        MU void writeChunk();
     };
 
 }

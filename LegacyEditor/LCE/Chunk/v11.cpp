@@ -5,6 +5,7 @@
 
 #include "LegacyEditor/utils/NBT.hpp"
 #include "LegacyEditor/utils/dataManager.hpp"
+#include "helpers.hpp"
 
 
 static u32 toIndex(const u32 num) {
@@ -17,19 +18,19 @@ static u32 toIndex(const u32 num) {
 namespace editor::chunk {
 
     void ChunkV11::allocChunk() const {
-        chunkData->newBlocks = u16_vec(65536);
+        chunkData->oldBlocks = u8_vec(65536);
         chunkData->blockData = u8_vec(32768);
         chunkData->skyLight = u8_vec(32768);
         chunkData->blockLight = u8_vec(32768);
     }
 
+
     // #####################################################
     // #               Read Section
     // #####################################################
 
-    void ChunkV11::readChunk(ChunkData* chunkDataIn, DataManager* managerIn) {
-        dataManager = managerIn;
-        chunkData = chunkDataIn;
+
+    void ChunkV11::readChunk() {
         allocChunk();
 
         chunkData->chunkX = static_cast<i32>(dataManager->readInt32());
@@ -37,12 +38,16 @@ namespace editor::chunk {
         chunkData->lastUpdate = static_cast<i64>(dataManager->readInt64());
 
         chunkData->DataGroupCount = 0;
-        if (chunkData->lastVersion > 8) { // Potions
+        if (chunkData->lastVersion > 8) {
             chunkData->inhabitedTime = static_cast<i64>(dataManager->readInt64());
         }
 
         readBlocks();
-        readData();
+
+        auto dataArray = readGetDataBlockVector<6>(chunkData, dataManager);
+        readDataBlock(dataArray[0], dataArray[1], chunkData->blockData);
+        readDataBlock(dataArray[2], dataArray[3], chunkData->skyLight);
+        readDataBlock(dataArray[4], dataArray[5], chunkData->blockLight);
 
         dataManager->readOntoData(256, chunkData->heightMap.data());
         chunkData->terrainPopulated = static_cast<i16>(dataManager->readInt16());
@@ -63,22 +68,16 @@ namespace editor::chunk {
     }
 
 
-    static void maxBlocks(u8 const* buffer, u8* grid) {
-        /// TODO: can probably use memset
-        std::copy_n(buffer, 128, grid);
-    }
-
 
     static void putBlocks(u16_vec& writeVec, const u8* grid, const int writeOffset, int readOffset) {
         readOffset = calculateOffset(readOffset);
-        int num1 = 0;
+        int gridIndex = 0;
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 for (int k = 0; k < 4; k++) {
                     const int currentOffset = readOffset + i * 16 + j + k * 256; // xzy or zxy?
-                    const u8 num2 = grid[num1];
-                    num1 += 2;
-                    writeVec[currentOffset + writeOffset] = static_cast<u16>(num2); // | (static_cast<u16>(v2) << 8);
+                    const u8 num2 = grid[gridIndex++];
+                    writeVec[currentOffset + writeOffset] = static_cast<u16>(num2);
                 }
             }
         }
@@ -96,17 +95,23 @@ namespace editor::chunk {
                 continue;
             }
 
-            u8_vec header = dataManager->readIntoVector(GRID_HEADER_SIZE);
-            u8_vec data = dataManager->readIntoVector(blockLength);
+            u8* header = dataManager->ptr;
+            dataManager->incrementPointer(GRID_HEADER_SIZE);
+
+            // TODO: why is this read but not used???
+            u8* data = dataManager->ptr;
+            dataManager->incrementPointer(blockLength);
+
+
             for (int gridIndex = 0; gridIndex < 512; gridIndex++) {
                 const u8 byte1 = header[gridIndex * 2];
                 const u8 byte2 = header[gridIndex * 2 + 1];
                 u8 grid[GRID_SIZE] = {0};
 
-                if (byte1 == 7) {
+                if (byte1 == 0b111) {
                     if (byte2 != 0) {
 
-                        for (int i = 0; i < GRID_SIZE; i += 2) {
+                        for (int i = 0; i < GRID_SIZE; i++) {
                             grid[i] = byte2;
                         }
 
@@ -118,7 +123,8 @@ namespace editor::chunk {
                         case 0: readGrid<1>(dataManager->data + gridPosition, grid); break;
                         case 1: readGrid<2>(dataManager->data + gridPosition, grid); break;
                         case 2: readGrid<4>(dataManager->data + gridPosition, grid); break;
-                        case 3: maxBlocks  (dataManager->data + gridPosition, grid); break;
+                        case 3:
+                            fillAllBlocks<GRID_SIZE>(dataManager->data + gridPosition, grid); break;
                         default: return;
                     }
                 }
@@ -148,57 +154,19 @@ namespace editor::chunk {
                 }
                 if EXPECT_FALSE (idx >= size) { return false; }
                 grid[gridIndex] = palette[idx];
-                gridIndex += 2;
+                gridIndex += 1;
             }
         }
         return true;
     }
-
-
-    void ChunkV11::readData() const {
-
-        u8_vec_vec dataArray(6);
-        for (int i = 0; i < 6; i++) {
-            const u32 num = dataManager->readInt32();
-            const u32 index = toIndex(num);
-            // TODO: try to remove not-needed copy
-            dataArray[i] = dataManager->readIntoVector(index);
-            chunkData->DataGroupCount += dataArray[i].size();
-        }
-
-        auto processLightData = [](const u8_vec& data, u8_vec& blockData, int& offset) {
-            for (int k = 0; k < DATA_SECTION_SIZE; k++) {
-                if (data[k] == DATA_SECTION_SIZE) {
-                    memset(&blockData[offset], 0, DATA_SECTION_SIZE);
-                } else if (data[k] == DATA_SECTION_SIZE + 1) {
-                    memset(&blockData[offset], 255, DATA_SECTION_SIZE);
-                } else {
-                    memcpy(&blockData[offset], &data[toIndex(data[k])], DATA_SECTION_SIZE);
-                }
-                offset += DATA_SECTION_SIZE;
-            }
-        };
-
-        int writeOffset = 0;
-        processLightData(dataArray[0], chunkData->blockData, writeOffset);
-        processLightData(dataArray[1], chunkData->blockData, writeOffset);
-        writeOffset = 0;
-        processLightData(dataArray[2], chunkData->skyLight, writeOffset);
-        processLightData(dataArray[3], chunkData->skyLight, writeOffset);
-        writeOffset = 0;
-        processLightData(dataArray[4], chunkData->blockLight, writeOffset);
-        processLightData(dataArray[5], chunkData->blockLight, writeOffset);
-    }
-
 
     // #####################################################
     // #               Write Section
     // #####################################################
 
 
-    void ChunkV11::writeChunk(ChunkData* chunkDataIn, DataManager* managerOut) {
-        dataManager = managerOut;
-        chunkData = chunkDataIn;
+    void ChunkV11::writeChunk() {
+
     }
 
 

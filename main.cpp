@@ -36,13 +36,13 @@ int main() {
     TEST_PAIR("X360_TU74",   R"(XBOX360_TU74.dat)"                             , dir_path + R"(tests\XBOX360_TU74.dat)" );
     TEST_PAIR("nether",      R"(nether)", wiiu + R"(231114151239)");
     TEST_PAIR("corrupt_save",R"(CODY_UUAS_2017010800565100288444\GAMEDATA)", wiiu + R"(231000000000)");
-    const std::string TEST_IN = TESTS["corrupt_save"].first;   // file to read from
-    const std::string TEST_OUT = TESTS["corrupt_save"].second; // file to write to
+    const std::string TEST_IN = TESTS["aquatic_tut"].first;   // file to read from
+    const std::string TEST_OUT = TESTS["aquatic_tut"].second; // file to write to
     constexpr auto consoleOut = CONSOLE::WIIU;
 
 
-    // /*
-    const std::string fileIn  = R"(C:\Users\jerrin\CLionProjects\LegacyEditor\tests\CODY_UUAS_2017010800565100288444\THUMB)";
+    /*
+    const std::string fileIn  = R"(C:\Users\jerrin\CLionProjects\LegacyEditor\tests\CODY_UUAS_2017010800565100288444\GAMEDATA)";
     const std::string fileOut = dir_path + R"(230918230206_out.ext)";
     editor::FileInfo save_info;
     save_info.readFile(fileIn);
@@ -52,7 +52,7 @@ int main() {
     if (result) {
         return result;
     }
-    // */
+    */
 
 
     // read savedata

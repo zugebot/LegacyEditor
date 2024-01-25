@@ -193,7 +193,7 @@ namespace editor {
     }
 
 
-    /// readData the file listing from the file
+    /// readDataBlocks the file listing from the file
     void StfsPackage::readFileListing() {
         fileListing.fileEntries.clear();
         fileListing.folderEntries.clear();

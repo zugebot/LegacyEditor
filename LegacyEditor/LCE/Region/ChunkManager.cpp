@@ -25,17 +25,17 @@ namespace editor {
         switch(chunkData->lastVersion) {
             case HEADER_NBT:
                 chunkData->lastVersion = V_11;
-                chunk::ChunkV10().readChunk(chunkData, &managerIn);
+                chunk::ChunkV10(chunkData, &managerIn).readChunk();
                 break;
             case V_8:
             case V_9:
             // case V_10:
             case V_11: {
-                chunk::ChunkV11().readChunk(chunkData, &managerIn);
+                chunk::ChunkV11(chunkData, &managerIn).readChunk();
                 break;
             }
             case V_12: {
-                chunk::ChunkV12().readChunk(chunkData, &managerIn);
+                chunk::ChunkV12(chunkData, &managerIn).readChunk();
                 break;
             }
             default:;
@@ -51,19 +51,19 @@ namespace editor {
         managerOut.seekStart();
         switch (chunkData->lastVersion) {
             case HEADER_NBT: {
-                chunk::ChunkV10().writeChunk(chunkData, &managerOut);
+                chunk::ChunkV10(chunkData, &managerOut).writeChunk();
                 break;
             }
             case V_8:
             case V_9:
             case V_11: {
                 managerOut.writeInt16(chunkData->lastVersion);
-                chunk::ChunkV11().writeChunk(chunkData, &managerOut);
+                chunk::ChunkV11(chunkData, &managerOut).writeChunk();
                 break;
             }
             case V_12: {
                 managerOut.writeInt16(chunkData->lastVersion);
-                chunk::ChunkV12().writeChunk(chunkData, &managerOut);
+                chunk::ChunkV12(chunkData, &managerOut).writeChunk();
                 break;
             }
             default:;
