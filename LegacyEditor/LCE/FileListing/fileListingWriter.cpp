@@ -43,7 +43,7 @@ namespace editor {
         managerOut.writeInt16(oldestVersion);
         managerOut.writeInt16(currentVersion);
 
-
+        /*
         // step 4: create the correct file list order
         std::vector<File*> fileOrder;
         {
@@ -71,24 +71,25 @@ namespace editor {
             fileOrder.insert(fileOrder.end(), regionsEmpty.begin(), regionsEmpty.end());
             fileOrder.insert(fileOrder.end(), otherFiles.begin(), otherFiles.end());
         }
+         */
 
         // step 5: write each files data
         // I am using additionalData as the offset into the file its data is at
         u32 index = FILELISTING_HEADER_SIZE;
-        for (File* fileIter: fileOrder) {
-            fileIter->additionalData = index;
-            index += fileIter->data.getSize();
+        for (File& fileIter : allFiles) {
+            fileIter.additionalData = index;
+            index += fileIter.data.getSize();
             managerOut.writeFile(fileIter);
         }
 
         // step 6: write file metadata
-        for (const File* fileIter: fileOrder) {
+        for (const File& fileIter: allFiles) {
             // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter.additionalData, fileIter.size, fileIter.name.c_str());
-            std::string fileIterName = fileIter->constructFileName(consoleOut);
+            std::string fileIterName = fileIter.constructFileName(consoleOut);
             managerOut.writeWStringFromString(fileIterName, WSTRING_SIZE);
-            managerOut.writeInt32(fileIter->data.getSize());
-            managerOut.writeInt32(fileIter->additionalData);
-            managerOut.writeInt64(fileIter->timestamp);
+            managerOut.writeInt32(fileIter.data.getSize());
+            managerOut.writeInt32(fileIter.additionalData);
+            managerOut.writeInt64(fileIter.timestamp);
         }
 
         return dataOut;
@@ -132,6 +133,12 @@ namespace editor {
             case CONSOLE::VITA:
                 status = writeVita(outfileStr, dataOut);
                 break;
+            case CONSOLE::SWITCH:
+                status = writeNSX();
+                break;
+            case CONSOLE::PS4:
+                status = writePs4();
+                break;
             default:
                 status = INVALID_CONSOLE;
                 break;
@@ -163,8 +170,8 @@ namespace editor {
                 break;
             }
             case CONSOLE::NONE:
-                default:
-                    return INVALID_CONSOLE;
+            default:
+                return INVALID_CONSOLE;
         }
 
 
@@ -255,6 +262,14 @@ namespace editor {
 
 
     MU int FileListing::writeXbox360_BIN() {
+        return SUCCESS;
+    }
+
+    MU int FileListing::writeNSX() {
+        return SUCCESS;
+    }
+
+    MU int FileListing::writePs4() {
         return SUCCESS;
     }
 }

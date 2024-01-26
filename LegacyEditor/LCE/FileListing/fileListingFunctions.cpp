@@ -31,7 +31,7 @@ namespace editor {
 
         std::string folder = folderIn;
         if (folderIn.empty()) {
-            folder = dir_path + "dump_" + consoleToStr(console);
+            folder = dir_path + "dump/" + consoleToStr(console);
         }
 
         if (folder.length() < 20) {

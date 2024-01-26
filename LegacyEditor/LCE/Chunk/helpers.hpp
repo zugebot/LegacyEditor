@@ -4,6 +4,8 @@
 #include "LegacyEditor/utils/processor.hpp"
 #include <cstring>
 
+#include "LegacyEditor/utils/dataManager.hpp"
+
 
 namespace editor::chunk {
 

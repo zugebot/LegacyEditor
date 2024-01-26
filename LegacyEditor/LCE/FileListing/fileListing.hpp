@@ -92,7 +92,7 @@ namespace editor {
         MU ND int readFile(stringRef_t inFileStr);
         MU ND int readFileInfo(stringRef_t inFilePath);
         MU ND int readWiiU(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
-        MU ND int readSwitch(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
+        MU ND int readNSXorPS4(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
         MU ND int readVita(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
         MU ND int readPs3(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
         MU ND int readRpcs3(FILE* f_in, Data& data, u64 source_binary_size);
@@ -108,6 +108,8 @@ namespace editor {
         MU ND static int writeVita(stringRef_t outfileStr, const Data& dataOut);
         MU ND static int writeRPCS3(stringRef_t outfileStr, const Data& dataOut);
         MU ND static int writePS3();
+        MU ND static int writePs4();
+        MU ND static int writeNSX();
         MU ND static int writeXbox360_DAT();
         MU ND static int writeXbox360_BIN();
         Data writeData(CONSOLE consoleOut);

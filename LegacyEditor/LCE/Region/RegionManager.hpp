@@ -11,15 +11,22 @@ namespace editor {
     class File;
 
     class RegionManager {
-        static constexpr u32 REGION_WIDTH = 32;
-        static constexpr u32 SECTOR_BYTES = 4096;
-        static constexpr u32 SECTOR_INTS = SECTOR_BYTES / 4;
+        const u32 REGION_WIDTH = 32;
+        const u32 SECTOR_BYTES = 4096;
+        const u32 SECTOR_INTS = SECTOR_BYTES / 4;
 
     public:
-        ChunkManager chunks[SECTOR_INTS] = {};
+        ChunkManager *chunks;
+        u32 sectorBytes;
+        u32 sectorInts;
         CONSOLE console = CONSOLE::NONE;
 
-        explicit RegionManager(const CONSOLE consoleIn) : console(consoleIn) {}
+        explicit RegionManager(const CONSOLE consoleIn, u32 sectorBytes)
+            : console(consoleIn) {
+            sectorBytes =
+
+            chunks = new ChunkManager[]
+        }
         ~RegionManager() = default;
 
         /// FUNCTIONS

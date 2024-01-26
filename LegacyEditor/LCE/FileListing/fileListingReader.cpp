@@ -152,6 +152,9 @@ namespace editor {
                 file.fileType = FileType::STRUCTURE;
                 auto* nbt = file.createNBTTagCompound();
                 nbt->setString("filename", fileName);
+                if (fileName.starts_with("data/villages_") && (console == CONSOLE::SWITCH)) {
+                    console = CONSOLE::PS4;
+                }
                 continue;
             }
 
@@ -219,7 +222,7 @@ namespace editor {
             if (headerUnion.getZlibMagic() == ZLIB_MAGIC) {
                 if (headerUnion.getSwitchFileSize() < file_size) {
                     file_size = headerUnion.getSwitchFileSize();
-                    result = readSwitch(f_in, data, source_bin_size, file_size);
+                    result = readNSXorPS4(f_in, data, source_bin_size, file_size);
                 } else {
                     result = readWiiU(f_in, data, source_bin_size, file_size);
                 }
@@ -351,8 +354,8 @@ namespace editor {
     }
 
 
-    int FileListing::readSwitch(FILE* f_in, Data& data, u64 source_binary_size, const u32 file_size) {
-        printf("Detected WiiU savefile, converting\n\n");
+    int FileListing::readNSXorPS4(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size) {
+        printf("Detected Switch/Ps4 savefile, converting\n\n");
         console = CONSOLE::SWITCH;
 
         if(!data.allocate(file_size)) {
