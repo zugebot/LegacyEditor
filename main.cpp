@@ -25,6 +25,7 @@ int main() {
     // unit tests
     dir_path = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\)";
     out_path = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\)";
+    std::string out_build = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\out\)";
     wiiu = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\)";
     ps3_ = R"(D:\Emulator Folders\rpcs3-v0.0.18-12904-12efd291_win64\dev_hdd0\home\00000001\savedata\NPUB31419--231212220825\)";
     TEST_PAIR("superflat",   R"(superflat)"                                    , wiiu + R"(231105133853)");
@@ -38,7 +39,7 @@ int main() {
     TEST_PAIR("X360_TU74",   R"(XBOX360_TU74.dat)"                             , dir_path + R"(tests\XBOX360_TU74.dat)" );
     TEST_PAIR("nether",      R"(nether)", wiiu + R"(231114151239)");
     TEST_PAIR("corrupt_save",R"(CODY_UUAS_2017010800565100288444\GAMEDATA)", wiiu + R"(231000000000)");
-    TEST_PAIR("PS4_khaloody",R"(PS4\00000008\savedata0\GAMEDATA)", wiiu + R"(BLANK_SAVE)");
+    TEST_PAIR("PS4_khaloody",R"(PS4\00000008\savedata0\GAMEDATA)", out_build + R"(BLANK_SAVE)");
 
 
 
@@ -84,6 +85,45 @@ int main() {
     if (fileListing.saveToFolder() != 0) {
         return printf_err("failed to save files to folder\n");
     }
+
+
+    // figure out the bounds of each of the regions
+    for (int i = 0; i < fileListing.region_overworld.size(); i++) {
+        const auto& region = fileListing.region_overworld[i];
+        auto manager = editor::RegionManager(fileListing.console);
+        manager.read(region);
+
+        int minX = INT32_MAX;
+        int minZ = INT32_MAX;
+        int maxX = INT32_MIN;
+        int maxZ = INT32_MIN;
+        for (auto& chunk : manager.chunks) {
+            if (chunk.size == 0) {
+                continue;
+            }
+            chunk.ensureDecompress(fileListing.console);
+            chunk.readChunk(fileListing.console);
+            const auto* chunkData = chunk.chunkData;
+            if (!chunkData->validChunk) {
+                continue;
+            }
+            minX = minX > (int)chunkData->chunkX ? (int)chunkData->chunkX : minX;
+            minZ = minZ > (int)chunkData->chunkZ ? (int)chunkData->chunkZ : minZ;
+            maxX = maxX < (int)chunkData->chunkX ? (int)chunkData->chunkX : maxX;
+            maxZ = maxZ < (int)chunkData->chunkZ ? (int)chunkData->chunkZ : maxZ;
+            chunk.writeChunk(fileListing.console);
+            chunk.ensureCompressed(fileListing.console);
+        }
+
+        printf("%s: min: (%d, %d), max(%d, %d)\n",
+            region->constructFileName(fileListing.console, true).c_str(),
+            minX, minZ, maxX, maxZ);
+
+    }
+
+
+
+
 
     // edit regions (threaded)
     // add functions to "LegacyEditor/LCE/scripts.hpp"

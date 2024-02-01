@@ -95,7 +95,7 @@ namespace editor::chunk {
                 continue;
             }
             // TODO: replace with telling cpu to cache that address, and use a ptr?
-            u8* sectionHeader = dataManager->ptr; // size: 128 bytes
+            const u8* sectionHeader = dataManager->ptr; // size: 128 bytes
             dataManager->incrementPointer(128);
 
             u16 gridFormats[64] = {0};
@@ -226,8 +226,8 @@ namespace editor::chunk {
                 return false;
             }
 
-            int gridIndex = i * 2;
-            int paletteIndex = idx * 2;
+            const int gridIndex = i * 2;
+            const int paletteIndex = idx * 2;
 
             grid[gridIndex + 0] = palette[paletteIndex + 0];
             grid[gridIndex + 1] = palette[paletteIndex + 1];

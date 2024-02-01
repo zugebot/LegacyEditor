@@ -36,6 +36,10 @@ namespace editor {
                 chunk::ChunkV12(chunkData, &managerIn).readChunk();
                 break;
             }
+            case V_13: {
+                // do stuff
+                break;
+            }
             default:;
         }
     }
@@ -62,6 +66,10 @@ namespace editor {
             case V_12: {
                 managerOut.writeInt16(chunkData->lastVersion);
                 chunk::ChunkV12(chunkData, &managerOut).writeChunk();
+                break;
+            }
+            case V_13: {
+                // do stuff
                 break;
             }
             default:;

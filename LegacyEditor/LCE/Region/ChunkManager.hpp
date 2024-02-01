@@ -15,7 +15,10 @@ namespace editor {
             V_8 = 0x0008,
             V_9 = 0x0009,
             V_11 = 0x000B,
+            /// Update Aquatic
             V_12 = 0x000C,
+            /// PS4 Village and Pillage
+            V_13 = 0x000D,
         };
 
         struct {

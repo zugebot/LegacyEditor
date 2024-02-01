@@ -225,16 +225,12 @@ namespace editor {
     // TODO: this should be popping the current node, not the ending node
     void FileListing::removeFileTypes(const std::set<FileType>& typesToRemove) {
 
-        const auto end = allFiles.end();
-        for (auto iter = allFiles.begin(); iter != end;) {
+        auto iter = allFiles.begin();
+        while (iter != allFiles.end()) {
             if (typesToRemove.contains(iter->fileType)) {
                 iter->deleteData();
                 iter->deleteNBTCompound();
-                iter++;
-                auto toRemove = iter;
-                --toRemove;
-                allFiles.erase(toRemove);
-                allFiles.erase(iter);
+                iter = allFiles.erase(iter);
             } else {
                 ++iter;
             }
@@ -269,7 +265,7 @@ namespace editor {
         int status = readFile(inFileStr);
         if (status != SUCCESS) { return status; }
 
-        saveToFolder(dir_path + "dump_" + consoleToStr(console));
+        status = saveToFolder(dir_path + "dump_" + consoleToStr(console));
 
 
         removeFileTypes({FileType::PLAYER, FileType::DATA_MAPPING});
