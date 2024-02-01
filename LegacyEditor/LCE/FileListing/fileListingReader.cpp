@@ -3,13 +3,15 @@
 #include <cstdio>
 #include <filesystem>
 
-#include "LegacyEditor/utils/RLEVITA/rlevita.hpp"
-#include "LegacyEditor/utils/LZX/XboxCompression.hpp"
+#include "LegacyEditor/utils/RLE/rle_vita.hpp"
+#include <LegacyEditor/utils/RLE/rle_nsxps4.hpp>
 #include "LegacyEditor/libs/tinf/tinf.h"
 #include "LegacyEditor/libs/zlib-1.2.12/zlib.h"
+#include "LegacyEditor/utils/LZX/XboxCompression.hpp"
 
 #include "LegacyEditor/LCE/BinFile/BINSupport.hpp"
 #include "headerUnion.hpp"
+
 
 
 
@@ -69,7 +71,7 @@ namespace editor {
         currentVersion = managerIn.readInt16();
 
         allFiles.clear();
-        allFiles.reserve(fileCount);
+        // allFiles.reserve(fileCount);
 
         u32 total_size = 0;
         u32 non_empty_file_count = 0;
@@ -195,16 +197,16 @@ namespace editor {
     }
 
 
-    int FileListing::readFile(stringRef_t inFileStr) {
+    int FileListing::readFile(stringRef_t inFilePath) {
         Data data;
 
-        const char* inFileCStr = inFileStr.c_str();
+        const char* inFileCStr = inFilePath.c_str();
         FILE *f_in = fopen(inFileCStr, "rb");
         if (f_in == nullptr) {
             printf("Cannot open infile %s\n\n", inFileCStr);
             return FILE_ERROR;
         }
-        filename = inFileStr;
+        filename = inFilePath;
 
         fseek(f_in, 0, SEEK_END);
         const u64 source_bin_size = ftell(f_in);
@@ -255,6 +257,18 @@ namespace editor {
         fclose(f_in);
         if (result == SUCCESS) {
             readData(data);
+
+            // sets corresponding state booleans
+            switch (console) {
+                case CONSOLE::SWITCH:
+                case CONSOLE::PS4:
+                    separateRegions = true;
+                    separateEntities = true;
+                    break;
+                default:
+                    break;
+
+            }
         }
         return result;
     }
@@ -282,6 +296,8 @@ namespace editor {
                 filepath += ".ext";
                 break;
             }
+            case CONSOLE::XBOX1:
+                return NOT_IMPLEMENTED;
             case CONSOLE::NONE:
             default:
                 return INVALID_CONSOLE;
@@ -296,6 +312,58 @@ namespace editor {
         return SUCCESS;
     }
 
+
+    /**
+     * \brief
+     * \param inFilePath the directory containing the GAMEDATA files.
+     * \return
+     */
+    int FileListing::readExternalRegions(MU stringRef_t inFilePath) {
+        int fileIndex = -1;
+        namespace fs = std::filesystem;
+        for (const auto& file : fs::directory_iterator(inFilePath)) {
+
+            // TODO: place non-used files in a cache?
+            if (is_directory(file)) { continue; }
+            fileIndex++;
+
+            // initiate filename and filepath
+            std::string filepath_in = file.path().string();
+            std::string filename = file.path().filename().string();
+
+            // open the file
+            DataManager manager_in;
+            manager_in.setLittleEndian();
+            manager_in.readFromFile(filepath_in);
+            const uint32_t fileSize = manager_in.readInt32();
+
+            Data dat_out(fileSize);
+            const DataManager manager_out(dat_out);
+            RLE_NSXPS4_DECOMPRESS(manager_in.ptr, manager_in.size - 4,
+                                 manager_out.ptr, manager_out.size);
+
+            // TODO: get timestamp from file itself
+            uint32_t timestamp = 0;
+            allFiles.emplace_back(dat_out.data, fileSize, timestamp);
+            File &lFile = allFiles.back();
+            if (const char dimChar = filename.at(11) - 48; dimChar < 0 || dimChar > 2) {
+                lFile.fileType = FileType::NONE;
+            } else {
+                static constexpr FileType regDims[3] = {
+                    FileType::REGION_NETHER,
+                    FileType::REGION_OVERWORLD,
+                    FileType::REGION_END
+                };
+                lFile.fileType = regDims[dimChar];
+            }
+            const int16_t rX = static_cast<int8_t>(strtol(filename.substr(13, 2).c_str(), nullptr, 16));
+            const int16_t rZ = static_cast<int8_t>(strtol(filename.substr(15, 2).c_str(), nullptr, 16));
+            auto* nbt = lFile.createNBTTagCompound();
+            nbt->setTag("x", createNBT_INT16(rX));
+            nbt->setTag("z", createNBT_INT16(rZ));
+        }
+        return SUCCESS;
+    }
 
 
     /**

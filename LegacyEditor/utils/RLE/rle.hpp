@@ -8,8 +8,7 @@ static void RLE_decompress(u8* dataIn, const u32 sizeIn, u8* dataOut, u32& sizeO
     DataManager managerOut(dataOut, sizeOut);
 
     while (managerIn.getPosition() < sizeIn) {
-        const u8 byte1 = managerIn.readInt8();
-        if (byte1 != 255) {
+        if (const u8 byte1 = managerIn.readInt8(); byte1 != 255) {
             managerOut.writeInt8(byte1);
         } else {
             const u8 byte2 = managerIn.readInt8();

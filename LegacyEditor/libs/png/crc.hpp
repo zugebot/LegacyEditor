@@ -22,12 +22,12 @@
     Input, int LEN, the number of characters in the string.
     Output, unsigned long CRC, the CRC of the string.
 */
-unsigned long crc(const char* bufferIn, const int len) {
+inline unsigned long crc(const char* bufferIn, const int len) {
     const auto* buf = reinterpret_cast<const unsigned char*>(bufferIn);
 
     unsigned long crc = 0xffffffffL;
-    unsigned long crc_table[256];
-    bool crc_table_computed = false;
+    static unsigned long crc_table[256];
+    static bool crc_table_computed = false;
 
     if (!crc_table_computed) {
         for (int n = 0; n < 256; n++) {

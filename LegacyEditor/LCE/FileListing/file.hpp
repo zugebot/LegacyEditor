@@ -37,8 +37,8 @@ namespace editor {
         u32 additionalData = 0;
         FileType fileType = FileType::NONE;
 
-        ~File();
         File() = default;
+        ~File();
         explicit File(const u32 sizeIn) : data(Data(sizeIn)) {}
         File(const u32 sizeIn, const u64 timestampIn) : data(Data(sizeIn)), timestamp(timestampIn) {}
         File(u8* dataIn, const u32 sizeIn, const u64 timestampIn) : data(dataIn, sizeIn), timestamp(timestampIn) {}
@@ -61,11 +61,12 @@ namespace editor {
         ND NBTTagCompound* createNBTTagCompound();
         ND NBTTagCompound* getNBTCompound() const;
         void deleteNBTCompound();
-        ND std::string constructFileName(CONSOLE console) const;
+        ND std::string constructFileName(CONSOLE console, bool separateRegions) const;
         MU ND bool isEmpty() const { return data.size != 0; }
     };
 
     typedef std::vector<File> File_vec;
+    typedef std::vector<File*> FilePtr_vec;
 }
 
 

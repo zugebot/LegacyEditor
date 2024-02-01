@@ -17,9 +17,11 @@ inline u64 getSeconds() {
     return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
+
 Timer::Timer() {
     time = getNanoSeconds();
 }
+
 
 float Timer::getSeconds() const {
     static constexpr int NANO_TO_SEC = 1000000000;

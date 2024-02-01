@@ -20,8 +20,10 @@ namespace editor {
     }
 
     void FileListing::printFileList() const {
-        for (int index = 0; index < allFiles.size(); index++) {
-            printf("%.2d: %s\n", index, allFiles[index].constructFileName(console).c_str());
+        int index = 0;
+        for (auto iter = allFiles.begin(); iter != allFiles.end(); ++iter) {
+            printf("%.2d: %s\n", index, iter->constructFileName(console, separateRegions).c_str());
+            index++;
         }
         printf("\n");
     }
@@ -51,7 +53,7 @@ namespace editor {
         }
 
         for (const File &file: allFiles) {
-            std::string fullPath = folder + "\\" + file.constructFileName(console);
+            std::string fullPath = folder + "\\" + file.constructFileName(console, separateRegions);
 
             if (fs::path path(fullPath); !exists(path.parent_path())) {
                 create_directories(path.parent_path());
@@ -222,19 +224,17 @@ namespace editor {
 
     void FileListing::removeFileTypes(const std::set<FileType>& typesToRemove) {
 
-        size_t count = allFiles.size();
-        for (int index = 0; index < count;) {
-            if (typesToRemove.contains(allFiles[index].fileType)) {
-                allFiles[index].deleteData();
-                allFiles[index].deleteNBTCompound();
-                std::swap(allFiles[index], allFiles.back());
+        auto end = allFiles.end();
+        for (auto iter = allFiles.begin(); iter != end;) {
+            if (typesToRemove.contains(iter->fileType)) {
+                iter->deleteData();
+                iter->deleteNBTCompound();
                 allFiles.pop_back();
-                count--;
+                --end;
             } else {
-                index++;
+                ++iter;
             }
         }
-
         for (const auto& fileType : typesToRemove) {
             clearActionsRemove[fileType]();
         }

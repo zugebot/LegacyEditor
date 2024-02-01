@@ -45,7 +45,7 @@ namespace editor {
     }
 
 
-    std::string File::constructFileName(MU CONSOLE console) const {
+    std::string File::constructFileName(MU CONSOLE console, const bool separateRegions = false) const {
         static std::unordered_map<FileType, std::string> FileTypeNames{
                 {FileType::VILLAGE, "data/villages.dat"},
                 {FileType::DATA_MAPPING, "data/largeMapDataMappings.dat"},

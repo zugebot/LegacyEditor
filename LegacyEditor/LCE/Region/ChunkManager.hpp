@@ -14,7 +14,6 @@ namespace editor {
             HEADER_NBT = 0x0a00,
             V_8 = 0x0008,
             V_9 = 0x0009,
-            V_10 = 0x000A,
             V_11 = 0x000B,
             V_12 = 0x000C,
         };

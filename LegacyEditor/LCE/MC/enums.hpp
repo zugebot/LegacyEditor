@@ -12,6 +12,7 @@ enum class CONSOLE : i8 {
     RPCS3 = 4,
     SWITCH = 5,
     PS4 = 6,
+    XBOX1 = 7,
 };
 
 
@@ -19,6 +20,7 @@ enum class DIM : i8 {
     NETHER = -1,
     OVERWORLD = 0,
     END = 1,
+    NONE = 2
 };
 
 
@@ -31,7 +33,28 @@ enum STATUS : i8 {
     FILE_ERROR = -5,
     INVALID_CONSOLE = -6,
     INVALID_ARGUMENT = -7,
+    NOT_IMPLEMENTED = -8,
 };
+
+
+/**
+ * \brief Used for extracting the correct dimension
+ * from the GAMEDATA_0000000 filenames.
+ * \param number
+ * \return
+ */
+static DIM gamedataIntToDim(const char number) {
+    switch(number) {
+        case 0:
+            return DIM::NETHER;
+        case 1:
+            return DIM::OVERWORLD;
+        case 2:
+            return DIM::END;
+        default:
+            return DIM::NONE;
+    }
+}
 
 
 static std::string consoleToStr(const CONSOLE console) {
@@ -50,6 +73,8 @@ static std::string consoleToStr(const CONSOLE console) {
             return "switch";
         case CONSOLE::PS4:
             return "ps4";
+        case CONSOLE::XBOX1:
+            return "xbox1";
         case CONSOLE::NONE:
         default:
             return "NONE";
@@ -58,7 +83,6 @@ static std::string consoleToStr(const CONSOLE console) {
 
 
 static bool consoleIsBigEndian(const CONSOLE console) {
-    // TODO: idk endian of ps4 save files
     switch (console) {
         case CONSOLE::NONE:
         case CONSOLE::XBOX360:
@@ -68,6 +92,7 @@ static bool consoleIsBigEndian(const CONSOLE console) {
         default:
             return true;
         case CONSOLE::VITA:
+        case CONSOLE::PS4:
         case CONSOLE::SWITCH:
             return false;
     }

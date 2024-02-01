@@ -9,6 +9,9 @@
 #include "LegacyEditor/utils/processor.hpp"
 #include "file.hpp"
 
+
+#include <list>
+
 namespace editor {
 
 
@@ -35,7 +38,7 @@ namespace editor {
         // Data
 
         std::string filename;
-        File_vec allFiles;
+        std::list<File> allFiles;
         i32 oldestVersion{};
         i32 currentVersion{};
         CONSOLE console = CONSOLE::NONE;
@@ -86,10 +89,13 @@ namespace editor {
         MU ND int convertAndReplaceRegions(stringRef_t inFileStr, stringRef_t inFileRegionReplacementStr,
                                            stringRef_t outFileStr, CONSOLE consoleOut);
 
+        MU ND int readExternalRegions(stringRef_t inFilePath);
+        MU ND int writeExternalRegions(stringRef_t outFilePath);
+
     private:
 
         // Reader
-        MU ND int readFile(stringRef_t inFileStr);
+        MU ND int readFile(stringRef_t inFilePath);
         MU ND int readFileInfo(stringRef_t inFilePath);
         MU ND int readWiiU(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
         MU ND int readNSXorPS4(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);

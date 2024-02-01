@@ -14,7 +14,6 @@
 
 namespace editor {
 
-    
 
     MU void ChunkManager::readChunk(MU CONSOLE console) const {
         auto managerIn = DataManager(data, size);
@@ -29,7 +28,6 @@ namespace editor {
                 break;
             case V_8:
             case V_9:
-            // case V_10:
             case V_11: {
                 chunk::ChunkV11(chunkData, &managerIn).readChunk();
                 break;
@@ -102,7 +100,10 @@ namespace editor {
             case CONSOLE::SWITCH:
             case CONSOLE::WIIU:
             case CONSOLE::VITA:
+            case CONSOLE::PS4:
                 result = tinf_zlib_uncompress(decompData.start(), &decompData.size, data, size);
+                break;
+            case CONSOLE::XBOX1:
                 break;
             default:
                 break;
@@ -167,6 +168,7 @@ namespace editor {
             }
 
             case CONSOLE::SWITCH:
+            case CONSOLE::PS4:
             case CONSOLE::WIIU:
             case CONSOLE::VITA: {
                 if (const int status = compress(comp_ptr, &comp_size, data, size); status != 0) {
