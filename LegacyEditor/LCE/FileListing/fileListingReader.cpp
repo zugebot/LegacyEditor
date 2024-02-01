@@ -318,7 +318,7 @@ namespace editor {
      * \param inFilePath the directory containing the GAMEDATA files.
      * \return
      */
-    int FileListing::readExternalRegions(MU stringRef_t inFilePath) {
+    int FileListing::readExternalRegions(stringRef_t inFilePath) {
         int fileIndex = -1;
         namespace fs = std::filesystem;
         for (const auto& file : fs::directory_iterator(inFilePath)) {
@@ -350,8 +350,8 @@ namespace editor {
                 lFile.fileType = FileType::NONE;
             } else {
                 static constexpr FileType regDims[3] = {
-                    FileType::REGION_NETHER,
                     FileType::REGION_OVERWORLD,
+                    FileType::REGION_NETHER,
                     FileType::REGION_END
                 };
                 lFile.fileType = regDims[dimChar];
@@ -362,6 +362,9 @@ namespace editor {
             nbt->setTag("x", createNBT_INT16(rX));
             nbt->setTag("z", createNBT_INT16(rZ));
         }
+
+        updatePointers();
+
         return SUCCESS;
     }
 

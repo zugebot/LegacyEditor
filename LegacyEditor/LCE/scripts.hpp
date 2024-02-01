@@ -220,4 +220,51 @@ namespace editor {
         fileListing.region_nether[regionIndex]->data = region.write(console);
     }
 
+
+    /**
+     * Removes all blocks in the nether except for netherrack
+     * @param regionIndex
+     * @param fileListing
+     */
+    void ConvertPillagerToAquaticChunks(const int regionIndex, const FileListing& fileListing) {
+        const CONSOLE console = fileListing.console;
+        if (regionIndex >= fileListing.region_overworld.size()) { return; }
+
+        // read a region file
+        RegionManager region(console);
+        region.read(fileListing.region_overworld[regionIndex]);
+
+        for (auto & chunk : region.chunks) {
+            ChunkManager *chunkManager = &chunk;
+            if (chunkManager->size == 0) {
+                continue;
+            }
+            chunkManager->ensureDecompress(console);
+            chunkManager->readChunk(console);
+            auto* chunkData = chunkManager->chunkData;
+            if (!chunkData->validChunk) {
+                continue;
+            }
+
+            // remove 1.14 blocks and items here...
+            for (int i = 0; i < 65536; i++) {
+                const u16 id = chunkData->newBlocks[i] >> 4 & 1023;
+                if (id > 318) {
+                    chunkData->newBlocks[i] = 0;
+                }
+            }
+
+            chunkData->defaultNBT();
+            chunkManager->writeChunk(console);
+            chunkManager->ensureCompressed(console);
+        }
+
+        fileListing.region_overworld[regionIndex]->data.deallocate();
+        fileListing.region_overworld[regionIndex]->data = region.write(console);
+    }
+
+
+
+
+
 }

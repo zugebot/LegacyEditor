@@ -27,3 +27,8 @@ template int run_parallel<4>(
         void (*)(int, editor::FileListing&),
         std::reference_wrapper<editor::FileListing>
 );
+
+template int run_parallel<32>(
+        void (*)(int, editor::FileListing&),
+        std::reference_wrapper<editor::FileListing>
+);

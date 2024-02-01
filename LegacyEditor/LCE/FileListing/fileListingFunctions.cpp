@@ -221,16 +221,20 @@ namespace editor {
         }
     }
 
-
+    // TODO: this does not work at all
+    // TODO: this should be popping the current node, not the ending node
     void FileListing::removeFileTypes(const std::set<FileType>& typesToRemove) {
 
-        auto end = allFiles.end();
+        const auto end = allFiles.end();
         for (auto iter = allFiles.begin(); iter != end;) {
             if (typesToRemove.contains(iter->fileType)) {
                 iter->deleteData();
                 iter->deleteNBTCompound();
-                allFiles.pop_back();
-                --end;
+                iter++;
+                auto toRemove = iter;
+                --toRemove;
+                allFiles.erase(toRemove);
+                allFiles.erase(iter);
             } else {
                 ++iter;
             }

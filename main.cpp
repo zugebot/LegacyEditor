@@ -22,7 +22,6 @@ void TEST_PAIR(stringRef_t key, stringRef_t path_in, stringRef_t out) {
 
 
 int main() {
-
     // unit tests
     dir_path = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\)";
     out_path = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\)";
@@ -72,13 +71,15 @@ int main() {
         return status;
     }
 
+    fileListing.removeFileTypes({editor::FileType::PLAYER, editor::FileType::REGION_NETHER, editor::FileType::REGION_END});
+
     fileListing.fileInfo.basesavename = L"TEST NAME";
     fileListing.fileInfo.seed = 0;
 
     fileListing.printFileList();
     fileListing.printDetails();
 
-    editor::map::saveMapToPng(fileListing.maps[0], R"(C:\Users\jerrin\CLionProjects\LegacyEditor\)");
+    // editor::map::saveMapToPng(fileListing.maps[0], R"(C:\Users\jerrin\CLionProjects\LegacyEditor\)");
 
     if (fileListing.saveToFolder() != 0) {
         return printf_err("failed to save files to folder\n");
@@ -87,9 +88,10 @@ int main() {
     // edit regions (threaded)
     // add functions to "LegacyEditor/LCE/scripts.hpp"
     const auto timer = Timer();
-    // run_parallel<4>(editor::convertElytraToAquaticChunks, std::ref(fileListing));
-    for (int x = 0; x < 4; x++) {
-        // convertElytraToAquaticChunks(0, fileListing);
+
+    // run_parallel<32>(editor::convertElytraToAquaticChunks, std::ref(fileListing));
+    for (int i = 0; i < 32; i++) {
+        editor::ConvertPillagerToAquaticChunks(i, fileListing);
     }
 
     // fileListing.convertRegions(consoleOut);
