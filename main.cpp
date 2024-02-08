@@ -190,7 +190,7 @@ int main2() {
 int main3() {
     PREPARE_UNIT_TESTS();
 
-    const std::string TEST_NAME = "PS4_to_wiiu"; //" PS4_khaloody";
+    const std::string TEST_NAME = "vita"; //" PS4_khaloody";
     const std::string TEST_IN = TESTS[TEST_NAME].first;   // file to read from
     const std::string TEST_OUT = TESTS[TEST_NAME].second; // file to write to
     constexpr auto consoleOut = CONSOLE::WIIU;
@@ -201,11 +201,18 @@ int main3() {
         return printf_err("failed to load file\n");
     }
 
-    fileListing.printDetails();
+    fileListing.removeFileTypes({
+        editor::FileType::PLAYER,
+        editor::FileType::DATA_MAPPING});
 
+    fileListing.printDetails();
+    fileListing.printFileList();
+
+    fileListing.convertRegions(consoleOut);
+
+    /*
     editor::RegionManager region(fileListing.console);
     region.read(fileListing.region_overworld[0]);
-
     int x = 0;
     for (auto chunk : region.chunks) {
         if (chunk.size != 0) {
@@ -213,14 +220,13 @@ int main3() {
         }
         x++;
     }
-
-
-
     std::cout << region.chunks[0].size << std::endl;
+    */
 
     const int statusOut = fileListing.write(TEST_OUT, consoleOut);
     if (statusOut != 0) {
-        return printf_err({"converting to " + consoleToStr(consoleOut) + " failed...\n"});
+        return printf_err({"converting to "
+            + consoleToStr(consoleOut) + " failed...\n"});
     }
     printf("Finished!\nFile Out: %s", TEST_OUT.c_str());
 
@@ -229,5 +235,5 @@ int main3() {
 
 
 int main() {
-    return main1();
+    return main3();
 }

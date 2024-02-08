@@ -58,7 +58,7 @@ namespace editor {
         void ensureCompressed(CONSOLE console);
 
         MU void readChunk(CONSOLE console) const;
-        MU void writeChunk(CONSOLE console)
+        MU void writeChunk(CONSOLE console);
     };
 
 }
