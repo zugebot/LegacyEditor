@@ -1,7 +1,21 @@
 #include "file.hpp"
 
 
+#include "LegacyEditor/utils/NBT.hpp"
+
 namespace editor {
+
+
+    File::File() {}
+
+
+    File::File(const u32 sizeIn) : data(Data(sizeIn)) {}
+
+
+    File::File(const u32 sizeIn, const u64 timestampIn) : data(Data(sizeIn)), timestamp(timestampIn) {}
+
+
+    File::File(u8* dataIn, const u32 sizeIn, const u64 timestampIn) : data(dataIn, sizeIn), timestamp(timestampIn) {}
 
 
     File::~File() {
@@ -73,26 +87,25 @@ namespace editor {
             }
             case FileType::STRUCTURE: {
                 if (const auto* compound = getNBTCompound(); compound == nullptr) { break; }
-                name = getNBTCompound()->getString("filename");
+                name = getFileName();
                 break;
             }
             case FileType::MAP: {
                 if (const auto* compound = getNBTCompound(); compound == nullptr) { break; }
-                auto tag = getNBTCompound()->getTag("#");
-                const i16 mapNum = tag.toPrimitiveType<i16>();
+                const i16 mapNum = getMapNumber();
                 name = "data/map_" + to_string(mapNum) + ".dat";
                 break;
             }
             case FileType::PLAYER:
                 if (const auto* compound = getNBTCompound(); compound == nullptr) { break; }
-                name = getNBTCompound()->getString("filename");
+                name = getFileName();
                 break;
             case FileType::REGION_NETHER:
             case FileType::REGION_OVERWORLD:
             case FileType::REGION_END: {
                 if (const auto* compound = getNBTCompound(); compound == nullptr) { break; }
-                const i16 regionX = getNBTCompound()->getTag("x").toPrimitiveType<i16>();
-                const i16 regionZ = getNBTCompound()->getTag("z").toPrimitiveType<i16>();
+                const i16 regionX = getRegionX();
+                const i16 regionZ = getRegionZ();
                 if (fileType == FileType::REGION_NETHER) {
                     name = "DIM-1";
                 } else if (fileType == FileType::REGION_OVERWORLD) {
@@ -107,4 +120,30 @@ namespace editor {
         return name;
     }
 
+    std::string File::toString() const {
+        std::string str;
+        str .append("[")
+            .append("type='")
+            .append(fileTypeToString(fileType))
+            .append("', name='")
+            .append(constructFileName(CONSOLE::WIIU))
+            .append("']");
+        return str;
+    }
+
+    MU ND i16 File::getRegionX() const {
+        return getNBTCompound()->getTag("x").toPrimitiveType<i16>();
+    }
+
+    MU ND i16 File::getRegionZ() const {
+        return getNBTCompound()->getTag("z").toPrimitiveType<i16>();
+    }
+
+    MU ND i16 File::getMapNumber() const {
+        return getNBTCompound()->getTag("#").toPrimitiveType<i16>();
+    }
+
+    MU ND std::string File::getFileName() const {
+        return getNBTCompound()->getString("filename");
+    }
 }

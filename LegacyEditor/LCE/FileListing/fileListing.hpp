@@ -3,14 +3,13 @@
 #include <functional>
 #include <map>
 #include <set>
+#include <list>
 
 #include "LegacyEditor/LCE/FileInfo/FileInfo.hpp"
 #include "LegacyEditor/LCE/MC/enums.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 #include "file.hpp"
 
-
-#include <list>
 
 namespace editor {
 
@@ -35,7 +34,7 @@ namespace editor {
 
     public:
 
-        // Data
+        /// Data
 
         std::string filename;
         std::list<File> allFiles;
@@ -46,7 +45,7 @@ namespace editor {
         bool separateEntities = false;
         bool separateRegions = false;
 
-        // Pointers
+        /// Pointers
 
         FileList* dimFileLists[3] = {&region_nether, &region_overworld, &region_end};
         FileList region_nether, region_overworld, region_end;
@@ -54,36 +53,36 @@ namespace editor {
         File *entity_nether{}, *entity_overworld{}, *entity_end{};
         File *largeMapDataMappings{}, *level{}, *grf{}, *village{};
 
-        // Constructors
+        /// Constructors
 
         FileListing() = default;
         ~FileListing() { deallocate(); }
 
-        // Details
+        /// Details
 
         void printDetails() const;
         void printFileList() const;
 
-        // Functions
+        /// Functions
 
         MU ND int saveToFolder(stringRef_t folderIn = "") const;
         MU void convertRegions(CONSOLE consoleOut);
         void ensureAllRegionFilesExist();
 
-        // Modify State
+        /// Modify State
 
         void deallocate();
         void removeFileTypes(const std::set<FileType>& typesToRemove);
         MU void addFiles(File_vec filesIn);
         File_vec collectFiles(FileType fileType);
 
-        // Read / Write from console files
+        /// Read / Write from console files
 
         MU ND int read(stringRef_t inFileStr);
         MU ND int write(stringRef_t outfileStr, CONSOLE consoleOut);
 
 
-        // Conversion
+        /// Conversion
 
         MU ND int convertTo(stringRef_t inFileStr, stringRef_t outFileStr, CONSOLE consoleOut);
         MU ND int convertAndReplaceRegions(stringRef_t inFileStr, stringRef_t inFileRegionReplacementStr,
@@ -92,9 +91,12 @@ namespace editor {
         MU ND int readExternalRegions(stringRef_t inFilePath);
         MU ND int writeExternalRegions(stringRef_t outFilePath);
 
+        MU void pruneRegions();
+
     private:
 
-        // Reader
+        /// Reader
+
         MU ND int readFile(stringRef_t inFilePath);
         MU ND int readFileInfo(stringRef_t inFilePath);
         MU ND int readWiiU(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
@@ -106,7 +108,7 @@ namespace editor {
         MU ND int readXbox360BIN(FILE* f_in, Data& data, u64 source_binary_size);
         MU   void readData(const Data& dataIn);
 
-        // Writer
+        /// Writer
 
         MU ND int writeFile(stringRef_t outfileStr, CONSOLE consoleOut);
         MU ND int writeFileInfo(stringRef_t outFilePath, CONSOLE consoleOut) const;
@@ -121,12 +123,12 @@ namespace editor {
         Data writeData(CONSOLE consoleOut);
 
 
-        // File pointer stuff
+        /// File pointer stuff
 
         void clearPointers();
         void updatePointers();
 
-        // For use in removeFileTypes
+        /// For use in removeFileTypes
 
         std::map<FileType, std::function<void()>> clearActionsDelete = {
                 {FileType::STRUCTURE, [this] { structures.removeAll(); }},

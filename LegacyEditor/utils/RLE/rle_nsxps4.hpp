@@ -31,6 +31,7 @@ static u32 RLE_NSXPS4_DECOMPRESS(u8* dataIn, const u32 sizeIn, u8* dataOut, cons
                 numZeros = numZeros1 << 8 | numZeros2;
                 numZeros += 256;
             }
+
             memset(managerOut.ptr, 0, numZeros);
             managerOut.incrementPointer(numZeros);
         }

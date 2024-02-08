@@ -1,18 +1,15 @@
 #include "fileListing.hpp"
 
-#include "../../utils/RLE/rle_vita.hpp"
+#include <filesystem>
+#include <cstdio>
+
+#include "LegacyEditor/utils/RLE/rle_vita.hpp"
 #include "LegacyEditor/libs/zlib-1.2.12/zlib.h"
-#include "LegacyEditor/utils/processor.hpp"
 #include "LegacyEditor/utils/endian.hpp"
 // #include "LegacyEditor/utils/LZX/XboxCompression.hpp"
 // #include "LegacyEditor/utils/tinf/tinf.h"
 
-#include <filesystem>
-#include <cstdio>
-
-
-
-
+#include "LegacyEditor/utils/processor.hpp"
 
 
 namespace editor {

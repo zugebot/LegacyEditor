@@ -1,7 +1,6 @@
 #pragma once
 
 #include "LegacyEditor/LCE/MC/enums.hpp"
-#include "LegacyEditor/utils/NBT.hpp"
 #include "LegacyEditor/utils/data.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 
@@ -28,6 +27,40 @@ namespace editor {
         ENTITY_END,       // ...
     };
 
+    static std::string fileTypeToString(const FileType type) {
+        switch (type) {
+            case FileType::STRUCTURE:
+                return "STRUCTURE";
+            case FileType::VILLAGE:
+                return "VILLAGE";
+            case FileType::DATA_MAPPING:
+                return "DATA_MAPPING";
+            case FileType::MAP:
+                return "MAP";
+            case FileType::REGION_NETHER:
+                return "REGION_NETHER";
+            case FileType::REGION_OVERWORLD:
+                return "REGION_OVERWORLD";
+            case FileType::REGION_END:
+                return "REGION_END";
+            case FileType::PLAYER:
+                return "PLAYER";
+            case FileType::LEVEL:
+                return "LEVEL";
+            case FileType::GRF:
+                return "GRF";
+            case FileType::ENTITY_NETHER:
+                return "ENTITY_NETHER";
+            case FileType::ENTITY_OVERWORLD:
+                return "ENTITY_OVERWORLD";
+            case FileType::ENTITY_END:
+                return "ENTITY_END";
+            case FileType::NONE:
+            default:
+                return "NONE";
+        }
+    }
+
 
     class File {
     public:
@@ -37,11 +70,12 @@ namespace editor {
         u32 additionalData = 0;
         FileType fileType = FileType::NONE;
 
-        File() = default;
+        File();
+        explicit File(u32 sizeIn);
+        File(u32 sizeIn, u64 timestampIn);
+        File(u8* dataIn, u32 sizeIn, u64 timestampIn);
+
         ~File();
-        explicit File(const u32 sizeIn) : data(Data(sizeIn)) {}
-        File(const u32 sizeIn, const u64 timestampIn) : data(Data(sizeIn)), timestamp(timestampIn) {}
-        File(u8* dataIn, const u32 sizeIn, const u64 timestampIn) : data(dataIn, sizeIn), timestamp(timestampIn) {}
 
         MU ND bool isRegionType() const {
             return fileType == FileType::REGION_NETHER ||
@@ -63,6 +97,14 @@ namespace editor {
         void deleteNBTCompound();
         ND std::string constructFileName(CONSOLE console, bool separateRegions) const;
         MU ND bool isEmpty() const { return data.size != 0; }
+        MU ND std::string toString() const;
+
+    private:
+        MU ND i16 getRegionX() const;
+        MU ND i16 getRegionZ() const;
+        MU ND i16 getMapNumber() const;
+        MU ND std::string getFileName() const;
+
     };
 
     typedef std::vector<File> File_vec;

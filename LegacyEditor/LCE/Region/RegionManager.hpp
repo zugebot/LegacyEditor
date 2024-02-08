@@ -1,13 +1,12 @@
 #pragma once
 
 #include "ChunkManager.hpp"
-#include "LegacyEditor/LCE/MC/enums.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 
 
 namespace editor {
-
     class File;
+
 
     class RegionManager {
         static constexpr u32 REGION_WIDTH = 32;
@@ -20,9 +19,10 @@ namespace editor {
         u32 sectorInts;
         CONSOLE console = CONSOLE::NONE;
 
-        explicit RegionManager(const CONSOLE consoleIn)
-            : sectorBytes(0), sectorInts(0), console(consoleIn) {}
-        ~RegionManager() = default;
+        /// CONSTRUCTORS
+
+        explicit RegionManager(CONSOLE consoleIn);
+        ~RegionManager();
 
         /// FUNCTIONS
 

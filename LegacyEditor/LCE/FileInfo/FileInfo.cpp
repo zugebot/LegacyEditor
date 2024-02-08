@@ -1,7 +1,9 @@
-#include "LegacyEditor/libs/png/crc.hpp"
-#include "LegacyEditor/LCE/MC/enums.hpp"
-
 #include "FileInfo.hpp"
+
+#include "LegacyEditor/LCE/MC/enums.hpp"
+#include "LegacyEditor/utils/dataManager.hpp"
+
+#include "LegacyEditor/libs/png/crc.hpp"
 
 
 static u32 c2n(const char chara) {
@@ -78,9 +80,10 @@ static std::string int64ToString(i64 num) {
 }
 
 bool isPngHeader(DataManager& manager) {
-    const u8_vec PNGHeader = manager.readIntoVector(8);
+    static constexpr u8_vec PNG_HEADER{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
+    const u8_vec fileHeader = manager.readIntoVector(8);
     manager.decrementPointer(8);
-    return PNGHeader == u8_vec{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
+    return fileHeader == PNG_HEADER;
 }
 
 
@@ -294,7 +297,4 @@ namespace editor {
         return status;
 
     }
-
-
-
 }

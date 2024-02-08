@@ -2,11 +2,10 @@
 
 #include "chunkData.hpp"
 
+#include "LegacyEditor/utils/NBT.hpp"
+
 
 namespace editor::chunk {
-
-
-
 
 
     /// Order: YZX
@@ -75,7 +74,8 @@ namespace editor::chunk {
                     chunkData->blockData[offset] = chunkData->blockData[offset] & 0xF0 | data;
                 }
             }
-            case 12: {
+            case 12:
+            case 13: {
                 const int offset = toPos(xIn, yIn, zIn);
                 u16 value = block << 4 | data;
                 if (waterlogged) {
@@ -114,7 +114,8 @@ namespace editor::chunk {
                 }
                 return block << 4 | data;
             }
-            case 12: {
+            case 12:
+            case 13: {
                 const int offset = toPos(xIn, yIn, zIn);
                 return chunkData->newBlocks[offset];
             }

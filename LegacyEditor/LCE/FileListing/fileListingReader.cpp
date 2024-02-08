@@ -8,8 +8,8 @@
 #include "LegacyEditor/libs/tinf/tinf.h"
 #include "LegacyEditor/libs/zlib-1.2.12/zlib.h"
 #include "LegacyEditor/utils/LZX/XboxCompression.hpp"
+#include "LegacyEditor/utils/NBT.hpp"
 
-#include "LegacyEditor/LCE/BinFile/BINSupport.hpp"
 #include "headerUnion.hpp"
 
 
@@ -342,11 +342,13 @@ namespace editor {
             RLE_NSXPS4_DECOMPRESS(manager_in.ptr, manager_in.size - 4,
                                  manager_out.ptr, manager_out.size);
 
+            manager_out.writeToFile("C:\\Users\\Jerrin\\CLionProjects\\LegacyEditor\\out\\" + filename);
+
             // TODO: get timestamp from file itself
             uint32_t timestamp = 0;
             allFiles.emplace_back(dat_out.data, fileSize, timestamp);
             File &lFile = allFiles.back();
-            if (const char dimChar = filename.at(11) - 48; dimChar < 0 || dimChar > 2) {
+            if (const char dimChar = filename.at(12) - 48; dimChar < 0 || dimChar > 2) {
                 lFile.fileType = FileType::NONE;
             } else {
                 static constexpr FileType regDims[3] = {

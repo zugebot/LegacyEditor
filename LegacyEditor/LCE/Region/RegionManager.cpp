@@ -3,9 +3,20 @@
 #include <stdexcept>
 
 #include "LegacyEditor/LCE/FileListing/file.hpp"
+#include "LegacyEditor/LCE/MC/enums.hpp"
+#include "LegacyEditor/utils/dataManager.hpp"
 
 
 namespace editor {
+
+
+    RegionManager::RegionManager(const CONSOLE consoleIn)
+            : sectorBytes(0), sectorInts(0), console(consoleIn) {}
+
+    RegionManager::~RegionManager() {
+
+    }
+
 
     MU ChunkManager* RegionManager::getChunk(const int xIn, const int zIn) {
         const u32 index = xIn + zIn * REGION_WIDTH;
@@ -61,7 +72,7 @@ namespace editor {
         }
 
         for (chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
-            chunks[chunkIndex].setTimestamp(managerIn.readInt32());
+            chunks[chunkIndex].fileData.setTimestamp(managerIn.readInt32());
         }
 
         for (chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
@@ -78,8 +89,8 @@ namespace editor {
             managerIn.seek(SECTOR_BYTES * locations[chunkIndex]);
 
             chunk.size = managerIn.readInt32();
-            chunk.setRLE(chunk.size >> 31);
-            chunk.setUnknown(chunk.size >> 30 & 1);
+            chunk.fileData.setRLE(chunk.size >> 31);
+            chunk.fileData.setUnknown(chunk.size >> 30 & 1);
             chunk.size &= 0x00FFFFFF;
             chunk.allocate(chunk.size);
 
@@ -88,17 +99,11 @@ namespace editor {
                 case CONSOLE::RPCS3: {
                     const u32 num1 = managerIn.readInt32();
                     managerIn.readInt32();
-                    chunk.setDecSize(num1); // rle dec size
+                    chunk.fileData.setDecSize(num1); // rle dec size
                     break;
                 }
-                case CONSOLE::XBOX360:
-                case CONSOLE::SWITCH:
-                case CONSOLE::WIIU:
-                case CONSOLE::VITA:
-                case CONSOLE::PS4:
-                case CONSOLE::XBOX1:
                 default:
-                    chunk.setDecSize(managerIn.readInt32()); // final dec size
+                    chunk.fileData.setDecSize(managerIn.readInt32()); // final dec size
                     break;
                 }
                 memcpy(chunk.start(), managerIn.ptr, chunk.size);
@@ -106,7 +111,7 @@ namespace editor {
         }
 
 
-        /**
+    /**
      * step 1: make sure all chunks are compressed correctly
      * step 2: recalculate sectorCount of each chunk
      * step 3: calculate chunk offsets for each chunk
@@ -143,7 +148,7 @@ namespace editor {
             }
 
             for (int chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
-                managerOut.writeInt32(chunks[chunkIndex].getTimestamp());
+                managerOut.writeInt32(chunks[chunkIndex].fileData.getTimestamp());
             }
 
             for (int chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
@@ -153,28 +158,22 @@ namespace editor {
                 managerOut.seek(locations[chunkIndex] * SECTOR_BYTES);
 
                 u32 size = chunk.size;
-                if (chunk.getRLE() != 0U) size |= 0x80000000;
-                if (chunk.getUnknown() != 0U) size |= 0x40000000;
+                if (chunk.fileData.getRLE() != 0U) size |= 0x80000000;
+                if (chunk.fileData.getUnknown() != 0U) size |= 0x40000000;
                 managerOut.writeInt32(size);
 
                 switch (console) {
                     case CONSOLE::PS3:
-                        managerOut.writeInt32(chunk.getDecSize());
-                        managerOut.writeInt32(chunk.getDecSize());
                     case CONSOLE::RPCS3:
-                        managerOut.writeInt32(chunk.getDecSize());
-                        managerOut.writeInt32(chunk.getDecSize());
+                        managerOut.writeInt32(chunk.fileData.getDecSize());
+                        managerOut.writeInt32(chunk.fileData.getDecSize());
                         break;
-                    case CONSOLE::XBOX360:
-                    case CONSOLE::SWITCH:
-                    case CONSOLE::WIIU:
-                    case CONSOLE::VITA:
                     default:
-                        managerOut.writeInt32(chunk.getDecSize());
+                        managerOut.writeInt32(chunk.fileData.getDecSize());
                         break;
                 }
                 managerOut.writeBytes(chunk.start(), chunk.size);
             }
-            return dataOut;
-        }
+        return dataOut;
     }
+}

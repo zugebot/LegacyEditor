@@ -28,10 +28,10 @@ MU typedef std::vector<uint8_t> u8_vec;
 MU typedef std::vector<uint16_t> u16_vec;
 MU typedef std::vector<uint32_t> u32_vec;
 MU typedef std::vector<uint64_t> u64_vec;
-MU typedef std::vector<std::vector<uint8_t>> u8_vec_vec;
-MU typedef std::vector<std::vector<uint16_t>> u16_vec_vec;
-MU typedef std::vector<std::vector<uint32_t>> u32_vec_vec;
-MU typedef std::vector<std::vector<uint64_t>> u64_vec_vec;
+MU typedef std::vector<u8_vec> u8_vec_vec;
+MU typedef std::vector<u16_vec> u16_vec_vec;
+MU typedef std::vector<u32_vec> u32_vec_vec;
+MU typedef std::vector<u64_vec> u64_vec_vec;
 
 // signed
 MU typedef int8_t i8;
@@ -42,10 +42,10 @@ MU typedef std::vector<int8_t> i8_vec;
 MU typedef std::vector<int16_t> i16_vec;
 MU typedef std::vector<int32_t> i32_vec;
 MU typedef std::vector<int64_t> i64_vec;
-MU typedef std::vector<std::vector<int8_t>> i8_vec_vec;
-MU typedef std::vector<std::vector<int16_t>> i16_vec_vec;
-MU typedef std::vector<std::vector<int32_t>> i32_vec_vec;
-MU typedef std::vector<std::vector<int64_t>> i64_vec_vec;
+MU typedef std::vector<i8_vec> i8_vec_vec;
+MU typedef std::vector<i16_vec> i16_vec_vec;
+MU typedef std::vector<i32_vec> i32_vec_vec;
+MU typedef std::vector<i64_vec> i64_vec_vec;
 
 
 /// printf, but returns -1.

@@ -1,11 +1,9 @@
 #pragma once
 
-#include <cstring>
 #include "LegacyEditor/LCE/Chunk/modifiers.hpp"
 #include "LegacyEditor/LCE/FileListing/fileListing.hpp"
 #include "LegacyEditor/LCE/Region/RegionManager.hpp"
-
-
+#include <cstring>
 namespace editor {
 
     void processRegion(int regionIndex, FileListing& fileListing) {
@@ -18,7 +16,7 @@ namespace editor {
 
         int h = -1;
 
-        for (ChunkManager& chunkManager : region.chunks) {
+        for (ChunkManager& chunkManager: region.chunks) {
             h++;
             if (chunkManager.size == 0) {
                 continue;
@@ -42,7 +40,7 @@ namespace editor {
 
                         const u16 compare1 = (block1 & 0x1FF0) >> 4;
                         if ((block1 & 0x8000) != 0) { // fix stupid blocks
-                            if (compare1 == 271) { // sea pickle
+                            if (compare1 == 271) {    // sea pickle
                                 block1 = (block1 & 0x9FF7) | 0x08;
                             }
                             if (compare1 == 272) { // bubble column
@@ -121,7 +119,6 @@ namespace editor {
     }
 
 
-
     /**
      * Removes all blocks in the nether except for netherrack
      * @param regionIndex
@@ -135,7 +132,7 @@ namespace editor {
         RegionManager region(console);
         region.read(fileListing.region_nether[regionIndex]);
 
-        for (ChunkManager& chunkManager : region.chunks) {
+        for (ChunkManager& chunkManager: region.chunks) {
             if (chunkManager.size == 0) {
                 continue;
             }
@@ -179,7 +176,6 @@ namespace editor {
     }
 
 
-
     /**
      * Removes all blocks in the nether except for netherrack
      * @param regionIndex
@@ -194,7 +190,7 @@ namespace editor {
         region.read(fileListing.region_nether[regionIndex]);
 
         for (int index = 0; index < 1024; index++) {
-            ChunkManager *chunkManager = &region.chunks[index];
+            ChunkManager* chunkManager = &region.chunks[index];
 
             if (chunkManager->size == 0) {
                 continue;
@@ -234,37 +230,43 @@ namespace editor {
         RegionManager region(console);
         region.read(fileListing.region_overworld[regionIndex]);
 
-        for (auto & chunk : region.chunks) {
-            ChunkManager *chunkManager = &chunk;
-            if (chunkManager->size == 0) {
+        for (auto& chunk: region.chunks) {
+            if (chunk.size == 0) {
                 continue;
             }
-            chunkManager->ensureDecompress(console);
-            chunkManager->readChunk(console);
-            auto* chunkData = chunkManager->chunkData;
+            chunk.ensureDecompress(console);
+            chunk.readChunk(console);
+            auto* chunkData = chunk.chunkData;
             if (!chunkData->validChunk) {
                 continue;
             }
 
             // remove 1.14 blocks and items here...
             for (int i = 0; i < 65536; i++) {
+                chunkData->newBlocks[i] = 3;
+                /*
                 const u16 id = chunkData->newBlocks[i] >> 4 & 1023;
                 if (id > 318) {
                     chunkData->newBlocks[i] = 0;
                 }
+                */
             }
 
+            chunkData->lastVersion = 0x0C;
+            chunk.fileData.setRLE(1);
             chunkData->defaultNBT();
-            chunkManager->writeChunk(console);
-            chunkManager->ensureCompressed(console);
+            chunk.writeChunk(console);
+            chunk.ensureCompressed(console);
         }
 
         fileListing.region_overworld[regionIndex]->data.deallocate();
         fileListing.region_overworld[regionIndex]->data = region.write(console);
+
+        if (regionIndex == 0) {
+            DataManager(fileListing.region_overworld[0]->data).writeToFile(dir_path + "REGION_0");
+        }
+
     }
 
 
-
-
-
-}
+} // namespace editor

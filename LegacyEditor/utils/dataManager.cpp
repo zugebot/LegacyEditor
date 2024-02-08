@@ -336,7 +336,7 @@ void DataManager::readOntoData(const u32 length, u8* dataIn) {
 int DataManager::readFromFile(const std::string& fileStrIn) {
     FILE* file = fopen(fileStrIn.c_str(), "rb");
     if (file == nullptr) {
-        printf("Cannot open infile %s", fileStrIn.c_str());
+        printf("Cannot open infile '%s'", fileStrIn.c_str());
         return -1;
     }
 

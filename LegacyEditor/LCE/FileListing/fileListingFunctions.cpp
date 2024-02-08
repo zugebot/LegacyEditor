@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 
+#include "LegacyEditor/utils/NBT.hpp"
 #include "LegacyEditor/LCE/Region/RegionManager.hpp"
 
 
@@ -318,4 +319,30 @@ namespace editor {
         status = writeFile(outFileStr, consoleOut);
         return status;
     }
+
+    void FileListing::pruneRegions() {
+        auto iter = allFiles.begin();
+        while (iter != allFiles.end()) {
+            if (!iter->isRegionType()) {
+                ++iter;
+                continue;
+            }
+
+            const i16 regionX = iter->getNBTCompound()->getTag("x").toPrimitiveType<i16>();
+            const i16 regionZ = iter->getNBTCompound()->getTag("z").toPrimitiveType<i16>();
+
+            if (regionX < -1 || regionX > 0 || regionZ < -1 || regionZ > 0) {
+                iter->deleteData();
+                iter->deleteNBTCompound();
+                iter = allFiles.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+        clearPointers();
+        updatePointers();
+    }
+
+
+
 }
