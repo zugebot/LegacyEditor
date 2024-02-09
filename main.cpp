@@ -25,7 +25,7 @@ void PREPARE_UNIT_TESTS() {
     ps3_ = R"(D:\Emulator Folders\rpcs3-v0.0.18-12904-12efd291_win64\dev_hdd0\home\00000001\savedata\NPUB31419--231212220825\)";
     TEST_PAIR("superflat",   R"(superflat)"                                    , wiiu + R"(231105133853)");
     TEST_PAIR("aquatic_tut", R"(aquatic_tutorial)"                             , wiiu + R"(230918230206)");
-    TEST_PAIR("vita",        R"(Vita Save\PCSB00560-231005063840\GAMEDATA.bin)", wiiu + R"(BLANK_SAVE)");
+    TEST_PAIR("vita",        R"(Vita Save\PCSB00560-231005063840\GAMEDATA.bin)", dir_path + R"(BLANK_VITA_SAVE)");
     TEST_PAIR("elytra_tut",  R"(elytra_tutorial)"                              , wiiu + R"(230918230206)");
     TEST_PAIR("NS_save1"  ,  R"(NS\190809160532.dat)"                          , wiiu + R"(BLANK_SAVE)");
     TEST_PAIR("fortnite",    R"(fortnite_world)"                               , wiiu + R"(BLANK_SAVE)");
@@ -193,7 +193,7 @@ int main3() {
     const std::string TEST_NAME = "vita"; //" PS4_khaloody";
     const std::string TEST_IN = TESTS[TEST_NAME].first;   // file to read from
     const std::string TEST_OUT = TESTS[TEST_NAME].second; // file to write to
-    constexpr auto consoleOut = CONSOLE::WIIU;
+    constexpr auto consoleOut = CONSOLE::VITA;
 
     editor::FileListing fileListing;
 
@@ -201,14 +201,14 @@ int main3() {
         return printf_err("failed to load file\n");
     }
 
-    fileListing.removeFileTypes({
-        editor::FileType::PLAYER,
-        editor::FileType::DATA_MAPPING});
+    // fileListing.removeFileTypes({
+    //     editor::FileType::PLAYER,
+    //     editor::FileType::DATA_MAPPING});
 
     fileListing.printDetails();
     fileListing.printFileList();
 
-    fileListing.convertRegions(consoleOut);
+    // fileListing.convertRegions(consoleOut);
 
     /*
     editor::RegionManager region(fileListing.console);

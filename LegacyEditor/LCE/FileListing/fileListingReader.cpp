@@ -3,6 +3,8 @@
 #include <cstdio>
 #include <filesystem>
 
+#include "headerUnion.hpp"
+
 #include "LegacyEditor/utils/RLE/rle_vita.hpp"
 #include <LegacyEditor/utils/RLE/rle_nsxps4.hpp>
 #include "LegacyEditor/libs/tinf/tinf.h"
@@ -10,23 +12,19 @@
 #include "LegacyEditor/utils/LZX/XboxCompression.hpp"
 #include "LegacyEditor/utils/NBT.hpp"
 
-#include "headerUnion.hpp"
-
-
-
-
-namespace fs = std::filesystem;
-
 
 static constexpr u32 CON_MAGIC = 0x434F4E20;
 static constexpr u32 ZLIB_MAGIC = 0x789C;
-MU static constexpr char error1[69] = "Could not allocate %d bytes of data for source file buffer, exiting\n";
-MU static constexpr char error2[81] = "Could not allocate %d bytes of data for source and decompressed buffer, exiting\n";
-static constexpr char error3[43] = "Not a Minecraft console savefile, exiting\n";
+MU static constexpr char error1[69]
+    = "Could not allocate %d bytes of data for source file buffer, exiting\n";
+MU static constexpr char error2[81]
+    = "Could not allocate %d bytes of data for source and decompressed buffer, exiting\n";
+static constexpr char error3[43]
+    = "Not a Minecraft console savefile, exiting\n";
 
 
 namespace editor {
-
+    namespace fs = std::filesystem;
 
     i16 extractMapNumber(stringRef_t str) {
         static const std::string start = "map_";
@@ -108,7 +106,8 @@ namespace editor {
                     file.fileType = FileType::REGION_OVERWORLD;
                 }
                 auto* nbt = file.createNBTTagCompound();
-                const auto [fst, snd] = extractRegionCoords(fileName);
+                const auto [fst, snd]
+                    = extractRegionCoords(fileName);
                 nbt->setTag("x", createNBT_INT16(static_cast<i16>(fst)));
                 nbt->setTag("z", createNBT_INT16(static_cast<i16>(snd)));
                 continue;
@@ -154,7 +153,8 @@ namespace editor {
                 file.fileType = FileType::STRUCTURE;
                 auto* nbt = file.createNBTTagCompound();
                 nbt->setString("filename", fileName);
-                if (fileName.starts_with("data/villages_") && (console == CONSOLE::SWITCH)) {
+                if (fileName.starts_with("data/villages_")
+                    && (console == CONSOLE::SWITCH)) {
                     console = CONSOLE::PS4;
                 }
                 continue;
@@ -220,7 +220,6 @@ namespace editor {
         if (headerUnion.getInt1() <= 2) {
             u32 file_size = headerUnion.getDestSize();
             /// if (int1 == 0) it is a WiiU savefile unless it's a massive file
-            u32 indexFromSaveFile;
             if (headerUnion.getZlibMagic() == ZLIB_MAGIC) {
                 if (headerUnion.getSwitchFileSize() < file_size) {
                     file_size = headerUnion.getSwitchFileSize();
@@ -228,14 +227,17 @@ namespace editor {
                 } else {
                     result = readWiiU(f_in, data, source_bin_size, file_size);
                 }
-                /// idk utter coded it
-            } else if (indexFromSaveFile = headerUnion.getVitaFileSize() - headerUnion.getVitaFileListing(),
-                       indexFromSaveFile > 0 && indexFromSaveFile < 65536) {
-                std::cout << indexFromSaveFile << '\n';
-                file_size = headerUnion.getVitaFileSize();
-                result = readVita(f_in, data, source_bin_size, file_size);
+            // TODO: change this to write custom checker for FILE_COUNT * 144 == diff. with
+            // TODO: with custom vitaRLE decompress checker
             } else {
-                result = readPs3(f_in, data, source_bin_size, file_size);
+                const u32 indexFromSaveFile
+                    = headerUnion.getVitaFileSize() - headerUnion.getVitaFileListing();
+                if (indexFromSaveFile > 0 && indexFromSaveFile < 65536) {
+                    file_size = headerUnion.getVitaFileSize();
+                    result = readVita(f_in, data, source_bin_size, file_size);
+               } else {
+                   result = readPs3(f_in, data, source_bin_size, file_size);
+               }
             }
         } else if (headerUnion.getInt2() <= 2) {
             /// if (int2 == 0) it is an xbox savefile unless it's a massive
@@ -279,7 +281,7 @@ namespace editor {
 
         switch (console) {
             case CONSOLE::XBOX360:
-
+                // IDK...
             case CONSOLE::PS3:
             case CONSOLE::RPCS3:
             case CONSOLE::PS4:
@@ -291,7 +293,8 @@ namespace editor {
             case CONSOLE::WIIU:
             case CONSOLE::SWITCH: {
                 const u32 num = filename.size() - filepath.size();
-                const std::string filenamedat = filename.substr(filename.size(), num);
+                const std::string filenamedat
+                    = filename.substr(filename.size(), num);
                 filepath += filenamedat;
                 filepath += ".ext";
                 break;
@@ -320,8 +323,8 @@ namespace editor {
      */
     int FileListing::readExternalRegions(stringRef_t inFilePath) {
         int fileIndex = -1;
-        namespace fs = std::filesystem;
-        for (const auto& file : fs::directory_iterator(inFilePath)) {
+        for (const auto& file :
+            fs::directory_iterator(inFilePath)) {
 
             // TODO: place non-used files in a cache?
             if (is_directory(file)) { continue; }
@@ -342,13 +345,16 @@ namespace editor {
             RLE_NSXPS4_DECOMPRESS(manager_in.ptr, manager_in.size - 4,
                                  manager_out.ptr, manager_out.size);
 
-            manager_out.writeToFile("C:\\Users\\Jerrin\\CLionProjects\\LegacyEditor\\out\\" + filename);
+            // manager_out.writeToFile(
+            // "C:\\Users\\Jerrin\\CLionProjects\\LegacyEditor\\out\\"
+            // + filename);
 
             // TODO: get timestamp from file itself
             uint32_t timestamp = 0;
             allFiles.emplace_back(dat_out.data, fileSize, timestamp);
             File &lFile = allFiles.back();
-            if (const char dimChar = filename.at(12) - 48; dimChar < 0 || dimChar > 2) {
+            if (const char dimChar = filename.at(12) - 48; dimChar < 0
+                || dimChar > 2) {
                 lFile.fileType = FileType::NONE;
             } else {
                 static constexpr FileType regDims[3] = {
@@ -358,8 +364,10 @@ namespace editor {
                 };
                 lFile.fileType = regDims[dimChar];
             }
-            const int16_t rX = static_cast<int8_t>(strtol(filename.substr(13, 2).c_str(), nullptr, 16));
-            const int16_t rZ = static_cast<int8_t>(strtol(filename.substr(15, 2).c_str(), nullptr, 16));
+            const int16_t rX = static_cast<int8_t>(strtol(
+                filename.substr(13, 2).c_str(), nullptr, 16));
+            const int16_t rZ = static_cast<int8_t>(strtol(
+                filename.substr(15, 2).c_str(), nullptr, 16));
             auto* nbt = lFile.createNBTTagCompound();
             nbt->setTag("x", createNBT_INT16(rX));
             nbt->setTag("z", createNBT_INT16(rZ));
@@ -377,13 +385,13 @@ namespace editor {
      * 8-11 bytes: file listing?
      * @return
      */
-    int FileListing::readVita(FILE* f_in, Data& data, u64 source_binary_size, const u32 file_size) {
+    int FileListing::readVita(FILE* f_in, Data& data,
+        u64 source_binary_size, const u32 file_size) {
         printf("Detected Vita savefile, converting\n\n");
         console = CONSOLE::VITA;
 
         // total size of file
         source_binary_size -= 8;
-
         data.size = file_size;
 
         // allocate memory
@@ -402,7 +410,8 @@ namespace editor {
     }
 
 
-    int FileListing::readWiiU(FILE* f_in, Data& data, u64 source_binary_size, const u32 file_size) {
+    int FileListing::readWiiU(FILE* f_in, Data& data,
+        u64 source_binary_size, const u32 file_size) {
         printf("Detected WiiU savefile, converting\n\n");
         console = CONSOLE::WIIU;
 
@@ -418,7 +427,8 @@ namespace editor {
         fseek(f_in, 8, SEEK_SET);
         fread(src.start(), 1, source_binary_size, f_in);
 
-        if (tinf_zlib_uncompress(data.start(), &data.size, src.start(), source_binary_size) != 0) {
+        if (tinf_zlib_uncompress(data.start(), &data.size,
+            src.start(), source_binary_size) != 0) {
             src.deallocate();
             return DECOMPRESS;
         }
@@ -427,7 +437,8 @@ namespace editor {
     }
 
 
-    int FileListing::readNSXorPS4(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size) {
+    int FileListing::readNSXorPS4(FILE* f_in, Data& data,
+        u64 source_binary_size, const u32 file_size) {
         printf("Detected Switch/Ps4 savefile, converting\n\n");
         console = CONSOLE::SWITCH;
 
@@ -451,8 +462,10 @@ namespace editor {
 
 
     /// ps3 writeFile files don't need decompressing\n
-    /// TODO: IMPORTANT check from a region file chunk what console it is if it is uncompressed
-    int FileListing::readPs3(FILE* f_in, Data& data, const u64 source_binary_size, u32 file_size) {
+    /// TODO: figure out if this comment is actually important or not
+    /// TODO: check from regionFile chunk what console it is if uncompressed
+    int FileListing::readPs3(FILE* f_in, Data& data,
+        const u64 source_binary_size, u32 file_size) {
         printf("Detected compressed PS3 savefile, converting\n\n");
         console = CONSOLE::PS3;
 
@@ -480,7 +493,8 @@ namespace editor {
     }
 
 
-    int FileListing::readRpcs3(FILE* f_in, Data& data, u64 source_binary_size) {
+    int FileListing::readRpcs3(FILE* f_in, Data& data,
+        const u64 source_binary_size) {
         printf("Detected uncompressed PS3 / RPCS3 savefile, converting\n\n");
         console = CONSOLE::RPCS3;
         if (!data.allocate(source_binary_size)) {
@@ -492,7 +506,8 @@ namespace editor {
     }
 
 
-    int FileListing::readXbox360DAT(FILE* f_in, Data& data, const u32 file_size, const u32 src_size) {
+    int FileListing::readXbox360DAT(FILE* f_in, Data& data,
+        const u32 file_size, const u32 src_size) {
         printf("Detected Xbox360 .dat savefile, converting\n\n");
         console = CONSOLE::XBOX360;
 
@@ -506,7 +521,8 @@ namespace editor {
 
         // decompress src -> data
         fread(src.start(), 1, src.size, f_in);
-        data.size = XDecompress(data.start(), &data.size, src.start(), src.getSize());
+        data.size = XDecompress(data.start(), &data.size,
+            src.start(), src.getSize());
         src.deallocate();
         if (data.size == 0) {
             printf_err("%s", error3);
@@ -517,7 +533,8 @@ namespace editor {
     }
 
 
-    int FileListing::readXbox360BIN(FILE* f_in, Data& data, u64 source_binary_size) {
+    int FileListing::readXbox360BIN(FILE* f_in, Data& data,
+        u64 source_binary_size) {
         console = CONSOLE::XBOX360;
         /**
         printf("Detected Xbox360 .bin savefile, converting\n\n");

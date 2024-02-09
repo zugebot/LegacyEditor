@@ -15,6 +15,7 @@
 namespace editor {
     namespace fs = std::filesystem;
 
+
     Data FileListing::writeData(const CONSOLE consoleOut) {
 
         ensureAllRegionFilesExist();
@@ -63,7 +64,8 @@ namespace editor {
     }
 
 
-    int FileListing::write(stringRef_t outfileStr, const CONSOLE consoleOut) {
+    int FileListing::write(stringRef_t outfileStr,
+                           const CONSOLE consoleOut) {
         if (outfileStr.empty()) {
             return INVALID_ARGUMENT;
         }
@@ -79,7 +81,8 @@ namespace editor {
     }
 
 
-    int FileListing::writeFile(stringRef_t outfileStr, const CONSOLE consoleOut) {
+    int FileListing::writeFile(stringRef_t outfileStr,
+                               const CONSOLE consoleOut) {
         const Data dataOut = writeData(consoleOut);
         int status;
         switch (consoleOut) {
@@ -112,7 +115,8 @@ namespace editor {
     }
 
 
-    int FileListing::writeFileInfo(stringRef_t outFilePath, const CONSOLE consoleOut) const {
+    int FileListing::writeFileInfo(stringRef_t outFilePath,
+                                   const CONSOLE consoleOut) const {
         std::string filepath = outFilePath;
         while (!(filepath.back() == '\\' || filepath.back() == '/')) {
             filepath.pop_back();
@@ -150,69 +154,90 @@ namespace editor {
     }
 
 
-    int FileListing::writeWiiU(stringRef_t outfileStr, const Data& dataOut) {
-        const DataManager managerOut(dataOut);
-        u64 src_size = managerOut.size;
-
+    /**
+     * \brief Done.
+     * \param outfileStr
+     * \param dataOut
+     * \return
+     */
+    int FileListing::writeWiiU(stringRef_t outfileStr,
+                               const Data& dataOut) {
         FILE* f_out = fopen(outfileStr.c_str(), "wb");
         if (f_out == nullptr) { return FILE_ERROR; }
 
         // Write src_size to the file
+        u64 src_size = dataOut.size;
         uLong compressedSize = compressBound(src_size);
         printf("compressed bound: %lu\n", compressedSize);
 
         u8_vec compressedData(compressedSize);
         if (compress(compressedData.data(), &compressedSize,
-                     managerOut.data, managerOut.size) != Z_OK) {
+                     dataOut.data, dataOut.size) != Z_OK) {
             return COMPRESS;
         }
+
         compressedData.resize(compressedSize);
+        printf("Writing final size: %zu\n", compressedData.size());
 
         if (isSystemLittleEndian()) {
             src_size = swapEndian64(src_size);
         }
 
         fwrite(&src_size, sizeof(u64), 1, f_out);
-        printf("Writing final size: %zu\n", compressedData.size());
-
         fwrite(compressedData.data(), 1, compressedData.size(), f_out);
-
         fclose(f_out);
 
         return SUCCESS;
     }
 
 
-    int FileListing::writeVita(stringRef_t outfileStr, const Data& dataOut) {
+    /**
+     * \brief Done.
+     * \param outfileStr
+     * \param dataOut
+     * \return
+     */
+    int FileListing::writeVita(stringRef_t outfileStr,
+                               const Data& dataOut) {
         FILE* f_out = fopen(outfileStr.c_str(), "wb");
         if (f_out == nullptr) { return FILE_ERROR; }
 
         Data self;
         self.allocate(dataOut.size + 2);
 
-        self.size = RLEVITA_COMPRESS(dataOut.data, dataOut.size, self.data, self.size);
+        self.size = RLEVITA_COMPRESS(
+            dataOut.data, dataOut.size,
+            self.data, self.size);
 
         constexpr int num = 0;
+        u32 compSize = dataOut.size;
+        if (!isSystemLittleEndian()) {
+            compSize = swapEndian32(compSize);
+        }
+
+        // 4-bytes of '0'
+        // 4-bytes of total decompressed fileListing size
+        // N-bytes fileListing data
         fwrite(&num, sizeof(u32), 1, f_out);
+        fwrite(&compSize, sizeof(u32), 1, f_out);
+        fwrite(self.data, 1, self.size, f_out);
 
-        u32 val;
-        memcpy(&val, &self.data[0], 4);
-        static constexpr u32 NUM = 0x0900;
-        val += NUM;
-
-        // might need to swap endianness
-        fwrite(&val, sizeof(u32), 1, f_out);
-        fwrite(self.data, sizeof(u8), self.size, f_out);
         fclose(f_out);
 
         return SUCCESS;
     }
 
 
-    MU int FileListing::writeRPCS3(stringRef_t outfileStr, const Data& dataOut) {
+    /**
+     * \brief Done.
+     * \param outfileStr
+     * \param dataOut
+     * \return
+     */
+    MU int FileListing::writeRPCS3(stringRef_t outfileStr,
+                                   const Data& dataOut) {
         FILE* f_out = fopen(outfileStr.c_str(), "wb");
         if (f_out == nullptr) { return FILE_ERROR; }
-
 
         printf("Writing final size: %u\n", dataOut.size);
         fwrite(dataOut.data, 1, dataOut.size, f_out);
