@@ -111,19 +111,20 @@ namespace editor {
 
 
     // TODO: rewrite to return status
-    void ChunkManager::ensureDecompress(const CONSOLE console) {
+    int ChunkManager::ensureDecompress(const CONSOLE console) {
         if (fileData.getCompressed() == 0U
             || console == CONSOLE::NONE
             || data == nullptr
             || size == 0) {
-            return;
+            return SUCCESS;
         }
         fileData.setCompressed(0U);
 
         u32 dec_size_copy = fileData.getDecSize();
         Data decompData(fileData.getDecSize());
 
-        int result;
+        // TODO: XBOX1 case is not handled
+        int result = SUCCESS;
         switch (console) {
             case CONSOLE::XBOX360:
                 dec_size_copy = XDecompress(decompData.start(), &decompData.size, data, size);
@@ -137,8 +138,6 @@ namespace editor {
             case CONSOLE::VITA:
             case CONSOLE::PS4:
                 result = tinf_zlib_uncompress(decompData.start(), &decompData.size, data, size);
-                break;
-            case CONSOLE::XBOX1:
                 break;
             default:
                 break;
@@ -155,6 +154,7 @@ namespace editor {
             size = dec_size_copy;
             decompData.reset();
         }
+        return result;
     }
 
 

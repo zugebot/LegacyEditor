@@ -37,13 +37,13 @@ namespace editor::chunk {
 
     /// "Aquatic" chunks.
     class ChunkV13 {
-        static constexpr int DATA_HEADER_SIZE = 28;
-        static constexpr int SECTION_HEADER_SIZE = 50;
+        static constexpr u32 DATA_HEADER_SIZE = 28;
+        static constexpr u32 SECTION_HEADER_SIZE = 50;
 
-        static constexpr int SECTION_COUNT = 16;
-        static constexpr int GRID_COUNT = 64;
-        static constexpr int GRID_SIZE = 128;
-        static constexpr int MAP_SIZE = 65536;
+        static constexpr u32 SECTION_COUNT = 16;
+        static constexpr u32 GRID_COUNT = 64;
+        static constexpr u32 GRID_SIZE = 128;
+        static constexpr u32 MAP_SIZE = 65536;
 
         // Read Section
 
@@ -68,7 +68,7 @@ namespace editor::chunk {
         ChunkV13(ChunkData* chunkDataIn, DataManager* managerIn) : chunkData(chunkDataIn), dataManager(managerIn) {}
         MU void allocChunk() const;
         MU void readChunk();
-        MU void writeChunk();
+        MU void writeChunk() const;
 
     };
 }

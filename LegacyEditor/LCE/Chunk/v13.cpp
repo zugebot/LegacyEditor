@@ -33,9 +33,6 @@ namespace editor::chunk {
         chunkData->chunkZ = static_cast<i32>(dataManager->readInt32());
         chunkData->lastUpdate = static_cast<i64>(dataManager->readInt64());
         chunkData->inhabitedTime = static_cast<i64>(dataManager->readInt64());
-        // dataManager->setLittleEndian();
-        // dataManager->setBigEndian();
-
 
         readBlockData();
 
@@ -77,7 +74,7 @@ namespace editor::chunk {
         const u32 maxSectionAddress = dataManager->readInt16() << 8;
 
         u16_vec sectionJumpTable(16);
-        for (int i = 0; i < 16; i++) {
+        for (u32 i = 0; i < 16; i++) {
             const u16 address = dataManager->readInt16();
             sectionJumpTable[i] = address;
         }
@@ -89,7 +86,7 @@ namespace editor::chunk {
         }
 
         for (int section = 0; section < 16; section++) {
-            const int address = sectionJumpTable[section];
+            const u32 address = sectionJumpTable[section];
             dataManager->seek(SECTION_HEADER_SIZE + DATA_HEADER_SIZE + address); // 28 chunk header + 50 section header
             if (address == maxSectionAddress) {
                 break;
@@ -207,12 +204,12 @@ namespace editor::chunk {
         u16_vec palette(size);
         std::copy_n(buffer, size, palette.begin());
 
-        int i = 0;
-        while (i < 64) {
+        int index = 0;
+        while (index < 64) {
             u8 vBlocks[BitsPerBlock];
 
-            const int row = i / 8;
-            const int column = i % 8;
+            const int row = index / 8;
+            const int column = index % 8;
 
             for (int j = 0; j < BitsPerBlock; j++) {
                 vBlocks[j] = buffer[size + row + j * 8];
@@ -229,13 +226,13 @@ namespace editor::chunk {
                 return false;
             }
 
-            const int gridIndex = i * 2;
+            const int gridIndex = index * 2;
             const int paletteIndex = idx * 2;
 
             grid[gridIndex + 0] = palette[paletteIndex + 0];
             grid[gridIndex + 1] = palette[paletteIndex + 1];
 
-            i++;
+            index++;
         }
         return true;
     }
@@ -273,8 +270,8 @@ namespace editor::chunk {
                 u16 idxBlock = 0;
                 u16 idxSbmrg = 0;
                 for (int k = 0; k < BitsPerBlock; k++) {
-                    idxBlock |= ((vBlocks[k] & mask) >> (7 - j)) << k;
-                    idxSbmrg |= ((vWaters[k] & mask) >> (7 - j)) << k;
+                    idxBlock |= (vBlocks[k] & mask) >> 7 - j << k;
+                    idxSbmrg |= (vWaters[k] & mask) >> 7 - j << k;
                 }
 
                 if EXPECT_FALSE (idxBlock >= size || idxSbmrg >= size) {
@@ -299,7 +296,7 @@ namespace editor::chunk {
     // #####################################################
 
 
-    void ChunkV13::writeChunk() {
+    void ChunkV13::writeChunk() const {
         dataManager->writeInt32(chunkData->chunkX);
         dataManager->writeInt32(chunkData->chunkZ);
         dataManager->writeInt64(chunkData->lastUpdate);
@@ -327,8 +324,8 @@ namespace editor::chunk {
         u16_vec blockVector;
         u16_vec blockLocations;
         u16 gridHeader[GRID_COUNT];
-        u16 sectJumpTable[SECTION_COUNT] = {0};
-        u8 sectSizeTable[SECTION_COUNT] = {0};
+        u16 sectJumpTable[SECTION_COUNT] = {};
+        u8 sectSizeTable[SECTION_COUNT] = {};
         u8 blockMap[MAP_SIZE] = {0};
 
         blockVector.reserve(GRID_COUNT);
@@ -408,7 +405,7 @@ namespace editor::chunk {
 
                             default: gridFormat = V13_8_FULL; writeWithMaxBlocks(blockVector, blockLocations, blockMap); break;
                         }
-                        gridID = (sectionSize / 4) | gridFormat << 12;
+                        gridID = sectionSize / 4 | gridFormat << 12;
                     SWITCH_END:;
                         gridHeader[gridIndex++] = gridID;
                         sectionSize += V13_GRID_SIZES[gridFormat];

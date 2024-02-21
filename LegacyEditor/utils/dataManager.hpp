@@ -40,6 +40,7 @@ public:
     void seekStart();
     void seekEnd();
     void seek(i64 position);
+    void seek(u32 position);
     bool isEndOfData() const;
     u32 getPosition() const;
     u8 peekNextByte() const;

@@ -53,9 +53,16 @@ namespace editor::chunk {
         // Write Section
 
         void writeBlockData() const;
+
         template<size_t BitsPerBlock, size_t BlockCount, size_t EmptyCount>
         void writeGrid(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[MAP_SIZE]) const;
         void writeWithMaxBlocks(const u16_vec& blockVector, const u16_vec& blockLocations, u8 blockMap[MAP_SIZE]) const;
+
+        template<size_t BitsPerBlock, size_t BlockCount, size_t EmptyCount>
+        void writeGridSubmerged(u16_vec& blockVector, u16_vec& blockLocations,
+            const u16_vec& sbmrgLocations, u8 blockMap[MAP_SIZE]) const;
+        void writeWithMaxBlocksSubmerged(const u16_vec& blockVector,
+            const u16_vec& blockLocations, const u16_vec& sbmrgLocations, u8 blockMap[MAP_SIZE]) const;
 
     public:
         ChunkData* chunkData = nullptr;
@@ -63,8 +70,8 @@ namespace editor::chunk {
 
         ChunkV12(ChunkData* chunkDataIn, DataManager* managerIn) : chunkData(chunkDataIn), dataManager(managerIn) {}
         MU void allocChunk() const;
-        MU void readChunk();
-        MU void writeChunk();
+        MU void readChunk() const;
+        MU void writeChunk() const;
 
     };
 }

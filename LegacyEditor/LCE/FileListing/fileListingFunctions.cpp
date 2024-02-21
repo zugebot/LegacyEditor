@@ -30,7 +30,7 @@ namespace editor {
     }
 
 
-    int FileListing::saveToFolder(stringRef_t folderIn) const {
+    int FileListing::saveToFolder(const stringRef_t folderIn) const {
 
         std::string folder = folderIn;
         if (folderIn.empty()) {

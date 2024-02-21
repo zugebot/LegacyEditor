@@ -1,16 +1,20 @@
 #pragma once
 
-#include "chunkData.hpp"
+#include "LegacyEditor/utils/processor.hpp"
+
 
 class DataManager;
 
 
 namespace editor::chunk {
 
+    class ChunkData;
+
     /// "Elytra" chunks.
     class ChunkV11 {
         static constexpr i32 GRID_SIZE = 64;
         static constexpr i32 GRID_HEADER_SIZE = 1024;
+        static constexpr i32 GRID_COUNT = 512;
 
         // Read
 
@@ -29,7 +33,7 @@ namespace editor::chunk {
             chunkData(chunkDataIn), dataManager(managerIn) {}
 
         MU void allocChunk() const;
-        MU void readChunk();
+        MU void readChunk() const;
         MU void writeChunk();
     };
 

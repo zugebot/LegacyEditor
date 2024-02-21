@@ -13,9 +13,7 @@ namespace editor {
     RegionManager::RegionManager(const CONSOLE consoleIn)
             : sectorBytes(0), sectorInts(0), console(consoleIn) {}
 
-    RegionManager::~RegionManager() {
-
-    }
+    RegionManager::~RegionManager() = default;
 
 
     MU ChunkManager* RegionManager::getChunk(const int xIn, const int zIn) {
@@ -123,8 +121,8 @@ namespace editor {
      * @return
      */
         Data RegionManager::write(const CONSOLE consoleIn) {
-            u32 locations[SECTOR_INTS] = {0};
-            u8 sectors[SECTOR_INTS] = {0};
+            u32 locations[SECTOR_INTS] = {};
+            u8 sectors[SECTOR_INTS] = {};
 
             int total_sectors = 2;
             for (int chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
@@ -158,8 +156,8 @@ namespace editor {
                 managerOut.seek(locations[chunkIndex] * SECTOR_BYTES);
 
                 u32 size = chunk.size;
-                if (chunk.fileData.getRLE() != 0U) size |= 0x80000000;
-                if (chunk.fileData.getUnknown() != 0U) size |= 0x40000000;
+                if (chunk.fileData.getRLE() != 0U) { size |= 0x80000000; }
+                if (chunk.fileData.getUnknown() != 0U) { size |= 0x40000000; }
                 managerOut.writeInt32(size);
 
                 switch (console) {

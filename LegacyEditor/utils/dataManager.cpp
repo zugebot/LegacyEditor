@@ -37,6 +37,11 @@ void DataManager::seek(const i64 position) {
     incrementPointer(static_cast<i32>(position));
 }
 
+void DataManager::seek(const u32 position) {
+    seekStart();
+    incrementPointer(static_cast<i32>(position));
+}
+
 bool DataManager::isEndOfData() const {
     return ptr >= data + size - 1;
 }

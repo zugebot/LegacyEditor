@@ -1,16 +1,13 @@
 #include "v11.hpp"
 
-#include <cstring>
 #include <algorithm>
+#include <cstring>
 
 #include "LegacyEditor/utils/NBT.hpp"
 #include "LegacyEditor/utils/dataManager.hpp"
+#include "chunkData.hpp"
 #include "helpers.hpp"
 
-
-static u32 toIndex(const u32 num) {
-    return (num + 1) * 128;
-}
 
 // TODO: I think I need to rewrite this all to place blocks as only u8's,
 // TODO: and to switch it to use oldBlocks instead of newBlocks
@@ -30,7 +27,7 @@ namespace editor::chunk {
     // #####################################################
 
 
-    void ChunkV11::readChunk() {
+    void ChunkV11::readChunk() const {
         allocChunk();
 
         chunkData->chunkX = static_cast<i32>(dataManager->readInt32());
@@ -44,7 +41,7 @@ namespace editor::chunk {
 
         readBlocks();
 
-        auto dataArray = readGetDataBlockVector<6>(chunkData, dataManager);
+        const auto dataArray = readGetDataBlockVector<6>(chunkData, dataManager);
         readDataBlock(dataArray[0], dataArray[1], chunkData->blockData);
         readDataBlock(dataArray[2], dataArray[3], chunkData->skyLight);
         readDataBlock(dataArray[4], dataArray[5], chunkData->blockLight);
@@ -60,24 +57,18 @@ namespace editor::chunk {
         chunkData->validChunk = true;
     }
 
+    // xzy or zxy?
+    static void putBlocks(u16_vec& writeVec, const u8* grid,
+        const int writeOffset, const int gridIndex) {
+        const int num = gridIndex / 64;
+        const int num2 = gridIndex / 2 % 32;
+        const int gridOffset = writeOffset + num / 4 * 64 + num % 4 * 4 + num2 * 1024;
 
-    static int calculateOffset(const int value) {
-        const int num = value / 32;
-        const int num2 = value % 32;
-        return num / 4 * 64 + num % 4 * 4 + num2 * 1024;
-    }
-
-
-
-    static void putBlocks(u16_vec& writeVec, const u8* grid, const int writeOffset, int readOffset) {
-        readOffset = calculateOffset(readOffset);
-        int gridIndex = 0;
-        for (int i = 0; i < 4; i++) {
+        int gridIter = 0;
+        for (int i = 0; i < 64; i += 16) {
             for (int j = 0; j < 4; j++) {
-                for (int k = 0; k < 4; k++) {
-                    const int currentOffset = readOffset + i * 16 + j + k * 256; // xzy or zxy?
-                    const u8 num2 = grid[gridIndex++];
-                    writeVec[currentOffset + writeOffset] = static_cast<u16>(num2);
+                for (int k = 0; k < 1024; k += 256) {
+                    writeVec[gridOffset + i + j + k] = static_cast<u16>(grid[gridIter++]);
                 }
             }
         }
@@ -85,53 +76,70 @@ namespace editor::chunk {
 
 
     void ChunkV11::readBlocks() const {
-        const u32 CHUNK_HEADER_SIZE = chunkData->lastVersion > 8 ? 26 : 18;
 
-        int putBlockOffset = 0;
-        for (size_t loop = 0; loop < 2; ++loop, putBlockOffset += 32768) {
+        for (int putBlockOffset = 0; putBlockOffset < 65536; putBlockOffset += 32768) {
             const i32 blockLength = static_cast<i32>(dataManager->readInt32()) - GRID_HEADER_SIZE;
 
-            if (blockLength <= 0) {
-                continue;
-            }
+            if (blockLength <= 0) { continue; }
 
-            u8* header = dataManager->ptr;
+            // access: 0 <-> 1023
+            const u8* gridHeader = dataManager->ptr;
             dataManager->incrementPointer(GRID_HEADER_SIZE);
 
-            // TODO: why is this read but not used???
-            u8* data = dataManager->ptr;
+            // access: 0 <-> blockLength
+            const u8 *const blockDataPtr = dataManager->ptr;
             dataManager->incrementPointer(blockLength);
 
+            /**
+             * the data is stored in the order of
+             * [ byte2 | byte1 ]
+             * but for readability we will swap it.
+             *
+             *
+             *         [    byte1 |    byte2 ]
+             * VAR:    [ XXXXXXXX | XXXXXXXX ]
+             *
+             * IF:
+             * value : [ -------- | 00000111 ]
+             *
+             * THEN:
+             * block : [ XXXXXXXX | -------- ]
+             *
+             * ELSE:
+             * format: [ -------- | ------XX ]
+             * offset: [ -------X | XXXXXX-- ]
+             *
+             * This does not increment dataManager->data.
+             */
+            for (int gridIndex = 0; gridIndex < GRID_HEADER_SIZE; gridIndex += 2) {
+                // read the grid header bytes
+                const u8 byte2 = gridHeader[gridIndex];
+                const u8 byte1 = gridHeader[gridIndex + 1];
+                u8 grid[GRID_SIZE] = {};
 
-            for (int gridIndex = 0; gridIndex < 512; gridIndex++) {
-                const u8 byte1 = header[gridIndex * 2];
-                const u8 byte2 = header[gridIndex * 2 + 1];
-                u8 grid[GRID_SIZE] = {0};
+                if (byte2 == 0b111) {
+                    // this is only here to optimize filling with air
+                    if (byte1 != 0) { for (u8& gridIter: grid) {
+                        gridIter = byte1;
+                    } }
 
-                if (byte1 == 0b111) {
-                    if (byte2 != 0) {
-
-                        for (int i = 0; i < GRID_SIZE; i++) {
-                            grid[i] = byte2;
-                        }
-
-                    }
                 } else {
-                    const int dataOffset = (byte2 << 7) + ((byte1 & 0b11111100) >> 1);
-                    const u32 gridPosition = 4 + GRID_HEADER_SIZE + CHUNK_HEADER_SIZE + dataOffset;
-                    switch (byte1 & 0b11) {
-                        case 0: readGrid<1>(dataManager->data + gridPosition, grid); break;
-                        case 1: readGrid<2>(dataManager->data + gridPosition, grid); break;
-                        case 2: readGrid<4>(dataManager->data + gridPosition, grid); break;
-                        case 3:
-                            fillAllBlocks<GRID_SIZE>(dataManager->data + gridPosition, grid); break;
+                    // find the location of the grid's data
+                    const u32 dataOffset = (byte1 << 7U) + ((byte2 & 0b11111100U) >> 1);
+                    const u8* const gridPositionPtr = blockDataPtr + dataOffset;
+
+                    // switch over format
+                    switch (byte2 & 0b11U) {
+                        case 0: readGrid<1>(gridPositionPtr, grid); break;
+                        case 1: readGrid<2>(gridPositionPtr, grid); break;
+                        case 2: readGrid<4>(gridPositionPtr, grid); break;
+                        case 3: fillAllBlocks<GRID_SIZE>(gridPositionPtr, grid); break;
                         default: return;
                     }
                 }
-
+                // place the grid blocks into the chunkData
                 putBlocks(chunkData->newBlocks, grid, putBlockOffset, gridIndex);
             }
-
         }
     }
 
@@ -144,17 +152,18 @@ namespace editor::chunk {
 
         int gridIndex = 0;
         const int blocksPerByte = 8 / BitsPerBlock;
-        for (size_t i = 0; i < BitsPerBlock * 8; i++) {
-            u16 v = buffer[size + i];
+        // iterates over all bytes
+        for (size_t byteOffset = 0; byteOffset < 8 * BitsPerBlock; byteOffset++) {
+            u16 currentByte = buffer[size + byteOffset];
+            // iterates over each block in a byte
             for (int j = 0; j < blocksPerByte; j++) {
-                u16 idx = 0;
-                for (int x = 0; x < BitsPerBlock; x++) {
-                    idx |= (v & 1) << x;
-                    v >>= 1;
+                u16 paletteIndex = 0;
+                // iterates over each bit in the byte, could be made faster?
+                for (int bitPerBlock = 0; bitPerBlock < BitsPerBlock; bitPerBlock++) {
+                    paletteIndex |= (currentByte & 1) << bitPerBlock;
+                    currentByte >>= 1;
                 }
-                if EXPECT_FALSE (idx >= size) { return false; }
-                grid[gridIndex] = palette[idx];
-                gridIndex += 1;
+                grid[gridIndex++] = palette[paletteIndex];
             }
         }
         return true;
@@ -166,12 +175,7 @@ namespace editor::chunk {
 
 
     void ChunkV11::writeChunk() {
-
     }
 
 
-
-
-}
-
-
+} // namespace editor::chunk

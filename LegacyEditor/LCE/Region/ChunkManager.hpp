@@ -44,7 +44,7 @@ namespace editor {
             MU ND u64 getCompressed() const { return isCompressed; }
         };
 
-        FileData fileData{};
+        FileData fileData;
         chunk::ChunkData* chunkData = nullptr;
 
         /// CONSTRUCTORS
@@ -54,7 +54,7 @@ namespace editor {
 
         /// FUNCTIONS
 
-        void ensureDecompress(CONSOLE console);
+        int ensureDecompress(CONSOLE console);
         void ensureCompressed(CONSOLE console);
 
         MU void readChunk(CONSOLE console) const;
