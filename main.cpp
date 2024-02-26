@@ -13,14 +13,14 @@ std::string dir_path, out_path, wiiu, ps3_;
 typedef std::pair<std::string, std::string> strPair_t;
 std::map<std::string, strPair_t> TESTS;
 void TEST_PAIR(stringRef_t key, stringRef_t path_in, stringRef_t out) {
-    std::string pathIn = dir_path + R"(tests\)" + path_in;
+    std::string pathIn = dir_path + R"(tests/)" + path_in;
     TESTS.insert(std::make_pair(key, std::make_pair(pathIn, out)));
 }
 
 void PREPARE_UNIT_TESTS() {
-    dir_path = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\)";
+    dir_path = R"(/Users/brandon/Documents/Coding Projects/LegacyEditor/)";
     out_path = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\)";
-    std::string out_build = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\out\)";
+    std::string out_build = R"(/Users/brandon/Documents/Coding Projects/LegacyEditor/out/)";
     wiiu = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\)";
     ps3_ = R"(D:\Emulator Folders\rpcs3-v0.0.18-12904-12efd291_win64\dev_hdd0\home\00000001\savedata\NPUB31419--231212220825\)";
     TEST_PAIR("superflat",   R"(superflat)"                                    , wiiu + R"(231105133853)");
@@ -36,6 +36,7 @@ void PREPARE_UNIT_TESTS() {
     TEST_PAIR("corrupt_save",R"(CODY_UUAS_2017010800565100288444\GAMEDATA)", wiiu + R"(231000000000)");
     TEST_PAIR("PS4_khaloody",R"(PS4\00000008\savedata0\GAMEDATA)", out_build + R"(BLANK_SAVE)");
     TEST_PAIR("PS4_to_wiiu"   , R"(BLANK_SAVE)", dir_path + "PS4_to_wiiu_to_wiiu");
+    TEST_PAIR("Offroaders123"   , R"(GAMEDATA)", out_build + "PS4_to_wiiu_to_wiiu");
 }
 
 
@@ -190,10 +191,10 @@ int main2() {
 int main3() {
     PREPARE_UNIT_TESTS();
 
-    const std::string TEST_NAME = "vita"; //" PS4_khaloody";
+    const std::string TEST_NAME = "Offroaders123"; //" PS4_khaloody";
     const std::string TEST_IN = TESTS[TEST_NAME].first;   // file to read from
     const std::string TEST_OUT = TESTS[TEST_NAME].second; // file to write to
-    constexpr auto consoleOut = CONSOLE::VITA;
+    constexpr auto consoleOut = CONSOLE::XBOX1;
 
     editor::FileListing fileListing;
 
