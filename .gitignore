@@ -1,4 +1,5 @@
 /cmake-build-debug/
+/build/
 
 /dump/wiiu/
 /dump/switch/
@@ -6,3 +7,5 @@
 /dump/rpcs3/
 /dump_xbox360/
 /dump/vita/
+
+.DS_Store

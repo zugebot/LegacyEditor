@@ -32,10 +32,10 @@ void DataManager::seekEnd() {
 }
 
 
-void DataManager::seek(const i64 position) {
-    seekStart();
-    incrementPointer(static_cast<i32>(position));
-}
+// void DataManager::seek(const i64 position) {
+//     seekStart();
+//     incrementPointer(static_cast<i32>(position));
+// }
 
 void DataManager::seek(const u32 position) {
     seekStart();
