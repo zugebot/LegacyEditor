@@ -11,11 +11,11 @@
 
 
 std::string dir_path, out_path, wiiu, ps3_;
-typedef std::pair<std::string, std::string> strPair_t;
-std::map<std::string, strPair_t> TESTS;
-void TEST_PAIR(stringRef_t key, stringRef_t path_in, stringRef_t out) {
+std::map<std::string, std::pair<std::string, std::string>> TESTS;
+void TEST_PAIR(const std::string &key, const std::string &path_in, const std::string &out) {
     std::string pathIn = dir_path + R"(tests\)" + path_in;
-    TESTS.insert(std::make_pair(key, std::make_pair(pathIn, out)));
+    std::pair<std::string, std::string> pair = std::make_pair(pathIn, out);
+    TESTS.insert(std::make_pair(key, pair));
 }
 
 void PREPARE_UNIT_TESTS() {
@@ -33,10 +33,10 @@ void PREPARE_UNIT_TESTS() {
     TEST_PAIR("rpcs3_flat",  R"(RPCS3_GAMEDATA)"                               , ps3_ + R"(GAMEDATA)");
     TEST_PAIR("X360_TU69",   R"(XBOX360_TU69.bin)"                             , dir_path + R"(tests\XBOX360_TU69.bin)" );
     TEST_PAIR("X360_TU74",   R"(XBOX360_TU74.dat)"                             , dir_path + R"(tests\XBOX360_TU74.dat)" );
-    TEST_PAIR("nether",      R"(nether)", wiiu + R"(231114151239)");
-    TEST_PAIR("corrupt_save",R"(CODY_UUAS_2017010800565100288444\GAMEDATA)", wiiu + R"(231000000000)");
-    TEST_PAIR("PS4_khaloody",R"(PS4\00000008\savedata0\GAMEDATA)", out_build + R"(BLANK_SAVE)");
-    TEST_PAIR("PS4_to_wiiu"   , R"(BLANK_SAVE)", dir_path + "PS4_to_wiiu_to_wiiu");
+    TEST_PAIR("nether",      R"(nether)"                                       , wiiu + R"(231114151239)");
+    TEST_PAIR("corrupt_save",R"(CODY_UUAS_2017010800565100288444\GAMEDATA)"    , wiiu + R"(231000000000)");
+    TEST_PAIR("PS4_khaloody",R"(PS4\00000008\savedata0\GAMEDATA)"              , out_build + R"(BLANK_SAVE)");
+    TEST_PAIR("PS4_to_wiiu" ,R"(BLANK_SAVE)"                                   , dir_path + "PS4_to_wiiu_to_wiiu");
 }
 
 
@@ -60,7 +60,7 @@ int main0() {
     fileListing.printDetails();
     fileListing.printFileList();
 
-    editor::RegionManager region(consoleIn);
+    editor::RegionManager region;
     region.read(fileListing.region_overworld[2]);
     editor::ChunkManager *chunk = region.getChunk(0, 0);
 
@@ -75,8 +75,6 @@ int main0() {
 
     fileListing.region_overworld[2]->data.deallocate();
     fileListing.region_overworld[2]->data = region.write(consoleOut);
-
-    // fileListing.convertRegions(consoleOut);
 
     // fileListing.fileInfo.basesavename = L"Fortnite";
     const int statusOut = fileListing.write(TEST_OUT, consoleOut);
@@ -260,8 +258,6 @@ int main3() {
 
     fileListing.printDetails();
     fileListing.printFileList();
-
-    fileListing.convertRegions(consoleOut);
 
     const int statusOut = fileListing.write(TEST_OUT, consoleOut);
     if (statusOut != 0) {

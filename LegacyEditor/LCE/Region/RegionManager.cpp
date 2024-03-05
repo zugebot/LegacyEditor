@@ -10,8 +10,8 @@
 namespace editor {
 
 
-    RegionManager::RegionManager(const CONSOLE consoleIn)
-            : sectorBytes(0), sectorInts(0), console(consoleIn) {}
+    RegionManager::RegionManager()
+            : sectorBytes(0), sectorInts(0) {}
 
     RegionManager::~RegionManager() = default;
 
@@ -40,11 +40,14 @@ namespace editor {
 
 
     void RegionManager::read(const File* fileIn) {
+        console = fileIn->console;
         read(&fileIn->data);
     }
 
 
     /**
+     * DO NOT USE THIS ONE! USE 'read(const File* fileIn)'!
+     *
      * step 1: copying data from file
      * step 2: read timestamps [CHUNK_COUNT]
      * step 3: read chunk size, decompressed size

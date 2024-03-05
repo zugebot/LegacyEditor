@@ -92,7 +92,8 @@ namespace editor {
             managerIn.seek(index);
             u8* data = managerIn.readBytes(fileSize);
 
-            allFiles.emplace_back(data, fileSize, timestamp);
+            // TODO: make sure all files are set with the correct console
+            allFiles.emplace_back(console, data, fileSize, timestamp);
             File &file = allFiles.back();
 
             // region file
@@ -352,7 +353,8 @@ namespace editor {
 
             // TODO: get timestamp from file itself
             uint32_t timestamp = 0;
-            allFiles.emplace_back(dat_out.data, fileSize, timestamp);
+            // TODO: should not be CONSOLE::NONE
+            allFiles.emplace_back(CONSOLE::NONE, dat_out.data, fileSize, timestamp);
             File &lFile = allFiles.back();
             if (const char dimChar = filename.at(12) - 48; dimChar < 0
                 || dimChar > 2) {

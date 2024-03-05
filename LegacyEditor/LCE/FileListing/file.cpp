@@ -9,13 +9,13 @@ namespace editor {
     File::File() {}
 
 
-    File::File(const u32 sizeIn) : data(Data(sizeIn)) {}
+    File::File(const CONSOLE consoleIn, const u32 sizeIn) : data(Data(sizeIn)), console(consoleIn) {}
 
 
-    File::File(const u32 sizeIn, const u64 timestampIn) : data(Data(sizeIn)), timestamp(timestampIn) {}
+    File::File(const CONSOLE consoleIn, const u32 sizeIn, const u64 timestampIn) : data(Data(sizeIn)), timestamp(timestampIn), console(consoleIn) {}
 
 
-    File::File(u8* dataIn, const u32 sizeIn, const u64 timestampIn) : data(dataIn, sizeIn), timestamp(timestampIn) {}
+    File::File(const CONSOLE consoleIn, u8* dataIn, const u32 sizeIn, const u64 timestampIn) : data(dataIn, sizeIn), timestamp(timestampIn), console(consoleIn) {}
 
 
     File::~File() {

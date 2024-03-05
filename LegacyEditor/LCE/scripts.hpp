@@ -11,7 +11,7 @@ namespace editor {
         if (regionIndex >= fileListing.region_overworld.size()) { return; }
 
         // read a region file
-        RegionManager region(console);
+        RegionManager region;
         region.read(fileListing.region_overworld[regionIndex]);
 
         int h = -1;
@@ -129,7 +129,7 @@ namespace editor {
         if (regionIndex >= fileListing.region_nether.size()) { return; }
 
         // read a region file
-        RegionManager region(console);
+        RegionManager region;
         region.read(fileListing.region_nether[regionIndex]);
 
         for (ChunkManager& chunkManager: region.chunks) {
@@ -186,7 +186,7 @@ namespace editor {
         if (regionIndex >= fileListing.region_nether.size()) { return; }
 
         // read a region file
-        RegionManager region(console);
+        RegionManager region;
         region.read(fileListing.region_nether[regionIndex]);
 
         for (int index = 0; index < 1024; index++) {
@@ -227,7 +227,7 @@ namespace editor {
         if (regionIndex >= fileListing.region_overworld.size()) { return; }
 
         // read a region file
-        RegionManager region(console);
+        RegionManager region;
         region.read(fileListing.region_overworld[regionIndex]);
 
         for (auto& chunk: region.chunks) {

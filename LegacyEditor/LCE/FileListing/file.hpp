@@ -68,12 +68,13 @@ namespace editor {
         Data data;
         u64 timestamp = 0;
         u32 additionalData = 0;
+        CONSOLE console = CONSOLE::NONE;
         FileType fileType = FileType::NONE;
 
         File();
-        explicit File(u32 sizeIn);
-        File(u32 sizeIn, u64 timestampIn);
-        File(u8* dataIn, u32 sizeIn, u64 timestampIn);
+        explicit File(CONSOLE consoleIn, u32 sizeIn);
+        File(CONSOLE consoleIn, u32 sizeIn, u64 timestampIn);
+        File(CONSOLE consoleIn, u8* dataIn, u32 sizeIn, u64 timestampIn);
 
         ~File();
 

@@ -111,7 +111,8 @@ namespace editor {
                     }
 
                     filesAdded++;
-                    allFiles.emplace_back(nullptr, 0, 0);
+                    // TODO: should not be CONSOLE::NONE
+                    allFiles.emplace_back(CONSOLE::NONE, nullptr, 0, 0);
                     File &file = allFiles.back();
 
                     auto* nbt = file.createNBTTagCompound();
@@ -253,7 +254,11 @@ namespace editor {
     MU void FileListing::convertRegions(const CONSOLE consoleOut) {
         for (const FileList* fileList : dimFileLists) {
             for (File* file : *fileList) {
-                RegionManager region(console);
+                // don't convert it if it's already the correct console version
+                if (file->console == consoleOut) {
+                    continue;
+                }
+                RegionManager region;
                 region.read(file);
                 const Data data = region.write(consoleOut);
                 file->data.steal(data);
@@ -274,7 +279,7 @@ namespace editor {
 
         for (const auto* fileList : dimFileLists) {
             for (File* file: *fileList) {
-                RegionManager region(this->console);
+                RegionManager region;
                 region.read(file);
                 const Data data1 = region.write(consoleOut);
                 file->data.steal(data1);
@@ -307,7 +312,7 @@ namespace editor {
 
         for (const auto* fileList : dimFileLists) {
             for (File* file: *fileList) {
-                RegionManager region(replace.console);
+                RegionManager region;
                 region.read(file);
                 const Data data1 = region.write(consoleOut);
                 file->data.steal(data1);

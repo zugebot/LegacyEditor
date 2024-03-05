@@ -70,6 +70,8 @@ namespace editor {
             return INVALID_ARGUMENT;
         }
 
+        convertRegions(consoleOut);
+
         const int status = writeFile(outfileStr, consoleOut);
 
         if (fileInfo.isLoaded) {

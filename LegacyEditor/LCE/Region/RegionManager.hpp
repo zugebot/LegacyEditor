@@ -21,7 +21,7 @@ namespace editor {
 
         /// CONSTRUCTORS
 
-        explicit RegionManager(CONSOLE consoleIn);
+        RegionManager();
         ~RegionManager();
 
         /// FUNCTIONS
