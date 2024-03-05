@@ -59,6 +59,9 @@ namespace editor {
 
         MU void readChunk(CONSOLE console) const;
         MU void writeChunk(CONSOLE console);
+
+        void setSizeFromReading(u32 sizeIn);
+        ND u32 getSizeForWriting() const;
     };
 
 }

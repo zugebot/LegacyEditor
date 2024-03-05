@@ -118,7 +118,7 @@ namespace editor {
     int FileListing::writeFileInfo(stringRef_t outFilePath,
                                    const CONSOLE consoleOut) const {
         std::string filepath = outFilePath;
-        while (!(filepath.back() == '\\' || filepath.back() == '/')) {
+        while (filepath.back() != '\\' && filepath.back() != '/') {
             filepath.pop_back();
         }
 
