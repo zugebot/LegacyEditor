@@ -28,14 +28,13 @@ namespace editor {
         MU ChunkManager* getChunk(int index);
         MU ChunkManager* getNonEmptyChunk();
 
-        /// READ
+        /// READ AND WRITE
 
         void read(const File* fileIn);
-        void read(const Data* dataIn);
-
-        /// WRITE
-
         Data write(CONSOLE consoleIn);
+
+    private:
+        void read(const Data* dataIn);
     };
 
 }

@@ -148,7 +148,11 @@ int main2() {
         return status;
     }
 
-    fileListing.removeFileTypes({editor::FileType::PLAYER, editor::FileType::REGION_NETHER, editor::FileType::REGION_END});
+    fileListing.removeFileTypes({
+        editor::FileType::PLAYER,
+        editor::FileType::REGION_NETHER,
+        editor::FileType::REGION_END
+    });
 
 
 
