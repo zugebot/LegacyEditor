@@ -60,7 +60,7 @@ namespace editor::chunk {
 
     MU inline void placeBlock(ChunkData* chunkData,
         const int xIn, const int yIn, const int zIn,
-        const u16 block, const u16 data, const bool waterlogged) {
+        const u16 block, const u16 data, const bool waterlogged, const bool submerged = false) {
         switch (chunkData->lastVersion) {
             case 8:
             case 9:
@@ -81,7 +81,12 @@ namespace editor::chunk {
                 if (waterlogged) {
                     value |= 0x8000;
                 }
-                chunkData->newBlocks[offset] = value;
+                if (!submerged) {
+                    chunkData->newBlocks[offset] = value;
+                } else {
+                    chunkData->submerged[offset] = value;
+                }
+
             }
             default:;
         }
@@ -89,11 +94,11 @@ namespace editor::chunk {
 
     MU inline void placeBlock(ChunkData* chunkData,
         const int xIn, const int yIn, const int zIn,
-        const u16 block) {
+        const u16 block, const bool submerged = false) {
         const bool waterloggedIn = block & 0x8000;
         const bool dataIn = block & 0x0F;
         const bool blockIn = block & 0x7FF0 >> 4;
-        placeBlock(chunkData, xIn, yIn, zIn, blockIn, dataIn, waterloggedIn);
+        placeBlock(chunkData, xIn, yIn, zIn, blockIn, dataIn, waterloggedIn, submerged);
     }
 
 

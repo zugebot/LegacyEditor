@@ -18,7 +18,7 @@ namespace editor {
 
     Data FileListing::writeData(const CONSOLE consoleOut) {
 
-        ensureAllRegionFilesExist();
+        // ensureAllRegionFilesExist();
 
         // step 1: get the file count and size of all sub-files
         u32 fileCount = 0;
@@ -70,6 +70,8 @@ namespace editor {
             return INVALID_ARGUMENT;
         }
 
+        convertRegions(consoleOut);
+
         const int status = writeFile(outfileStr, consoleOut);
 
         if (fileInfo.isLoaded) {
@@ -118,7 +120,7 @@ namespace editor {
     int FileListing::writeFileInfo(stringRef_t outFilePath,
                                    const CONSOLE consoleOut) const {
         std::string filepath = outFilePath;
-        while (!(filepath.back() == '\\' || filepath.back() == '/')) {
+        while (filepath.back() != '\\' && filepath.back() != '/') {
             filepath.pop_back();
         }
 

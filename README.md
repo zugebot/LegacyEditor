@@ -8,14 +8,14 @@ for editing blocks / nbt.
 1. WiiU
 2. PS3
 3. RPCS3 (Emulator)
-4. Xbox360 (.dat)
+4. ~~Xbox360 (.dat)~~
 5. PSVita
 6. Switch (region/entity conversion imminent)
 7. PS4 (region/entity conversion imminent)
 
 **The code exists to write to:**
 1. WiiU
-2. PSVita (Untested)
+2. PSVita
 3. PS3 (METADATA not yet resignable)
 4. RPCS3 (METADATA not yet resignable)
 

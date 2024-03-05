@@ -5,7 +5,6 @@
 #include "LegacyEditor/utils/processor.hpp"
 
 
-class NBTBase;
 class NBTTagCompound;
 
 namespace editor {
@@ -64,16 +63,17 @@ namespace editor {
 
     class File {
     public:
-        NBTBase* nbt = nullptr;
+        NBTTagCompound* nbt = nullptr;
         Data data;
         u64 timestamp = 0;
         u32 additionalData = 0;
+        CONSOLE console = CONSOLE::NONE;
         FileType fileType = FileType::NONE;
 
-        File();
-        explicit File(u32 sizeIn);
-        File(u32 sizeIn, u64 timestampIn);
-        File(u8* dataIn, u32 sizeIn, u64 timestampIn);
+        explicit File(CONSOLE consoleIn);
+        explicit File(CONSOLE consoleIn, u32 sizeIn);
+        File(CONSOLE consoleIn, u32 sizeIn, u64 timestampIn);
+        File(CONSOLE consoleIn, u8* dataIn, u32 sizeIn, u64 timestampIn);
 
         ~File();
 
@@ -92,9 +92,6 @@ namespace editor {
         void deleteData();
         MU void steal(const Data& other) { data.steal(other); }
 
-        ND NBTTagCompound* createNBTTagCompound();
-        ND NBTTagCompound* getNBTCompound() const;
-        void deleteNBTCompound();
         ND std::string constructFileName(CONSOLE console, bool separateRegions) const;
         MU ND bool isEmpty() const { return data.size != 0; }
         MU ND std::string toString() const;
@@ -107,8 +104,8 @@ namespace editor {
 
     };
 
-    typedef std::vector<File> File_vec;
-    typedef std::vector<File*> FilePtr_vec;
+    using File_vec = std::vector<File>;
+    using FilePtr_vec = std::vector<File *>;
 }
 
 

@@ -23,14 +23,14 @@ static i64 stringToHex(const std::string& str) {
 static i64 stringToInt64(const std::string& str) {
     i64 result = 0;
     int sign = 1;
-    size_t i = 0;
+    size_t index = 0;
 
     if (str[0] == '-') {
         sign = -1;
-        i++;
+        index++;
     }
     const int stringSize = static_cast<int>(str.size());
-    for (; i < stringSize; i++) { result = result * 10 + (str[i] - '0'); }
+    for (; index < stringSize; index++) { result = result * 10 + (str[index] - '0'); }
 
     return result * sign;
 }
@@ -88,6 +88,15 @@ bool isPngHeader(DataManager& manager) {
 
 
 namespace editor {
+
+    /**
+     * \brief Gives FileInfo a default ico for creation
+     * TODO: write the code
+     */
+    void FileInfo::defaultThumbnail() {
+
+    }
+
 
     /**
      * \brief presumes that the tEXt header is located second to last inside the png.
@@ -196,13 +205,13 @@ namespace editor {
 
         DataManager header;
         if (console == CONSOLE::SWITCH) {
-            const Data _(528);
-            header.take(_);
+            const Data fileHeader(528);
+            header.take(fileHeader);
         }
 
         else if (console == CONSOLE::WIIU) {
-            const Data _(256);
-            header.take(_);
+            const Data fileHeader(256);
+            header.take(fileHeader);
             header.writeWString(basesavename, 128);
 
         } else {

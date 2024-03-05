@@ -89,7 +89,7 @@ public:
     ND NBTType getId() const { return type; }
 
     template<class classType>
-    classType toPrimitiveType() {
+    classType toPrim() {
         switch (type) {
             case NBT_INT8:
                 return (classType) *(u8*) data;
@@ -192,7 +192,7 @@ public:
     template<typename classType>
     classType getPrimitive(STR key) {
         if (hasKey(key, TAG_PRIMITIVE)) {
-            return tagMap.at(key).toPrimitiveType<classType>();
+            return tagMap.at(key).toPrim<classType>();
         }
         return static_cast<classType>(0);
     }
@@ -232,7 +232,7 @@ public:
         if (tagType < 7 && tagType > 0) {
             if (index >= 0 && index < tagList.size()) {
                 NBTBase nbtBase = tagList.at(index);
-                return nbtBase.toPrimitiveType<classType>();
+                return nbtBase.toPrim<classType>();
             }
         }
 
@@ -327,27 +327,27 @@ static NBTBase createNBT_DOUBLE(const double dataIn) {
 static NBTBase convertType(NBTBase baseData, NBTType toType) {
     switch (toType) {
         case NBT_INT8: {
-            auto valueB = baseData.toPrimitiveType<u8>();
+            auto valueB = baseData.toPrim<u8>();
             return {&valueB, 1, NBT_INT8};
         }
         case NBT_INT16: {
-            auto valueS = baseData.toPrimitiveType<i16>();
+            auto valueS = baseData.toPrim<i16>();
             return {&valueS, 2, NBT_INT16};
         }
         case NBT_INT32: {
-            int value = baseData.toPrimitiveType<i32>();
+            int value = baseData.toPrim<i32>();
             return {&value, 4, NBT_INT32};
         }
         case NBT_INT64: {
-            auto valueL = baseData.toPrimitiveType<i64>();
+            auto valueL = baseData.toPrim<i64>();
             return {&valueL, 8, NBT_INT64};
         }
         case NBT_FLOAT: {
-            auto valueF = baseData.toPrimitiveType<float>();
+            auto valueF = baseData.toPrim<float>();
             return {&valueF, 4, NBT_FLOAT};
         }
         case NBT_DOUBLE: {
-            auto valueD = baseData.toPrimitiveType<double>();
+            auto valueD = baseData.toPrim<double>();
             return {&valueD, 8, NBT_DOUBLE};
         }
         default:
