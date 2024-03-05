@@ -10,8 +10,7 @@
 namespace editor {
 
 
-    RegionManager::RegionManager()
-            : sectorBytes(0), sectorInts(0) {}
+    RegionManager::RegionManager() {}
 
     RegionManager::~RegionManager() = default;
 

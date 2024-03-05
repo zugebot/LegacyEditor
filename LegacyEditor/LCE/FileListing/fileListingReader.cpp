@@ -216,8 +216,8 @@ namespace editor {
         if (headerUnion.getInt1() <= 2) {
             u32 file_size = headerUnion.getDestSize();
             if (headerUnion.getShort5() == ZLIB_MAGIC) {
-                if (headerUnion.getInt1() < file_size) {
-                    file_size = headerUnion.getInt1();
+                if (headerUnion.getInt2Swapped() < file_size) {
+                    file_size = headerUnion.getInt2Swapped();
                     result = readNSXorPS4(f_in, data, source_bin_size, file_size);
                 } else {
                     result = readWiiU(f_in, data, source_bin_size, file_size);
@@ -226,9 +226,9 @@ namespace editor {
             // TODO: with custom vitaRLE decompress checker
             } else {
                 const u32 indexFromSaveFile
-                    = headerUnion.getInt2() - headerUnion.getInt3();
+                    = headerUnion.getInt2Swapped() - headerUnion.getInt3Swapped();
                 if (indexFromSaveFile > 0 && indexFromSaveFile < 65536) {
-                    file_size = headerUnion.getInt2();
+                    file_size = headerUnion.getInt2Swapped();
                     result = readVita(f_in, data, source_bin_size, file_size);
                } else {
                    result = readPs3(f_in, data, source_bin_size, file_size);

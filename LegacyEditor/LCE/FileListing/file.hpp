@@ -70,7 +70,7 @@ namespace editor {
         CONSOLE console = CONSOLE::NONE;
         FileType fileType = FileType::NONE;
 
-        File();
+        explicit File(CONSOLE consoleIn);
         explicit File(CONSOLE consoleIn, u32 sizeIn);
         File(CONSOLE consoleIn, u32 sizeIn, u64 timestampIn);
         File(CONSOLE consoleIn, u8* dataIn, u32 sizeIn, u64 timestampIn);

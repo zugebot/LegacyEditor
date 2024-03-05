@@ -64,10 +64,11 @@ namespace editor {
             case FileType::STRUCTURE:
                 name = getFileName();
                 break;
-            case FileType::MAP:
+            case FileType::MAP: {
                 const i16 mapNum = getMapNumber();
                 name = "data/map_" + to_string(mapNum) + ".dat";
                 break;
+            }
             case FileType::PLAYER:
                 name = getFileName();
                 break;
