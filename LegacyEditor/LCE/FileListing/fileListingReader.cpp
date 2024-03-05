@@ -69,7 +69,6 @@ namespace editor {
         currentVersion = managerIn.readInt16();
 
         allFiles.clear();
-        // allFiles.reserve(fileCount);
 
         u32 total_size = 0;
         u32 non_empty_file_count = 0;
@@ -106,11 +105,10 @@ namespace editor {
                 } else if (fileName.starts_with("r")) {
                     file.fileType = FileType::REGION_OVERWORLD;
                 }
-                auto* nbt = file.createNBTTagCompound();
                 const auto [fst, snd]
                     = extractRegionCoords(fileName);
-                nbt->setTag("x", createNBT_INT16(static_cast<i16>(fst)));
-                nbt->setTag("z", createNBT_INT16(static_cast<i16>(snd)));
+                file.nbt->setTag("x", createNBT_INT16(static_cast<i16>(fst)));
+                file.nbt->setTag("z", createNBT_INT16(static_cast<i16>(snd)));
                 continue;
             }
 
@@ -134,9 +132,8 @@ namespace editor {
 
             if (fileName.starts_with("data/map_")) {
                 file.fileType = FileType::MAP;
-                auto* nbt = file.createNBTTagCompound();
                 const i16 mapNumber = extractMapNumber(fileName);
-                nbt->setTag("#", createNBT_INT16(mapNumber));
+                file.nbt->setTag("#", createNBT_INT16(mapNumber));
                 continue;
             }
 
@@ -152,10 +149,8 @@ namespace editor {
 
             if (fileName.starts_with("data/")) {
                 file.fileType = FileType::STRUCTURE;
-                auto* nbt = file.createNBTTagCompound();
-                nbt->setString("filename", fileName);
-                if (fileName.starts_with("data/villages_")
-                    && (console == CONSOLE::SWITCH)) {
+                file.nbt->setString("filename", fileName);
+                if (fileName.starts_with("data/villages_") && console == CONSOLE::SWITCH) {
                     console = CONSOLE::PS4;
                 }
                 continue;
@@ -168,8 +163,7 @@ namespace editor {
 
             if (fileName.starts_with("players/") || fileName.find('/') == -1) {
                 file.fileType = FileType::PLAYER;
-                auto* nbt = file.createNBTTagCompound();
-                nbt->setString("filename", fileName);
+                file.nbt->setString("filename", fileName);
                 continue;
             }
 
@@ -188,7 +182,7 @@ namespace editor {
 
         // create file path / root
         std::string filepath = filename;
-        while (!(filepath.back() == '\\' || filepath.back() == '/')) {
+        while (filepath.back() != '\\' && filepath.back() != '/') {
             filepath.pop_back();
         }
 
@@ -218,12 +212,12 @@ namespace editor {
 
         int result;
 
+        // TODO: rewrite this to get rid of getDestSize garbage
         if (headerUnion.getInt1() <= 2) {
             u32 file_size = headerUnion.getDestSize();
-            /// if (int1 == 0) it is a WiiU savefile unless it's a massive file
-            if (headerUnion.getZlibMagic() == ZLIB_MAGIC) {
-                if (headerUnion.getSwitchFileSize() < file_size) {
-                    file_size = headerUnion.getSwitchFileSize();
+            if (headerUnion.getShort5() == ZLIB_MAGIC) {
+                if (headerUnion.getInt1() < file_size) {
+                    file_size = headerUnion.getInt1();
                     result = readNSXorPS4(f_in, data, source_bin_size, file_size);
                 } else {
                     result = readWiiU(f_in, data, source_bin_size, file_size);
@@ -232,9 +226,9 @@ namespace editor {
             // TODO: with custom vitaRLE decompress checker
             } else {
                 const u32 indexFromSaveFile
-                    = headerUnion.getVitaFileSize() - headerUnion.getVitaFileListing();
+                    = headerUnion.getInt2() - headerUnion.getInt3();
                 if (indexFromSaveFile > 0 && indexFromSaveFile < 65536) {
-                    file_size = headerUnion.getVitaFileSize();
+                    file_size = headerUnion.getInt2();
                     result = readVita(f_in, data, source_bin_size, file_size);
                } else {
                    result = readPs3(f_in, data, source_bin_size, file_size);
@@ -243,8 +237,8 @@ namespace editor {
         } else if (headerUnion.getInt2() <= 2) {
             /// if (int2 == 0) it is an xbox savefile unless it's a massive
             /// file, but there won't be 2 files in a savegame file for PS3
-            const u32 file_size = headerUnion.getDATFileSize();
-            const u32 src_size = headerUnion.getDATSrcSize();
+            const u32 file_size = headerUnion.getInt3();
+            const u32 src_size = headerUnion.getInt1();
             result = readXbox360DAT(f_in, data, file_size, src_size);
         } else if (headerUnion.getInt2() < 100) {
             /// otherwise if (int2) > 50 then it is a random file
@@ -262,15 +256,9 @@ namespace editor {
             readData(data);
 
             // sets corresponding state booleans
-            switch (console) {
-                case CONSOLE::SWITCH:
-                case CONSOLE::PS4:
-                    separateRegions = true;
-                    separateEntities = true;
-                    break;
-                default:
-                    break;
-
+            if (console == CONSOLE::PS4 || console == CONSOLE::SWITCH) {
+                separateRegions = true;
+                separateEntities = true;
             }
         }
         return result;
@@ -366,14 +354,13 @@ namespace editor {
                     FileType::REGION_END
                 };
                 lFile.fileType = regDims[dimChar];
-            }
+            }\
             const int16_t rX = static_cast<int8_t>(strtol(
                 filename.substr(13, 2).c_str(), nullptr, 16));
             const int16_t rZ = static_cast<int8_t>(strtol(
                 filename.substr(15, 2).c_str(), nullptr, 16));
-            auto* nbt = lFile.createNBTTagCompound();
-            nbt->setTag("x", createNBT_INT16(rX));
-            nbt->setTag("z", createNBT_INT16(rZ));
+            lFile.nbt->setTag("x", createNBT_INT16(rX));
+            lFile.nbt->setTag("z", createNBT_INT16(rZ));
         }
 
         updatePointers();
@@ -472,9 +459,6 @@ namespace editor {
         printf("Detected compressed PS3 savefile, converting\n\n");
         console = CONSOLE::PS3;
 
-        // source
-        auto src = Data(source_binary_size);
-
         // destination
         if (!data.allocate(file_size)) {
             return MALLOC_FAILED;
@@ -482,10 +466,11 @@ namespace editor {
 
         // decompress src -> data
         fseek(f_in, UNION_HEADER_SIZE, SEEK_SET);
-        src.size -= UNION_HEADER_SIZE;
+        auto src = Data(source_binary_size - UNION_HEADER_SIZE);
         fread(src.start(), 1, src.size, f_in);
         tinf_uncompress(data.start(), &file_size, src.start(), src.getSize());
         src.deallocate();
+
 
         if (file_size == 0) {
             printf_err("%s", error3);
@@ -514,15 +499,13 @@ namespace editor {
         printf("Detected Xbox360 .dat savefile, converting\n\n");
         console = CONSOLE::XBOX360;
 
-        // allocate source memory
-        Data src(src_size - 8);
-
         // allocate destination memory
         if (!data.allocate(file_size)) {
             return MALLOC_FAILED;
         }
 
         // decompress src -> data
+        Data src(src_size - 8);
         fread(src.start(), 1, src.size, f_in);
         data.size = XDecompress(data.start(), &data.size,
             src.start(), src.getSize());

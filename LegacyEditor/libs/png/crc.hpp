@@ -30,8 +30,8 @@ inline unsigned long crc(const char* bufferIn, const int len) {
     static bool crc_table_computed = false;
 
     if (!crc_table_computed) {
-        for (int n = 0; n < 256; n++) {
-            auto c = static_cast<unsigned long>(n);
+        for (int index = 0; index < 256; index++) {
+            auto c = static_cast<unsigned long>(index);
             for (int k = 0; k < 8; k++) {
                 if (c & 1) {
                     c = 0xedb88320L ^ c >> 1;
@@ -39,13 +39,13 @@ inline unsigned long crc(const char* bufferIn, const int len) {
                     c = c >> 1;
                 }
             }
-            crc_table[n] = c;
+            crc_table[index] = c;
         }
         crc_table_computed = true;
     }
 
-    for (int n = 0; n < len; n++) {
-        crc = crc_table[(crc ^ buf[n]) & 0xff] ^ crc >> 8;
+    for (int index = 0; index < len; index++) {
+        crc = crc_table[(crc ^ buf[index]) & 0xff] ^ crc >> 8;
     }
 
     return crc ^ 0xffffffffL;

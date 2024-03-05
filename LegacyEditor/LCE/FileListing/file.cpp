@@ -6,23 +6,24 @@
 namespace editor {
 
 
-    File::File() {}
+    File::File(const CONSOLE consoleIn) : console(consoleIn) {
+        nbt = new NBTTagCompound();
+    }
 
-
-    File::File(const CONSOLE consoleIn, const u32 sizeIn) : data(Data(sizeIn)), console(consoleIn) {}
-
+    File::File(const CONSOLE consoleIn, const u32 sizeIn) : data(Data(sizeIn)), console(consoleIn) {
+        nbt = new NBTTagCompound();
+    }
 
     File::File(const CONSOLE consoleIn, const u32 sizeIn, const u64 timestampIn) : data(Data(sizeIn)), timestamp(timestampIn), console(consoleIn) {}
 
 
-    File::File(const CONSOLE consoleIn, u8* dataIn, const u32 sizeIn, const u64 timestampIn) : data(dataIn, sizeIn), timestamp(timestampIn), console(consoleIn) {}
+    File::File(const CONSOLE consoleIn, u8* dataIn, const u32 sizeIn, const u64 timestampIn) : data(dataIn, sizeIn), timestamp(timestampIn), console(consoleIn) {
+        nbt = new NBTTagCompound();
+    }
 
 
     File::~File() {
-        if (nbt == nullptr) { return; }
-        if (nbt->data == nullptr) { return; }
-        getNBTCompound()->deleteAll();
-        nbt->data = nullptr;
+        nbt->deleteAll();
         delete nbt;
         nbt = nullptr;
     }
@@ -32,30 +33,6 @@ namespace editor {
         delete[] data.data;
         data.data = nullptr;
         data.size = 0;
-    }
-
-
-    NBTTagCompound* File::createNBTTagCompound() {
-        if (nbt != nullptr) { return nullptr; }
-        nbt = new NBTBase(new NBTTagCompound(), TAG_COMPOUND);
-        return static_cast<NBTTagCompound*>(nbt->data);
-    }
-
-
-    ND NBTTagCompound* File::getNBTCompound() const {
-        if (nbt == nullptr) { return nullptr; }
-        if (nbt->data == nullptr) { return nullptr; }
-        return static_cast<NBTTagCompound*>(nbt->data);
-    }
-
-
-    void File::deleteNBTCompound() {
-        if (nbt == nullptr) { return; }
-        if (nbt->data == nullptr) { return; }
-        getNBTCompound()->deleteAll();
-        nbt->data = nullptr;
-        delete nbt;
-        nbt = nullptr;
     }
 
 
@@ -80,30 +57,24 @@ namespace editor {
             case FileType::ENTITY_END:
                 name = FileTypeNames[fileType];
                 break;
-            case FileType::NONE: {
+            case FileType::NONE:
                 name = "NONE";
                 printf("file encountered with no type, possibly an error?");
                 break;
-            }
-            case FileType::STRUCTURE: {
-                if (const auto* compound = getNBTCompound(); compound == nullptr) { break; }
+            case FileType::STRUCTURE:
                 name = getFileName();
                 break;
-            }
-            case FileType::MAP: {
-                if (const auto* compound = getNBTCompound(); compound == nullptr) { break; }
+            case FileType::MAP:
                 const i16 mapNum = getMapNumber();
                 name = "data/map_" + to_string(mapNum) + ".dat";
                 break;
-            }
             case FileType::PLAYER:
-                if (const auto* compound = getNBTCompound(); compound == nullptr) { break; }
                 name = getFileName();
                 break;
+            // TODO: rewrite to put files in different location for switch / ps4
             case FileType::REGION_NETHER:
             case FileType::REGION_OVERWORLD:
             case FileType::REGION_END: {
-                if (const auto* compound = getNBTCompound(); compound == nullptr) { break; }
                 const i16 regionX = getRegionX();
                 const i16 regionZ = getRegionZ();
                 if (fileType == FileType::REGION_NETHER) {
@@ -132,18 +103,18 @@ namespace editor {
     }
 
     MU ND i16 File::getRegionX() const {
-        return getNBTCompound()->getTag("x").toPrimitiveType<i16>();
+        return nbt->getTag("x").toPrim<i16>();
     }
 
     MU ND i16 File::getRegionZ() const {
-        return getNBTCompound()->getTag("z").toPrimitiveType<i16>();
+        return nbt->getTag("z").toPrim<i16>();
     }
 
     MU ND i16 File::getMapNumber() const {
-        return getNBTCompound()->getTag("#").toPrimitiveType<i16>();
+        return nbt->getTag("#").toPrim<i16>();
     }
 
     MU ND std::string File::getFileName() const {
-        return getNBTCompound()->getString("filename");
+        return nbt->getString("filename");
     }
 }

@@ -20,9 +20,9 @@ namespace editor {
 
 
     enum CHUNK_HEADER : i16 {
-        HEADER_NBT = 0x0a00,
         V_8 = 0x0008,
         V_9 = 0x0009,
+        V_NBT = 0x0A00,
         V_11 = 0x000B,
         V_12 = 0x000C,
         V_13 = 0x000D,
@@ -46,24 +46,19 @@ namespace editor {
         chunkData->lastVersion = managerIn.readInt16();
 
         switch(chunkData->lastVersion) {
-            case HEADER_NBT:
+            case V_NBT:
                 chunkData->lastVersion = V_11;
                 chunk::ChunkV10(chunkData, &managerIn).readChunk();
                 break;
-            case V_8:
-            case V_9:
-            case V_11: {
+            case V_8: case V_9: case V_11:
                 chunk::ChunkV11(chunkData, &managerIn).readChunk();
                 break;
-            }
-            case V_12: {
+            case V_12:
                 chunk::ChunkV12(chunkData, &managerIn).readChunk();
                 break;
-            }
-            case V_13: {
+            case V_13:
                 // chunk::ChunkV13(chunkData, &managerIn).readChunk();
                 break;
-            }
             default:;
         }
     }
@@ -76,26 +71,17 @@ namespace editor {
 
         managerOut.seekStart();
         switch (chunkData->lastVersion) {
-            case HEADER_NBT: {
+            case V_NBT:
                 chunk::ChunkV10(chunkData, &managerOut).writeChunk();
-                break;
-            }
-            case V_8:
-            case V_9:
-            case V_11: {
+            break; case V_8: case V_9: case V_11:
                 managerOut.writeInt16(chunkData->lastVersion);
                 chunk::ChunkV11(chunkData, &managerOut).writeChunk();
-                break;
-            }
-            case V_12: {
+            break; case V_12:
                 managerOut.writeInt16(chunkData->lastVersion);
                 chunk::ChunkV12(chunkData, &managerOut).writeChunk();
-                break;
-            }
-            case V_13: {
+            break; case V_13:
                 printf("ChunkManager::writeChunk v13 forbidden\n");
                 exit(-1);
-            }
             default:;
         }
 
@@ -147,7 +133,8 @@ namespace editor {
 
         if (fileData.getRLE() != 0U) {
             allocate(fileData.getDecSize());
-            RLE_decompress(decompData.start(), decompData.size, start(), dec_size_copy);
+            RLE_decompress(decompData.start(),
+                decompData.size, start(), dec_size_copy);
             decompData.deallocate();
         } else {
             data = decompData.data;
@@ -183,6 +170,7 @@ namespace editor {
         uLongf comp_size = size;
 
         // TODO: Does it work for vita?
+        int status;
         switch (console) {
             case CONSOLE::XBOX360:
                 // TODO: leaks memory
@@ -194,10 +182,9 @@ namespace editor {
                 break;
 
             case CONSOLE::RPCS3: {
-                if (const int status = compress(comp_ptr, &comp_size, data, size); status != 0) {
+                if (status = compress(comp_ptr, &comp_size, data, size); status != 0) {
                     printf("error has occurred compressing chunk\n");
                 }
-
                 deallocate();
                 data = comp_ptr;
                 size = comp_size;
@@ -208,21 +195,34 @@ namespace editor {
             case CONSOLE::SWITCH:
             case CONSOLE::PS4:
             case CONSOLE::WIIU:
-            case CONSOLE::VITA: {
-                if (const int status = compress(comp_ptr, &comp_size, data, size); status != 0) {
+            case CONSOLE::VITA:
+                if (status = compress(comp_ptr, &comp_size, data, size); status != 0) {
                     printf("error has occurred compressing chunk\n");
                 }
-
                 deallocate();
                 data = comp_ptr;
                 size = comp_size;
                 comp_size = 0;
                 break;
-            }
             default:
                 break;
         }
 
+    }
+
+
+    void ChunkManager::setSizeFromReading(const u32 sizeIn) {
+        fileData.setRLE(sizeIn >> 31);
+        fileData.setUnknown(sizeIn >> 30 & 1);
+        size = sizeIn & 0x00FFFFFF;
+    }
+
+
+    u32 ChunkManager::getSizeForWriting() const {
+        u32 sizeOut = size;
+        if (fileData.getRLE() != 0U) { sizeOut |= 0x80000000; }
+        if (fileData.getUnknown() != 0U) { sizeOut |= 0x40000000; }
+        return sizeOut;
     }
 
 

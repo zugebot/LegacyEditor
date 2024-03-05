@@ -93,8 +93,8 @@ namespace editor {
             for (const auto *fileList : dimFileLists) {
                 for (const auto* regionFile: *fileList) {
                     if (regionFile->data.size != 0) {
-                        const i16 regionX = regionFile->getNBTCompound()->getTag("x").toPrimitiveType<i16>();
-                        const i16 regionZ = regionFile->getNBTCompound()->getTag("z").toPrimitiveType<i16>();
+                        const i16 regionX = regionFile->nbt->getTag("x").toPrim<i16>();
+                        const i16 regionZ = regionFile->nbt->getTag("z").toPrim<i16>();
                         dim[dimCount][regionX + 1][regionZ + 1] = true;
                     }
                 }
@@ -115,9 +115,8 @@ namespace editor {
                     allFiles.emplace_back(CONSOLE::NONE, nullptr, 0, 0);
                     File &file = allFiles.back();
 
-                    auto* nbt = file.createNBTTagCompound();
-                    nbt->setTag("x", createNBT_INT16(static_cast<i16>(xIter - 1)));
-                    nbt->setTag("z", createNBT_INT16(static_cast<i16>(zIter - 1)));
+                    file.nbt->setTag("x", createNBT_INT16(static_cast<i16>(xIter - 1)));
+                    file.nbt->setTag("z", createNBT_INT16(static_cast<i16>(zIter - 1)));
                     switch (dim_i) {
                         case 0:
                             file.fileType = FileType::REGION_NETHER;
@@ -231,7 +230,6 @@ namespace editor {
         while (iter != allFiles.end()) {
             if (typesToRemove.contains(iter->fileType)) {
                 iter->deleteData();
-                iter->deleteNBTCompound();
                 iter = allFiles.erase(iter);
             } else {
                 ++iter;
@@ -267,7 +265,7 @@ namespace editor {
     }
 
 
-    MU ND int FileListing::convertTo(stringRef_t inFileStr, stringRef_t outFileStr, CONSOLE consoleOut) {
+    MU ND int FileListing::convertTo(stringRef_t inFileStr, stringRef_t outFileStr, const CONSOLE consoleOut) {
         int status = readFile(inFileStr);
         if (status != SUCCESS) { return status; }
 
@@ -333,12 +331,11 @@ namespace editor {
                 continue;
             }
 
-            const i16 regionX = iter->getNBTCompound()->getTag("x").toPrimitiveType<i16>();
-            const i16 regionZ = iter->getNBTCompound()->getTag("z").toPrimitiveType<i16>();
+            const i16 regionX = iter->nbt->getTag("x").toPrim<i16>();
+            const i16 regionZ = iter->nbt->getTag("z").toPrim<i16>();
 
             if (regionX < -1 || regionX > 0 || regionZ < -1 || regionZ > 0) {
                 iter->deleteData();
-                iter->deleteNBTCompound();
                 iter = allFiles.erase(iter);
             } else {
                 ++iter;

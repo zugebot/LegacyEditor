@@ -89,10 +89,7 @@ namespace editor {
 
             managerIn.seek(SECTOR_BYTES * locations[chunkIndex]);
 
-            chunk.size = managerIn.readInt32();
-            chunk.fileData.setRLE(chunk.size >> 31);
-            chunk.fileData.setUnknown(chunk.size >> 30 & 1);
-            chunk.size &= 0x00FFFFFF;
+            chunk.setSizeFromReading(managerIn.readInt32());
             chunk.allocate(chunk.size);
 
             switch (console) {
@@ -124,17 +121,16 @@ namespace editor {
      * @return
      */
         Data RegionManager::write(const CONSOLE consoleIn) {
-            u32 locations[SECTOR_INTS] = {};
             u8 sectors[SECTOR_INTS] = {};
+            u32 locations[SECTOR_INTS] = {};
 
+            // 1: Sectors Block
+            // 2: Locations Block
             int total_sectors = 2;
             for (int chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
-                if (ChunkManager& chunk = chunks[chunkIndex]; chunk.size == 0) {
-                    sectors[chunkIndex] = 0;
-                    locations[chunkIndex] = 0;
-                } else {
+                if (ChunkManager& chunk = chunks[chunkIndex]; chunk.size != 0) {
                     chunk.ensureCompressed(consoleIn);
-                    sectors[chunkIndex] = (chunk.size + 12) / SECTOR_BYTES + 1;
+                    sectors[chunkIndex] = (chunk.size + CHUNK_HEADER_SIZE) / SECTOR_BYTES + 1;
                     locations[chunkIndex] = total_sectors;
                     total_sectors += sectors[chunkIndex];
                 }
@@ -157,18 +153,11 @@ namespace editor {
 
                 ChunkManager& chunk = chunks[chunkIndex];
                 managerOut.seek(locations[chunkIndex] * SECTOR_BYTES);
-
-                u32 size = chunk.size;
-                if (chunk.fileData.getRLE() != 0U) { size |= 0x80000000; }
-                if (chunk.fileData.getUnknown() != 0U) { size |= 0x40000000; }
-                managerOut.writeInt32(size);
-
+                managerOut.writeInt32(chunk.getSizeForWriting());
                 switch (console) {
                     case CONSOLE::PS3:
                     case CONSOLE::RPCS3:
                         managerOut.writeInt32(chunk.fileData.getDecSize());
-                        managerOut.writeInt32(chunk.fileData.getDecSize());
-                        break;
                     default:
                         managerOut.writeInt32(chunk.fileData.getDecSize());
                         break;
