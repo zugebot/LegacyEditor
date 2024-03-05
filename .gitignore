@@ -1,2 +1,6 @@
 /cmake-build-debug/
 /dump/*
+
+/dump/*
+
+.DS_Store
