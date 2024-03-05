@@ -191,7 +191,7 @@ namespace editor {
             filepath.pop_back();
         }
 
-        MU const int status2 = readFileInfo(filepath);
+        // MU const int status2 = readFileInfo(filepath);
 
         return status;
     }
@@ -293,10 +293,10 @@ namespace editor {
             case CONSOLE::WIIU:
             case CONSOLE::SWITCH: {
                 const u32 num = filename.size() - filepath.size();
-                const std::string filenamedat
-                    = filename.substr(filename.size(), num);
-                filepath += filenamedat;
-                filepath += ".ext";
+                // const std::string filenamedat
+                //     = filename.substr(filename.size(), num);
+                // filepath += filenamedat;
+                filepath = filename + ".ext";
                 break;
             }
             case CONSOLE::XBOX1:
@@ -308,6 +308,7 @@ namespace editor {
 
         if (fs::exists(filepath)) {
             fileInfo.readFile(filepath);
+
         } else {
             printf("FileInfo file not found...\n");
         }

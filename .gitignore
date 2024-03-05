@@ -1,8 +1,2 @@
 /cmake-build-debug/
-
-/dump/wiiu/
-/dump/switch/
-/dump_ps3/
-/dump/rpcs3/
-/dump_xbox360/
-/dump/vita/
+/dump/*

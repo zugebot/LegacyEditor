@@ -3,6 +3,7 @@
 #include <thread>
 
 #include "LegacyEditor/LCE/FileInfo/FileInfo.hpp"
+#include "LegacyEditor/LCE/MC/blocks.hpp"
 #include "LegacyEditor/LCE/include.hpp"
 #include "LegacyEditor/utils/RLE/rle_nsxps4.hpp"
 #include "LegacyEditor/utils/processor.hpp"
@@ -37,6 +38,57 @@ void PREPARE_UNIT_TESTS() {
     TEST_PAIR("PS4_khaloody",R"(PS4\00000008\savedata0\GAMEDATA)", out_build + R"(BLANK_SAVE)");
     TEST_PAIR("PS4_to_wiiu"   , R"(BLANK_SAVE)", dir_path + "PS4_to_wiiu_to_wiiu");
 }
+
+
+int main0() {
+    PREPARE_UNIT_TESTS();
+
+    const std::string TEST_IN  = wiiu + R"(230918230206)";
+    const std::string TEST_OUT = wiiu + R"(230918230207)";
+    constexpr auto consoleOut = CONSOLE::WIIU;
+
+    editor::FileListing fileListing;
+    if (fileListing.read(TEST_IN) != 0) {
+        return printf_err("failed to load file\n");
+    }
+    const auto consoleIn = fileListing.console;
+
+    fileListing.removeFileTypes({
+        // editor::FileType::PLAYER,
+        editor::FileType::DATA_MAPPING});
+
+    fileListing.printDetails();
+    fileListing.printFileList();
+
+    editor::RegionManager region(consoleIn);
+    region.read(fileListing.region_overworld[2]);
+    editor::ChunkManager *chunk = region.getChunk(0, 0);
+
+    chunk->ensureDecompress(consoleIn);
+    chunk->readChunk(consoleIn);
+
+    placeBlock(chunk->chunkData, 7, 64, 7, DRIED_KELP_BLOCK_ID, 0, false);
+
+    chunk->chunkData->defaultNBT();
+    chunk->writeChunk(consoleOut);
+    chunk->ensureCompressed(consoleOut);
+
+    fileListing.region_overworld[2]->data.deallocate();
+    fileListing.region_overworld[2]->data = region.write(consoleOut);
+
+    // fileListing.convertRegions(consoleOut);
+
+    // fileListing.fileInfo.basesavename = L"Fortnite";
+    const int statusOut = fileListing.write(TEST_OUT, consoleOut);
+    if (statusOut != 0) {
+        return printf_err({"converting to "
+            + consoleToStr(consoleOut) + " failed...\n"});
+    }
+    printf("Finished!\nFile Out: %s", TEST_OUT.c_str());
+
+    return 0;
+}
+
 
 
 
@@ -190,38 +242,26 @@ int main2() {
 int main3() {
     PREPARE_UNIT_TESTS();
 
-    const std::string TEST_NAME = "vita"; //" PS4_khaloody";
+    const std::string TEST_NAME = "vita";
     const std::string TEST_IN = TESTS[TEST_NAME].first;   // file to read from
     const std::string TEST_OUT = TESTS[TEST_NAME].second; // file to write to
     constexpr auto consoleOut = CONSOLE::VITA;
 
     editor::FileListing fileListing;
-
     if (fileListing.read(TEST_IN) != 0) {
         return printf_err("failed to load file\n");
     }
 
-    // fileListing.removeFileTypes({
-    //     editor::FileType::PLAYER,
-    //     editor::FileType::DATA_MAPPING});
+    fileListing.fileInfo.basesavename = L"Fortnite";
+
+    fileListing.removeFileTypes({
+        editor::FileType::PLAYER,
+        editor::FileType::DATA_MAPPING});
 
     fileListing.printDetails();
     fileListing.printFileList();
 
-    // fileListing.convertRegions(consoleOut);
-
-    /*
-    editor::RegionManager region(fileListing.console);
-    region.read(fileListing.region_overworld[0]);
-    int x = 0;
-    for (auto chunk : region.chunks) {
-        if (chunk.size != 0) {
-            std::cout << x << std::endl;
-        }
-        x++;
-    }
-    std::cout << region.chunks[0].size << std::endl;
-    */
+    fileListing.convertRegions(consoleOut);
 
     const int statusOut = fileListing.write(TEST_OUT, consoleOut);
     if (statusOut != 0) {
@@ -235,5 +275,5 @@ int main3() {
 
 
 int main() {
-    return main3();
+    return main0();
 }

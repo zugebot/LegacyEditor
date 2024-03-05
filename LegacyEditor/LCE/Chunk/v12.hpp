@@ -22,7 +22,7 @@ namespace editor::chunk {
         V12_4_BIT = 8,
         V12_4_BIT_SUBMERGED = 9,
         V12_8_FULL = 0x0E,
-        V12_8_FULL_BLOCKS_SUBMERGED = 0x0F,
+        V12_8_FULL_SUBMERGED = 0x0F,
     };
 
 
@@ -31,7 +31,22 @@ namespace editor::chunk {
      * return: size of memory that is being written to for that grid\n
      */
     static constexpr u32 V12_GRID_SIZES[16] = {
-            0, 0, 12, 20, 24, 40, 40, 64, 64, 96, 0, 0, 0, 0, 128, 256
+        0,  // V12_0_UNO
+        0,
+        12, // V12_1_BIT
+        20, // V12_1_BIT_SUBMERGED
+        24, // V12_2_BIT
+        40, // V12_2_BIT_SUBMERGED
+        40, // V12_3_BIT
+        64, // V12_3_BIT_SUBMERGED
+        64, // V12_4_BIT
+        96, // V12_4_BIT_SUBMERGED
+        0,
+        0,
+        0,
+        0,
+        128,
+        256
     };
 
 
@@ -61,8 +76,6 @@ namespace editor::chunk {
         template<size_t BitsPerBlock, size_t BlockCount, size_t EmptyCount>
         void writeGridSubmerged(u16_vec& blockVector, u16_vec& blockLocations,
             const u16_vec& sbmrgLocations, u8 blockMap[MAP_SIZE]) const;
-        void writeWithMaxBlocksSubmerged(const u16_vec& blockVector,
-            const u16_vec& blockLocations, const u16_vec& sbmrgLocations, u8 blockMap[MAP_SIZE]) const;
 
     public:
         ChunkData* chunkData = nullptr;

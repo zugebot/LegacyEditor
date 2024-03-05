@@ -22,7 +22,7 @@ namespace editor {
 
 
     int BINHeader::readHeader(DataManager& binFile) {
-        binFile.seek(0x340);
+        binFile.seek(0x340U);
         headerSize = binFile.readInt32();
 
         //content type, 1 is savegame
@@ -32,21 +32,21 @@ namespace editor {
         }
 
         //file system
-        binFile.seek(0x3A9);
+        binFile.seek(0x3A9U);
         if (binFile.readInt32()) {
             printf(".bin file is not in STFS format, exiting\n");
             return 0;
         }
 
-        binFile.seek(0x0379);
+        binFile.seek(0x0379U);
         stfsVD.readStfsVD(binFile);
-        binFile.seek(0x0411);
+        binFile.seek(0x0411U);
 
         //read the savegame name
         displayName = binFile.readNullTerminatedWString();
 
         //skip all the irrelevant data to extract the savegame
-        binFile.seek(0x1712);
+        binFile.seek(0x1712U);
         //get thumbnail image, if not present, use the title one if present
         u32 thumbnailImageSize = (u32) binFile.readInt32();
         if (thumbnailImageSize) {
@@ -56,7 +56,7 @@ namespace editor {
         } else {
             u32 titleThumbnailImageSize = binFile.readInt32();
             if (titleThumbnailImageSize) {
-                binFile.seek(0x571A);
+                binFile.seek(0x571AU);
                 u8* titleThumbnailImageData = binFile.readBytes(thumbnailImageSize);
                 thumbnailImage = DataManager(titleThumbnailImageData, titleThumbnailImageSize);
             }

@@ -18,7 +18,7 @@ namespace editor {
 
     Data FileListing::writeData(const CONSOLE consoleOut) {
 
-        ensureAllRegionFilesExist();
+        // ensureAllRegionFilesExist();
 
         // step 1: get the file count and size of all sub-files
         u32 fileCount = 0;
