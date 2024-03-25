@@ -42,7 +42,6 @@ namespace editor {
             return FILE_ERROR;
         }
 
-        namespace fs = std::filesystem;
         if (const fs::path _dir_path{folder}; exists(_dir_path) && is_directory(_dir_path)) {
             for (const auto &entry: fs::directory_iterator(_dir_path)) {
                 try {
