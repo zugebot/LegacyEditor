@@ -1,10 +1,11 @@
 #include "fileListing.hpp"
 
 #include <cstdio>
-#include <filesystem>
 #include <sstream>
 
 #include "headerUnion.hpp"
+
+#include "LegacyEditor/libs/ghc/fs_std.hpp"
 
 #include "LegacyEditor/utils/RLE/rle_vita.hpp"
 #include <LegacyEditor/utils/RLE/rle_nsxps4.hpp>
@@ -25,7 +26,7 @@ static constexpr char error3[43]
 
 
 namespace editor {
-    namespace fs = std::filesystem;
+
 
     i16 extractMapNumber(stringRef_t str) {
         static const std::string start = "map_";
@@ -177,7 +178,7 @@ namespace editor {
     }
 
 
-    int FileListing::read(stringRef_t inFileStr) {
+    int FileListing::read(stringRef_t inFileStr, const bool readEXTFile) {
 
         const int status = readFile(inFileStr);
 
@@ -187,7 +188,9 @@ namespace editor {
             filepath.pop_back();
         }
 
-        // MU const int status2 = readFileInfo(filepath);
+        if (readEXTFile) {
+            const int status2 = readFileInfo(filepath);
+        }
 
         return status;
     }
@@ -336,9 +339,7 @@ namespace editor {
             RLE_NSXPS4_DECOMPRESS(manager_in.ptr, manager_in.size - 4,
                                  manager_out.ptr, manager_out.size);
 
-            // manager_out.writeToFile(
-            // "C:\\Users\\Jerrin\\CLionProjects\\LegacyEditor\\out\\"
-            // + filename);
+            // manager_out.writeToFile("C:\\Users\\Jerrin\\CLionProjects\\LegacyEditor\\out\\" + filename);
 
             // TODO: get timestamp from file itself
             uint32_t timestamp = 0;

@@ -45,6 +45,7 @@ namespace editor {
         /// bytes 0-7
         ND u64 getDestSize() const { return isSystemLittle() ? swapEndian64(ZLIB.dest_size) : ZLIB.dest_size; }
 
+        /// bytes 0-3
         ND u32 getInt1Swapped() const { return isSystemLittle() ? INT_VIEW.int1 : swapEndian32(INT_VIEW.int1); }
         /// bytes 4-7
         ND u32 getInt2Swapped() const { return isSystemLittle() ? INT_VIEW.int2 : swapEndian32(INT_VIEW.int2); }

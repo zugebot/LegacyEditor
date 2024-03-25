@@ -10,7 +10,8 @@
 namespace editor {
 
 
-    RegionManager::RegionManager() {}
+    RegionManager::RegionManager() = default;
+
 
     RegionManager::~RegionManager() = default;
 
@@ -38,15 +39,7 @@ namespace editor {
     }
 
 
-    void RegionManager::read(const File* fileIn) {
-        console = fileIn->console;
-        read(&fileIn->data);
-    }
-
-
     /**
-     * DO NOT USE THIS ONE! USE 'read(const File* fileIn)'!
-     *
      * step 1: copying data from file
      * step 2: read timestamps [CHUNK_COUNT]
      * step 3: read chunk size, decompressed size
@@ -54,9 +47,12 @@ namespace editor {
      * step 5: allocates memory for the chunk
      * step 6: set chunk's decompressed size attribute
      * step 7: each chunk gets its own memory
-     * @param dataIn
+     * @param fileIn
      */
-    void RegionManager::read(const Data* dataIn) {
+    void RegionManager::read(const File* fileIn) {
+        console = fileIn->console;
+        auto* dataIn = &fileIn->data;
+
         const u32 totalSectors = dataIn->size / SECTOR_BYTES + 1;
 
         size_t chunkIndex;

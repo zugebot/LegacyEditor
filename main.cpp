@@ -1,6 +1,7 @@
-#include <filesystem>
 #include <iostream>
 #include <thread>
+
+#include "LegacyEditor/libs/ghc/fs_std.hpp"
 
 #include "LegacyEditor/LCE/FileInfo/FileInfo.hpp"
 #include "LegacyEditor/LCE/MC/blocks.hpp"
@@ -8,6 +9,7 @@
 #include "LegacyEditor/utils/RLE/rle_nsxps4.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 #include "LegacyEditor/utils/timer.hpp"
+
 
 
 std::string dir_path, out_path, wiiu, ps3_;
@@ -37,6 +39,20 @@ void PREPARE_UNIT_TESTS() {
     TEST_PAIR("corrupt_save",R"(CODY_UUAS_2017010800565100288444\GAMEDATA)"    , wiiu + R"(231000000000)");
     TEST_PAIR("PS4_khaloody",R"(PS4\00000008\savedata0\GAMEDATA)"              , out_build + R"(BLANK_SAVE)");
     TEST_PAIR("PS4_to_wiiu" ,R"(BLANK_SAVE)"                                   , dir_path + "PS4_to_wiiu_to_wiiu");
+    TEST_PAIR("BIG_WIIU"      , R"(240219135035)"                                  , "");
+}
+
+
+int main11() {
+    PREPARE_UNIT_TESTS();
+
+    const std::string TEST_IN  = TESTS["BIG_WIIU"].first;
+    editor::FileListing fileListing;
+    if (fileListing.read(TEST_IN) != 0) {
+        return printf_err("failed to load file\n");
+    }
+    printf("done!");
+    return 0;
 }
 
 
@@ -169,48 +185,61 @@ int main2() {
     fileListing.printFileList();
     fileListing.printDetails();
 
-    /*
+
     int chunksOut = 0;
     // figure out the bounds of each of the regions
     for (int i = 0; i < fileListing.region_overworld.size(); i++) {
-        const auto& region = fileListing.region_overworld[i];
-        auto manager = editor::RegionManager(fileListing.console);
-        manager.read(region);
+        const auto& regionFile = fileListing.region_overworld[i];
 
+        auto region = editor::RegionManager();
+        region.read(regionFile);
+
+        /*
         int minX = INT32_MAX;
         int minZ = INT32_MAX;
         int maxX = INT32_MIN;
         int maxZ = INT32_MIN;
-        for (auto& chunk : manager.chunks) {
-            if (chunk.size == 0) {
-                continue;
-            }
+        */
+        int chunkIndex = -1;
+        auto chunkCoords = std::map<int, std::pair<int, int>>();
+
+        for (auto& chunk : region.chunks) {
+            chunkIndex++;
+            if (chunk.size == 0) { continue; }
+
             chunk.ensureDecompress(fileListing.console);
 
+            /*
             if (chunksOut < 5) {
                 DataManager chunkOut(chunk.data, chunk.size);
                 chunkOut.writeToFile(dir_path + "chunk" + std::to_string(chunksOut++));
-            }
+            }*/
 
             chunk.readChunk(fileListing.console);
             const auto* chunkData = chunk.chunkData;
-            if (!chunkData->validChunk) {
-                continue;
-            }
+            if (!chunkData->validChunk) { continue; }
+
+            chunkCoords[chunkIndex] = std::make_pair(chunkData->chunkX, chunkData->chunkZ);
+
+            /*
             minX = minX > (int)chunkData->chunkX ? (int)chunkData->chunkX : minX;
             minZ = minZ > (int)chunkData->chunkZ ? (int)chunkData->chunkZ : minZ;
             maxX = maxX < (int)chunkData->chunkX ? (int)chunkData->chunkX : maxX;
             maxZ = maxZ < (int)chunkData->chunkZ ? (int)chunkData->chunkZ : maxZ;
+            */
             chunk.writeChunk(fileListing.console);
             chunk.ensureCompressed(fileListing.console);
         }
 
+        printf("done!");
+        /*
         printf("%s: min: (%d, %d), max(%d, %d)\n",
             region->constructFileName(fileListing.console, true).c_str(),
             minX, minZ, maxX, maxZ);
+        */
     }
 
-    */
+
 
 
 
@@ -274,6 +303,7 @@ int main3() {
 }
 
 
+
 int main() {
-    return main0();
+    return main11();
 }

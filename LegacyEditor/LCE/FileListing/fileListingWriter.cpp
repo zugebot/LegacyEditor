@@ -1,7 +1,7 @@
 #include "fileListing.hpp"
 
-#include <filesystem>
 #include <cstdio>
+#include "LegacyEditor/libs/ghc/fs_std.hpp"
 
 #include "LegacyEditor/utils/RLE/rle_vita.hpp"
 #include "LegacyEditor/libs/zlib-1.2.12/zlib.h"
@@ -13,7 +13,7 @@
 
 
 namespace editor {
-    namespace fs = std::filesystem;
+
 
 
     Data FileListing::writeData(const CONSOLE consoleOut) {

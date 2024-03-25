@@ -288,8 +288,10 @@ namespace editor::chunk {
                 const int paletteIndexSbmrg = idxSbmrg * 2;
                 blockGrid[gridIndex + 0] = palette[paletteIndexBlock + 0];
                 blockGrid[gridIndex + 1] = palette[paletteIndexBlock + 1];
-                SbmrgGrid[gridIndex + 0] = palette[paletteIndexSbmrg + 0];
-                SbmrgGrid[gridIndex + 1] = palette[paletteIndexSbmrg + 1];
+                auto sub1 = palette[paletteIndexSbmrg + 0];
+                auto sub2 = palette[paletteIndexSbmrg + 1];
+                SbmrgGrid[gridIndex + 0] = sub1;
+                SbmrgGrid[gridIndex + 1] = sub2;
             }
         }
         return true;
@@ -410,7 +412,7 @@ namespace editor::chunk {
 
                         u16 gridID;
                         u16 gridFormat;
-                        if (true /*foundSubmerged*/) {
+                        if (true /*noSubmerged*/) {
                             switch (blockVector.size()) {
                                 case  1: gridFormat = V12_0_UNO; gridID = blockVector[0]; blockMap[blockVector[0]] = 0; goto SWITCH_END;
                                 case  2: gridFormat = V12_1_BIT; writeGrid<1,  2, 0>(blockVector, blockLocations, blockMap); break;
@@ -508,16 +510,17 @@ namespace editor::chunk {
 
         // write the palette data
         dataManager->setLittleEndian();
+        #pragma unroll
         for (size_t blockIndex = 0; blockIndex < BlockCount; blockIndex++) {
             dataManager->writeInt16(blockVector[blockIndex]);
         }
         dataManager->setBigEndian();
         // fill rest of empty palette with 0xFF's
         // TODO: IDK if this is actually necessary
+        #pragma unroll EmptyCount
         for (size_t rest = 0; rest < EmptyCount; rest++) {
             dataManager->writeInt16(0xFFFF);
         }
-
         //  write the position data
         //  so, write the first bit of each position, as a single u64,
         //  then the second, third etc. N times, where N is BitsPerBlock

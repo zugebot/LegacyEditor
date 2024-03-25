@@ -8,6 +8,7 @@ namespace editor {
     class File;
 
     class RegionManager {
+        // TODO: maybe PS4 / SWITCH have this value as 27?
         static constexpr u32 REGION_WIDTH = 32;
         static constexpr u32 SECTOR_BYTES = 4096;
         static constexpr u32 SECTOR_INTS = 1024; // SECTOR_BYTES / 4
@@ -33,8 +34,6 @@ namespace editor {
         void read(const File* fileIn);
         Data write(CONSOLE consoleIn);
 
-    private:
-        void read(const Data* dataIn);
     };
 
 }

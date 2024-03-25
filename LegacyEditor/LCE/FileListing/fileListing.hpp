@@ -78,7 +78,7 @@ namespace editor {
 
         /// Read / Write from console files
 
-        MU ND int read(stringRef_t inFileStr);
+        MU ND int read(stringRef_t inFileStr, bool readEXTFile = false);
         MU ND int write(stringRef_t outfileStr, CONSOLE consoleOut);
 
 
