@@ -24,8 +24,8 @@ I will update this README with more info as I go.
 Be sure to check LICENSE.md for instructions on how this code may be used.
 
 Includes:
-https://github.com/gulrak/filesystem
-http://nothings.org/stb
-https://github.com/jibsen/tinf
-LZX - Jed Wing <jedwin@ugcs.caltech.edu>
-TINF - Joergen Ibsen
+- https://github.com/gulrak/filesystem
+- http://nothings.org/stb
+- https://github.com/jibsen/tinf
+- LZX - Jed Wing <jedwin@ugcs.caltech.edu>
+- TINF - Joergen Ibsen
