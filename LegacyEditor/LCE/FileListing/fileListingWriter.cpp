@@ -18,8 +18,6 @@ namespace editor {
 
     Data FileListing::writeData(const CONSOLE consoleOut) {
 
-        // ensureAllRegionFilesExist();
-
         // step 1: get the file count and size of all sub-files
         u32 fileCount = 0;
         u32 fileDataSize = 0;
@@ -52,7 +50,6 @@ namespace editor {
 
         // step 6: write file metadata
         for (const File& fileIter: allFiles) {
-            // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter.additionalData, fileIter.size, fileIter.name.c_str());
             std::string fileIterName = fileIter.constructFileName(consoleOut, separateRegions);
             managerOut.writeWStringFromString(fileIterName, WSTRING_SIZE);
             managerOut.writeInt32(fileIter.data.getSize());

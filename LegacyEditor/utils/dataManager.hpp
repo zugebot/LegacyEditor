@@ -23,11 +23,11 @@ public:
     explicit DataManager(const Data& dataIn) : data(dataIn.start()), ptr(data), size(dataIn.size) {}
     explicit DataManager(const Data& dataIn, const bool isBig) : isBig(isBig), data(dataIn.start()), ptr(data), size(dataIn.size) {}
 
-    explicit DataManager(const Data* dataIn) : data(dataIn->start()), ptr(data), size(dataIn->size) {}
-    explicit DataManager(const Data* dataIn, const bool isBig) : isBig(isBig), data(dataIn->start()), ptr(data), size(dataIn->size) {}
-
     explicit DataManager(u8* dataIn, const u32 sizeIn) : data(dataIn), ptr(dataIn), size(sizeIn) {}
     explicit DataManager(u8* dataIn, const u32 sizeIn, const bool isBig) : isBig(isBig), data(dataIn), ptr(dataIn), size(sizeIn) {}
+
+    explicit DataManager(const Data* dataIn) : data(dataIn->start()), ptr(data), size(dataIn->size) {}
+    explicit DataManager(const Data* dataIn, const bool isBig) : isBig(isBig), data(dataIn->start()), ptr(data), size(dataIn->size) {}
 
     void setBigEndian() const { isBig = true; }
     void setLittleEndian() const { isBig = false; }

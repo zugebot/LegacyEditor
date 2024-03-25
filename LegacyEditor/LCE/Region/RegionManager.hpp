@@ -1,41 +1,38 @@
 #pragma once
 
 #include "ChunkManager.hpp"
+#include "LegacyEditor/LCE/MC/containsConsole.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 
 
 namespace editor {
     class File;
 
-    class RegionManager {
+    class RegionManager : public Data, public ContainsConsole {
         static constexpr u32 REGION_WIDTH = 32;
         static constexpr u32 SECTOR_BYTES = 4096;
         static constexpr u32 SECTOR_INTS = 1024; // SECTOR_BYTES / 4
         static constexpr u32 CHUNK_HEADER_SIZE = 12;
 
     public:
-        ChunkManager chunks[SECTOR_INTS];
-        CONSOLE console = CONSOLE::NONE;
+        ChunkManager* chunks = nullptr;
+        bool isRead = false;
 
         /// CONSTRUCTORS
 
-        RegionManager();
+        explicit RegionManager(const File* fileIn);
         ~RegionManager();
 
         /// FUNCTIONS
 
-        MU ChunkManager* getChunk(int xIn, int zIn);
-        MU ChunkManager* getChunk(int index);
-        MU ChunkManager* getNonEmptyChunk();
+        MU ND ChunkManager* getChunk(int xIn, int zIn) const;
+        MU ND ChunkManager* getChunk(int index) const;
+        MU ND ChunkManager* getNonEmptyChunk() const;
 
-        /// READ
+        /// READ / WRITE
 
-        void read(const File* fileIn);
-        void read(const Data* dataIn);
-
-        /// WRITE
-
-        Data write(CONSOLE consoleIn);
+        void ensureRead();
+        Data ensureWrite(CONSOLE consoleIn);
     };
 
 }

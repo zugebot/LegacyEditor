@@ -60,21 +60,20 @@ int main0() {
     fileListing.printDetails();
     fileListing.printFileList();
 
-    editor::RegionManager region;
-    region.read(fileListing.region_overworld[2]);
-    editor::ChunkManager *chunk = region.getChunk(0, 0);
+    editor::RegionManager region(fileListing.region_overworld[2]);
+    region.ensureRead();
 
-    chunk->ensureDecompress(consoleIn);
+    editor::ChunkManager *chunk = region.getChunk(0, 0);
     chunk->readChunk(consoleIn);
 
     placeBlock(chunk->chunkData, 7, 64, 7, DRIED_KELP_BLOCK_ID, 0, false);
 
     chunk->chunkData->defaultNBT();
+
     chunk->writeChunk(consoleOut);
-    chunk->ensureCompressed(consoleOut);
 
     fileListing.region_overworld[2]->data.deallocate();
-    fileListing.region_overworld[2]->data = region.write(consoleOut);
+    fileListing.region_overworld[2]->data = region.ensureWrite(consoleOut);
 
     // fileListing.fileInfo.basesavename = L"Fortnite";
     const int statusOut = fileListing.write(TEST_OUT, consoleOut);

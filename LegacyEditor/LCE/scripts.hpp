@@ -11,8 +11,8 @@ namespace editor {
         if (regionIndex >= fileListing.region_overworld.size()) { return; }
 
         // read a region file
-        RegionManager region;
-        region.read(fileListing.region_overworld[regionIndex]);
+        RegionManager region(fileListing.region_overworld[regionIndex]);
+        region.ensureRead();
 
         int h = -1;
 
@@ -22,7 +22,6 @@ namespace editor {
                 continue;
             }
 
-            chunkManager.ensureDecompress(console);
             chunkManager.readChunk(console);
             auto* chunkData = chunkManager.chunkData;
 
@@ -111,11 +110,10 @@ namespace editor {
 
             chunkData->defaultNBT();
             chunkManager.writeChunk(console);
-            chunkManager.ensureCompressed(console);
         }
 
         fileListing.region_overworld[regionIndex]->data.deallocate();
-        fileListing.region_overworld[regionIndex]->data = region.write(console);
+        fileListing.region_overworld[regionIndex]->data = region.ensureWrite(console);
     }
 
 
@@ -129,15 +127,14 @@ namespace editor {
         if (regionIndex >= fileListing.region_nether.size()) { return; }
 
         // read a region file
-        RegionManager region;
-        region.read(fileListing.region_nether[regionIndex]);
+        RegionManager region(fileListing.region_nether[regionIndex]);
+        region.ensureRead();
 
         for (ChunkManager& chunkManager: region.chunks) {
             if (chunkManager.size == 0) {
                 continue;
             }
 
-            chunkManager.ensureDecompress(console);
             chunkManager.readChunk(console);
             auto* chunkData = chunkManager.chunkData;
 
@@ -172,7 +169,7 @@ namespace editor {
         }
 
         fileListing.region_nether[regionIndex]->data.deallocate();
-        fileListing.region_nether[regionIndex]->data = region.write(console);
+        fileListing.region_nether[regionIndex]->data = region.ensureWrite(console);
     }
 
 
@@ -186,8 +183,8 @@ namespace editor {
         if (regionIndex >= fileListing.region_nether.size()) { return; }
 
         // read a region file
-        RegionManager region;
-        region.read(fileListing.region_nether[regionIndex]);
+        RegionManager region(fileListing.region_nether[regionIndex]);
+        region.ensureRead();
 
         for (int index = 0; index < 1024; index++) {
             ChunkManager* chunkManager = &region.chunks[index];
@@ -209,11 +206,10 @@ namespace editor {
 
             chunkData->defaultNBT();
             chunkManager->writeChunk(console);
-            chunkManager->ensureCompressed(console);
         }
 
         fileListing.region_nether[regionIndex]->data.deallocate();
-        fileListing.region_nether[regionIndex]->data = region.write(console);
+        fileListing.region_nether[regionIndex]->data = region.ensureWrite(console);
     }
 
 
@@ -227,14 +223,14 @@ namespace editor {
         if (regionIndex >= fileListing.region_overworld.size()) { return; }
 
         // read a region file
-        RegionManager region;
-        region.read(fileListing.region_overworld[regionIndex]);
+        RegionManager region(fileListing.region_overworld[regionIndex]);
+        region.ensureRead();
 
         for (auto& chunk: region.chunks) {
             if (chunk.size == 0) {
                 continue;
             }
-            chunk.ensureDecompress(console);
+
             chunk.readChunk(console);
             auto* chunkData = chunk.chunkData;
             if (!chunkData->validChunk) {
@@ -255,15 +251,14 @@ namespace editor {
             chunkData->lastVersion = 0x0C;
             chunk.fileData.setRLE(1);
             chunkData->defaultNBT();
-            chunk.writeChunk(console);
-            chunk.ensureCompressed(console);
         }
 
         fileListing.region_overworld[regionIndex]->data.deallocate();
-        fileListing.region_overworld[regionIndex]->data = region.write(console);
+        fileListing.region_overworld[regionIndex]->data = region.ensureWrite(console);
 
         if (regionIndex == 0) {
-            DataManager(fileListing.region_overworld[0]->data).writeToFile(dir_path + "REGION_0");
+            // Debugging
+            int ret = DataManager(fileListing.region_overworld[0]->data).writeToFile(dir_path + "REGION_0");
         }
 
     }

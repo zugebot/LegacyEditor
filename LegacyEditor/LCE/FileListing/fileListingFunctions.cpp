@@ -258,7 +258,7 @@ namespace editor {
                 }
                 RegionManager region;
                 region.read(file);
-                const Data data = region.write(consoleOut);
+                const Data data = region.ensureWrite(consoleOut);
                 file->data.steal(data);
             }
         }
@@ -279,7 +279,7 @@ namespace editor {
             for (File* file: *fileList) {
                 RegionManager region;
                 region.read(file);
-                const Data data1 = region.write(consoleOut);
+                const Data data1 = region.ensureWrite(consoleOut);
                 file->data.steal(data1);
             }
         }
@@ -312,7 +312,7 @@ namespace editor {
             for (File* file: *fileList) {
                 RegionManager region;
                 region.read(file);
-                const Data data1 = region.write(consoleOut);
+                const Data data1 = region.ensureWrite(consoleOut);
                 file->data.steal(data1);
             }
         }

@@ -57,8 +57,8 @@ namespace editor {
         int ensureDecompress(CONSOLE console);
         void ensureCompressed(CONSOLE console);
 
-        MU void readChunk(CONSOLE console) const;
-        MU void writeChunk(CONSOLE console);
+        MU void readChunk(CONSOLE consoleIn);
+        MU void writeChunk(CONSOLE consoleIn);
 
         void setSizeFromReading(u32 sizeIn);
         ND u32 getSizeForWriting() const;

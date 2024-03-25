@@ -10,37 +10,38 @@
 namespace editor {
 
 
-    RegionManager::RegionManager() {}
+    RegionManager::RegionManager(const File* fileIn) {
+        setConsole(fileIn->console);
+        this->data = fileIn->data.data;
+        this->size = fileIn->data.size;
+    }
 
     RegionManager::~RegionManager() = default;
 
 
-    MU ChunkManager* RegionManager::getChunk(const int xIn, const int zIn) {
+    MU ChunkManager* RegionManager::getChunk(const int xIn, const int zIn) const {
+        if (chunks == nullptr) { return nullptr; }
         const u32 index = xIn + zIn * REGION_WIDTH;
         if (index > SECTOR_INTS) { return nullptr; }
         return &chunks[index];
     }
 
 
-    MU ChunkManager* RegionManager::getChunk(const int index) {
+    MU ChunkManager* RegionManager::getChunk(const int index) const {
+        if (chunks == nullptr) { return nullptr; }
         if (index > SECTOR_INTS) { return nullptr; }
         return &chunks[index];
     }
 
 
-    MU ChunkManager* RegionManager::getNonEmptyChunk() {
+    MU ChunkManager* RegionManager::getNonEmptyChunk() const {
+        if (chunks == nullptr) { return nullptr; }
         for (auto& chunk: chunks) {
             if (chunk.size != 0) {
                 return &chunk;
             }
         }
         return nullptr;
-    }
-
-
-    void RegionManager::read(const File* fileIn) {
-        console = fileIn->console;
-        read(&fileIn->data);
     }
 
 
@@ -54,16 +55,21 @@ namespace editor {
      * step 5: allocates memory for the chunk
      * step 6: set chunk's decompressed size attribute
      * step 7: each chunk gets its own memory
-     * @param dataIn
      */
-    void RegionManager::read(const Data* dataIn) {
-        const u32 totalSectors = dataIn->size / SECTOR_BYTES + 1;
+    void RegionManager::ensureRead() {
+        if (isRead) {
+            return;
+        }
+
+        chunks = new ChunkManager[SECTOR_INTS];
+
+        const u32 totalSectors = this->size / SECTOR_BYTES + 1;
 
         size_t chunkIndex;
         u8 sectors[SECTOR_INTS];
         u32 locations[SECTOR_INTS];
 
-        DataManager managerIn(dataIn, consoleIsBigEndian(console));
+        DataManager managerIn(this, consoleIsBigEndian(getConsole()));
 
         for (chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
             const u32 val = managerIn.readInt32();
@@ -91,7 +97,7 @@ namespace editor {
             chunk.setSizeFromReading(managerIn.readInt32());
             chunk.allocate(chunk.size);
 
-            switch (console) {
+            switch (getConsole()) {
                 case CONSOLE::PS3:
                 case CONSOLE::RPCS3: {
                     const u32 num1 = managerIn.readInt32();
@@ -102,10 +108,11 @@ namespace editor {
                 default:
                     chunk.fileData.setDecSize(managerIn.readInt32()); // final dec size
                     break;
-                }
-                memcpy(chunk.start(), managerIn.ptr, chunk.size);
             }
+            memcpy(chunk.start(), managerIn.ptr, chunk.size);
         }
+        isRead = true;
+    }
 
 
     /**
@@ -119,7 +126,11 @@ namespace editor {
      * @param consoleIn
      * @return
      */
-        Data RegionManager::write(const CONSOLE consoleIn) {
+        Data RegionManager::ensureWrite(const CONSOLE consoleIn) {
+            if (!isRead) {
+                return {};
+            }
+
             u8 sectors[SECTOR_INTS] = {};
             u32 locations[SECTOR_INTS] = {};
 
@@ -128,7 +139,7 @@ namespace editor {
             int total_sectors = 2;
             for (int chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
                 if (ChunkManager& chunk = chunks[chunkIndex]; chunk.size != 0) {
-                    chunk.ensureCompressed(consoleIn);
+                    chunk.writeChunk(consoleIn);
                     sectors[chunkIndex] = (chunk.size + CHUNK_HEADER_SIZE) / SECTOR_BYTES + 1;
                     locations[chunkIndex] = total_sectors;
                     total_sectors += sectors[chunkIndex];
@@ -153,7 +164,7 @@ namespace editor {
                 ChunkManager& chunk = chunks[chunkIndex];
                 managerOut.seek(locations[chunkIndex] * SECTOR_BYTES);
                 managerOut.writeInt32(chunk.getSizeForWriting());
-                switch (console) {
+                switch (getConsole()) {
                     case CONSOLE::PS3:
                     case CONSOLE::RPCS3:
                         managerOut.writeInt32(chunk.fileData.getDecSize());
@@ -163,6 +174,8 @@ namespace editor {
                 }
                 managerOut.writeBytes(chunk.start(), chunk.size);
             }
+        // TODO: flag whether or not to delete the data?
+        isRead = false;
         return dataOut;
     }
 }

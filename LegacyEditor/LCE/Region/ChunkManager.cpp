@@ -39,7 +39,9 @@ namespace editor {
     }
 
 
-    MU void ChunkManager::readChunk(MU const CONSOLE console) const {
+    MU void ChunkManager::readChunk(MU const CONSOLE consoleIn) {
+        ensureDecompress(consoleIn);
+
         auto managerIn = DataManager(data, size);
         managerIn.seekStart();
 
@@ -64,7 +66,8 @@ namespace editor {
     }
 
 
-    MU void ChunkManager::writeChunk(MU CONSOLE console) {
+    MU void ChunkManager::writeChunk(MU const CONSOLE consoleIn) {
+
         Data outBuffer(CHUNK_BUFFER_SIZE);
         memset(outBuffer.data, 0, CHUNK_BUFFER_SIZE);
         auto managerOut = DataManager(outBuffer);
@@ -93,6 +96,8 @@ namespace editor {
         data = outData.data;
         size = outData.size;
         fileData.setDecSize(size);
+
+        ensureCompressed(consoleIn);
     }
 
 
