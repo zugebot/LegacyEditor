@@ -1,7 +1,7 @@
 # LegacyEditor Project Documentation
 
 My goal is to write the code necessary to convert saves between
-all consoles and all versions. It will also be able to handle
+all "Minecraft Console Edition" consoles and all their specific versions. It will also be able to handle
 player conversion, and be usable in such a way to be easily scriptable
 for editing blocks / nbt.
 
@@ -20,7 +20,7 @@ for editing blocks / nbt.
 ### Writing To:
 - **WiiU**
 - **PSVita**
-- **PS3 Emulator** (METADATA not yet resignable)
+- **PS3** (METADATA not yet resignable)
 - **RPCS3 Emulator** (METADATA not yet resignable)
 
 ## Usage
