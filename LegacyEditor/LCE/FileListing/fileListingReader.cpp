@@ -540,11 +540,23 @@ namespace editor {
             return {};
         }
 
+        /*
+        BINHeader meta = stfsInfo.getMetaData();
+        fileInfo.basesavename = meta.displayName;
+        fileInfo.thumbnail = meta.thumbnailImage;
+        fileInfo.exploredchunks;
+        fileInfo.extradata;
+        fileInfo.hostoptions;
+        fileInfo.loads;
+        fileInfo.seed;
+        fileInfo.settings;
+        fileInfo.texturepack;
+        */
+
         const Data _ = stfsInfo.extractFile(entry);
         DataManager out(_);
 
         bin.deallocate();
-
 
         const u32 srcSize = out.readInt32() - 8;
         data.size = out.readInt64();
