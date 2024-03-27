@@ -18,12 +18,10 @@ namespace editor {
 
     Data FileListing::writeData(const CONSOLE consoleOut) {
 
-        // ensureAllRegionFilesExist();
-
         // step 1: get the file count and size of all sub-files
         u32 fileCount = 0;
         u32 fileDataSize = 0;
-        for (const File& file: allFiles) {
+        for (const LCEFile& file: allFiles) {
             fileCount++;
             fileDataSize += file.data.getSize();
         }
@@ -44,16 +42,17 @@ namespace editor {
         // step 5: write each files data
         // I am using additionalData as the offset into the file its data is at
         u32 index = FILELISTING_HEADER_SIZE;
-        for (File& fileIter : allFiles) {
+        for (LCEFile& fileIter : allFiles) {
             fileIter.additionalData = index;
             index += fileIter.data.getSize();
             managerOut.writeFile(fileIter);
         }
 
         // step 6: write file metadata
-        for (const File& fileIter: allFiles) {
-            // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter.additionalData, fileIter.size, fileIter.name.c_str());
-            std::string fileIterName = fileIter.constructFileName(consoleOut, separateRegions);
+        for (const LCEFile& fileIter: allFiles) {
+            // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter
+            // .additionalData, fileIter.size, fileIter.name.c_str());
+            std::string fileIterName = fileIter.constructFileName(consoleOut, hasSeparateRegions);
             managerOut.writeWStringFromString(fileIterName, WSTRING_SIZE);
             managerOut.writeInt32(fileIter.data.getSize());
             managerOut.writeInt32(fileIter.additionalData);
@@ -67,6 +66,7 @@ namespace editor {
     int FileListing::write(stringRef_t outfileStr,
                            const CONSOLE consoleOut) {
         if (outfileStr.empty()) {
+            printf("FileListing::write: filename is empty!");
             return INVALID_ARGUMENT;
         }
 
@@ -78,7 +78,6 @@ namespace editor {
             MU const int status2 = writeFileInfo(outfileStr, consoleOut);
         }
 
-
         return status;
     }
 
@@ -86,22 +85,29 @@ namespace editor {
     int FileListing::writeFile(stringRef_t outfileStr,
                                const CONSOLE consoleOut) {
         const Data dataOut = writeData(consoleOut);
+
+        FILE* f_out = fopen(outfileStr.c_str(), "wb");
+        if (f_out == nullptr) {
+            printf("cannot create file \"%s\"", outfileStr.c_str());
+            return FILE_ERROR;
+        }
+
         int status;
         switch (consoleOut) {
             case CONSOLE::PS3:
                 status = writePS3();
                 break;
             case CONSOLE::RPCS3:
-                status = writeRPCS3(outfileStr, dataOut);
+                status = writeRPCS3(f_out, dataOut);
                 break;
             case CONSOLE::XBOX360:
                 status = writeXbox360_BIN();
                 break;
             case CONSOLE::WIIU:
-                status = writeWiiU(outfileStr, dataOut);
+                status = writeWiiU(f_out, dataOut);
                 break;
             case CONSOLE::VITA:
-                status = writeVita(outfileStr, dataOut);
+                status = writeVita(f_out, dataOut);
                 break;
             case CONSOLE::SWITCH:
                 status = writeNSX();
@@ -139,6 +145,7 @@ namespace editor {
                 break;
             }
             case CONSOLE::XBOX360:
+                printf("FileListing::writeFileInfo: not implemented!");
                 return NOT_IMPLEMENTED;
             case CONSOLE::NONE:
             default:
@@ -152,22 +159,19 @@ namespace editor {
 
 
     int FileListing::writeExternalRegions(MU stringRef_t outFilePath) {
+        printf("FileListing::writeExternalRegions: not implemented!");
         return NOT_IMPLEMENTED;
     }
 
 
     /**
      * \brief Done.
-     * \param outfileStr
+     * \param f_out
      * \param dataOut
      * \return
      */
-    int FileListing::writeWiiU(stringRef_t outfileStr,
-                               const Data& dataOut) {
-        FILE* f_out = fopen(outfileStr.c_str(), "wb");
-        if (f_out == nullptr) { return FILE_ERROR; }
+    int FileListing::writeWiiU(FILE* f_out, const Data& dataOut) {
 
-        // Write src_size to the file
         u64 src_size = dataOut.size;
         uLong compressedSize = compressBound(src_size);
         printf("compressed bound: %lu\n", compressedSize);
@@ -195,15 +199,11 @@ namespace editor {
 
     /**
      * \brief Done.
-     * \param outfileStr
+     * \param f_out
      * \param dataOut
      * \return
      */
-    int FileListing::writeVita(stringRef_t outfileStr,
-                               const Data& dataOut) {
-        FILE* f_out = fopen(outfileStr.c_str(), "wb");
-        if (f_out == nullptr) { return FILE_ERROR; }
-
+    int FileListing::writeVita(FILE* f_out, const Data& dataOut) {
         Data self;
         self.allocate(dataOut.size + 2);
 
@@ -232,15 +232,12 @@ namespace editor {
 
     /**
      * \brief Done.
-     * \param outfileStr
+     * \param f_out
      * \param dataOut
      * \return
      */
-    MU int FileListing::writeRPCS3(stringRef_t outfileStr,
+    MU int FileListing::writeRPCS3(FILE* f_out,
                                    const Data& dataOut) {
-        FILE* f_out = fopen(outfileStr.c_str(), "wb");
-        if (f_out == nullptr) { return FILE_ERROR; }
-
         printf("Writing final size: %u\n", dataOut.size);
         fwrite(dataOut.data, 1, dataOut.size, f_out);
         fclose(f_out);
@@ -249,24 +246,29 @@ namespace editor {
 
 
     MU int FileListing::writePS3() {
+        printf("FileListing::writePS3: not implemented!");
         return NOT_IMPLEMENTED;
     }
 
 
     MU int FileListing::writeXbox360_DAT() {
+        printf("FileListing::writeXbox360_DAT: not implemented!");
         return NOT_IMPLEMENTED;
     }
 
 
     MU int FileListing::writeXbox360_BIN() {
+        printf("FileListing::writeXbox360_BIN: not implemented!");
         return NOT_IMPLEMENTED;
     }
 
     MU int FileListing::writeNSX() {
+        printf("FileListing::writeNSX: not implemented!");
         return NOT_IMPLEMENTED;
     }
 
     MU int FileListing::writePs4() {
+        printf("FileListing::writePs4: not implemented!");
         return NOT_IMPLEMENTED;
     }
 }

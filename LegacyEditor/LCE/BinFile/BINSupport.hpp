@@ -1,7 +1,6 @@
 #pragma once
 
 #include "LegacyEditor/utils/dataManager.hpp"
-#include "__remove__.hpp"
 
 
 namespace editor {
@@ -77,12 +76,12 @@ namespace editor {
     public:
         explicit StfsPackage(DataManager& input) : data(input) {}
 
-        void extractFile(StfsFileEntry* entry, DataManager& out);
-        ND u32 blockToAddress(u32 blockNum);
+        Data extractFile(StfsFileEntry* entry);
+        ND u32 blockToAddress(u32 blockNum) const;
         ND u32 getHashAddressOfBlock(u32 blockNum);
 
-        ND inline StfsFileListing getFileListing() { return fileListing; }
-        ND inline BINHeader getMetaData() { return metaData; }
+        ND StfsFileListing getFileListing() { return fileListing; }
+        ND BINHeader getMetaData() { return metaData; }
 
         /// parse the file
         void parse();
@@ -100,7 +99,7 @@ namespace editor {
         u32 tablesPerLvl[3]{};
 
         void readFileListing();
-        void extractBlock(u32 blockNum, u8* inputData, u32 length = 0x1000);
+        void extractBlock(u32 blockNum, u8* inputData, u32 length = 0x1000) const;
         ND u32 computeBackingDataBlockNumber(u32 blockNum) const;
         HashEntry getBlockHashEntry(u32 blockNum);
         ND u32 computeLevelNBackingHashBlockNumber(u32 blockNum, u8 level);

@@ -5,7 +5,7 @@
 
 
 namespace editor {
-    class File;
+    class LCEFile;
 
     class RegionManager {
         // TODO: maybe PS4 / SWITCH have this value as 27?
@@ -31,7 +31,7 @@ namespace editor {
 
         /// READ AND WRITE
 
-        void read(const File* fileIn);
+        void read(const LCEFile* fileIn);
         Data write(CONSOLE consoleIn);
 
     };

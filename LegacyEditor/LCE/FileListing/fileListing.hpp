@@ -5,19 +5,19 @@
 #include <set>
 #include <list>
 
+#include "LCEFile.hpp"
 #include "LegacyEditor/LCE/FileInfo/FileInfo.hpp"
 #include "LegacyEditor/LCE/MC/enums.hpp"
 #include "LegacyEditor/utils/processor.hpp"
-#include "file.hpp"
 
 
 namespace editor {
 
 
-    class FileList : public std::vector<File*> {
+    class FileList : public std::vector<LCEFile*> {
     public:
         void removeAll() {
-            for (File* file : *this) {
+            for (LCEFile* file : *this) {
                 delete[] file->data.data;
                 file->data.data = nullptr;
             }
@@ -37,21 +37,22 @@ namespace editor {
         /// Data
 
         std::string filename;
-        std::list<File> allFiles;
+        std::list<LCEFile> allFiles;
         i32 oldestVersion{};
         i32 currentVersion{};
         CONSOLE console = CONSOLE::NONE;
         FileInfo fileInfo;
-        bool separateEntities = false;
-        bool separateRegions = false;
+        bool hasLoadedFileInfo = false;
+        bool hasSeparateEntities = false;
+        bool hasSeparateRegions = false;
 
         /// Pointers
 
         FileList* dimFileLists[3] = {&region_nether, &region_overworld, &region_end};
         FileList region_nether, region_overworld, region_end;
         FileList maps, structures, players;
-        File *entity_nether{}, *entity_overworld{}, *entity_end{};
-        File *largeMapDataMappings{}, *level{}, *grf{}, *village{};
+        LCEFile *entity_nether{}, *entity_overworld{}, *entity_end{};
+        LCEFile *largeMapDataMappings{}, *level{}, *grf{}, *village{};
 
         /// Constructors
 
@@ -72,9 +73,9 @@ namespace editor {
         /// Modify State
 
         void deallocate();
-        void removeFileTypes(const std::set<FileType>& typesToRemove);
-        MU void addFiles(File_vec filesIn);
-        File_vec collectFiles(FileType fileType);
+        void removeFileTypes(const std::set<LCEFileType>& typesToRemove);
+        MU void addFiles(LCEFile_vec filesIn);
+        LCEFile_vec collectFiles(LCEFileType fileType);
 
         /// Read / Write from console files
 
@@ -89,7 +90,7 @@ namespace editor {
                                            stringRef_t outFileStr, CONSOLE consoleOut);
 
         MU ND int readExternalRegions(stringRef_t inFilePath);
-        MU ND int writeExternalRegions(stringRef_t outFilePath);
+        MU ND static int writeExternalRegions(stringRef_t outFilePath);
 
         MU void pruneRegions();
 
@@ -112,16 +113,15 @@ namespace editor {
 
         MU ND int writeFile(stringRef_t outfileStr, CONSOLE consoleOut);
         MU ND int writeFileInfo(stringRef_t outFilePath, CONSOLE consoleOut) const;
-        MU ND static int writeWiiU(stringRef_t outfileStr, const Data& dataOut);
-        MU ND static int writeVita(stringRef_t outfileStr, const Data& dataOut);
-        MU ND static int writeRPCS3(stringRef_t outfileStr, const Data& dataOut);
+        MU ND static int writeWiiU(FILE* f_out, const Data& dataOut);
+        MU ND static int writeVita(FILE* f_out, const Data& dataOut);
+        MU ND static int writeRPCS3(FILE* f_out, const Data& dataOut);
         MU ND static int writePS3();
         MU ND static int writePs4();
         MU ND static int writeNSX();
         MU ND static int writeXbox360_DAT();
         MU ND static int writeXbox360_BIN();
         Data writeData(CONSOLE consoleOut);
-
 
         /// File pointer stuff
 
@@ -130,37 +130,37 @@ namespace editor {
 
         /// For use in removeFileTypes
 
-        std::map<FileType, std::function<void()>> clearActionsDelete = {
-                {FileType::STRUCTURE, [this] { structures.removeAll(); }},
-                {FileType::MAP, [this] { maps.removeAll(); }},
-                {FileType::PLAYER, [this] { players.removeAll(); }},
-                {FileType::REGION_NETHER, [this] { region_nether.removeAll(); }},
-                {FileType::REGION_OVERWORLD, [this] { region_overworld.removeAll(); }},
-                {FileType::REGION_END, [this] { region_end.removeAll(); }},
-                {FileType::ENTITY_NETHER, [this] { entity_nether->deleteData(); entity_nether = nullptr; }},
-                {FileType::ENTITY_OVERWORLD, [this] { entity_overworld->deleteData(); entity_overworld = nullptr; }},
-                {FileType::ENTITY_END, [this] { entity_end->deleteData(); entity_end = nullptr; }},
-                {FileType::VILLAGE, [this] { village->deleteData(); village = nullptr; }},
-                {FileType::DATA_MAPPING, [this] { largeMapDataMappings->deleteData(); largeMapDataMappings = nullptr; }},
-                {FileType::LEVEL, [this] { level->deleteData(); level = nullptr; }},
-                {FileType::GRF, [this] { grf->deleteData(); grf = nullptr; }},
+        std::map<LCEFileType, std::function<void()>> clearActionsDelete = {
+                {LCEFileType::STRUCTURE, [this] { structures.removeAll(); }},
+                {LCEFileType::MAP, [this] { maps.removeAll(); }},
+                {LCEFileType::PLAYER, [this] { players.removeAll(); }},
+                {LCEFileType::REGION_NETHER, [this] { region_nether.removeAll(); }},
+                {LCEFileType::REGION_OVERWORLD, [this] { region_overworld.removeAll(); }},
+                {LCEFileType::REGION_END, [this] { region_end.removeAll(); }},
+                {LCEFileType::ENTITY_NETHER, [this] { entity_nether->deleteData(); entity_nether = nullptr; }},
+                {LCEFileType::ENTITY_OVERWORLD, [this] { entity_overworld->deleteData(); entity_overworld = nullptr; }},
+                {LCEFileType::ENTITY_END, [this] { entity_end->deleteData(); entity_end = nullptr; }},
+                {LCEFileType::VILLAGE, [this] { village->deleteData(); village = nullptr; }},
+                {LCEFileType::DATA_MAPPING, [this] { largeMapDataMappings->deleteData(); largeMapDataMappings = nullptr; }},
+                {LCEFileType::LEVEL, [this] { level->deleteData(); level = nullptr; }},
+                {LCEFileType::GRF, [this] { grf->deleteData(); grf = nullptr; }},
         };
 
 
-        std::map<FileType, std::function<void()>> clearActionsRemove = {
-                {FileType::STRUCTURE, [this] { structures.clear(); }},
-                {FileType::MAP, [this] { maps.clear(); }},
-                {FileType::PLAYER, [this] { players.clear(); }},
-                {FileType::REGION_NETHER, [this] { region_nether.clear(); }},
-                {FileType::REGION_OVERWORLD, [this] { region_overworld.clear(); }},
-                {FileType::REGION_END, [this] { region_end.clear(); }},
-                {FileType::ENTITY_NETHER, [this] { entity_nether = nullptr; }},
-                {FileType::ENTITY_OVERWORLD, [this] { entity_overworld = nullptr; }},
-                {FileType::ENTITY_END, [this] { entity_end = nullptr; }},
-                {FileType::VILLAGE, [this] { village = nullptr; }},
-                {FileType::DATA_MAPPING, [this] { largeMapDataMappings = nullptr; }},
-                {FileType::LEVEL, [this] { level = nullptr; }},
-                {FileType::GRF, [this] { grf = nullptr; }},
+        std::map<LCEFileType, std::function<void()>> clearActionsRemove = {
+                {LCEFileType::STRUCTURE, [this] { structures.clear(); }},
+                {LCEFileType::MAP, [this] { maps.clear(); }},
+                {LCEFileType::PLAYER, [this] { players.clear(); }},
+                {LCEFileType::REGION_NETHER, [this] { region_nether.clear(); }},
+                {LCEFileType::REGION_OVERWORLD, [this] { region_overworld.clear(); }},
+                {LCEFileType::REGION_END, [this] { region_end.clear(); }},
+                {LCEFileType::ENTITY_NETHER, [this] { entity_nether = nullptr; }},
+                {LCEFileType::ENTITY_OVERWORLD, [this] { entity_overworld = nullptr; }},
+                {LCEFileType::ENTITY_END, [this] { entity_end = nullptr; }},
+                {LCEFileType::VILLAGE, [this] { village = nullptr; }},
+                {LCEFileType::DATA_MAPPING, [this] { largeMapDataMappings = nullptr; }},
+                {LCEFileType::LEVEL, [this] { level = nullptr; }},
+                {LCEFileType::GRF, [this] { grf = nullptr; }},
         };
     };
 }

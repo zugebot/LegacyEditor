@@ -10,6 +10,7 @@ namespace editor {
      * uses many struct unions to interpret header for different consoles
      */
     class HeaderUnion {
+
         static bool isSystemLittle() {
             return isSystemLittleEndian();
         }
@@ -44,7 +45,6 @@ namespace editor {
         ND u32 getShort5() const { return isSystemLittle() ? swapEndian16(ZLIB.zlib_magic) : ZLIB.zlib_magic; }
         /// bytes 0-7
         ND u64 getDestSize() const { return isSystemLittle() ? swapEndian64(ZLIB.dest_size) : ZLIB.dest_size; }
-
         /// bytes 0-3
         ND u32 getInt1Swapped() const { return isSystemLittle() ? INT_VIEW.int1 : swapEndian32(INT_VIEW.int1); }
         /// bytes 4-7

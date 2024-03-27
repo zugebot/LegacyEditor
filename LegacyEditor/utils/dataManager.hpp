@@ -8,7 +8,7 @@
 
 
 namespace editor {
-    class File;
+    class LCEFile;
 }
 
 /// Starts writing in "Big Endian".
@@ -111,8 +111,8 @@ public:
     void writeInt64AtOffset(u32 offset, u64 longIn) const;
 
     void writeData(const Data* dataIn);
-    void writeFile(const editor::File* fileIn);
-    void writeFile(const editor::File& fileIn);
+    void writeFile(const editor::LCEFile* fileIn);
+    void writeFile(const editor::LCEFile& fileIn);
     void writeBytes(const u8* dataPtrIn, u32 length);
 
     void writeUTF(std::string str);

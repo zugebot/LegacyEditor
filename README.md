@@ -1,31 +1,43 @@
+# LegacyEditor Project Documentation
 
 My goal is to write the code necessary to convert saves between
 all consoles and all versions. It will also be able to handle
 player conversion, and be usable in such a way to be easily scriptable
 for editing blocks / nbt.
 
-**The code exists to read from:**
-1. WiiU
-2. PS3
-3. RPCS3 (Emulator)
-4. ~~Xbox360 (.dat)~~
-5. PSVita
-6. Switch (region/entity conversion imminent)
-7. PS4 (region/entity conversion imminent)
+## Supported Consoles and Formats
 
-**The code exists to write to:**
-1. WiiU
-2. PSVita
-3. PS3 (METADATA not yet resignable)
-4. RPCS3 (METADATA not yet resignable)
+### Reading From:
+- **WiiU**
+- **PS3**
+- **RPCS3 Emulator**
+- **PSVita**
+- **Xbox 360 (.bin format)**
+- **Xbox 360 (.dat format)**
+- **Switch** (region/entity conversion imminent)
+- **PS4** (region/entity conversion imminent)
 
-I will update this README with more info as I go.
+### Writing To:
+- **WiiU**
+- **PSVita**
+- **PS3 Emulator** (METADATA not yet resignable)
+- **RPCS3 Emulator** (METADATA not yet resignable)
 
-Be sure to check LICENSE.md for instructions on how this code may be used.
+## Usage
 
-Includes:
-- https://github.com/gulrak/filesystem
-- http://nothings.org/stb
-- https://github.com/jibsen/tinf
+Refer to the `examples/` directory to see different ways the code can be used. For unit testing, edit the folder locations in `LegacyEditor/examples/unit_tests.cpp` to the directory that contains your saves (e.g., `/saves/`).
+
+## Dependencies
+
+This project makes use of several external libraries, including:
+- [gulrak/filesystem](https://github.com/gulrak/filesystem) for filesystem operations
+- [stb](http://nothings.org/stb) by Sean Barrett
+- [jibsen/tinf](https://github.com/jibsen/tinf) for data compression
 - LZX - Jed Wing <jedwin@ugcs.caltech.edu>
 - TINF - Joergen Ibsen
+
+## License
+
+Please refer to `LICENSE.md` for detailed information on the licensing of this code and its usage permissions.
+
+---

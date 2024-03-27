@@ -1,13 +1,15 @@
 #include "map.hpp"
 
-#include "LegacyEditor/LCE/FileListing/file.hpp"
+#include "LegacyEditor/LCE/FileListing/LCEFile.hpp"
 #include "LegacyEditor/utils/NBT.hpp"
 #include "LegacyEditor/utils/picture.hpp"
 #include "mapcolors.hpp"
 
 
 namespace editor::map {
-    MU void saveMapToPng(const File* map,
+
+
+    MU void saveMapToPng(const LCEFile* map,
                          const std::string& path,
                          const std::string& filename) {
         static constexpr int MAP_BYTE_SIZE = 16384;

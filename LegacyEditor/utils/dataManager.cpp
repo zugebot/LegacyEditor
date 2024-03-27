@@ -1,6 +1,6 @@
 #include "dataManager.hpp"
 
-#include "LegacyEditor/LCE/FileListing/file.hpp"
+#include "LegacyEditor/LCE/FileListing/LCEFile.hpp"
 
 
 static constexpr u8 FF_MASK = 0xFF;
@@ -105,6 +105,17 @@ i32 DataManager::readInt24() {
 
 
 // TODO: remove this function its bad
+i32 DataManager::readInt24(const bool isLittleIn) {
+    int val;
+    if (isLittleIn) {
+        val = ((ptr[2] << 16) | (ptr[1] << 8) | ptr[0]);
+    } else {
+        val = ((ptr[0] << 16) | (ptr[1] << 8) | ptr[2]);
+    }
+    incrementPointer(3);
+    return val;
+}
+/*
 i32 DataManager::readInt24(bool isLittleIn) {
     const bool originalEndianType = isBig;
     isBig = isLittleIn;
@@ -118,6 +129,7 @@ i32 DataManager::readInt24(bool isLittleIn) {
     isBig = originalEndianType;
     return static_cast<int>(val);
 }
+*/
 
 
 u32 DataManager::readInt32() {
@@ -527,12 +539,12 @@ void DataManager::writeData(const Data* dataIn) {
 }
 
 
-void DataManager::writeFile(const editor::File* fileIn) {
+void DataManager::writeFile(const editor::LCEFile* fileIn) {
     writeBytes(fileIn->data.start(), fileIn->data.size);
 }
 
 
-void DataManager::writeFile(const editor::File& fileIn) {
+void DataManager::writeFile(const editor::LCEFile& fileIn) {
     writeBytes(fileIn.data.start(), fileIn.data.size);
 }
 

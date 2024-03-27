@@ -9,7 +9,7 @@ class NBTTagCompound;
 
 namespace editor {
 
-    enum class FileType : u8 {
+    enum class LCEFileType : u8 {
         NONE,             // NONE
         STRUCTURE,        // data/
         VILLAGE,          // data/
@@ -26,67 +26,67 @@ namespace editor {
         ENTITY_END,       // ...
     };
 
-    static std::string fileTypeToString(const FileType type) {
+    static std::string fileTypeToString(const LCEFileType type) {
         switch (type) {
-            case FileType::STRUCTURE:
+            case LCEFileType::STRUCTURE:
                 return "STRUCTURE";
-            case FileType::VILLAGE:
+            case LCEFileType::VILLAGE:
                 return "VILLAGE";
-            case FileType::DATA_MAPPING:
+            case LCEFileType::DATA_MAPPING:
                 return "DATA_MAPPING";
-            case FileType::MAP:
+            case LCEFileType::MAP:
                 return "MAP";
-            case FileType::REGION_NETHER:
+            case LCEFileType::REGION_NETHER:
                 return "REGION_NETHER";
-            case FileType::REGION_OVERWORLD:
+            case LCEFileType::REGION_OVERWORLD:
                 return "REGION_OVERWORLD";
-            case FileType::REGION_END:
+            case LCEFileType::REGION_END:
                 return "REGION_END";
-            case FileType::PLAYER:
+            case LCEFileType::PLAYER:
                 return "PLAYER";
-            case FileType::LEVEL:
+            case LCEFileType::LEVEL:
                 return "LEVEL";
-            case FileType::GRF:
+            case LCEFileType::GRF:
                 return "GRF";
-            case FileType::ENTITY_NETHER:
+            case LCEFileType::ENTITY_NETHER:
                 return "ENTITY_NETHER";
-            case FileType::ENTITY_OVERWORLD:
+            case LCEFileType::ENTITY_OVERWORLD:
                 return "ENTITY_OVERWORLD";
-            case FileType::ENTITY_END:
+            case LCEFileType::ENTITY_END:
                 return "ENTITY_END";
-            case FileType::NONE:
+            case LCEFileType::NONE:
             default:
                 return "NONE";
         }
     }
 
 
-    class File {
+    class LCEFile {
     public:
         NBTTagCompound* nbt = nullptr;
         Data data;
         u64 timestamp = 0;
         u32 additionalData = 0;
         CONSOLE console = CONSOLE::NONE;
-        FileType fileType = FileType::NONE;
+        LCEFileType fileType = LCEFileType::NONE;
 
-        explicit File(CONSOLE consoleIn);
-        explicit File(CONSOLE consoleIn, u32 sizeIn);
-        File(CONSOLE consoleIn, u32 sizeIn, u64 timestampIn);
-        File(CONSOLE consoleIn, u8* dataIn, u32 sizeIn, u64 timestampIn);
+        explicit LCEFile(CONSOLE consoleIn);
+        explicit LCEFile(CONSOLE consoleIn, u32 sizeIn);
+        LCEFile(CONSOLE consoleIn, u32 sizeIn, u64 timestampIn);
+        LCEFile(CONSOLE consoleIn, u8* dataIn, u32 sizeIn, u64 timestampIn);
 
-        ~File();
+        ~LCEFile();
 
         MU ND bool isRegionType() const {
-            return fileType == FileType::REGION_NETHER ||
-                   fileType == FileType::REGION_OVERWORLD ||
-                   fileType == FileType::REGION_END;
+            return fileType == LCEFileType::REGION_NETHER ||
+                   fileType == LCEFileType::REGION_OVERWORLD ||
+                   fileType == LCEFileType::REGION_END;
         }
 
         MU ND bool isEntityType() const {
-            return fileType == FileType::ENTITY_NETHER ||
-                   fileType == FileType::ENTITY_OVERWORLD ||
-                   fileType == FileType::ENTITY_END;
+            return fileType == LCEFileType::ENTITY_NETHER ||
+                   fileType == LCEFileType::ENTITY_OVERWORLD ||
+                   fileType == LCEFileType::ENTITY_END;
         }
 
         void deleteData();
@@ -104,8 +104,8 @@ namespace editor {
 
     };
 
-    using File_vec = std::vector<File>;
-    using FilePtr_vec = std::vector<File *>;
+    using LCEFile_vec = std::vector<LCEFile>;
+    using LCEFilePtr_vec = std::vector<LCEFile *>;
 }
 
 

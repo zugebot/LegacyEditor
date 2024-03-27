@@ -3,7 +3,7 @@
 #include "RegionManager.hpp"
 
 namespace editor {
-class File;
+class LCEFile;
 
 /**
  * should be part of FileListing?

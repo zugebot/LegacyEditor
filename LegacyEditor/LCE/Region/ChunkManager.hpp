@@ -62,6 +62,7 @@ namespace editor {
 
         void setSizeFromReading(u32 sizeIn);
         ND u32 getSizeForWriting() const;
+
     };
 
 }

@@ -23,7 +23,7 @@ namespace editor {
     void FileListing::printFileList() const {
         int index = 0;
         for (auto iter = allFiles.begin(); iter != allFiles.end(); ++iter) {
-            printf("%.2d: %s\n", index, iter->constructFileName(console, separateRegions).c_str());
+            printf("%.2d: %s\n", index, iter->constructFileName(console, hasSeparateRegions).c_str());
             index++;
         }
         printf("\n");
@@ -52,8 +52,8 @@ namespace editor {
             }
         }
 
-        for (const File &file: allFiles) {
-            std::string fullPath = folder + "\\" + file.constructFileName(console, separateRegions);
+        for (const LCEFile &file: allFiles) {
+            std::string fullPath = folder + "\\" + file.constructFileName(console, hasSeparateRegions);
 
             if (fs::path path(fullPath); !exists(path.parent_path())) {
                 create_directories(path.parent_path());
@@ -69,11 +69,11 @@ namespace editor {
 
 
     // TODO: this function probably doesn't work
-    File_vec FileListing::collectFiles(FileType fileType) {
-        File_vec collectedFiles;
+    LCEFile_vec FileListing::collectFiles(LCEFileType fileType) {
+        LCEFile_vec collectedFiles;
         std::erase_if(
                 allFiles,
-                [&collectedFiles, &fileType](const File& file) {
+                [&collectedFiles, &fileType](const LCEFile& file) {
                     const bool isType = file.fileType == fileType;
                     if (isType) {
                         collectedFiles.push_back(file);
@@ -112,21 +112,21 @@ namespace editor {
                     filesAdded++;
                     // TODO: should not be CONSOLE::NONE
                     allFiles.emplace_back(CONSOLE::NONE, nullptr, 0, 0);
-                    File &file = allFiles.back();
+                    LCEFile &file = allFiles.back();
 
                     file.nbt->setTag("x", createNBT_INT16(static_cast<i16>(xIter - 1)));
                     file.nbt->setTag("z", createNBT_INT16(static_cast<i16>(zIter - 1)));
                     switch (dim_i) {
                         case 0:
-                            file.fileType = FileType::REGION_NETHER;
+                            file.fileType = LCEFileType::REGION_NETHER;
                             region_nether.push_back(&file);
                             break;
                         case 1:
-                            file.fileType = FileType::REGION_OVERWORLD;
+                            file.fileType = LCEFileType::REGION_OVERWORLD;
                             region_overworld.push_back(&file);
                             break;
                         case 2:
-                            file.fileType = FileType::REGION_END;
+                            file.fileType = LCEFileType::REGION_END;
                             region_end.push_back(&file);
                             break;
                         default:;
@@ -143,7 +143,7 @@ namespace editor {
 
 
     void FileListing::deallocate() {
-        for (File& file : allFiles) {
+        for (LCEFile& file : allFiles) {
             delete[] file.data.data;
             file.data.data = nullptr;
         }
@@ -174,45 +174,45 @@ namespace editor {
 
     void FileListing::updatePointers() {
         clearPointers();
-        for (File& file : allFiles) {
+        for (LCEFile& file : allFiles) {
             switch(file.fileType) {
-                case FileType::STRUCTURE:
+                case LCEFileType::STRUCTURE:
                     structures.push_back(&file);
                     break;
-                case FileType::VILLAGE:
+                case LCEFileType::VILLAGE:
                     village = &file;
                     break;
-                case FileType::DATA_MAPPING:
+                case LCEFileType::DATA_MAPPING:
                     largeMapDataMappings = &file;
                     break;
-                case FileType::MAP:
+                case LCEFileType::MAP:
                     maps.push_back(&file);
                     break;
-                case FileType::REGION_NETHER:
+                case LCEFileType::REGION_NETHER:
                     region_nether.push_back(&file);
                     break;
-                case FileType::REGION_OVERWORLD:
+                case LCEFileType::REGION_OVERWORLD:
                     region_overworld.push_back(&file);
                     break;
-                case FileType::REGION_END:
+                case LCEFileType::REGION_END:
                     region_end.push_back(&file);
                     break;
-                case FileType::PLAYER:
+                case LCEFileType::PLAYER:
                     players.push_back(&file);
                     break;
-                case FileType::LEVEL:
+                case LCEFileType::LEVEL:
                     level = &file;
                     break;
-                case FileType::GRF:
+                case LCEFileType::GRF:
                     grf = &file;
                     break;
-                case FileType::ENTITY_NETHER:
+                case LCEFileType::ENTITY_NETHER:
                     entity_nether = &file;
                     break;
-                case FileType::ENTITY_OVERWORLD:
+                case LCEFileType::ENTITY_OVERWORLD:
                     entity_overworld = &file;
                     break;
-                case FileType::ENTITY_END:
+                case LCEFileType::ENTITY_END:
                     entity_end = &file;
                     break;
                 default:
@@ -223,7 +223,7 @@ namespace editor {
 
     // TODO: this does not work at all
     // TODO: this should be popping the current node, not the ending node
-    void FileListing::removeFileTypes(const std::set<FileType>& typesToRemove) {
+    void FileListing::removeFileTypes(const std::set<LCEFileType>& typesToRemove) {
 
         auto iter = allFiles.begin();
         while (iter != allFiles.end()) {
@@ -242,7 +242,7 @@ namespace editor {
     }
 
 
-    MU void FileListing::addFiles(std::vector<File> filesIn) {
+    MU void FileListing::addFiles(std::vector<LCEFile> filesIn) {
         allFiles.insert(allFiles.end(), filesIn.begin(), filesIn.end());
         updatePointers();
     }
@@ -250,7 +250,7 @@ namespace editor {
 
     MU void FileListing::convertRegions(const CONSOLE consoleOut) {
         for (const FileList* fileList : dimFileLists) {
-            for (File* file : *fileList) {
+            for (LCEFile* file : *fileList) {
                 // don't convert it if it's already the correct console version
                 if (file->console == consoleOut) {
                     continue;
@@ -270,12 +270,10 @@ namespace editor {
 
         status = saveToFolder(dir_path + "dump_" + consoleToStr(console));
 
-
-        removeFileTypes({FileType::PLAYER, FileType::DATA_MAPPING});
-
+        removeFileTypes({LCEFileType::PLAYER, LCEFileType::DATA_MAPPING});
 
         for (const auto* fileList : dimFileLists) {
-            for (File* file: *fileList) {
+            for (LCEFile* file: *fileList) {
                 RegionManager region;
                 region.read(file);
                 const Data data1 = region.write(consoleOut);
@@ -299,16 +297,16 @@ namespace editor {
         status = replace.readFile(inFileRegionReplacementStr);
         if (status != SUCCESS) { return status; }
 
-        removeFileTypes({FileType::REGION_NETHER,
-                         FileType::REGION_OVERWORLD,
-                         FileType::REGION_END});
+        removeFileTypes({LCEFileType::REGION_NETHER,
+                         LCEFileType::REGION_OVERWORLD,
+                         LCEFileType::REGION_END});
 
-        addFiles(replace.collectFiles(FileType::REGION_NETHER));
-        addFiles(replace.collectFiles(FileType::REGION_OVERWORLD));
-        addFiles(replace.collectFiles(FileType::REGION_END));
+        addFiles(replace.collectFiles(LCEFileType::REGION_NETHER));
+        addFiles(replace.collectFiles(LCEFileType::REGION_OVERWORLD));
+        addFiles(replace.collectFiles(LCEFileType::REGION_END));
 
         for (const auto* fileList : dimFileLists) {
-            for (File* file: *fileList) {
+            for (LCEFile* file: *fileList) {
                 RegionManager region;
                 region.read(file);
                 const Data data1 = region.write(consoleOut);

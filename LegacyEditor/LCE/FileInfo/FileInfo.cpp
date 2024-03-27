@@ -29,8 +29,10 @@ static i64 stringToInt64(const std::string& str) {
         sign = -1;
         index++;
     }
-    const int stringSize = static_cast<int>(str.size());
-    for (; index < stringSize; index++) { result = result * 10 + (str[index] - '0'); }
+
+    for (const int stringSize = static_cast<int>(str.size()); index < stringSize; index++) {
+        result = result * 10 + (str[index] - '0');
+    }
 
     return result * sign;
 }
@@ -53,7 +55,8 @@ static std::string hexToString(i64 hex) {
 
     std::string result;
     while (hex > 0) {
-        result = n2c(hex % 16) + result;
+        // result = n2c(hex % 16) + result;
+        result += n2c(hex % 16);
         hex /= 16;
     }
     return result;
@@ -69,7 +72,8 @@ static std::string int64ToString(i64 num) {
     num = std::abs(num);
 
     while (num > 0) {
-        result = static_cast<char>('0' + num % 10) + result;
+        // result = static_cast<char>('0' + num % 10) + result;
+        result += static_cast<char>('0' + num % 10);
         num /= 10;
     }
 
@@ -122,11 +126,11 @@ namespace editor {
         manager.incrementPointer(8);
 
         while (!manager.isEndOfData()) {
-            const u8* PNG_END = nullptr;
+            const u8* PNG_END;
             const u32 chunkLength = manager.readInt32();
-            std::string chunkType = manager.readString(4);
 
-            if (chunkType != "tEXt") {
+            if (std::string chunkType = manager.readString(4);
+                    chunkType != "tEXt") {
 
                 // this may not work
                 if (chunkType == "IEND") {

@@ -37,7 +37,7 @@ namespace editor {
         std::wstring basesavename;
         bool isLoaded;
 
-        MU void defaultThumbnail();
+        MU static void defaultThumbnail();
         void readFile(const std::string& inFileStr);
         ND int writeFile(const std::string& outFileStr, CONSOLE console) const;
     };

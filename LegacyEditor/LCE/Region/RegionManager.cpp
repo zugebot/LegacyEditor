@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-#include "LegacyEditor/LCE/FileListing/file.hpp"
+#include "LegacyEditor/LCE/FileListing/LCEFile.hpp"
 #include "LegacyEditor/LCE/MC/enums.hpp"
 #include "LegacyEditor/utils/dataManager.hpp"
 
@@ -49,7 +49,7 @@ namespace editor {
      * step 7: each chunk gets its own memory
      * @param fileIn
      */
-    void RegionManager::read(const File* fileIn) {
+    void RegionManager::read(const LCEFile* fileIn) {
         console = fileIn->console;
         auto* dataIn = &fileIn->data;
 

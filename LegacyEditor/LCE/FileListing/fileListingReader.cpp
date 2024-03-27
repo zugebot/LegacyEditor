@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <sstream>
 
+#include "LegacyEditor/LCE/BinFile/BINSupport.hpp"
 #include "headerUnion.hpp"
 
 #include "LegacyEditor/libs/ghc/fs_std.hpp"
@@ -95,17 +96,17 @@ namespace editor {
 
             // TODO: make sure all files are set with the correct console
             allFiles.emplace_back(console, data, fileSize, timestamp);
-            File &file = allFiles.back();
+            LCEFile &file = allFiles.back();
 
             // region file
             non_empty_file_count++;
             if (fileName.ends_with(".mcr")) {
                 if (fileName.starts_with("DIM-1")) {
-                    file.fileType = FileType::REGION_NETHER;
+                    file.fileType = LCEFileType::REGION_NETHER;
                 } else if (fileName.starts_with("DIM1")) {
-                    file.fileType = FileType::REGION_END;
+                    file.fileType = LCEFileType::REGION_END;
                 } else if (fileName.starts_with("r")) {
-                    file.fileType = FileType::REGION_OVERWORLD;
+                    file.fileType = LCEFileType::REGION_OVERWORLD;
                 }
                 const auto [fst, snd]
                     = extractRegionCoords(fileName);
@@ -115,42 +116,42 @@ namespace editor {
             }
 
             if (fileName == "entities.dat") {
-                file.fileType = FileType::ENTITY_OVERWORLD;
+                file.fileType = LCEFileType::ENTITY_OVERWORLD;
                 continue;
             }
             if (fileName.ends_with("entities.dat")) {
                 if (fileName.starts_with("DIM-1")) {
-                    file.fileType = FileType::ENTITY_NETHER;
+                    file.fileType = LCEFileType::ENTITY_NETHER;
                 } else if (fileName.starts_with("DIM1/")) {
-                    file.fileType = FileType::ENTITY_END;
+                    file.fileType = LCEFileType::ENTITY_END;
                 }
                 continue;
             }
 
             if (fileName == "level.dat") {
-                file.fileType = FileType::LEVEL;
+                file.fileType = LCEFileType::LEVEL;
                 continue;
             }
 
             if (fileName.starts_with("data/map_")) {
-                file.fileType = FileType::MAP;
+                file.fileType = LCEFileType::MAP;
                 const i16 mapNumber = extractMapNumber(fileName);
                 file.nbt->setTag("#", createNBT_INT16(mapNumber));
                 continue;
             }
 
             if (fileName == "data/villages.dat") {
-                file.fileType = FileType::VILLAGE;
+                file.fileType = LCEFileType::VILLAGE;
                 continue;
             }
 
             if (fileName == "data/largeMapDataMappings.dat") {
-                file.fileType = FileType::DATA_MAPPING;
+                file.fileType = LCEFileType::DATA_MAPPING;
                 continue;
             }
 
             if (fileName.starts_with("data/")) {
-                file.fileType = FileType::STRUCTURE;
+                file.fileType = LCEFileType::STRUCTURE;
                 file.nbt->setString("filename", fileName);
                 if (fileName.starts_with("data/villages_") && console == CONSOLE::SWITCH) {
                     console = CONSOLE::PS4;
@@ -159,12 +160,12 @@ namespace editor {
             }
 
             if (fileName.ends_with(".grf")) {
-                file.fileType = FileType::GRF;
+                file.fileType = LCEFileType::GRF;
                 continue;
             }
 
             if (fileName.starts_with("players/") || fileName.find('/') == -1) {
-                file.fileType = FileType::PLAYER;
+                file.fileType = LCEFileType::PLAYER;
                 file.nbt->setString("filename", fileName);
                 continue;
             }
@@ -188,7 +189,7 @@ namespace editor {
             filepath.pop_back();
         }
 
-        if (readEXTFile) {
+        if (readEXTFile && !hasLoadedFileInfo) {
             const int status2 = readFileInfo(filepath);
         }
 
@@ -261,8 +262,8 @@ namespace editor {
 
             // sets corresponding state booleans
             if (console == CONSOLE::PS4 || console == CONSOLE::SWITCH) {
-                separateRegions = true;
-                separateEntities = true;
+                hasSeparateRegions = true;
+                hasSeparateEntities = true;
             }
         }
         return result;
@@ -274,7 +275,7 @@ namespace editor {
 
         switch (console) {
             case CONSOLE::XBOX360:
-                // IDK...
+                return NOT_IMPLEMENTED;
             case CONSOLE::PS3:
             case CONSOLE::RPCS3:
             case CONSOLE::PS4:
@@ -285,10 +286,6 @@ namespace editor {
                 break;
             case CONSOLE::WIIU:
             case CONSOLE::SWITCH: {
-                const u32 num = filename.size() - filepath.size();
-                // const std::string filenamedat
-                //     = filename.substr(filename.size(), num);
-                // filepath += filenamedat;
                 filepath = filename + ".ext";
                 break;
             }
@@ -301,6 +298,7 @@ namespace editor {
 
         if (fs::exists(filepath)) {
             fileInfo.readFile(filepath);
+            hasLoadedFileInfo = true;
 
         } else {
             printf("FileInfo file not found...\n");
@@ -345,18 +343,18 @@ namespace editor {
             uint32_t timestamp = 0;
             // TODO: should not be CONSOLE::NONE
             allFiles.emplace_back(CONSOLE::NONE, dat_out.data, fileSize, timestamp);
-            File &lFile = allFiles.back();
-            if (const char dimChar = filename.at(12) - 48; dimChar < 0
-                || dimChar > 2) {
-                lFile.fileType = FileType::NONE;
+            LCEFile &lFile = allFiles.back();
+            if (const auto dimChar = static_cast<char>(static_cast<int>(filename.at(12)) - 48);
+                dimChar < 0 || dimChar > 2) {
+                lFile.fileType = LCEFileType::NONE;
             } else {
-                static constexpr FileType regDims[3] = {
-                    FileType::REGION_OVERWORLD,
-                    FileType::REGION_NETHER,
-                    FileType::REGION_END
+                static constexpr LCEFileType regDims[3] = {
+                    LCEFileType::REGION_OVERWORLD,
+                    LCEFileType::REGION_NETHER,
+                    LCEFileType::REGION_END
                 };
                 lFile.fileType = regDims[dimChar];
-            }\
+            }
             const int16_t rX = static_cast<int8_t>(strtol(
                 filename.substr(13, 2).c_str(), nullptr, 16));
             const int16_t rZ = static_cast<int8_t>(strtol(
@@ -473,7 +471,6 @@ namespace editor {
         tinf_uncompress(data.start(), &file_size, src.start(), src.getSize());
         src.deallocate();
 
-
         if (file_size == 0) {
             printf_err("%s", error3);
             return DECOMPRESS;
@@ -520,30 +517,46 @@ namespace editor {
         return SUCCESS;
     }
 
-
+    // TODO: IDK if it should but it is for now, get fileInfo out of it, fix memory leaks
     int FileListing::readXbox360BIN(FILE* f_in, Data& data,
-        u64 source_binary_size) {
+        const u64 source_binary_size) {
         console = CONSOLE::XBOX360;
-        /**
+
         printf("Detected Xbox360 .bin savefile, converting\n\n");
 
         fseek(f_in, 0, SEEK_SET);
 
         Data bin(source_binary_size);
         fread(bin.start(), 1, source_binary_size, f_in);
-        fileInfo = extractSaveGameDat(bin.start(), static_cast<i64>(source_binary_size));
-        bin.deallocate(); // TODO: IDK if it should but it is for now
 
-        const u32 src_size = fileInfo.saveFileData.readInt32() - 8;
+        DataManager binFile(bin.data, source_binary_size);
+        StfsPackage stfsInfo(binFile);
+        stfsInfo.parse();
+        StfsFileListing listing = stfsInfo.getFileListing();
 
-        // at offset 8
-        data.size = fileInfo.saveFileData.readInt64();
+        StfsFileEntry* entry = findSavegameFileEntry(listing);
+        if (entry == nullptr) {
+            bin.deallocate();
+            return {};
+        }
+
+        const Data _ = stfsInfo.extractFile(entry);
+        DataManager out(_);
+
+        bin.deallocate();
+
+
+        const u32 srcSize = out.readInt32() - 8;
+        data.size = out.readInt64();
 
         if (!data.allocate(data.size)) {
             return MALLOC_FAILED;
         }
-        data.size = XDecompress(data.start(), &data.size, fileInfo.saveFileData.data, src_size);
-        */
+
+        data.size = XDecompress(
+            data.start(), &data.size,
+            out.ptr, srcSize);
+
         return SUCCESS;
     }
 
