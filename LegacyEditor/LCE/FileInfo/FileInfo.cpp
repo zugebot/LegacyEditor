@@ -3,7 +3,7 @@
 #include "LegacyEditor/LCE/MC/enums.hpp"
 #include "LegacyEditor/utils/dataManager.hpp"
 
-#include "LegacyEditor/libs/png/crc.hpp"
+#include "include/png/crc.hpp"
 
 
 static u32 c2n(const char chara) {

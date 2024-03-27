@@ -3,7 +3,8 @@
 #include <iostream>
 #include <algorithm>
 
-#include "LegacyEditor/libs/ghc/fs_std.hpp"
+#include "include/ghc/fs_std.hpp"
+
 #include "LegacyEditor/utils/NBT.hpp"
 #include "LegacyEditor/LCE/Region/RegionManager.hpp"
 

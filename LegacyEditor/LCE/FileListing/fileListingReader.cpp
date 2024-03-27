@@ -3,16 +3,16 @@
 #include <cstdio>
 #include <sstream>
 
-#include "LegacyEditor/LCE/BinFile/BINSupport.hpp"
+
+#include "include/ghc/fs_std.hpp"
+#include "include/tinf/tinf.h"
+#include "include/zlib-1.2.12/zlib.h"
+#include "include/lzx/XboxCompression.hpp"
+
 #include "headerUnion.hpp"
-
-#include "LegacyEditor/libs/ghc/fs_std.hpp"
-
+#include "LegacyEditor/LCE/BinFile/BINSupport.hpp"
 #include "LegacyEditor/utils/RLE/rle_vita.hpp"
 #include <LegacyEditor/utils/RLE/rle_nsxps4.hpp>
-#include "LegacyEditor/libs/tinf/tinf.h"
-#include "LegacyEditor/libs/zlib-1.2.12/zlib.h"
-#include "LegacyEditor/utils/LZX/XboxCompression.hpp"
 #include "LegacyEditor/utils/NBT.hpp"
 
 

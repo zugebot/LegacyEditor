@@ -4,7 +4,7 @@
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
-#include "LegacyEditor/libs/stb_image_write.h"
+#include "../../include/stb_image_write.h"
 #include "LegacyEditor/utils/processor.hpp"
 
 

@@ -1,14 +1,13 @@
 #include "ChunkManager.hpp"
 
-#include "LegacyEditor/utils/PS3_DEFLATE/deflateUsage.hpp"
-#include "LegacyEditor/utils/LZX/XboxCompression.hpp"
-#include "LegacyEditor/utils/RLE/rle.hpp"
-#include "LegacyEditor/libs/tinf/tinf.h"
-#include "LegacyEditor/libs/zlib-1.2.12/zlib.h"
+#include "include/tinf/tinf.h"
+#include "include/zlib-1.2.12/zlib.h"
+#include "include/lzx/XboxCompression.hpp"
 
+#include "LegacyEditor/utils/PS3_DEFLATE/deflateUsage.hpp"
+#include "LegacyEditor/utils/RLE/rle.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 #include "LegacyEditor/LCE/Chunk/chunkData.hpp"
-
 
 #include "LegacyEditor/LCE/Chunk/v10.hpp"
 #include "LegacyEditor/LCE/Chunk/v11.hpp"

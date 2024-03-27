@@ -1,6 +1,6 @@
 #include "deflateUsage.hpp"
 
-#include "LegacyEditor/libs/zlib-1.2.12/zlib.h"
+#include "include/zlib-1.2.12/zlib.h"
 
 #define ZIPCHUNK_SIZE 32768
 

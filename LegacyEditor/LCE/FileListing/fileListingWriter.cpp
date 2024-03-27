@@ -1,11 +1,13 @@
 #include "fileListing.hpp"
 
 #include <cstdio>
-#include "LegacyEditor/libs/ghc/fs_std.hpp"
+
+#include "include/ghc/fs_std.hpp"
+#include "include/zlib-1.2.12/zlib.h"
 
 #include "LegacyEditor/utils/RLE/rle_vita.hpp"
-#include "LegacyEditor/libs/zlib-1.2.12/zlib.h"
 #include "LegacyEditor/utils/endian.hpp"
+
 // #include "LegacyEditor/utils/LZX/XboxCompression.hpp"
 // #include "LegacyEditor/utils/tinf/tinf.h"
 

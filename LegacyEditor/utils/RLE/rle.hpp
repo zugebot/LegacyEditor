@@ -1,5 +1,6 @@
 #pragma once
 
+#include "LegacyEditor/utils/dataManager.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 
 

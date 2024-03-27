@@ -1,7 +1,7 @@
 #include <iostream>
 
+#include "include/ghc/fs_std.hpp"
 
-#include "LegacyEditor/libs/ghc/fs_std.hpp"
 #include "LegacyEditor/LCE/MC/blocks.hpp"
 #include "LegacyEditor/LCE/include.hpp"
 #include "LegacyEditor/utils/processor.hpp"
