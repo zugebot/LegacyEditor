@@ -72,6 +72,16 @@ namespace editor {
             return INVALID_ARGUMENT;
         }
 
+        const bool differentConsole = console != consoleOut;
+
+        if (AUTO_REMOVE_PLAYERS && differentConsole) {
+            removeFileTypes({editor::LCEFileType::PLAYER});
+        }
+
+        if (AUTO_REMOVE_DATA_MAPPING && differentConsole) {
+            removeFileTypes({editor::LCEFileType::DATA_MAPPING});
+        }
+
         convertRegions(consoleOut);
 
         const int status = writeFile(outfileStr, consoleOut);

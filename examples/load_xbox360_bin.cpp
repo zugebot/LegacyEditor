@@ -18,10 +18,6 @@ int main() {
         return printf_err("failed to load file\n");
     }
 
-    fileListing.removeFileTypes({
-        editor::LCEFileType::PLAYER,
-        editor::LCEFileType::DATA_MAPPING});
-
     fileListing.printDetails();
     fileListing.printFileList();
 

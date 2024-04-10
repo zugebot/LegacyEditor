@@ -17,15 +17,14 @@ int main() {
     const std::string TEST_OUT = wiiu + R"(230918230207)";
     constexpr auto consoleOut = CONSOLE::WIIU;
 
+    editor::FileListing::AUTO_REMOVE_PLAYERS = false;
+
     editor::FileListing fileListing;
     if (fileListing.read(TEST_IN) != 0) {
         return printf_err("failed to load file\n");
     }
     const auto consoleIn = fileListing.console;
 
-    fileListing.removeFileTypes({
-        // editor::FileType::PLAYER,
-        editor::LCEFileType::DATA_MAPPING});
 
     fileListing.printDetails();
     fileListing.printFileList();

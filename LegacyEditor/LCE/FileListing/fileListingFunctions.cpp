@@ -11,6 +11,9 @@
 
 namespace editor {
 
+    bool FileListing::AUTO_REMOVE_PLAYERS = true;
+    bool FileListing::AUTO_REMOVE_DATA_MAPPING = true;
+
 
     void FileListing::printDetails() const {
         printf("> FileListing Details:\n");

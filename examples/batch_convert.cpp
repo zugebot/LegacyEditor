@@ -55,10 +55,6 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
-        fileListing.removeFileTypes({
-                editor::LCEFileType::PLAYER,
-                editor::LCEFileType::DATA_MAPPING});
-
         fs::path outFile = outDir / filePath.filename();
         outFile += "_" + consoleIn;
         const int statusOut = fileListing.write(outFile.string(), consoleOut);

@@ -32,9 +32,13 @@ namespace editor {
         static constexpr u32 FILELISTING_HEADER_SIZE = 12;
         static constexpr u32 FILE_HEADER_SIZE = 144;
 
+
+
     public:
 
         /// Data
+        static bool AUTO_REMOVE_PLAYERS;
+        static bool AUTO_REMOVE_DATA_MAPPING;
 
         std::string filename;
         std::list<LCEFile> allFiles;
@@ -164,3 +168,4 @@ namespace editor {
         };
     };
 }
+
