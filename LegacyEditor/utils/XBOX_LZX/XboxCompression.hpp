@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lzx.h"
+#include "include/lzx/lzx.h"
 #include <iostream>
 #include <cstring>
 

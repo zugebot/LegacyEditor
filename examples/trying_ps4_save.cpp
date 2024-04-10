@@ -1,13 +1,13 @@
 #include <iostream>
 
-#include "LegacyEditor/libs/ghc/fs_std.hpp"
+#include "include/ghc/fs_std.hpp"
 
 #include "LegacyEditor/LCE/FileInfo/FileInfo.hpp"
 #include "LegacyEditor/LCE/include.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 #include "LegacyEditor/utils/timer.hpp"
 
-#include "../LegacyEditor/unit_tests.hpp"
+#include "/LegacyEditor/unit_tests.hpp"
 
 
 int main() {

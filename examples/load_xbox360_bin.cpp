@@ -2,11 +2,10 @@
 
 #include "include/ghc/fs_std.hpp"
 
-#include "LegacyEditor/LCE/MC/blocks.hpp"
 #include "LegacyEditor/LCE/include.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 
-#include "../LegacyEditor/unit_tests.hpp"
+#include "LegacyEditor/unit_tests.hpp"
 
 
 int main() {

@@ -35,7 +35,7 @@ namespace editor {
 
         std::string folder = folderIn;
         if (folderIn.empty()) {
-            folder = dir_path + "dump/" + consoleToStr(console);
+            folder = /*dir_path +*/ "dump/" + consoleToStr(console);
         }
 
         if (folder.length() < 20) {
@@ -269,7 +269,7 @@ namespace editor {
         int status = readFile(inFileStr);
         if (status != SUCCESS) { return status; }
 
-        status = saveToFolder(dir_path + "dump_" + consoleToStr(console));
+        status = saveToFolder(/*dir_path + */ "dump_" + consoleToStr(console));
 
         removeFileTypes({LCEFileType::PLAYER, LCEFileType::DATA_MAPPING});
 

@@ -36,6 +36,10 @@ This project makes use of several external libraries, including:
 - LZX - Jed Wing <jedwin@ugcs.caltech.edu>
 - TINF - Joergen Ibsen
 
+## Outside Help
+
+PS-VITA: https://docs.google.com/document/d/1HUoeH9YcIwqYPYMx9ps0Ui3YF0x_g9QkluADAx_fTJQ
+
 ## License
 
 Please refer to `LICENSE.md` for detailed information on the licensing of this code and its usage permissions.

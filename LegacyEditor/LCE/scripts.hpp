@@ -263,7 +263,7 @@ namespace editor {
         fileListing.region_overworld[regionIndex]->data = region.write(console);
 
         if (regionIndex == 0) {
-            DataManager(fileListing.region_overworld[0]->data).writeToFile(dir_path + "REGION_0");
+            DataManager(fileListing.region_overworld[0]->data).writeToFile(/*dir_path +*/ "REGION_0");
         }
 
     }

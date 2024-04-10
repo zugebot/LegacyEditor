@@ -7,6 +7,13 @@ set(CMAKE_CXX_STANDARD 20)
 # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
+# remove this if you are building your own project
+# add_definitions(-DUNIT_TESTS)
+
+if(WIN32)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
+endif()
+
 include_directories(${CMAKE_SOURCE_DIR}/)
 
 file(GLOB_RECURSE LEGACY_EDITOR_SOURCES
@@ -26,4 +33,4 @@ file(GLOB_RECURSE INCLUDE_SOURCES
 add_executable(LegacyEditor
         ${LEGACY_EDITOR_SOURCES}
         ${INCLUDE_SOURCES}
-        examples/load_xbox360_bin.cpp)
+        examples/batch_convert.cpp)

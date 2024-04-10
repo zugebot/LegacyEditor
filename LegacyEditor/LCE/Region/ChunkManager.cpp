@@ -2,8 +2,8 @@
 
 #include "include/tinf/tinf.h"
 #include "include/zlib-1.2.12/zlib.h"
-#include "include/lzx/XboxCompression.hpp"
 
+#include "LegacyEditor/utils/XBOX_LZX/XboxCompression.hpp"
 #include "LegacyEditor/utils/PS3_DEFLATE/deflateUsage.hpp"
 #include "LegacyEditor/utils/RLE/rle.hpp"
 #include "LegacyEditor/utils/processor.hpp"

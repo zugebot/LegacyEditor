@@ -2,6 +2,9 @@
 
 #include "LegacyEditor/utils/processor.hpp"
 
+#include <algorithm>
+#include <cctype>
+
 
 enum class CONSOLE : i8 {
     NONE = -1,
@@ -78,6 +81,33 @@ static std::string consoleToStr(const CONSOLE console) {
         case CONSOLE::NONE:
         default:
             return "NONE";
+    }
+}
+
+
+static CONSOLE strToConsole(const std::string& inputStr) {
+    std::string str = inputStr;
+    std::transform(str.begin(), str.end(), str.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+
+    if (str == "xbox360") {
+        return CONSOLE::XBOX360;
+    } else if (str == "ps3" || str == "playstation3") {
+        return CONSOLE::PS3;
+    } else if (str == "rpcs3") {
+        return CONSOLE::RPCS3;
+    } else if (str == "wiiu") {
+        return CONSOLE::WIIU;
+    } else if (str == "vita" || str == "psvita") {
+        return CONSOLE::VITA;
+    } else if (str == "switch") {
+        return CONSOLE::SWITCH;
+    } else if (str == "ps4" || str == "playstation4") {
+        return CONSOLE::PS4;
+    } else if (str == "xbox1" || str == "xboxone") {
+        return CONSOLE::XBOX1;
+    } else {
+        return CONSOLE::NONE;
     }
 }
 

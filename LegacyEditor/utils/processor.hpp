@@ -6,10 +6,12 @@
 #include <vector>
 #include <ctime>
 
+#ifdef UNIT_TESTS
 extern std::string dir_path;
 extern std::string out_path;
 extern std::string wiiu;
 extern std::string ps3_;
+#endif
 
 #define ND [[nodiscard]]
 #define MU [[maybe_unused]]
