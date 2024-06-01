@@ -275,8 +275,8 @@ namespace editor::chunk {
                 u16 idxBlock = 0;
                 u16 idxSbmrg = 0;
                 for (int k = 0; k < BitsPerBlock; k++) {
-                    idxBlock |= (vBlocks[k] & mask) >> 7 - j << k;
-                    idxSbmrg |= (vWaters[k] & mask) >> 7 - j << k;
+                    idxBlock |= (vBlocks[k] & mask) >> (7 - j) << k;
+                    idxSbmrg |= (vWaters[k] & mask) >> (7 - j) << k;
                 }
 
                 if EXPECT_FALSE (idxBlock >= size || idxSbmrg >= size) {
@@ -515,12 +515,16 @@ namespace editor::chunk {
             dataManager->writeInt16(blockVector[blockIndex]);
         }
         dataManager->setBigEndian();
+
         // fill rest of empty palette with 0xFF's
         // TODO: IDK if this is actually necessary
-        #pragma unroll EmptyCount
-        for (size_t rest = 0; rest < EmptyCount; rest++) {
-            dataManager->writeInt16(0xFFFF);
+        if constexpr (EmptyCount != 0) {
+            #pragma unroll EmptyCount
+            for (size_t rest = 0; rest < EmptyCount; rest++) {
+                dataManager->writeInt16(0xFFFF);
+            }
         }
+
         //  write the position data
         //  so, write the first bit of each position, as a single u64,
         //  then the second, third etc. N times, where N is BitsPerBlock
@@ -528,7 +532,7 @@ namespace editor::chunk {
             u64 position = 0;
             for (size_t locIndex = 0; locIndex < GRID_COUNT; locIndex++) {
                 const u64 pos = blockLocations[locIndex];
-                position |= (pos >> bitIndex & 1U) << GRID_COUNT - locIndex - 1;
+                position |= (pos >> bitIndex & 1U) << (GRID_COUNT - locIndex - 1);
             }
             dataManager->writeInt64(position);
         }
@@ -588,7 +592,7 @@ namespace editor::chunk {
             u64 position = 0;
             for (size_t locIndex = 0; locIndex < GRID_COUNT; locIndex++) {
                 const u64 pos = blockLocations[locIndex];
-                position |= (pos >> bitIndex & 1U) << GRID_COUNT - locIndex - 1;
+                position |= (pos >> bitIndex & 1U) << (GRID_COUNT - locIndex - 1);
             }
             dataManager->writeInt64(position);
         }
@@ -600,7 +604,7 @@ namespace editor::chunk {
             u64 position = 0;
             for (size_t locIndex = 0; locIndex < GRID_COUNT; locIndex++) {
                 const u64 pos = sbmrgLocations[locIndex];
-                position |= (pos >> bitIndex & 1U) << GRID_COUNT - locIndex - 1;
+                position |= (pos >> bitIndex & 1U) << (GRID_COUNT - locIndex - 1);
             }
             dataManager->writeInt64(position);
         }
