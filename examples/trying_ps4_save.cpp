@@ -16,7 +16,7 @@ int main() {
     const std::string TEST_NAME = "PS4_khaloody"; //"PS4_khaloody";
     const std::string TEST_IN = TESTS[TEST_NAME].first;   // file to read from
     const std::string TEST_OUT = TESTS[TEST_NAME].second; // file to write to
-    constexpr auto consoleOut = CONSOLE::WIIU;
+    constexpr auto consoleOut = lce::CONSOLE::WIIU;
 
     /*
     const std::string fileIn  = R"(C:\Users\jerrin\CLionProjects\LegacyEditor\tests\CODY_UUAS_2017010800565100288444\GAMEDATA)";
@@ -25,7 +25,7 @@ int main() {
     save_info.readFile(fileIn);
     const DataManager manager(save_info.thumbnail);
     int status = manager.writeToFile(dir_path + "thumbnail.png");
-    const int result = save_info.writeFile(fileOut, CONSOLE::PS3);
+    const int result = save_info.writeFile(fileOut, lce::CONSOLE::PS3);
     if (result) {
         return result;
     }

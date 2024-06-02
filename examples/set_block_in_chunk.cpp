@@ -3,11 +3,12 @@
 
 #include "include/ghc/fs_std.hpp"
 
-#include "LegacyEditor/LCE/MC/blocks.hpp"
 #include "LegacyEditor/LCE/include.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 
-#include "/LegacyEditor/unit_tests.hpp"
+#include "LegacyEditor/unit_tests.hpp"
+
+#include "lce/items/block_ids.hpp"
 
 
 int main() {
@@ -15,7 +16,7 @@ int main() {
 
     const std::string TEST_IN  = wiiu + R"(230918230206)";
     const std::string TEST_OUT = wiiu + R"(230918230207)";
-    constexpr auto consoleOut = CONSOLE::WIIU;
+    constexpr auto consoleOut = lce::CONSOLE::WIIU;
 
     editor::FileListing::AUTO_REMOVE_PLAYERS = false;
 
@@ -36,7 +37,7 @@ int main() {
     chunk->ensureDecompress(consoleIn);
     chunk->readChunk(consoleIn);
 
-    placeBlock(chunk->chunkData, 7, 64, 7, DRIED_KELP_BLOCK_ID, 0, false);
+    placeBlock(chunk->chunkData, 7, 64, 7, lce::blocks::ids::DRIED_KELP_BLOCK_ID, 0, false);
 
     chunk->chunkData->defaultNBT();
     chunk->writeChunk(consoleOut);

@@ -3,8 +3,8 @@
 #include <stdexcept>
 
 #include "LegacyEditor/LCE/FileListing/LCEFile.hpp"
-#include "LegacyEditor/LCE/MC/enums.hpp"
 #include "LegacyEditor/utils/dataManager.hpp"
+#include "LegacyEditor/utils/error_status.hpp"
 
 
 namespace editor {
@@ -88,8 +88,8 @@ namespace editor {
             chunk.allocate(chunk.size);
 
             switch (console) {
-                case CONSOLE::PS3:
-                case CONSOLE::RPCS3: {
+                case lce::CONSOLE::PS3:
+                case lce::CONSOLE::RPCS3: {
                     const u32 num1 = managerIn.readInt32();
                     managerIn.readInt32();
                     chunk.fileData.setDecSize(num1); // rle dec size
@@ -115,7 +115,7 @@ namespace editor {
      * @param consoleIn
      * @return
      */
-        Data RegionManager::write(const CONSOLE consoleIn) {
+        Data RegionManager::write(const lce::CONSOLE consoleIn) {
             u8 sectors[SECTOR_INTS] = {};
             u32 locations[SECTOR_INTS] = {};
 
@@ -150,8 +150,8 @@ namespace editor {
                 managerOut.seek(locations[chunkIndex] * SECTOR_BYTES);
                 managerOut.writeInt32(chunk.getSizeForWriting());
                 switch (console) {
-                    case CONSOLE::PS3:
-                    case CONSOLE::RPCS3:
+                    case lce::CONSOLE::PS3:
+                    case lce::CONSOLE::RPCS3:
                         managerOut.writeInt32(chunk.fileData.getDecSize());
                     default:
                         managerOut.writeInt32(chunk.fileData.getDecSize());

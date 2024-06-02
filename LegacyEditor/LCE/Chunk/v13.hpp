@@ -2,8 +2,7 @@
 
 #include "chunkData.hpp"
 
-#include "LegacyEditor/LCE/MC/enums.hpp"
-
+#include "LegacyEditor/utils/error_status.hpp"
 
 
 class DataManager;

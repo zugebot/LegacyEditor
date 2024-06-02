@@ -1,8 +1,8 @@
 #pragma once
 
 
-#include "LegacyEditor/LCE/MC/enums.hpp"
 #include "LegacyEditor/utils/NBT.hpp"
+#include "LegacyEditor/utils/error_status.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 
 #include "LCE/AquaticChunkParser.hpp"

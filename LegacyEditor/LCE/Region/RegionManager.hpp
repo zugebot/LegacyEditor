@@ -16,7 +16,7 @@ namespace editor {
 
     public:
         ChunkManager chunks[SECTOR_INTS];
-        CONSOLE console = CONSOLE::NONE;
+        lce::CONSOLE console = lce::CONSOLE::NONE;
 
         /// CONSTRUCTORS
 
@@ -32,7 +32,7 @@ namespace editor {
         /// READ AND WRITE
 
         void read(const LCEFile* fileIn);
-        Data write(CONSOLE consoleIn);
+        Data write(lce::CONSOLE consoleIn);
 
     };
 

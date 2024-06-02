@@ -38,7 +38,7 @@ namespace editor {
     }
 
 
-    MU void ChunkManager::readChunk(MU const CONSOLE console) const {
+    MU void ChunkManager::readChunk(MU const lce::CONSOLE console) const {
         auto managerIn = DataManager(data, size);
         managerIn.seekStart();
 
@@ -63,7 +63,7 @@ namespace editor {
     }
 
 
-    MU void ChunkManager::writeChunk(MU CONSOLE console) {
+    MU void ChunkManager::writeChunk(MU lce::CONSOLE console) {
         Data outBuffer(CHUNK_BUFFER_SIZE);
         memset(outBuffer.data, 0, CHUNK_BUFFER_SIZE);
         auto managerOut = DataManager(outBuffer);
@@ -96,9 +96,9 @@ namespace editor {
 
 
     // TODO: rewrite to return status
-    int ChunkManager::ensureDecompress(const CONSOLE console) {
+    int ChunkManager::ensureDecompress(const lce::CONSOLE console) {
         if (fileData.getCompressed() == 0U
-            || console == CONSOLE::NONE
+            || console == lce::CONSOLE::NONE
             || data == nullptr
             || size == 0) {
             return SUCCESS;
@@ -111,17 +111,17 @@ namespace editor {
         // TODO: XBOX1 case is not handled
         int result = SUCCESS;
         switch (console) {
-            case CONSOLE::XBOX360:
+            case lce::CONSOLE::XBOX360:
                 dec_size_copy = XDecompress(decompData.start(), &decompData.size, data, size);
                 break;
-            case CONSOLE::RPCS3:
-            case CONSOLE::PS3:
+            case lce::CONSOLE::RPCS3:
+            case lce::CONSOLE::PS3:
                 result = tinf_uncompress(decompData.start(), &decompData.size, data, size);
                 break;
-            case CONSOLE::SWITCH:
-            case CONSOLE::WIIU:
-            case CONSOLE::VITA:
-            case CONSOLE::PS4:
+            case lce::CONSOLE::SWITCH:
+            case lce::CONSOLE::WIIU:
+            case lce::CONSOLE::VITA:
+            case lce::CONSOLE::PS4:
                 result = tinf_zlib_uncompress(decompData.start(), &decompData.size, data, size);
                 break;
             default:
@@ -145,9 +145,9 @@ namespace editor {
 
 
     // TODO: rewrite to return status
-    void ChunkManager::ensureCompressed(const CONSOLE console) {
+    void ChunkManager::ensureCompressed(const lce::CONSOLE console) {
         if (fileData.getCompressed() != 0U
-            || console == CONSOLE::NONE
+            || console == lce::CONSOLE::NONE
             || data == nullptr
             || size == 0) {
             return;
@@ -171,16 +171,16 @@ namespace editor {
         // TODO: Does it work for vita?
         int status;
         switch (console) {
-            case CONSOLE::XBOX360:
+            case lce::CONSOLE::XBOX360:
                 // TODO: leaks memory
                 // XCompress(comp_ptr, comp_size, data_ptr, data_size);
                 break;
-            case CONSOLE::PS3:
+            case lce::CONSOLE::PS3:
                 // TODO: leaks memory
                 // tinf_compress(comp_ptr, comp_size, data_ptr, data_size);
                 break;
 
-            case CONSOLE::RPCS3: {
+            case lce::CONSOLE::RPCS3: {
                 if (status = compress(comp_ptr, &comp_size, data, size); status != 0) {
                     printf("error has occurred compressing chunk\n");
                 }
@@ -191,10 +191,10 @@ namespace editor {
                 break;
             }
 
-            case CONSOLE::SWITCH:
-            case CONSOLE::PS4:
-            case CONSOLE::WIIU:
-            case CONSOLE::VITA:
+            case lce::CONSOLE::SWITCH:
+            case lce::CONSOLE::PS4:
+            case lce::CONSOLE::WIIU:
+            case lce::CONSOLE::VITA:
                 if (status = compress(comp_ptr, &comp_size, data, size); status != 0) {
                     printf("error has occurred compressing chunk\n");
                 }

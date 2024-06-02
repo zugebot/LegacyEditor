@@ -1,7 +1,7 @@
 #pragma once
 
-#include "LegacyEditor/LCE/MC/enums.hpp"
 #include "LegacyEditor/utils/data.hpp"
+#include "LegacyEditor/utils/error_status.hpp"
 
 
 namespace editor {
@@ -54,11 +54,11 @@ namespace editor {
 
         /// FUNCTIONS
 
-        int ensureDecompress(CONSOLE console);
-        void ensureCompressed(CONSOLE console);
+        int ensureDecompress(lce::CONSOLE console);
+        void ensureCompressed(lce::CONSOLE console);
 
-        MU void readChunk(CONSOLE console) const;
-        MU void writeChunk(CONSOLE console);
+        MU void readChunk(lce::CONSOLE console) const;
+        MU void writeChunk(lce::CONSOLE console);
 
         void setSizeFromReading(u32 sizeIn);
         ND u32 getSizeForWriting() const;

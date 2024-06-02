@@ -7,7 +7,7 @@
 namespace editor {
 
     void processRegion(int regionIndex, FileListing& fileListing) {
-        const CONSOLE console = fileListing.console;
+        const lce::CONSOLE console = fileListing.console;
         if (regionIndex >= fileListing.region_overworld.size()) { return; }
 
         // read a region file
@@ -125,7 +125,7 @@ namespace editor {
      * @param fileListing
      */
     void removeNetherrack(int regionIndex, FileListing& fileListing) {
-        const CONSOLE console = fileListing.console;
+        const lce::CONSOLE console = fileListing.console;
         if (regionIndex >= fileListing.region_nether.size()) { return; }
 
         // read a region file
@@ -182,7 +182,7 @@ namespace editor {
      * @param fileListing
      */
     void convertElytraToAquaticChunks(int regionIndex, FileListing& fileListing) {
-        const CONSOLE console = fileListing.console;
+        const lce::CONSOLE console = fileListing.console;
         if (regionIndex >= fileListing.region_nether.size()) { return; }
 
         // read a region file
@@ -223,7 +223,7 @@ namespace editor {
      * @param fileListing
      */
     void ConvertPillagerToAquaticChunks(const int regionIndex, const FileListing& fileListing) {
-        const CONSOLE console = fileListing.console;
+        const lce::CONSOLE console = fileListing.console;
         if (regionIndex >= fileListing.region_overworld.size()) { return; }
 
         // read a region file

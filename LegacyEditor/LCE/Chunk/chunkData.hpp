@@ -1,6 +1,6 @@
 #pragma once
 
-#include "LegacyEditor/LCE/MC/enums.hpp"
+#include "LegacyEditor/utils/error_status.hpp"
 
 class NBTBase;
 

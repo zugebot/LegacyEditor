@@ -153,8 +153,8 @@ namespace editor {
             if (fileName.starts_with("data/")) {
                 file.fileType = LCEFileType::STRUCTURE;
                 file.nbt->setString("filename", fileName);
-                if (fileName.starts_with("data/villages_") && console == CONSOLE::SWITCH) {
-                    console = CONSOLE::PS4;
+                if (fileName.starts_with("data/villages_") && console == lce::CONSOLE::SWITCH) {
+                    console = lce::CONSOLE::PS4;
                 }
                 continue;
             }
@@ -261,7 +261,7 @@ namespace editor {
             readData(data);
 
             // sets corresponding state booleans
-            if (console == CONSOLE::PS4 || console == CONSOLE::SWITCH) {
+            if (console == lce::CONSOLE::PS4 || console == lce::CONSOLE::SWITCH) {
                 hasSeparateRegions = true;
                 hasSeparateEntities = true;
             }
@@ -274,24 +274,24 @@ namespace editor {
         std::string filepath = inFilePath;
 
         switch (console) {
-            case CONSOLE::XBOX360:
+            case lce::CONSOLE::XBOX360:
                 return NOT_IMPLEMENTED;
-            case CONSOLE::PS3:
-            case CONSOLE::RPCS3:
-            case CONSOLE::PS4:
+            case lce::CONSOLE::PS3:
+            case lce::CONSOLE::RPCS3:
+            case lce::CONSOLE::PS4:
                 filepath += "THUMB";
                 break;
-            case CONSOLE::VITA:
+            case lce::CONSOLE::VITA:
                 filepath += "THUMBDATA.BIN";
                 break;
-            case CONSOLE::WIIU:
-            case CONSOLE::SWITCH: {
+            case lce::CONSOLE::WIIU:
+            case lce::CONSOLE::SWITCH: {
                 filepath = filename + ".ext";
                 break;
             }
-            case CONSOLE::XBOX1:
+            case lce::CONSOLE::XBOX1:
                 return NOT_IMPLEMENTED;
-            case CONSOLE::NONE:
+            case lce::CONSOLE::NONE:
             default:
                 return INVALID_CONSOLE;
         }
@@ -342,7 +342,7 @@ namespace editor {
             // TODO: get timestamp from file itself
             uint32_t timestamp = 0;
             // TODO: should not be CONSOLE::NONE
-            allFiles.emplace_back(CONSOLE::NONE, dat_out.data, fileSize, timestamp);
+            allFiles.emplace_back(lce::CONSOLE::NONE, dat_out.data, fileSize, timestamp);
             LCEFile &lFile = allFiles.back();
             if (const auto dimChar = static_cast<char>(static_cast<int>(filename.at(12)) - 48);
                 dimChar < 0 || dimChar > 2) {
@@ -378,7 +378,7 @@ namespace editor {
     int FileListing::readVita(FILE* f_in, Data& data,
         u64 source_binary_size, const u32 file_size) {
         printf("Detected Vita savefile, converting\n\n");
-        console = CONSOLE::VITA;
+        console = lce::CONSOLE::VITA;
 
         // total size of file
         source_binary_size -= 8;
@@ -403,7 +403,7 @@ namespace editor {
     int FileListing::readWiiU(FILE* f_in, Data& data,
         u64 source_binary_size, const u32 file_size) {
         printf("Detected WiiU savefile, converting\n\n");
-        console = CONSOLE::WIIU;
+        console = lce::CONSOLE::WIIU;
 
         // total size of file
         source_binary_size -= 8;
@@ -430,7 +430,7 @@ namespace editor {
     int FileListing::readNSXorPS4(FILE* f_in, Data& data,
         u64 source_binary_size, const u32 file_size) {
         printf("Detected Switch/Ps4 savefile, converting\n\n");
-        console = CONSOLE::SWITCH;
+        console = lce::CONSOLE::SWITCH;
 
         if(!data.allocate(file_size)) {
             return MALLOC_FAILED;
@@ -457,7 +457,7 @@ namespace editor {
     int FileListing::readPs3(FILE* f_in, Data& data,
         const u64 source_binary_size, u32 file_size) {
         printf("Detected compressed PS3 savefile, converting\n\n");
-        console = CONSOLE::PS3;
+        console = lce::CONSOLE::PS3;
 
         // destination
         if (!data.allocate(file_size)) {
@@ -483,7 +483,7 @@ namespace editor {
     int FileListing::readRpcs3(FILE* f_in, Data& data,
         const u64 source_binary_size) {
         printf("Detected uncompressed PS3 / RPCS3 savefile, converting\n\n");
-        console = CONSOLE::RPCS3;
+        console = lce::CONSOLE::RPCS3;
         if (!data.allocate(source_binary_size)) {
             return MALLOC_FAILED;
         }
@@ -496,7 +496,7 @@ namespace editor {
     int FileListing::readXbox360DAT(FILE* f_in, Data& data,
         const u32 file_size, const u32 src_size) {
         printf("Detected Xbox360 .dat savefile, converting\n\n");
-        console = CONSOLE::XBOX360;
+        console = lce::CONSOLE::XBOX360;
 
         // allocate destination memory
         if (!data.allocate(file_size)) {
@@ -520,7 +520,7 @@ namespace editor {
     // TODO: IDK if it should but it is for now, get fileInfo out of it, fix memory leaks
     int FileListing::readXbox360BIN(FILE* f_in, Data& data,
         const u64 source_binary_size) {
-        console = CONSOLE::XBOX360;
+        console = lce::CONSOLE::XBOX360;
 
         printf("Detected Xbox360 .bin savefile, converting\n\n");
 

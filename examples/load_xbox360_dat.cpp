@@ -11,7 +11,7 @@
 int main() {
     PREPARE_UNIT_TESTS();
     const auto [fst, snd] = TESTS["XBOX_DAT"];
-    constexpr auto consoleOut = CONSOLE::WIIU;
+    constexpr auto consoleOut = lce::CONSOLE::WIIU;
 
     editor::FileListing fileListing;
     if (fileListing.read(fst) != 0) {

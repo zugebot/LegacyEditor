@@ -1,8 +1,9 @@
 #pragma once
 
-#include "LegacyEditor/LCE/MC/enums.hpp"
-#include "LegacyEditor/utils/processor.hpp"
 #include "LegacyEditor/utils/Data.hpp"
+#include "LegacyEditor/utils/error_status.hpp"
+#include "LegacyEditor/utils/processor.hpp"
+#include "lce/enums.hpp"
 
 
 /*
@@ -39,7 +40,7 @@ namespace editor {
 
         MU static void defaultThumbnail();
         void readFile(const std::string& inFileStr);
-        ND int writeFile(const std::string& outFileStr, CONSOLE console) const;
+        ND int writeFile(const std::string& outFileStr, lce::CONSOLE console) const;
     };
 
 }

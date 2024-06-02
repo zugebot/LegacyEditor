@@ -10,7 +10,7 @@ int main() {
     const std::string TEST_NAME = "vita";
     const std::string TEST_IN = TESTS[TEST_NAME].first;   // file to read from
     const std::string TEST_OUT = TESTS[TEST_NAME].second; // file to write to
-    constexpr auto consoleOut = CONSOLE::VITA;
+    constexpr auto consoleOut = lce::CONSOLE::VITA;
 
     editor::FileListing fileListing;
     if (fileListing.read(TEST_IN) != 0) {

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "LegacyEditor/LCE/MC/enums.hpp"
 #include "LegacyEditor/utils/data.hpp"
+#include "LegacyEditor/utils/error_status.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 
 
@@ -67,13 +67,13 @@ namespace editor {
         Data data;
         u64 timestamp = 0;
         u32 additionalData = 0;
-        CONSOLE console = CONSOLE::NONE;
+        lce::CONSOLE console = lce::CONSOLE::NONE;
         LCEFileType fileType = LCEFileType::NONE;
 
-        explicit LCEFile(CONSOLE consoleIn);
-        explicit LCEFile(CONSOLE consoleIn, u32 sizeIn);
-        LCEFile(CONSOLE consoleIn, u32 sizeIn, u64 timestampIn);
-        LCEFile(CONSOLE consoleIn, u8* dataIn, u32 sizeIn, u64 timestampIn);
+        explicit LCEFile(lce::CONSOLE consoleIn);
+        explicit LCEFile(lce::CONSOLE consoleIn, u32 sizeIn);
+        LCEFile(lce::CONSOLE consoleIn, u32 sizeIn, u64 timestampIn);
+        LCEFile(lce::CONSOLE consoleIn, u8* dataIn, u32 sizeIn, u64 timestampIn);
 
         ~LCEFile();
 
@@ -92,7 +92,7 @@ namespace editor {
         void deleteData();
         MU void steal(const Data& other) { data.steal(other); }
 
-        ND std::string constructFileName(CONSOLE console, bool separateRegions) const;
+        ND std::string constructFileName(lce::CONSOLE console, bool separateRegions) const;
         MU ND bool isEmpty() const { return data.size != 0; }
         MU ND std::string toString() const;
 

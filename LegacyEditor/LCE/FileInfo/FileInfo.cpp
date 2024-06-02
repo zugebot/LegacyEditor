@@ -1,7 +1,7 @@
 #include "FileInfo.hpp"
 
-#include "LegacyEditor/LCE/MC/enums.hpp"
 #include "LegacyEditor/utils/dataManager.hpp"
+#include "LegacyEditor/utils/error_status.hpp"
 
 #include "include/png/crc.hpp"
 
@@ -202,18 +202,18 @@ namespace editor {
     }
 
 
-    int FileInfo::writeFile(const std::string& outFileStr, const CONSOLE console) const {
+    int FileInfo::writeFile(const std::string& outFileStr, const lce::CONSOLE console) const {
         if (thumbnail.data == nullptr) {
             return FILE_ERROR;
         }
 
         DataManager header;
-        if (console == CONSOLE::SWITCH) {
+        if (console == lce::CONSOLE::SWITCH) {
             const Data fileHeader(528);
             header.take(fileHeader);
         }
 
-        else if (console == CONSOLE::WIIU) {
+        else if (console == lce::CONSOLE::WIIU) {
             const Data fileHeader(256);
             header.take(fileHeader);
             header.writeWString(basesavename, 128);

@@ -27,8 +27,8 @@ int main(int argc, char *argv[]) {
     std::cout << "Name the console to output:";
     std::string consoleIn;
     std::cin >> consoleIn;
-    const CONSOLE consoleOut = strToConsole(consoleIn);
-    if (consoleOut == CONSOLE::NONE) {
+    const lce::CONSOLE consoleOut = lce::strToConsole(consoleIn);
+    if (consoleOut == lce::CONSOLE::NONE) {
         std::cerr << "Invalid console name, exiting\n";
         std::cerr << "click ENTER to exit.\n";
         waitForEnter();

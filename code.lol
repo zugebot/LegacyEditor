@@ -65,7 +65,7 @@ bool foundChunk = false;
 ChunkManager chunkToCopy;
 
 for (int regionIndex = 0; regionIndex < 4; regionIndex++) {
-    CONSOLE console = parser.console;
+    lce::CONSOLE console = parser.console;
     // read a region file
     RegionManager region(fileListing.console);
     region.read(fileListing.region_overworld[regionIndex]);

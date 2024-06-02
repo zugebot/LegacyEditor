@@ -17,20 +17,29 @@ endif()
 include_directories(${CMAKE_SOURCE_DIR}/)
 
 file(GLOB_RECURSE LEGACY_EDITOR_SOURCES
-        "${CMAKE_SOURCE_DIR}/LegacyEditor/*.cpp"
-        "${CMAKE_SOURCE_DIR}/LegacyEditor/*.hpp"
-        "${CMAKE_SOURCE_DIR}/LegacyEditor/*.c"
-        "${CMAKE_SOURCE_DIR}/LegacyEditor/*.h"
+    "${CMAKE_SOURCE_DIR}/LegacyEditor/*.cpp"
+    "${CMAKE_SOURCE_DIR}/LegacyEditor/*.hpp"
+    "${CMAKE_SOURCE_DIR}/LegacyEditor/*.c"
+    "${CMAKE_SOURCE_DIR}/LegacyEditor/*.h"
 )
 
 file(GLOB_RECURSE INCLUDE_SOURCES
-        "${CMAKE_SOURCE_DIR}/include/*.cpp"
-        "${CMAKE_SOURCE_DIR}/include/*.hpp"
-        "${CMAKE_SOURCE_DIR}/include/*.c"
-        "${CMAKE_SOURCE_DIR}/include/*.h"
+    "${CMAKE_SOURCE_DIR}/include/*.cpp"
+    "${CMAKE_SOURCE_DIR}/include/*.hpp"
+    "${CMAKE_SOURCE_DIR}/include/*.c"
+    "${CMAKE_SOURCE_DIR}/include/*.h"
+)
+
+file(GLOB_RECURSE LCE_RESOURCES
+    "${CMAKE_SOURCE_DIR}/lce/*.cpp"
+    "${CMAKE_SOURCE_DIR}/lce/*.hpp"
+    "${CMAKE_SOURCE_DIR}/lce/*.c"
+    "${CMAKE_SOURCE_DIR}/lce/*.h"
 )
 
 add_executable(LegacyEditor
-        ${LEGACY_EDITOR_SOURCES}
-        ${INCLUDE_SOURCES}
-        examples/batch_convert.cpp)
+    ${LEGACY_EDITOR_SOURCES}
+    ${LCE_RESOURCES}
+    ${INCLUDE_SOURCES}
+    examples/batch_convert.cpp
+)

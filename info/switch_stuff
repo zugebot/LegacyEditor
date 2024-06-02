@@ -109,7 +109,7 @@ namespace fs = std::filesystem;
         memcpy(chunk.start(), managerIn.ptr, chunk.size);
 
         chunk.ensure_decompress(CONSOLE::SWITCH);
-        chunk.readChunk(CONSOLE::SWITCH, DIM::OVERWORLD);
+        chunk.readChunk(CONSOLE::SWITCH, DIMENSION::OVERWORLD);
 
 
 

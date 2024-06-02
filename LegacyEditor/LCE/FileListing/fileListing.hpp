@@ -7,7 +7,7 @@
 
 #include "LCEFile.hpp"
 #include "LegacyEditor/LCE/FileInfo/FileInfo.hpp"
-#include "LegacyEditor/LCE/MC/enums.hpp"
+#include "LegacyEditor/utils/error_status.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 
 
@@ -44,7 +44,7 @@ namespace editor {
         std::list<LCEFile> allFiles;
         i32 oldestVersion{};
         i32 currentVersion{};
-        CONSOLE console = CONSOLE::NONE;
+        lce::CONSOLE console = lce::CONSOLE::NONE;
         FileInfo fileInfo;
         bool hasLoadedFileInfo = false;
         bool hasSeparateEntities = false;
@@ -71,7 +71,7 @@ namespace editor {
         /// Functions
 
         MU ND int saveToFolder(stringRef_t folderIn = "") const;
-        MU void convertRegions(CONSOLE consoleOut);
+        MU void convertRegions(lce::CONSOLE consoleOut);
         void ensureAllRegionFilesExist();
 
         /// Modify State
@@ -84,14 +84,14 @@ namespace editor {
         /// Read / Write from console files
 
         MU ND int read(stringRef_t inFileStr, bool readEXTFile = false);
-        MU ND int write(stringRef_t outfileStr, CONSOLE consoleOut);
+        MU ND int write(stringRef_t outfileStr, lce::CONSOLE consoleOut);
 
 
         /// Conversion
 
-        MU ND int convertTo(stringRef_t inFileStr, stringRef_t outFileStr, CONSOLE consoleOut);
+        MU ND int convertTo(stringRef_t inFileStr, stringRef_t outFileStr, lce::CONSOLE consoleOut);
         MU ND int convertAndReplaceRegions(stringRef_t inFileStr, stringRef_t inFileRegionReplacementStr,
-                                           stringRef_t outFileStr, CONSOLE consoleOut);
+                                           stringRef_t outFileStr, lce::CONSOLE consoleOut);
 
         MU ND int readExternalRegions(stringRef_t inFilePath);
         MU ND static int writeExternalRegions(stringRef_t outFilePath);
@@ -115,8 +115,8 @@ namespace editor {
 
         /// Writer
 
-        MU ND int writeFile(stringRef_t outfileStr, CONSOLE consoleOut);
-        MU ND int writeFileInfo(stringRef_t outFilePath, CONSOLE consoleOut) const;
+        MU ND int writeFile(stringRef_t outfileStr, lce::CONSOLE consoleOut);
+        MU ND int writeFileInfo(stringRef_t outFilePath, lce::CONSOLE consoleOut) const;
         MU ND static int writeWiiU(FILE* f_out, const Data& dataOut);
         MU ND static int writeVita(FILE* f_out, const Data& dataOut);
         MU ND static int writeRPCS3(FILE* f_out, const Data& dataOut);
@@ -125,7 +125,7 @@ namespace editor {
         MU ND static int writeNSX();
         MU ND static int writeXbox360_DAT();
         MU ND static int writeXbox360_BIN();
-        Data writeData(CONSOLE consoleOut);
+        Data writeData(lce::CONSOLE consoleOut);
 
         /// File pointer stuff
 

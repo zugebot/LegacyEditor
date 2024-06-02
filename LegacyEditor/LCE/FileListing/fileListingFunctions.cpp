@@ -115,7 +115,7 @@ namespace editor {
 
                     filesAdded++;
                     // TODO: should not be CONSOLE::NONE
-                    allFiles.emplace_back(CONSOLE::NONE, nullptr, 0, 0);
+                    allFiles.emplace_back(lce::CONSOLE::NONE, nullptr, 0, 0);
                     LCEFile &file = allFiles.back();
 
                     file.nbt->setTag("x", createNBT_INT16(static_cast<i16>(xIter - 1)));
@@ -252,7 +252,7 @@ namespace editor {
     }
 
 
-    MU void FileListing::convertRegions(const CONSOLE consoleOut) {
+    MU void FileListing::convertRegions(const lce::CONSOLE consoleOut) {
         for (const FileList* fileList : dimFileLists) {
             for (LCEFile* file : *fileList) {
                 // don't convert it if it's already the correct console version
@@ -268,7 +268,7 @@ namespace editor {
     }
 
 
-    MU ND int FileListing::convertTo(stringRef_t inFileStr, stringRef_t outFileStr, const CONSOLE consoleOut) {
+    MU ND int FileListing::convertTo(stringRef_t inFileStr, stringRef_t outFileStr, const lce::CONSOLE consoleOut) {
         int status = readFile(inFileStr);
         if (status != SUCCESS) { return status; }
 
@@ -292,7 +292,7 @@ namespace editor {
 
     MU ND int FileListing::convertAndReplaceRegions(stringRef_t inFileStr,
                                                     stringRef_t inFileRegionReplacementStr,
-                                                    stringRef_t outFileStr, const CONSOLE consoleOut) {
+                                                    stringRef_t outFileStr, const lce::CONSOLE consoleOut) {
 
         int status = readFile(inFileStr);
         if (status != SUCCESS) { return status; }

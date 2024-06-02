@@ -6,18 +6,18 @@
 namespace editor {
 
 
-    LCEFile::LCEFile(const CONSOLE consoleIn) : console(consoleIn) {
+    LCEFile::LCEFile(const lce::CONSOLE consoleIn) : console(consoleIn) {
         nbt = new NBTTagCompound();
     }
 
-    LCEFile::LCEFile(const CONSOLE consoleIn, const u32 sizeIn) : data(Data(sizeIn)), console(consoleIn) {
+    LCEFile::LCEFile(const lce::CONSOLE consoleIn, const u32 sizeIn) : data(Data(sizeIn)), console(consoleIn) {
         nbt = new NBTTagCompound();
     }
 
-    LCEFile::LCEFile(const CONSOLE consoleIn, const u32 sizeIn, const u64 timestampIn) : data(Data(sizeIn)), timestamp(timestampIn), console(consoleIn) {}
+    LCEFile::LCEFile(const lce::CONSOLE consoleIn, const u32 sizeIn, const u64 timestampIn) : data(Data(sizeIn)), timestamp(timestampIn), console(consoleIn) {}
 
 
-    LCEFile::LCEFile(const CONSOLE consoleIn, u8* dataIn, const u32 sizeIn, const u64 timestampIn) : data(dataIn, sizeIn), timestamp(timestampIn), console(consoleIn) {
+    LCEFile::LCEFile(const lce::CONSOLE consoleIn, u8* dataIn, const u32 sizeIn, const u64 timestampIn) : data(dataIn, sizeIn), timestamp(timestampIn), console(consoleIn) {
         nbt = new NBTTagCompound();
     }
 
@@ -36,7 +36,7 @@ namespace editor {
     }
 
 
-    std::string LCEFile::constructFileName(MU CONSOLE console, const bool separateRegions = false) const {
+    std::string LCEFile::constructFileName(MU lce::CONSOLE console, const bool separateRegions = false) const {
         static std::unordered_map<LCEFileType, std::string> FileTypeNames{
                 {LCEFileType::VILLAGE, "data/villages.dat"},
                 {LCEFileType::DATA_MAPPING, "data/largeMapDataMappings.dat"},
@@ -98,7 +98,7 @@ namespace editor {
             .append("type='")
             .append(fileTypeToString(fileType))
             .append("', name='")
-            .append(constructFileName(CONSOLE::WIIU))
+            .append(constructFileName(lce::CONSOLE::WIIU))
             .append("']");
         return str;
     }

@@ -18,7 +18,7 @@ namespace editor {
 
 
 
-    Data FileListing::writeData(const CONSOLE consoleOut) {
+    Data FileListing::writeData(const lce::CONSOLE consoleOut) {
 
         // step 1: get the file count and size of all sub-files
         u32 fileCount = 0;
@@ -66,7 +66,7 @@ namespace editor {
 
 
     int FileListing::write(stringRef_t outfileStr,
-                           const CONSOLE consoleOut) {
+                           const lce::CONSOLE consoleOut) {
         if (outfileStr.empty()) {
             printf("FileListing::write: filename is empty!");
             return INVALID_ARGUMENT;
@@ -95,7 +95,7 @@ namespace editor {
 
 
     int FileListing::writeFile(stringRef_t outfileStr,
-                               const CONSOLE consoleOut) {
+                               const lce::CONSOLE consoleOut) {
         const Data dataOut = writeData(consoleOut);
 
         FILE* f_out = fopen(outfileStr.c_str(), "wb");
@@ -106,25 +106,25 @@ namespace editor {
 
         int status;
         switch (consoleOut) {
-            case CONSOLE::PS3:
+            case lce::CONSOLE::PS3:
                 status = writePS3();
                 break;
-            case CONSOLE::RPCS3:
+            case lce::CONSOLE::RPCS3:
                 status = writeRPCS3(f_out, dataOut);
                 break;
-            case CONSOLE::XBOX360:
+            case lce::CONSOLE::XBOX360:
                 status = writeXbox360_BIN();
                 break;
-            case CONSOLE::WIIU:
+            case lce::CONSOLE::WIIU:
                 status = writeWiiU(f_out, dataOut);
                 break;
-            case CONSOLE::VITA:
+            case lce::CONSOLE::VITA:
                 status = writeVita(f_out, dataOut);
                 break;
-            case CONSOLE::SWITCH:
+            case lce::CONSOLE::SWITCH:
                 status = writeNSX();
                 break;
-            case CONSOLE::PS4:
+            case lce::CONSOLE::PS4:
                 status = writePs4();
                 break;
             default:
@@ -136,30 +136,30 @@ namespace editor {
 
 
     int FileListing::writeFileInfo(stringRef_t outFilePath,
-                                   const CONSOLE consoleOut) const {
+                                   const lce::CONSOLE consoleOut) const {
         std::string filepath = outFilePath;
         while (filepath.back() != '\\' && filepath.back() != '/') {
             filepath.pop_back();
         }
 
         switch (consoleOut) {
-            case CONSOLE::PS3:
-            case CONSOLE::RPCS3:
-            case CONSOLE::PS4:
+            case lce::CONSOLE::PS3:
+            case lce::CONSOLE::RPCS3:
+            case lce::CONSOLE::PS4:
                 filepath += "THUMB";
                 break;
-            case CONSOLE::VITA:
+            case lce::CONSOLE::VITA:
                 filepath += "THUMBDATA.BIN";
                 break;
-            case CONSOLE::WIIU:
-            case CONSOLE::SWITCH: {
+            case lce::CONSOLE::WIIU:
+            case lce::CONSOLE::SWITCH: {
                 filepath = outFilePath + ".ext";
                 break;
             }
-            case CONSOLE::XBOX360:
+            case lce::CONSOLE::XBOX360:
                 printf("FileListing::writeFileInfo: not implemented!");
                 return NOT_IMPLEMENTED;
-            case CONSOLE::NONE:
+            case lce::CONSOLE::NONE:
             default:
                 return INVALID_CONSOLE;
         }
