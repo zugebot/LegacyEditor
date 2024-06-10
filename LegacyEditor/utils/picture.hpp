@@ -1,80 +1,114 @@
 #pragma once
 
 #include <cstddef>
+#include <string>
+
+#include "lce/processor.hpp"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "include/stb_image_write.h"
 
-#include "../../include/stb_image_write.h"
-#include "LegacyEditor/utils/processor.hpp"
+#define STB_IMAGE_IMPLEMENTATION
+#include "include/stb_image.h"
 
 
 class Picture {
 public:
-    static constexpr int RGB_SIZE = 3;
-    u32 width = 0;
-    u32 height = 0;
+    uint32_t myRGBSize = 3;
+    uint32_t myWidth = 0;
+    uint32_t myHeight = 0;
 
     /// goes left to right, top to bottom I think
-    u8* data;
+    uint8_t* myData = nullptr;
 
-    void allocate() {
-        delete[] data;
-        data = new u8[static_cast<size_t>(width * height * RGB_SIZE)];
-        memset(data, 0, width * height * RGB_SIZE);
+    void allocate(const uint32_t rgbSize) {
+        delete[] myData;
+        myRGBSize = rgbSize;
+        myData = new uint8_t[static_cast<size_t>(myWidth * myHeight * myRGBSize)];
+        memset(myData, 0, myWidth * myHeight * myRGBSize);
     }
 
-    Picture(const int width, const int height) : width(width), height(height) {
-        data = nullptr;
-        allocate();
+    Picture(const uint32_t width, const uint32_t height) : myWidth(width), myHeight(height) {
+        myData = nullptr;
+        allocate(3);
     }
 
     MU explicit Picture(const int size) : Picture(size, size) {}
 
-    ~Picture() { delete[] data; }
+    MU Picture() = default;
 
-    MU ND u32 getWidth() const { return width; }
-    MU ND u32 getHeight() const { return height; }
-    ND u32 getIndex(const u32 xIn, const u32 yIn) const { return xIn + yIn * height; }
+    ~Picture() { delete[] myData; }
 
-    MU void drawPixel(const unsigned char* rgb, const u32 xIn, const u32 yIn) const {
-        const u32 index = getIndex(xIn, yIn);
-        memcpy(&data[static_cast<size_t>(index * 3)], rgb, 3);
+    MU ND uint32_t getWidth() const { return myWidth; }
+    MU ND uint32_t getHeight() const { return myHeight; }
+    ND uint32_t getIndex(const uint32_t xIn, const uint32_t yIn) const { return xIn + yIn * myHeight; }
+
+    MU void drawPixel(const unsigned char* rgb, const uint32_t xIn, const uint32_t yIn) const {
+        const uint32_t index = getIndex(xIn, yIn);
+        memcpy(&myData[static_cast<size_t>(index * myRGBSize)], rgb, myRGBSize);
     }
 
-    MU ND bool drawBox(const u32 startX, const u32 startY, const u32 endX, const u32 endY, const u8 red, const u8 green, const u8 blue) const {
+    MU ND bool drawBox(const uint32_t startX, const uint32_t startY,
+                       const uint32_t endX, const uint32_t endY,
+                       const uint8_t red, const uint8_t green, const uint8_t blue) const {
 
-        if (startX > width || startY > height) { return false; }
-        if (endX > width || endY > height) { return false; }
+        if (startX > myWidth || startY > myHeight) { return false; }
+        if (endX > myWidth || endY > myHeight) { return false; }
         if (endX < startX || endY < startY) { return false; }
 
-        for (u32 xIter = startX; xIter < endX; xIter++) {
-            const u32 index = getIndex(xIter, startY) * RGB_SIZE;
-            data[index] = red;
-            data[index + 1] = green;
-            data[index + 2] = blue;
+        for (uint32_t xIter = startX; xIter < endX; xIter++) {
+            const uint32_t index = getIndex(xIter, startY) * myRGBSize;
+            myData[index] = red;
+            myData[index + 1] = green;
+            myData[index + 2] = blue;
         }
 
-        const u32 rowSize = (endX - startX) * RGB_SIZE;
-        const u32 firstRowIndex = getIndex(startX, startY) * RGB_SIZE;
-        for (u32 yIter = startY + 1; yIter < endY; yIter++) {
-            const u32 index = getIndex(startX, yIter) * RGB_SIZE;
-            memcpy(&data[index], &data[firstRowIndex], rowSize);
+        const uint32_t rowSize = (endX - startX) * myRGBSize;
+        const uint32_t firstRowIndex = getIndex(startX, startY) * myRGBSize;
+        for (uint32_t yIter = startY + 1; yIter < endY; yIter++) {
+            const uint32_t index = getIndex(startX, yIter) * myRGBSize;
+            memcpy(&myData[index], &myData[firstRowIndex], rowSize);
         }
         return true;
     }
 
-    MU void fillColor(const u8 red, const u8 green, const u8 blue) const {
-        for (u32 xIter = 0; xIter < width; xIter++) {
-            const u32 index = getIndex(xIter, 0) * RGB_SIZE;
-            data[index] = red;
-            data[index + 1] = green;
-            data[index + 2] = blue;
+    MU void fillColor(const uint8_t red, const uint8_t green, const uint8_t blue) const {
+        for (uint32_t xIter = 0; xIter < myWidth; xIter++) {
+            const uint32_t index = getIndex(xIter, 0) * myRGBSize;
+            myData[index] = red;
+            myData[index + 1] = green;
+            myData[index + 2] = blue;
         }
 
-        const u32 rowSize = (width) *RGB_SIZE;
-        for (u32 yIter = 0; yIter < height; yIter++) {
-            const u32 index = getIndex(0, yIter) * RGB_SIZE;
-            memcpy(&data[index], &data[0], rowSize);
+        const uint32_t rowSize = (myWidth) * myRGBSize;
+        for (uint32_t yIter = 0; yIter < myHeight; yIter++) {
+            const uint32_t index = getIndex(0, yIter) * myRGBSize;
+            memcpy(&myData[index], &myData[0], rowSize);
+        }
+    }
+
+
+    void loadFromFile(const char* filename) {
+        int x,y,n;
+        delete[] myData;
+        myData = stbi_load(filename, &x, &y, &n, 0);
+        myWidth = x;
+        myHeight = y;
+        myRGBSize = n;
+    }
+
+
+    MU void getSubImage(Picture& picture, const uint32_t startX, const uint32_t startY) const {
+        if (myData == nullptr || myWidth == 0 || myHeight == 0 || startX > myWidth || startY > myHeight) {
+            return;
+        }
+
+        picture.allocate(myRGBSize);
+        const uint32_t rowSize = picture.myWidth * myRGBSize;
+        for (uint32_t yIter = 0; yIter < picture.myHeight; yIter++) {
+            const uint32_t indexIn = (startX + (startY + yIter) * myWidth) * myRGBSize;
+            const uint32_t indexOut = yIter * picture.myWidth * picture.myRGBSize;
+            memcpy(&picture.myData[indexOut], &this->myData[indexIn], rowSize);
         }
     }
 
@@ -82,14 +116,12 @@ public:
     void saveWithName(std::string filename, const std::string& directory) const {
         filename = directory + filename;
         stbi_write_png(filename.c_str(),
-            static_cast<int>(width),
-            static_cast<int>(height),
-            RGB_SIZE,
-            data,
-            static_cast<int>(width) * RGB_SIZE
+                       static_cast<int>(myWidth),
+                       static_cast<int>(myHeight),
+                       static_cast<int>(myRGBSize), myData,
+                       static_cast<int>(myWidth * myRGBSize)
         );
     }
 
 
 };
-

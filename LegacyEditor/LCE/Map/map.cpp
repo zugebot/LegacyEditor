@@ -29,9 +29,9 @@ namespace editor::map {
         int count = 0;
         for (int i = 0; i < MAP_BYTE_SIZE; i++) {
             const RGB rgb = getRGB(byteArray->array[i]);
-            picture.data[count++] = rgb.r;
-            picture.data[count++] = rgb.g;
-            picture.data[count++] = rgb.b;
+            picture.myData[count++] = rgb.r;
+            picture.myData[count++] = rgb.g;
+            picture.myData[count++] = rgb.b;
         }
 
         picture.saveWithName(filename, path);
