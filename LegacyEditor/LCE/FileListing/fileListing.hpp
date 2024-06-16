@@ -7,6 +7,7 @@
 
 #include "LCEFile.hpp"
 #include "LegacyEditor/LCE/FileInfo/FileInfo.hpp"
+#include "LegacyEditor/LCE/Region/RegionManager.hpp"
 #include "LegacyEditor/utils/error_status.hpp"
 #include "LegacyEditor/utils/processor.hpp"
 
@@ -96,7 +97,11 @@ namespace editor {
         MU ND int readExternalRegions(stringRef_t inFilePath);
         MU ND static int writeExternalRegions(stringRef_t outFilePath);
 
+        /// Region Helpers
+
         MU void pruneRegions();
+        MU void replaceRegionOW(int regionIndex, editor::RegionManager& region, const lce::CONSOLE consoleOut);
+
 
     private:
 
@@ -166,6 +171,8 @@ namespace editor {
                 {LCEFileType::LEVEL, [this] { level = nullptr; }},
                 {LCEFileType::GRF, [this] { grf = nullptr; }},
         };
+
+
     };
 }
 

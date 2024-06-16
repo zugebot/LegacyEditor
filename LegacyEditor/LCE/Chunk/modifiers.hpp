@@ -102,6 +102,7 @@ namespace editor::chunk {
     }
 
 
+    /// Returns (blockID << 4 | dataTag).
     inline u16 getBlock(const ChunkData* chunkData,
         const int xIn, const int yIn, const int zIn) {
         switch (chunkData->lastVersion) {
@@ -110,14 +111,14 @@ namespace editor::chunk {
             case 11: {
                 const int yOffset = yIn & 0x80 << 8;
                 const int offset = yOffset + toPos(xIn, yIn & 0x7F, zIn);
-                const u16 block = chunkData->newBlocks[offset];
-                u16 data;
+                const u16 blockID = chunkData->newBlocks[offset];
+                u16 dataTag;
                 if (offset % 2 == 0) {
-                    data = chunkData->blockData[offset] & 0x0F;
+                    dataTag = chunkData->blockData[offset] & 0x0F;
                 } else {
-                    data = (chunkData->blockData[offset] & 0xF0) >> 8;
+                    dataTag = (chunkData->blockData[offset] & 0xF0) >> 8;
                 }
-                return block << 4 | data;
+                return blockID << 4 | dataTag;
             }
             case 12:
             case 13: {

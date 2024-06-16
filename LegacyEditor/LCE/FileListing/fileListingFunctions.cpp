@@ -347,5 +347,14 @@ namespace editor {
     }
 
 
+    void FileListing::replaceRegionOW(int regionIndex, editor::RegionManager& region, const lce::CONSOLE consoleOut) {
+        if (regionIndex >= region_overworld.size()) {
+            throw std::runtime_error("attempted to call FileListing::replaceRegionOW with an index that is out of bounds.");
+        }
+        region_overworld[regionIndex]->data.deallocate();
+        region_overworld[regionIndex]->data = region.write(consoleOut);
+    }
+
+
 
 }

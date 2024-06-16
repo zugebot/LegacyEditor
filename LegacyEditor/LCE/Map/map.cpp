@@ -1,9 +1,10 @@
 #include "map.hpp"
+#include "mapcolors.hpp"
+
+#include "lce/include/picture.hpp"
 
 #include "LegacyEditor/LCE/FileListing/LCEFile.hpp"
 #include "LegacyEditor/utils/NBT.hpp"
-#include "LegacyEditor/utils/picture.hpp"
-#include "mapcolors.hpp"
 
 
 namespace editor::map {

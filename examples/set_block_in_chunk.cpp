@@ -8,7 +8,7 @@
 
 #include "LegacyEditor/unit_tests.hpp"
 
-#include "lce/items/block_ids.hpp"
+#include "lce/blocks/block_ids.hpp"
 
 
 int main() {
