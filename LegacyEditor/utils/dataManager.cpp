@@ -37,7 +37,7 @@ void DataManager::seek(const i64 position) {
     incrementPointer(static_cast<i32>(position));
 }
 
-void DataManager::seek(const u32 position) {
+void DataManager::seek(c_u32 position) {
     seekStart();
     incrementPointer(static_cast<i32>(position));
 }
@@ -73,7 +73,7 @@ void DataManager::decrementPointer(u32 amount) {
 
 
 u8 DataManager::readInt8() {
-    const u8 value = ptr[0];
+    c_u8 value = ptr[0];
     incrementPointer1();
     return value;
 }
@@ -105,7 +105,7 @@ i32 DataManager::readInt24() {
 
 
 // TODO: remove this function its bad
-i32 DataManager::readInt24(const bool isLittleIn) {
+i32 DataManager::readInt24(c_bool isLittleIn) {
     int val;
     if (isLittleIn) {
         val = ((ptr[2] << 16) | (ptr[1] << 8) | ptr[0]);
@@ -117,7 +117,7 @@ i32 DataManager::readInt24(const bool isLittleIn) {
 }
 /*
 i32 DataManager::readInt24(bool isLittleIn) {
-    const bool originalEndianType = isBig;
+    c_bool originalEndianType = isBig;
     isBig = isLittleIn;
     u32 val = readInt32();
     if (isLittleIn) {
@@ -170,14 +170,14 @@ u64 DataManager::readInt64() {
 }
 
 
-u8 DataManager::readInt8AtOffset(const u32 offset) const {
+u8 DataManager::readInt8AtOffset(c_u32 offset) const {
     u8 value = data[offset];
     return value;
 }
 
 
-u16 DataManager::readInt16AtOffset(const u32 offset) const {
-    const u8* ptrOff = data + offset;
+u16 DataManager::readInt16AtOffset(c_u32 offset) const {
+    c_u8* ptrOff = data + offset;
     u16 value;
     if (isBig) {
         value = ptrOff[0] << 8 | ptrOff[1];
@@ -188,8 +188,8 @@ u16 DataManager::readInt16AtOffset(const u32 offset) const {
 }
 
 
-u32 DataManager::readInt32AtOffset(const u32 offset) const {
-    const u8* ptrOff = data + offset;
+u32 DataManager::readInt32AtOffset(c_u32 offset) const {
+    c_u8* ptrOff = data + offset;
     u32 value;
     if (isBig) {
         value = ptrOff[0] << 24 | ptrOff[1] << 16 | ptrOff[2] << 8 | ptrOff[3];
@@ -200,8 +200,8 @@ u32 DataManager::readInt32AtOffset(const u32 offset) const {
 }
 
 
-u64 DataManager::readInt64AtOffset(const u32 offset) const {
-    const u8* ptrOff = data + offset;
+u64 DataManager::readInt64AtOffset(c_u32 offset) const {
+    c_u8* ptrOff = data + offset;
     i64 val;
     if (isBig) {
         val = static_cast<i64>(static_cast<u64>(ptrOff[0]) << 56 |
@@ -232,7 +232,7 @@ bool DataManager::readBool() {
 
 
 std::string DataManager::readUTF() {
-    const u8 length = readInt16();
+    c_u8 length = readInt16();
     std::string return_string(reinterpret_cast<char*>(ptr), length);
     incrementPointer(length);
     return return_string;
@@ -249,7 +249,7 @@ std::string DataManager::readNullTerminatedString() {
 }
 
 
-std::string DataManager::readString(const i32 length) {
+std::string DataManager::readString(c_i32 length) {
     std::vector<char> strVec;
     strVec.resize(length + 1);
     char* str = strVec.data();
@@ -271,16 +271,16 @@ std::wstring DataManager::readNullTerminatedWString() {
 }
 
 
-std::wstring DataManager::readWString(const u32 length) {
+std::wstring DataManager::readWString(c_u32 length) {
     std::wstring returnString;
     for (u32 i = 0; i < length; i++) {
-        if (const auto c = static_cast<wchar_t>(this->readInt16()); c != 0) { returnString += c; }
+        if (c_auto c = static_cast<wchar_t>(this->readInt16()); c != 0) { returnString += c; }
     }
     return returnString;
 }
 
 
-std::string DataManager::readWAsString(const u32 length) {
+std::string DataManager::readWAsString(c_u32 length) {
     auto *const letters = new u8[length + 1];
     letters[length] = 0;
 
@@ -306,7 +306,7 @@ std::string DataManager::readWAsString(const u32 length) {
 
 
 
-u8_vec DataManager::readIntoVector(const u32 amount) {
+u8_vec DataManager::readIntoVector(c_u32 amount) {
     if EXPECT_FALSE(getPosition() + amount > size) {
         return u8_vec(amount, 0);
     }
@@ -328,7 +328,7 @@ double DataManager::readDouble() {
 }
 
 
-u8* DataManager::readWithOffset(const i32 offset, const i32 amount) {
+u8* DataManager::readWithOffset(c_i32 offset, c_i32 amount) {
     auto *const val = new u8[amount];
     incrementPointer(offset);
     memcpy(val, data, amount);
@@ -337,7 +337,7 @@ u8* DataManager::readWithOffset(const i32 offset, const i32 amount) {
 }
 
 
-u8* DataManager::readBytes(const u32 length) {
+u8* DataManager::readBytes(c_u32 length) {
     auto *val = new u8[length];
     memcpy(val, ptr, length);
     incrementPointer(static_cast<i32>(length));
@@ -345,7 +345,7 @@ u8* DataManager::readBytes(const u32 length) {
 }
 
 
-void DataManager::readOntoData(const u32 length, u8* dataIn) {
+void DataManager::readOntoData(c_u32 length, u8* dataIn) {
     memcpy(dataIn, ptr, length);
     incrementPointer(static_cast<i32>(length));
 }
@@ -358,7 +358,7 @@ int DataManager::readFromFile(const std::string& fileStrIn) {
     }
 
     fseek(file, 0, SEEK_END);
-    const u64 newSize = ftell(file);
+    c_u64 newSize = ftell(file);
     fseek(file, 0, SEEK_SET);
 
     data = new u8[newSize];
@@ -380,13 +380,13 @@ int DataManager::readFromFile(const std::string& fileStrIn) {
 }
 
 
-void DataManager::writeInt8(const u8 byteIn) {
+void DataManager::writeInt8(c_u8 byteIn) {
     ptr[0] = byteIn;
     incrementPointer1();
 }
 
 
-void DataManager::writeInt16(const u16 shortIn) {
+void DataManager::writeInt16(c_u16 shortIn) {
     if (isBig) {
         ptr[0] = (shortIn >> 8) & FF_MASK;
         ptr[1] =  shortIn       & FF_MASK;
@@ -399,7 +399,7 @@ void DataManager::writeInt16(const u16 shortIn) {
 
 
 
-void DataManager::writeInt24(const u32 intIn) {
+void DataManager::writeInt24(c_u32 intIn) {
     if (isBig) {
         // Write the most significant 3 bytes for big-endian
         ptr[0] = (intIn >> 16) & FF_MASK;
@@ -416,7 +416,7 @@ void DataManager::writeInt24(const u32 intIn) {
 
 
 
-void DataManager::writeInt32(const u32 intIn) {
+void DataManager::writeInt32(c_u32 intIn) {
     if (isBig) {
         ptr[0] = (intIn >> 24) & FF_MASK;
         ptr[1] = (intIn >> 16) & FF_MASK;
@@ -432,7 +432,7 @@ void DataManager::writeInt32(const u32 intIn) {
 }
 
 
-auto DataManager::writeInt64(const u64 longIn) -> void {
+auto DataManager::writeInt64(c_u64 longIn) -> void {
     if (isBig) {
         ptr[0] = (longIn >> 56) & FF_MASK;
         ptr[1] = (longIn >> 48) & FF_MASK;
@@ -456,13 +456,13 @@ auto DataManager::writeInt64(const u64 longIn) -> void {
 }
 
 
-void DataManager::writeInt8AtOffset(const u32 offset, const u8 byteIn) const {
+void DataManager::writeInt8AtOffset(c_u32 offset, c_u8 byteIn) const {
     u8* ptrOff = data + offset;
     ptrOff[0] = byteIn;
 }
 
 
-void DataManager::writeInt16AtOffset(const u32 offset, const u16 shortIn) const {
+void DataManager::writeInt16AtOffset(c_u32 offset, c_u16 shortIn) const {
     u8* ptrOff = data + offset;
     if (isBig) {
         ptrOff[0] = (shortIn >> 8) & FF_MASK;
@@ -474,7 +474,7 @@ void DataManager::writeInt16AtOffset(const u32 offset, const u16 shortIn) const 
 }
 
 
-void DataManager::writeInt32AtOffset(const u32 offset, const u32 intIn) const {
+void DataManager::writeInt32AtOffset(c_u32 offset, c_u32 intIn) const {
     u8* ptrOff = data + offset;
     if (isBig) {
         ptrOff[0] = (intIn >> 24) & FF_MASK;
@@ -490,7 +490,7 @@ void DataManager::writeInt32AtOffset(const u32 offset, const u32 intIn) const {
 }
 
 
-void DataManager::writeInt64AtOffset(const u32 offset, const u64 longIn) const {
+void DataManager::writeInt64AtOffset(c_u32 offset, c_u64 longIn) const {
     u8* ptrOff = data + offset;
     if (isBig) {
         ptrOff[0] = (longIn >> 56) & FF_MASK;
@@ -528,7 +528,7 @@ void DataManager::writeDouble(double doubleIn) {
 }
 
 
-void DataManager::writeBytes(const u8* dataPtrIn, const u32 length) {
+void DataManager::writeBytes(c_u8* dataPtrIn, c_u32 length) {
     memcpy(ptr, dataPtrIn, length);
     incrementPointer(static_cast<i32>(length));
 }
@@ -550,14 +550,14 @@ void DataManager::writeFile(const editor::LCEFile& fileIn) {
 
 
 void DataManager::writeUTF(std::string str) {
-    const u32 str_size = str.size();
+    c_u32 str_size = str.size();
     writeInt16(str_size);
     writeBytes(reinterpret_cast<u8*>(str.data()), str_size);
 }
 
 
-void DataManager::writeWString(const std::wstring& wstr, const u32 upperbounds) {
-    const u32 wstr_size_min = std::min(static_cast<u32>(wstr.size()), upperbounds);
+void DataManager::writeWString(const std::wstring& wstr, c_u32 upperbounds) {
+    c_u32 wstr_size_min = std::min(static_cast<u32>(wstr.size()), upperbounds);
     for (u32 i = 0; i < upperbounds && i < wstr_size_min; ++i) {
         writeInt16(wstr[i]);
     }
@@ -565,9 +565,9 @@ void DataManager::writeWString(const std::wstring& wstr, const u32 upperbounds) 
 
 
 
-void DataManager::writeWStringFromString(const std::string& str, const u32 upperbounds) {
+void DataManager::writeWStringFromString(const std::string& str, c_u32 upperbounds) {
     constexpr u8 empty = 0;
-    const u8* emptyPtr = &empty;
+    c_u8* emptyPtr = &empty;
 
     for (u32 i = 0; i < upperbounds && i < std::min(static_cast<u32>(str.size()), upperbounds); ++i) {
         if (isBig) {
@@ -598,7 +598,7 @@ int DataManager::writeToFile(const std::string& fileName) const {
 }
 
 
-int DataManager::writeToFile(const u8* ptrIn, const u32 sizeIn, const std::string& fileName) const {
+int DataManager::writeToFile(c_u8* ptrIn, c_u32 sizeIn, const std::string& fileName) const {
     FILE* f_out = fopen(fileName.c_str(), "wb");
     if (f_out == nullptr) {
         printf("Failed to write data to output file '%s'", fileName.c_str());

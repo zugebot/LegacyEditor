@@ -10,14 +10,14 @@ namespace editor {
         nbt = new NBTTagCompound();
     }
 
-    LCEFile::LCEFile(const lce::CONSOLE consoleIn, const u32 sizeIn) : data(Data(sizeIn)), console(consoleIn) {
+    LCEFile::LCEFile(const lce::CONSOLE consoleIn, c_u32 sizeIn) : data(Data(sizeIn)), console(consoleIn) {
         nbt = new NBTTagCompound();
     }
 
-    LCEFile::LCEFile(const lce::CONSOLE consoleIn, const u32 sizeIn, const u64 timestampIn) : data(Data(sizeIn)), timestamp(timestampIn), console(consoleIn) {}
+    LCEFile::LCEFile(const lce::CONSOLE consoleIn, c_u32 sizeIn, c_u64 timestampIn) : data(Data(sizeIn)), timestamp(timestampIn), console(consoleIn) {}
 
 
-    LCEFile::LCEFile(const lce::CONSOLE consoleIn, u8* dataIn, const u32 sizeIn, const u64 timestampIn) : data(dataIn, sizeIn), timestamp(timestampIn), console(consoleIn) {
+    LCEFile::LCEFile(const lce::CONSOLE consoleIn, u8* dataIn, c_u32 sizeIn, c_u64 timestampIn) : data(dataIn, sizeIn), timestamp(timestampIn), console(consoleIn) {
         nbt = new NBTTagCompound();
     }
 
@@ -36,7 +36,7 @@ namespace editor {
     }
 
 
-    std::string LCEFile::constructFileName(MU lce::CONSOLE console, const bool separateRegions = false) const {
+    std::string LCEFile::constructFileName(MU lce::CONSOLE console, c_bool separateRegions = false) const {
         static std::unordered_map<LCEFileType, std::string> FileTypeNames{
                 {LCEFileType::VILLAGE, "data/villages.dat"},
                 {LCEFileType::DATA_MAPPING, "data/largeMapDataMappings.dat"},
@@ -65,7 +65,7 @@ namespace editor {
                 name = getFileName();
                 break;
             case LCEFileType::MAP: {
-                const i16 mapNum = getMapNumber();
+                c_i16 mapNum = getMapNumber();
                 name = "data/map_" + to_string(mapNum) + ".dat";
                 break;
             }
@@ -76,8 +76,8 @@ namespace editor {
             case LCEFileType::REGION_NETHER:
             case LCEFileType::REGION_OVERWORLD:
             case LCEFileType::REGION_END: {
-                const i16 regionX = getRegionX();
-                const i16 regionZ = getRegionZ();
+                c_i16 regionX = getRegionX();
+                c_i16 regionZ = getRegionZ();
                 if (fileType == LCEFileType::REGION_NETHER) {
                     name = "DIM-1";
                 } else if (fileType == LCEFileType::REGION_OVERWORLD) {

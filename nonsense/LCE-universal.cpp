@@ -7,7 +7,7 @@
 #include "PaletteChunkParser.hpp"
 
 
-bool LCE_universal::willBeWater(uint16_t block1_13, uint8_t data) {
+bool LCE_universal::willBeWater(uint16_t block1_13, u8 data) {
     if (block1_13 == 9 || block1_13 == 0x102 || block1_13 == 0x10e || block1_13 == 0x110) { return true; }
     if (block1_13 == 0x10f) {
         if (data & 8) {
@@ -19,7 +19,7 @@ bool LCE_universal::willBeWater(uint16_t block1_13, uint8_t data) {
     return false;//no other downgrade will result in water
 }
 
-uint8_t LCE_universal::convertTo1_12Blocks(uint16_t block1_13, uint8_t& data) {
+u8 LCE_universal::convertTo1_12Blocks(uint16_t block1_13, u8& data) {
     switch (block1_13) {
             //sea pickle
         case 0x10f:
@@ -113,7 +113,7 @@ uint8_t LCE_universal::convertTo1_12Blocks(uint16_t block1_13, uint8_t& data) {
 
 /// check for surrounding water and the current block with water
 /// if surrounded by them or is going to be replaced since it's a 1.13
-uint8_t LCE_universal::convertBlockFrom1_13(LoadedChunks& adjacentChunks, BlockPos& blockPos) {
+u8 LCE_universal::convertBlockFrom1_13(LoadedChunks& adjacentChunks, BlockPos& blockPos) {
     int x = blockPos.x;
     int y = blockPos.y;
     int z = blockPos.z;
@@ -210,7 +210,7 @@ NBTTagList* LCE_universal::convertTileTicks(NBTTagList* tileTicksNbt) {
 }
 
 
-void LCE_universal::convertPortal(uint8_t* dataOut, BlockWithPos& blockWithPos, LoadedChunks& chunks) {
+void LCE_universal::convertPortal(u8* dataOut, BlockWithPos& blockWithPos, LoadedChunks& chunks) {
     //0 is default meaning the game calculates the rotation
     int x = blockWithPos.pos.x;
     int y = blockWithPos.pos.y;
@@ -258,7 +258,7 @@ void LCE_universal::convertPortal(uint8_t* dataOut, BlockWithPos& blockWithPos, 
     -open (3rd bit) of the whole door
     -top bit (4th bit) always off for bottom half
 */
-uint8_t LCE_universal::convertDoorNew(uint8_t data) {
+u8 LCE_universal::convertDoorNew(u8 data) {
     if (data & 8) {
         // if the door is open in old or powered in new because that likely won't
         // matter if the door is open in new (& 4, & 2)
@@ -273,7 +273,7 @@ uint8_t LCE_universal::convertDoorNew(uint8_t data) {
     return data;
 }
 
-uint8_t LCE_universal::convertDoorOld(uint8_t data) {
+u8 LCE_universal::convertDoorOld(u8 data) {
     if (data & 8) {
         return 8;// just return the top bit as powered and hinge wasn't added?
     } else {
@@ -282,9 +282,9 @@ uint8_t LCE_universal::convertDoorOld(uint8_t data) {
 }
 
 
-void LCE_universal::convertFlowerPotData(uint8_t data, NBTTagCompound* tileEntity) {
+void LCE_universal::convertFlowerPotData(u8 data, NBTTagCompound* tileEntity) {
     std::string item;
-    uint8_t dataOut;
+    u8 dataOut;
     switch (data) {
         case 1:
             item = "red_flower";
@@ -369,7 +369,7 @@ void LCE_universal::applyFixes(UniversalChunkFormat* chunkData, LoadedChunks& ad
     int downgradeBlocksSize = (int) fixes.downgradingBlocks.size();
     for (int i = 0; i < downgradeBlocksSize; i++) {
         BlockWithPos blockWithPos = fixes.downgradingBlocks[i];
-        uint8_t block = convertTo1_12Blocks(blockWithPos.block.block, chunkData->data[blockWithPos.index]);
+        u8 block = convertTo1_12Blocks(blockWithPos.block.block, chunkData->data[blockWithPos.index]);
 
         if (block == 0) {
             block = blockWithPos.block.waterLogged ? 9 : 0;
@@ -439,7 +439,7 @@ void LCE_universal::applyFixes(UniversalChunkFormat* chunkData, LoadedChunks& ad
 }
 
 
-void LCE_universal::checkForFixBlock(uint16_t block, uint8_t data, bool waterLogged, int x, int y, int z,
+void LCE_universal::checkForFixBlock(uint16_t block, u8 data, bool waterLogged, int x, int y, int z,
                                      LCEFixes& fixes) {
     //fix old block data or downgrade 1.13 blocks
     switch (block) {
@@ -489,7 +489,7 @@ void LCE_universal::checkForFixBlock(uint16_t block, uint8_t data, bool waterLog
     }
 }
 
-int LCE_universal::checkChestRotationViableBlock(uint8_t block) {
+int LCE_universal::checkChestRotationViableBlock(u8 block) {
     switch (block) {
         case 1:
         case 2:
@@ -560,7 +560,7 @@ int LCE_universal::checkChestRotationViableBlock(uint8_t block) {
  *  -if one east, it will face west
  *  -if both 1>= east and west, then face west
  */
-uint8_t LCE_universal::alignDoubleChest(BlockPos blockPos, LoadedChunks& adjacentChunks, int direction) {
+u8 LCE_universal::alignDoubleChest(BlockPos blockPos, LoadedChunks& adjacentChunks, int direction) {
 
     int x = blockPos.x;
     int y = blockPos.y;
@@ -649,12 +649,12 @@ uint8_t LCE_universal::alignDoubleChest(BlockPos blockPos, LoadedChunks& adjacen
 }
 
 
-uint8_t LCE_universal::alignChest(BlockPos blockPos, LoadedChunks& adjacentChunks) {
+u8 LCE_universal::alignChest(BlockPos blockPos, LoadedChunks& adjacentChunks) {
     int x = blockPos.x;
     int y = blockPos.y;
     int z = blockPos.z;
     Block block;
-    uint8_t data = 3;//south
+    u8 data = 3;//south
     //I think the easiest way, is defaulting to south
     //then checking the south block if there is then face north
     //then if there is one block on west/east then face the other way (not both)
@@ -682,7 +682,7 @@ uint8_t LCE_universal::alignChest(BlockPos blockPos, LoadedChunks& adjacentChunk
 
 
     bool hasOneEastWestBlock = false;
-    uint8_t facingEastWest = 0;
+    u8 facingEastWest = 0;
     block = adjacentChunks.getBlockWithDirectionPreCalculated(x + 1, y, z);//test east block (+x)
     //test block
     int testBlockEast = checkChestRotationViableBlock(block.block);
@@ -783,11 +783,11 @@ UniversalChunkFormat* LCE_universal::convertLCE1_13RegionToUniversal(AquaticChun
         uint16_t byte2 = chunkData.blocks[i * 2 + 1];
 
         uint16_t block = ((byte2 << 4) + ((byte1 & 0xF0) >> 4)) & 0x1FF;
-        uint8_t data = byte1 & 0xf;
+        u8 data = byte1 & 0xf;
         uint16_t byte3 = chunkData.submerged[i * 2];
         uint16_t byte4 = chunkData.submerged[i * 2 + 1];
         uint16_t submergedBlock = ((byte4 << 4) + ((byte3 & 0xF0) >> 4));
-        uint8_t subData = byte3 & 0xf;
+        u8 subData = byte3 & 0xf;
         anvil->blocks[i] = block;
         //16 128 has a submerged tag might want to check that
         anvil->data[i] = data;
@@ -806,11 +806,11 @@ UniversalChunkFormat* LCE_universal::convertLCE1_13RegionToUniversal(AquaticChun
         //4 bits of light per block
         int lightIndex = i >> 1;
         if ((i & 1) == 0) {
-            anvil->skyLight[index] = (uint8_t) chunkData.skyLight[lightIndex] & 15;
-            anvil->blockLight[index] = (uint8_t) chunkData.blockLight[lightIndex] & 15;
+            anvil->skyLight[index] = (u8) chunkData.skyLight[lightIndex] & 15;
+            anvil->blockLight[index] = (u8) chunkData.blockLight[lightIndex] & 15;
         } else {
-            anvil->skyLight[index] = (uint8_t) (chunkData.skyLight[lightIndex] >> 4) & 15;
-            anvil->blockLight[index] = (uint8_t) (chunkData.blockLight[lightIndex] >> 4) & 15;
+            anvil->skyLight[index] = (u8) (chunkData.skyLight[lightIndex] >> 4) & 15;
+            anvil->blockLight[index] = (u8) (chunkData.blockLight[lightIndex] >> 4) & 15;
         }
         checkForFixBlock(block, data, submergedBlock, x, y, z, fixes);
     }
@@ -868,19 +868,19 @@ UniversalChunkFormat* LCE_universal::convertLCE1_12RegionToUniversal(LCEChunkDat
         int z = (i >> 12) & 15;
         int index = y << 8 | z << 4 | x;
         //12 bits is the block and 4 bits is the data
-        uint8_t block = chunkData.blocks[i];
-        uint8_t data;
+        u8 block = chunkData.blocks[i];
+        u8 data;
         anvil->blocks[index] = block;
         //4 bits of light per block
         int lightIndex = i >> 1;
         if ((i & 1) == 0) {
-            data = (uint8_t) chunkData.data[lightIndex] & 15;
-            anvil->skyLight[index] = (uint8_t) chunkData.skyLight[lightIndex] & 15;
-            anvil->blockLight[index] = (uint8_t) chunkData.blockLight[lightIndex] & 15;
+            data = (u8) chunkData.data[lightIndex] & 15;
+            anvil->skyLight[index] = (u8) chunkData.skyLight[lightIndex] & 15;
+            anvil->blockLight[index] = (u8) chunkData.blockLight[lightIndex] & 15;
         } else {
-            data = (uint8_t) (chunkData.data[lightIndex] >> 4) & 15;
-            anvil->skyLight[index] = (uint8_t) (chunkData.skyLight[lightIndex] >> 4) & 15;
-            anvil->blockLight[index] = (uint8_t) (chunkData.blockLight[lightIndex] >> 4) & 15;
+            data = (u8) (chunkData.data[lightIndex] >> 4) & 15;
+            anvil->skyLight[index] = (u8) (chunkData.skyLight[lightIndex] >> 4) & 15;
+            anvil->blockLight[index] = (u8) (chunkData.blockLight[lightIndex] >> 4) & 15;
         }
         anvil->data[index] = data;
         checkForFixBlock(block, data, false, x, y, z, fixes);
@@ -935,11 +935,11 @@ UniversalChunkFormat* LCE_universal::convertNBTChunkToUniversal(DataInputManager
             }
             currentChunkVersion = version;
             anvil->version = version;
-            uint8_t* blocks = blockTag->getByteArray();
-            uint8_t* data = levelTag->getByteArray("Data")->getByteArray();
-            uint8_t* blockLight = levelTag->getByteArray("BlockLight")->getByteArray();
-            uint8_t* skyLight = levelTag->getByteArray("SkyLight")->getByteArray();
-            uint8_t* heightMap = levelTag->getByteArray("HeightMap")->getByteArray();
+            u8* blocks = blockTag->getByteArray();
+            u8* data = levelTag->getByteArray("Data")->getByteArray();
+            u8* blockLight = levelTag->getByteArray("BlockLight")->getByteArray();
+            u8* skyLight = levelTag->getByteArray("SkyLight")->getByteArray();
+            u8* heightMap = levelTag->getByteArray("HeightMap")->getByteArray();
 
             if (levelTag->hasKey("Entities")) {
                 anvil->entities = static_cast<NBTTagList*>(levelTag->getTag("Entities").copy().data);
@@ -961,17 +961,17 @@ UniversalChunkFormat* LCE_universal::convertNBTChunkToUniversal(DataInputManager
                     int index = x << 12 | z << 8 | y;
                     //4 bits of light per block
                     int nibbleIndex = i >> 1;
-                    uint8_t block = blocks[i];
+                    u8 block = blocks[i];
                     anvil->blocks[index] = block;
 
                     if ((i & 1) == 0) {
-                        anvil->data[index] = (uint8_t) data[nibbleIndex] & 15;
-                        anvil->skyLight[index] = (uint8_t) skyLight[nibbleIndex] & 15;
-                        anvil->blockLight[index] = (uint8_t) blockLight[nibbleIndex] & 15;
+                        anvil->data[index] = (u8) data[nibbleIndex] & 15;
+                        anvil->skyLight[index] = (u8) skyLight[nibbleIndex] & 15;
+                        anvil->blockLight[index] = (u8) blockLight[nibbleIndex] & 15;
                     } else {
-                        anvil->data[index] = (uint8_t) (data[nibbleIndex] >> 4) & 15;
-                        anvil->skyLight[index] = (uint8_t) (skyLight[nibbleIndex] >> 4) & 15;
-                        anvil->blockLight[index] = (uint8_t) (blockLight[nibbleIndex] >> 4) & 15;
+                        anvil->data[index] = (u8) (data[nibbleIndex] >> 4) & 15;
+                        anvil->skyLight[index] = (u8) (skyLight[nibbleIndex] >> 4) & 15;
+                        anvil->blockLight[index] = (u8) (blockLight[nibbleIndex] >> 4) & 15;
                     }
                     checkForFixBlock(block, anvil->data[index], false, x, y, z, fixes);
                 }
@@ -983,16 +983,16 @@ UniversalChunkFormat* LCE_universal::convertNBTChunkToUniversal(DataInputManager
                         int index = x << 12 | z << 8 | y;
                         //4 bits of light per block
                         int nibbleIndex = i >> 1;
-                        uint8_t block = blocks[i];
+                        u8 block = blocks[i];
                         anvil->blocks[index] = block;
                         if ((i & 1) == 0) {
-                            anvil->data[index] = (uint8_t) data[nibbleIndex] & 15;
-                            anvil->skyLight[index] = (uint8_t) skyLight[nibbleIndex] & 15;
-                            anvil->blockLight[index] = (uint8_t) blockLight[nibbleIndex] & 15;
+                            anvil->data[index] = (u8) data[nibbleIndex] & 15;
+                            anvil->skyLight[index] = (u8) skyLight[nibbleIndex] & 15;
+                            anvil->blockLight[index] = (u8) blockLight[nibbleIndex] & 15;
                         } else {
-                            anvil->data[index] = (uint8_t) (data[nibbleIndex] >> 4) & 15;
-                            anvil->skyLight[index] = (uint8_t) (skyLight[nibbleIndex] >> 4) & 15;
-                            anvil->blockLight[index] = (uint8_t) (blockLight[nibbleIndex] >> 4) & 15;
+                            anvil->data[index] = (u8) (data[nibbleIndex] >> 4) & 15;
+                            anvil->skyLight[index] = (u8) (skyLight[nibbleIndex] >> 4) & 15;
+                            anvil->blockLight[index] = (u8) (blockLight[nibbleIndex] >> 4) & 15;
                         }
                         checkForFixBlock(block, anvil->data[index], false, x, y, z, fixes);
                     }
@@ -1011,7 +1011,7 @@ UniversalChunkFormat* LCE_universal::convertNBTChunkToUniversal(DataInputManager
                 NBTTagByteArray* biomes = levelTag->getByteArray("Biomes");
                 if (biomes) {
                     //dimension
-                    uint8_t* biomeArray = biomes->getByteArray();
+                    u8* biomeArray = biomes->getByteArray();
                     for (int x = 0; x < 16; x++) {
                         for (int z = 0; z < 16; z++) {
                             anvil->biomes[x * 16 + z] = biomeArray[x * 16 + z];
@@ -1100,11 +1100,11 @@ UniversalChunkFormat* LCE_universal::convertLCE1_13RegionToUniversalForAccess(Aq
         uint16_t byte2 = chunkData.blocks[i * 2 + 1];
 
         uint16_t block = ((byte2 << 4) + ((byte1 & 0xF0) >> 4)) & 0x1FF;
-        uint8_t data = byte1 & 0xf;
+        u8 data = byte1 & 0xf;
         uint16_t byte3 = chunkData.submerged[i * 2];
         uint16_t byte4 = chunkData.submerged[i * 2 + 1];
         uint16_t submergedBlock = ((byte4 << 4) + ((byte3 & 0xF0) >> 4)) & 0x1FF;
-        uint8_t subData = byte3 & 0xf;
+        u8 subData = byte3 & 0xf;
         anvil->blocks[i] = block;
 
         anvil->data[i] = data;
@@ -1133,15 +1133,15 @@ UniversalChunkFormat* LCE_universal::convertLCE1_12RegionToUniversalForAccess(LC
         int z = (i >> 12) & 15;
         int index = y << 8 | z << 4 | x;
         //12 bits is the block and 4 bits is the data
-        uint8_t block = chunkData.blocks[i];
-        uint8_t data;
+        u8 block = chunkData.blocks[i];
+        u8 data;
         anvil->blocks[index] = block;
         //4 bits of light per block
         int lightIndex = i >> 1;
         if ((i & 1) == 0) {
-            data = (uint8_t) chunkData.data[lightIndex] & 15;
+            data = (u8) chunkData.data[lightIndex] & 15;
         } else {
-            data = (uint8_t) (chunkData.data[lightIndex] >> 4) & 15;
+            data = (u8) (chunkData.data[lightIndex] >> 4) & 15;
         }
         anvil->data[index] = data;
     }
@@ -1162,8 +1162,8 @@ UniversalChunkFormat* LCE_universal::convertNBTChunkToUniversalForAccess(DataInp
         NBTTagByteArray* blockTag = levelTag->getByteArray("Blocks");
 
         int blocksSize = blockTag->sizeOfData;
-        uint8_t* blocks = blockTag->getByteArray();
-        uint8_t* data = levelTag->getByteArray("Data")->getByteArray();
+        u8* blocks = blockTag->getByteArray();
+        u8* data = levelTag->getByteArray("Data")->getByteArray();
         // TODO: build height map if missing
         if (blocks && data) {
             memset(anvil->isWaterLogged, false, anvil->numBlocksInChunk());
@@ -1175,13 +1175,13 @@ UniversalChunkFormat* LCE_universal::convertNBTChunkToUniversalForAccess(DataInp
                 int index = x << 12 | z << 8 | y;
                 //4 bits of light per block
                 int nibbleIndex = i >> 1;
-                uint8_t block = blocks[i];
+                u8 block = blocks[i];
                 anvil->blocks[index] = block;
 
                 if ((i & 1) == 0) {
-                    anvil->data[index] = (uint8_t) data[nibbleIndex] & 15;
+                    anvil->data[index] = (u8) data[nibbleIndex] & 15;
                 } else {
-                    anvil->data[index] = (uint8_t) (data[nibbleIndex] >> 4) & 15;
+                    anvil->data[index] = (u8) (data[nibbleIndex] >> 4) & 15;
                 }
             }
             if (blocksSize == 65536) {
@@ -1192,12 +1192,12 @@ UniversalChunkFormat* LCE_universal::convertNBTChunkToUniversalForAccess(DataInp
                     int index = x << 12 | z << 8 | y;
                     //4 bits of light per block
                     int nibbleIndex = i >> 1;
-                    uint8_t block = blocks[i];
+                    u8 block = blocks[i];
                     anvil->blocks[index] = block;
                     if ((i & 1) == 0) {
-                        anvil->data[index] = (uint8_t) data[nibbleIndex] & 15;
+                        anvil->data[index] = (u8) data[nibbleIndex] & 15;
                     } else {
-                        anvil->data[index] = (uint8_t) (data[nibbleIndex] >> 4) & 15;
+                        anvil->data[index] = (u8) (data[nibbleIndex] >> 4) & 15;
                     }
                 }
             } else {

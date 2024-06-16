@@ -48,12 +48,12 @@ namespace editor {
         // skip all the irrelevant data to extract the savegame
         binFile.seek(0x1712U);
         // get thumbnail image, if not present, use the title one if present
-        if (const u32 thumbnailImageSize = binFile.readInt32()) {
+        if (c_u32 thumbnailImageSize = binFile.readInt32()) {
             binFile.incrementPointer(4); //read the other size but it will not be used
             u8* thumbnailImageData = binFile.readBytes(thumbnailImageSize);
             thumbnailImage = DataManager(thumbnailImageData, thumbnailImageSize);
         } else {
-            if (const u32 titleThumbImageSize = binFile.readInt32()) {
+            if (c_u32 titleThumbImageSize = binFile.readInt32()) {
                 binFile.seek(0x571AU);
                 u8* titleThumbnailImageData = binFile.readBytes(thumbnailImageSize);
                 thumbnailImage = DataManager(titleThumbnailImageData, titleThumbImageSize);
@@ -62,7 +62,7 @@ namespace editor {
         return 1;
     }
 
-    void write(std::vector<u8>& out, u8* buf, const u32 amount) {
+    void write(std::vector<u8>& out, u8* buf, c_u32 amount) {
         out.insert(out.end(), buf, buf + amount);
     }
 
@@ -82,7 +82,7 @@ namespace editor {
             auto* buffer = new u8[0xAA000];
 
             // seek to the beginning of the file
-            const u32 startAddress = blockToAddress(entry->startingBlockNum); // blockToAddress(entry->startingBlockNum);
+            c_u32 startAddress = blockToAddress(entry->startingBlockNum); // blockToAddress(entry->startingBlockNum);
             data.seek(startAddress);
 
             // calculateOffset the number of blocks to read before we hit a table
@@ -99,7 +99,7 @@ namespace editor {
                 delete[] buffer;
                 return {};
             } else {
-                const u32 amount = blockCount << 0xC;
+                c_u32 amount = blockCount << 0xC;
                 data.readOntoData(amount, buffer);
                 write(out2, buffer, amount);
                 // out.writeBytes(buffer, amount);
@@ -124,7 +124,7 @@ namespace editor {
             // pick up the change at the end
             if (tempSize != 0) {
                 // skip past the hash table(s)
-                const u32 currentPos = data.getPosition();
+                c_u32 currentPos = data.getPosition();
                 data.seek(currentPos + GetHashTableSkipSize(currentPos));
 
                 // read in the extra crap
@@ -137,7 +137,7 @@ namespace editor {
             delete[] buffer;
         } else {
             // generate the blockchain which we have to extract
-            const u32 fullReadCounts = fileSize / 0x1000;
+            c_u32 fullReadCounts = fileSize / 0x1000;
 
             fileSize -= (fullReadCounts * 0x1000);
 
@@ -168,7 +168,7 @@ namespace editor {
 
 
     /// convert a block into an address in the file
-    ND u32 StfsPackage::blockToAddress(const u32 blockNum) const {
+    ND u32 StfsPackage::blockToAddress(c_u32 blockNum) const {
         if (blockNum >= 0xFFFFFF) throw std::runtime_error("STFS: Block number must be less than 0xFFFFFF.\n");
         return (computeBackingDataBlockNumber(blockNum) << 0x0C) + firstHashTableAddress;
     }
@@ -190,8 +190,8 @@ namespace editor {
                 hashAddr += ((topTable.entries[blockNum / 0xAA].status & 0x40) << 6);
                 break;
             case 2:
-                const u32 level1Off = ((topTable.entries[blockNum / 0x70E4].status & 0x40) << 6);
-                const u32 pos =
+                c_u32 level1Off = ((topTable.entries[blockNum / 0x70E4].status & 0x40) << 6);
+                c_u32 pos =
                         ((computeLevel1BackingHashBlockNumber(blockNum) << 0xC) + firstHashTableAddress + level1Off) +
                         ((blockNum % 0xAA) * 0x18);
                 data.seek(pos + 0x14);
@@ -217,7 +217,7 @@ namespace editor {
 
         StfsFileListing fl;
         for (u32 x = 0; x < metaData.stfsVD.fileTableBlockCount; x++) {
-            const u32 currentAddr = blockToAddress(block);
+            c_u32 currentAddr = blockToAddress(block);
             data.seek(currentAddr);
 
             for (u32 i = 0; i < 0x40; i++) {
@@ -271,7 +271,7 @@ namespace editor {
 
 
     /// extractFile a block's data
-    void StfsPackage::extractBlock(const u32 blockNum, u8* inputData, const u32 length) const {
+    void StfsPackage::extractBlock(c_u32 blockNum, u8* inputData, c_u32 length) const {
         if (blockNum >= metaData.stfsVD.allocBlockCount)
             throw std::runtime_error("STFS: Reference to illegal block number.\n");
 
@@ -298,7 +298,7 @@ namespace editor {
 
 
     /// get a block's hash entry
-    HashEntry StfsPackage::getBlockHashEntry(const u32 blockNum) {
+    HashEntry StfsPackage::getBlockHashEntry(c_u32 blockNum) {
         if (blockNum >= metaData.stfsVD.allocBlockCount) {
             throw std::runtime_error("STFS: Reference to illegal block number.\n");
         }
@@ -414,7 +414,7 @@ namespace editor {
 
     void StfsPackage::parse() {
         BINHeader header;
-        if (const int result = header.readHeader(data); !result) {
+        if (c_int result = header.readHeader(data); !result) {
             // free(inputData);
             return; // SaveFileInfo();
         }
@@ -444,11 +444,11 @@ namespace editor {
         topTable.trueBlockNumber = computeLevelNBackingHashBlockNumber(0, topLevel);
         topTable.level = topLevel;
 
-        const u32 baseAddress = (topTable.trueBlockNumber << 0xC) + firstHashTableAddress;
+        c_u32 baseAddress = (topTable.trueBlockNumber << 0xC) + firstHashTableAddress;
         topTable.addressInFile = baseAddress + ((metaData.stfsVD.blockSeparation & 2) << 0xB);
         data.seek(topTable.addressInFile);
 
-        const u32 dataBlocksPerHashTreeLevel[3] = {1, 0xAA, 0x70E4};
+        c_u32 dataBlocksPerHashTreeLevel[3] = {1, 0xAA, 0x70E4};
 
         // load the information
         topTable.entryCount = metaData.stfsVD.allocBlockCount / dataBlocksPerHashTreeLevel[topLevel];
@@ -514,7 +514,7 @@ namespace editor {
             sign = -1;
             i++;
         }
-        const int stringSize = static_cast<int>(str.size()) - 1; // terminating value doesn't count
+        c_int stringSize = static_cast<int>(str.size()) - 1; // terminating value doesn't count
         for (; i < stringSize; i++) { result = result * 10 + (str[i] - '0'); }
 
         return result * sign;
@@ -528,10 +528,10 @@ namespace editor {
 
     WorldOptions getTagsInImage(DataManager& image) {
         WorldOptions options;
-        const u8_vec PNGHeader = image.readIntoVector(8);
+        c_u8_vec PNGHeader = image.readIntoVector(8);
         if (PNGHeader != u8_vec{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}) {
             printf("File in thumbnail block is not PNG header, the first 8 bytes are:\n");
-            // for (const u8& byte: PNGHeader) { std::cout << std::hex << byte << " "; }
+            // for (c_u8& byte: PNGHeader) { std::cout << std::hex << byte << " "; }
             // std::cout << std::endl;
         }
 
@@ -539,7 +539,7 @@ namespace editor {
 
         while (!image.isEndOfData()) {
             // Read chunk length
-            const u32 chunkLength = image.readInt32();
+            c_u32 chunkLength = image.readInt32();
             std::string chunkType = image.readString(4);
 
             // check if end
@@ -574,7 +574,7 @@ namespace editor {
         }
 
         // get keys and store them
-        for (const auto& [keyword, text]: chunks) {
+        for (c_auto& [keyword, text]: chunks) {
             if (keyword == "4J_SEED") {
                 options.displaySeed = stringToInt64(text);
             } else if (keyword == "4J_#LOADS") {

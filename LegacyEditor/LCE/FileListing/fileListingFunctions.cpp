@@ -34,7 +34,7 @@ namespace editor {
     }
 
 
-    int FileListing::saveToFolder(const stringRef_t folderIn) const {
+    int FileListing::saveToFolder(c_string_ref folderIn) const {
 
         std::string folder = folderIn;
         if (folderIn.empty()) {
@@ -47,7 +47,7 @@ namespace editor {
         }
 
         if (const fs::path _dir_path{folder}; exists(_dir_path) && is_directory(_dir_path)) {
-            for (const auto &entry: fs::directory_iterator(_dir_path)) {
+            for (c_auto &entry: fs::directory_iterator(_dir_path)) {
                 try {
                     remove_all(entry.path());
                 } catch (const fs::filesystem_error &e) {
@@ -78,7 +78,7 @@ namespace editor {
         std::erase_if(
                 allFiles,
                 [&collectedFiles, &fileType](const LCEFile& file) {
-                    const bool isType = file.fileType == fileType;
+                    c_bool isType = file.fileType == fileType;
                     if (isType) {
                         collectedFiles.push_back(file);
                     }
@@ -93,11 +93,11 @@ namespace editor {
         bool dim[3][2][2] = {false};
         {
             int dimCount = 0;
-            for (const auto *fileList : dimFileLists) {
-                for (const auto* regionFile: *fileList) {
+            for (c_auto *fileList : dimFileLists) {
+                for (c_auto* regionFile: *fileList) {
                     if (regionFile->data.size != 0) {
-                        const i16 regionX = regionFile->nbt->getTag("x").toPrim<i16>();
-                        const i16 regionZ = regionFile->nbt->getTag("z").toPrim<i16>();
+                        c_i16 regionX = regionFile->nbt->getTag("x").toPrim<i16>();
+                        c_i16 regionZ = regionFile->nbt->getTag("z").toPrim<i16>();
                         dim[dimCount][regionX + 1][regionZ + 1] = true;
                     }
                 }
@@ -238,7 +238,7 @@ namespace editor {
                 ++iter;
             }
         }
-        for (const auto& fileType : typesToRemove) {
+        for (c_auto& fileType : typesToRemove) {
             clearActionsRemove[fileType]();
         }
 
@@ -268,7 +268,7 @@ namespace editor {
     }
 
 
-    MU ND int FileListing::convertTo(stringRef_t inFileStr, stringRef_t outFileStr, const lce::CONSOLE consoleOut) {
+    MU ND int FileListing::convertTo(c_string_ref inFileStr, c_string_ref outFileStr, const lce::CONSOLE consoleOut) {
         int status = readFile(inFileStr);
         if (status != SUCCESS) { return status; }
 
@@ -276,7 +276,7 @@ namespace editor {
 
         removeFileTypes({LCEFileType::PLAYER, LCEFileType::DATA_MAPPING});
 
-        for (const auto* fileList : dimFileLists) {
+        for (c_auto* fileList : dimFileLists) {
             for (LCEFile* file: *fileList) {
                 RegionManager region;
                 region.read(file);
@@ -290,9 +290,9 @@ namespace editor {
     }
 
 
-    MU ND int FileListing::convertAndReplaceRegions(stringRef_t inFileStr,
-                                                    stringRef_t inFileRegionReplacementStr,
-                                                    stringRef_t outFileStr, const lce::CONSOLE consoleOut) {
+    MU ND int FileListing::convertAndReplaceRegions(c_string_ref inFileStr,
+                                                    c_string_ref inFileRegionReplacementStr,
+                                                    c_string_ref outFileStr, const lce::CONSOLE consoleOut) {
 
         int status = readFile(inFileStr);
         if (status != SUCCESS) { return status; }
@@ -309,7 +309,7 @@ namespace editor {
         addFiles(replace.collectFiles(LCEFileType::REGION_OVERWORLD));
         addFiles(replace.collectFiles(LCEFileType::REGION_END));
 
-        for (const auto* fileList : dimFileLists) {
+        for (c_auto* fileList : dimFileLists) {
             for (LCEFile* file: *fileList) {
                 RegionManager region;
                 region.read(file);
@@ -332,8 +332,8 @@ namespace editor {
                 continue;
             }
 
-            const i16 regionX = iter->nbt->getTag("x").toPrim<i16>();
-            const i16 regionZ = iter->nbt->getTag("z").toPrim<i16>();
+            c_i16 regionX = iter->nbt->getTag("x").toPrim<i16>();
+            c_i16 regionZ = iter->nbt->getTag("z").toPrim<i16>();
 
             if (regionX < -1 || regionX > 0 || regionZ < -1 || regionZ > 0) {
                 iter->deleteData();

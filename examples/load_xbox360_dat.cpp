@@ -1,16 +1,17 @@
 #include <iostream>
 
+#include "lce/processor.hpp"
+
 #include "include/ghc/fs_std.hpp"
 
 #include "LegacyEditor/LCE/include.hpp"
-#include "LegacyEditor/utils/processor.hpp"
 
 #include "LegacyEditor/unit_tests.hpp"
 
 
 int main() {
     PREPARE_UNIT_TESTS();
-    const auto [fst, snd] = TESTS["XBOX_DAT"];
+    c_auto [fst, snd] = TESTS["XBOX_DAT"];
     constexpr auto consoleOut = lce::CONSOLE::WIIU;
 
     editor::FileListing fileListing;

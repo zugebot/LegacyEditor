@@ -5,7 +5,7 @@
 #include <vector>
 #include <ranges>
 
-#include "LegacyEditor/utils/processor.hpp"
+#include "lce/processor.hpp"
 #include "dataManager.hpp"
 #include "LegacyEditor/utils/PS3_DEFLATE/deflateUsage.hpp"
 
@@ -70,7 +70,7 @@ public:
 
     NBTBase() : NBTBase(nullptr, NBT_NONE) {}
 
-    NBTBase(void* dataIn, const int dataSizeIn, const NBTType typeIn) : NBTBase(dataIn, typeIn) {
+    NBTBase(void* dataIn, c_int dataSizeIn, const NBTType typeIn) : NBTBase(dataIn, typeIn) {
         memcpy(data, dataIn, dataSizeIn);
     }
 
@@ -174,8 +174,8 @@ public:
     void setFloat(STR key, float value);
     void setDouble(STR key, double value);
     void setString(STR key, STR value);
-    void setByteArray(STR key, const u8* value, int size);
-    void setIntArray(STR key, const int* value, int size);
+    void setByteArray(STR key, c_u8* value, int size);
+    void setIntArray(STR key, c_int* value, int size);
     void setLongArray(STR key, const i64* value, int size);
     void setCompoundTag(STR key, NBTTagCompound* compoundTag);
     void setListTag(STR key, NBTTagList* listTag);
@@ -228,7 +228,7 @@ public:
     ND bool hasNoTags() const;
 
     template<typename classType>
-    classType getPrimitiveAt(const int index) {
+    classType getPrimitiveAt(c_int index) {
         if (tagType < 7 && tagType > 0) {
             if (index >= 0 && index < tagList.size()) {
                 NBTBase nbtBase = tagList.at(index);
@@ -270,7 +270,7 @@ public:
 };
 
 
-static NBTBase createNBT_INT8(const int8_t dataIn) {
+static NBTBase createNBT_INT8(c_i8 dataIn) {
     NBTBase nbtBase;
     nbtBase.data = malloc(sizeof(dataIn));
     memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
@@ -279,7 +279,7 @@ static NBTBase createNBT_INT8(const int8_t dataIn) {
 }
 
 
-static NBTBase createNBT_INT16(const i16 dataIn) {
+static NBTBase createNBT_INT16(c_i16 dataIn) {
     NBTBase nbtBase;
     nbtBase.data = malloc(sizeof(dataIn));
     memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
@@ -288,7 +288,7 @@ static NBTBase createNBT_INT16(const i16 dataIn) {
 }
 
 
-static NBTBase createNBT_INT32(const i32 dataIn) {
+static NBTBase createNBT_INT32(c_i32 dataIn) {
     NBTBase nbtBase;
     nbtBase.data = malloc(sizeof(dataIn));
     memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
@@ -387,13 +387,13 @@ static void compareNBT(const NBTBase* first, const NBTBase* second) {
     auto* firstNBT = NBTBase::toType<NBTTagCompound>(first)->getCompoundTag("Data");
     auto* secondNBT = NBTBase::toType<NBTTagCompound>(second)->getCompoundTag("Data");
 
-    for (const auto& key : firstNBT->tagMap | std::views::keys) {
+    for (c_auto& key : firstNBT->tagMap | std::views::keys) {
         if (!secondNBT->hasKey(key)) {
             printf("second does not contain tag '%s'\n", key.c_str());
         }
     }
 
-    for (const auto& key : secondNBT->tagMap | std::views::keys) {
+    for (c_auto& key : secondNBT->tagMap | std::views::keys) {
         if (!firstNBT->hasKey(key)) {
             printf("first does not contain tag '%s'\n", key.c_str());
         }

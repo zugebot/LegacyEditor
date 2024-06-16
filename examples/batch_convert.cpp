@@ -1,9 +1,10 @@
 #include <iostream>
 
+#include "lce/processor.hpp"
+
 #include "include/ghc/fs_std.hpp"
 
 #include "LegacyEditor/LCE/include.hpp"
-#include "LegacyEditor/utils/processor.hpp"
 
 
 void waitForEnter() {

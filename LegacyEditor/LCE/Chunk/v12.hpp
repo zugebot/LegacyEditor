@@ -60,7 +60,7 @@ namespace editor::chunk {
 
         void readBlockData() const;
         template<size_t BitsPerBlock>
-        bool readGrid(const u8* buffer, u8 grid[GRID_SIZE]) const;
+        bool readGrid(c_u8* buffer, u8 grid[GRID_SIZE]) const;
         template<size_t BitsPerBlock>
         bool readGridSubmerged(u8 const* buffer, u8 blockGrid[GRID_SIZE], u8 SbmrgGrid[GRID_SIZE]) const;
 
@@ -74,7 +74,7 @@ namespace editor::chunk {
 
         template<size_t BitsPerBlock, size_t BlockCount, size_t EmptyCount>
         void writeGridSubmerged(u16_vec& blockVector, u16_vec& blockLocations,
-            const u16_vec& sbmrgLocations, u8 blockMap[MAP_SIZE]) const;
+                                const u16_vec& sbmrgLocations, u8 blockMap[MAP_SIZE]) const;
 
     public:
         ChunkData* chunkData = nullptr;

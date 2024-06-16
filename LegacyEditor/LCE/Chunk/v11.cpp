@@ -41,7 +41,7 @@ namespace editor::chunk {
 
         readBlocks();
 
-        const auto dataArray = readGetDataBlockVector<6>(chunkData, dataManager);
+        c_auto dataArray = readGetDataBlockVector<6>(chunkData, dataManager);
         readDataBlock(dataArray[0], dataArray[1], chunkData->blockData);
         readDataBlock(dataArray[2], dataArray[3], chunkData->skyLight);
         readDataBlock(dataArray[4], dataArray[5], chunkData->blockLight);
@@ -58,11 +58,11 @@ namespace editor::chunk {
     }
 
     // xzy or zxy?
-    static void putBlocks(u16_vec& writeVec, const u8* grid,
-        const int writeOffset, const int gridIndex) {
-        const int num = gridIndex / 64;
-        const int num2 = gridIndex / 2 % 32;
-        const int gridOffset = writeOffset + num / 4 * 64 + num % 4 * 4 + num2 * 1024;
+    static void putBlocks(u16_vec& writeVec, c_u8* grid,
+        c_int writeOffset, c_int gridIndex) {
+        c_int num = gridIndex / 64;
+        c_int num2 = gridIndex / 2 % 32;
+        c_int gridOffset = writeOffset + num / 4 * 64 + num % 4 * 4 + num2 * 1024;
 
         int gridIter = 0;
         for (int i = 0; i < 64; i += 16) {
@@ -78,16 +78,16 @@ namespace editor::chunk {
     void ChunkV11::readBlocks() const {
 
         for (int putBlockOffset = 0; putBlockOffset < 65536; putBlockOffset += 32768) {
-            const i32 blockLength = static_cast<i32>(dataManager->readInt32()) - GRID_HEADER_SIZE;
+            c_i32 blockLength = static_cast<i32>(dataManager->readInt32()) - GRID_HEADER_SIZE;
 
             if (blockLength <= 0) { continue; }
 
             // access: 0 <-> 1023
-            const u8* gridHeader = dataManager->ptr;
+            c_u8* gridHeader = dataManager->ptr;
             dataManager->incrementPointer(GRID_HEADER_SIZE);
 
             // access: 0 <-> blockLength
-            const u8 *const blockDataPtr = dataManager->ptr;
+            c_u8 *const blockDataPtr = dataManager->ptr;
             dataManager->incrementPointer(blockLength);
 
             /**
@@ -113,8 +113,8 @@ namespace editor::chunk {
              */
             for (int gridIndex = 0; gridIndex < GRID_HEADER_SIZE; gridIndex += 2) {
                 // read the grid header bytes
-                const u8 byte2 = gridHeader[gridIndex];
-                const u8 byte1 = gridHeader[gridIndex + 1];
+                c_u8 byte2 = gridHeader[gridIndex];
+                c_u8 byte1 = gridHeader[gridIndex + 1];
                 u8 grid[GRID_SIZE] = {};
 
                 if (byte2 == 0b111) {
@@ -125,8 +125,8 @@ namespace editor::chunk {
 
                 } else {
                     // find the location of the grid's data
-                    const u32 dataOffset = (byte1 << 7U) + ((byte2 & 0b11111100U) >> 1);
-                    const u8* const gridPositionPtr = blockDataPtr + dataOffset;
+                    c_u32 dataOffset = (byte1 << 7U) + ((byte2 & 0b11111100U) >> 1);
+                    c_u8* const gridPositionPtr = blockDataPtr + dataOffset;
 
                     // switch over format
                     switch (byte2 & 0b11U) {
@@ -146,12 +146,12 @@ namespace editor::chunk {
 
     template<size_t BitsPerBlock>
     bool ChunkV11::readGrid(u8 const* buffer, u8 grid[GRID_SIZE]) {
-        const int size = 1 << BitsPerBlock;
+        c_int size = 1 << BitsPerBlock;
         u8_vec palette(size);
         std::copy_n(buffer, size, palette.begin());
 
         int gridIndex = 0;
-        const int blocksPerByte = 8 / BitsPerBlock;
+        c_int blocksPerByte = 8 / BitsPerBlock;
         // iterates over all bytes
         for (size_t byteOffset = 0; byteOffset < 8 * BitsPerBlock; byteOffset++) {
             u16 currentByte = buffer[size + byteOffset];

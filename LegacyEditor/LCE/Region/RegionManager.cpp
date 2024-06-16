@@ -16,14 +16,14 @@ namespace editor {
     RegionManager::~RegionManager() = default;
 
 
-    MU ChunkManager* RegionManager::getChunk(const int xIn, const int zIn) {
-        const u32 index = xIn + zIn * REGION_WIDTH;
+    MU ChunkManager* RegionManager::getChunk(c_int xIn, c_int zIn) {
+        c_u32 index = xIn + zIn * REGION_WIDTH;
         if (index > SECTOR_INTS) { return nullptr; }
         return &chunks[index];
     }
 
 
-    MU ChunkManager* RegionManager::getChunk(const int index) {
+    MU ChunkManager* RegionManager::getChunk(c_int index) {
         if (index > SECTOR_INTS) { return nullptr; }
         return &chunks[index];
     }
@@ -53,7 +53,7 @@ namespace editor {
         console = fileIn->console;
         auto* dataIn = &fileIn->data;
 
-        const u32 totalSectors = dataIn->size / SECTOR_BYTES + 1;
+        c_u32 totalSectors = dataIn->size / SECTOR_BYTES + 1;
 
         size_t chunkIndex;
         u8 sectors[SECTOR_INTS];
@@ -62,7 +62,7 @@ namespace editor {
         DataManager managerIn(dataIn, consoleIsBigEndian(console));
 
         for (chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
-            const u32 val = managerIn.readInt32();
+            c_u32 val = managerIn.readInt32();
             sectors[chunkIndex] = val & 0xFF;
             locations[chunkIndex] = val >> 8;
         }
@@ -90,7 +90,7 @@ namespace editor {
             switch (console) {
                 case lce::CONSOLE::PS3:
                 case lce::CONSOLE::RPCS3: {
-                    const u32 num1 = managerIn.readInt32();
+                    c_u32 num1 = managerIn.readInt32();
                     managerIn.readInt32();
                     chunk.fileData.setDecSize(num1); // rle dec size
                     break;
@@ -131,8 +131,8 @@ namespace editor {
                 }
             }
 
-            const u32 data_size = total_sectors * SECTOR_BYTES;
-            const auto dataOut = Data(data_size);
+            c_u32 data_size = total_sectors * SECTOR_BYTES;
+            c_auto dataOut = Data(data_size);
             DataManager managerOut(dataOut, consoleIsBigEndian(consoleIn));
 
             for (int chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {

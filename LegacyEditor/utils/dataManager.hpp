@@ -2,9 +2,9 @@
 
 #include <string>
 
+#include "lce/processor.hpp"
 
 #include "LegacyEditor/utils/data.hpp"
-#include "LegacyEditor/utils/processor.hpp"
 
 
 namespace editor {
@@ -21,13 +21,13 @@ public:
     DataManager() = default;
 
     explicit DataManager(const Data& dataIn) : data(dataIn.start()), ptr(data), size(dataIn.size) {}
-    explicit DataManager(const Data& dataIn, const bool isBig) : isBig(isBig), data(dataIn.start()), ptr(data), size(dataIn.size) {}
+    explicit DataManager(const Data& dataIn, c_bool isBig) : isBig(isBig), data(dataIn.start()), ptr(data), size(dataIn.size) {}
 
     explicit DataManager(const Data* dataIn) : data(dataIn->start()), ptr(data), size(dataIn->size) {}
-    explicit DataManager(const Data* dataIn, const bool isBig) : isBig(isBig), data(dataIn->start()), ptr(data), size(dataIn->size) {}
+    explicit DataManager(const Data* dataIn, c_bool isBig) : isBig(isBig), data(dataIn->start()), ptr(data), size(dataIn->size) {}
 
-    explicit DataManager(u8* dataIn, const u32 sizeIn) : data(dataIn), ptr(dataIn), size(sizeIn) {}
-    explicit DataManager(u8* dataIn, const u32 sizeIn, const bool isBig) : isBig(isBig), data(dataIn), ptr(dataIn), size(sizeIn) {}
+    explicit DataManager(u8* dataIn, c_u32 sizeIn) : data(dataIn), ptr(dataIn), size(sizeIn) {}
+    explicit DataManager(u8* dataIn, c_u32 sizeIn, c_bool isBig) : isBig(isBig), data(dataIn), ptr(dataIn), size(sizeIn) {}
 
     void setBigEndian() const { isBig = true; }
     void setLittleEndian() const { isBig = false; }
@@ -113,7 +113,7 @@ public:
     void writeData(const Data* dataIn);
     void writeFile(const editor::LCEFile* fileIn);
     void writeFile(const editor::LCEFile& fileIn);
-    void writeBytes(const u8* dataPtrIn, u32 length);
+    void writeBytes(c_u8* dataPtrIn, u32 length);
 
     void writeUTF(std::string str);
     /**
@@ -125,5 +125,5 @@ public:
     void writeWStringFromString(const std::string& str, u32 upperbounds);
 
     int writeToFile(const std::string& fileName) const;
-    int writeToFile(const u8* ptrIn, u32 sizeIn, const std::string& fileName) const;
+    int writeToFile(c_u8* ptrIn, u32 sizeIn, const std::string& fileName) const;
 };

@@ -36,9 +36,9 @@ namespace editor {
                     for (u16 y = 0; y < 256; y++) {
                         u16 block1 = getBlock(chunkManager.chunkData, x, y, z);
                         u16 data_1 = 0;
-                        const int offset1 = y + 256 * z + 4096 * x;
+                        c_int offset1 = y + 256 * z + 4096 * x;
 
-                        const u16 compare1 = (block1 & 0x1FF0) >> 4;
+                        c_u16 compare1 = (block1 & 0x1FF0) >> 4;
                         if ((block1 & 0x8000) != 0) { // fix stupid blocks
                             if (compare1 == 271) {    // sea pickle
                                 block1 = (block1 & 0x9FF7) | 0x08;
@@ -150,7 +150,7 @@ namespace editor {
                 for (u16 z = 0; z < 16; z++) {
                     for (u16 y = 0; y < 256; y++) {
                         u16 block1 = getBlock(chunkManager.chunkData, x, y, z);
-                        const int offset1 = y + 256 * z + 4096 * x;
+                        c_int offset1 = y + 256 * z + 4096 * x;
 
                         if ((block1 & 0x1FF0) >> 4 != 7) {
                             block1 = 0;
@@ -222,7 +222,7 @@ namespace editor {
      * @param regionIndex
      * @param fileListing
      */
-    void ConvertPillagerToAquaticChunks(const int regionIndex, const FileListing& fileListing) {
+    void ConvertPillagerToAquaticChunks(c_int regionIndex, const FileListing& fileListing) {
         const lce::CONSOLE console = fileListing.console;
         if (regionIndex >= fileListing.region_overworld.size()) { return; }
 
@@ -245,7 +245,7 @@ namespace editor {
             for (int i = 0; i < 65536; i++) {
                 chunkData->newBlocks[i] = 3;
                 /*
-                const u16 id = chunkData->newBlocks[i] >> 4 & 1023;
+                c_u16 id = chunkData->newBlocks[i] >> 4 & 1023;
                 if (id > 318) {
                     chunkData->newBlocks[i] = 0;
                 }

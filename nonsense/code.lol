@@ -1,3 +1,15 @@
+/// shuffles an array using the Fisher-Yates algorithm
+static void shuffleArray(uint16_t arr[], c_int size) {
+    std::srand(static_cast<unsigned int>(time(nullptr)));
+    for (int i = size - 1; i > 0; --i) {
+        c_int randIndex = std::rand() % (i + 1);
+        std::swap(arr[i], arr[randIndex]);
+    }
+}
+
+
+
+
 /*
 auto *file = fileListing.entity_overworld;
 DataManager entityManager(file->data);
@@ -162,7 +174,7 @@ chunkParser.readChunk(chunkOut, DIM::OVERWORLD);
 
 // auto* compound = static_cast<NBTTagCompound*>(chunkParser.chunkData.NBTData->data);
 auto* compound = chunkParser.chunkData.NBTData->toType<NBTTagCompound>();
-for (const auto& pair : compound->tagMap) {
+for (c_auto& pair : compound->tagMap) {
 printf("Key: %s, Type: %d\n", pair.first.c_str(), pair.second.type);
 }
 int x; std::cin >> x;
@@ -180,7 +192,7 @@ DataManager levelOut(fileListingWiiU.levelFilePtr);
 auto* levelData = NBT::readTag(levelOut);
 auto* root = static_cast<NBTTagCompound*>(levelData->data);
 NBTTagCompound* levelDataIn = root->getCompoundTag("Data");
-for (const auto& pair : levelDataIn->tagMap) {
+for (c_auto& pair : levelDataIn->tagMap) {
 printf("Key: %s, Type: %d\n", pair.first.c_str(), pair.second.type);
 }
 levelOut.writeToFile(dir_path + "chunk_out.bin");
@@ -199,7 +211,7 @@ levelOut.writeToFile(dir_path + "chunk_out.bin");
         try {
             // Check if the provided path is a directory
             if (fs::is_directory(path)) {
-                for (const auto& entry : fs::directory_iterator(path)) {
+                for (c_auto& entry : fs::directory_iterator(path)) {
                     // Check if the entry is a file
                     if (fs::is_regular_file(entry)) {
                         std::cout << "\nFile: " << entry.path() << std::endl;

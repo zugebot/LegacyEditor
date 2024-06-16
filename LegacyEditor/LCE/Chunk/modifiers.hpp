@@ -3,13 +3,14 @@
 #include "chunkData.hpp"
 
 #include "LegacyEditor/utils/NBT.hpp"
+#include "lce/processor.hpp"
 
 
 namespace editor::chunk {
 
 
     /// Order: YZX
-    static int toPos(const int xIn, const int yIn, const int zIn) {
+    static int toPos(c_int xIn, c_int yIn, c_int zIn) {
         return yIn + 256 * zIn + 4096 * xIn;
     }
 
@@ -22,8 +23,8 @@ namespace editor::chunk {
             for (int xIter = 0; xIter < 16; xIter++) {
                 for (int zIter = 0; zIter < 16; zIter++) {
                     for (int yIter = 0; yIter < 128; yIter++) {
-                        const int index = toPos(xIter, yIter + offset, zIter);
-                        const int newIndex = index / 2;
+                        c_int index = toPos(xIter, yIter + offset, zIter);
+                        c_int newIndex = index / 2;
                         u16 data = chunkData->blockData[newIndex];
                         if (count % 2 == 0) {
                             data >>= 4;
@@ -31,7 +32,7 @@ namespace editor::chunk {
                             data &= 15;
                         }
 
-                        const u16 oldBlock = chunkData->oldBlocks[count];
+                        c_u16 oldBlock = chunkData->oldBlocks[count];
                         chunkData->newBlocks[index] = (oldBlock << 4) | data;
                         count++;
                     }
@@ -59,14 +60,14 @@ namespace editor::chunk {
 
 
     MU inline void placeBlock(ChunkData* chunkData,
-        const int xIn, const int yIn, const int zIn,
-        const u16 block, const u16 data, const bool waterlogged, const bool submerged = false) {
+        c_int xIn, c_int yIn, c_int zIn,
+        c_u16 block, c_u16 data, c_bool waterlogged, c_bool submerged = false) {
         switch (chunkData->lastVersion) {
             case 8:
             case 9:
             case 11: {
-                const int yOffset = yIn & 0x80 << 8;
-                const int offset = yOffset + toPos(xIn, yIn & 0x7F, zIn);
+                c_int yOffset = yIn & 0x80 << 8;
+                c_int offset = yOffset + toPos(xIn, yIn & 0x7F, zIn);
                 chunkData->oldBlocks[offset] = block;
                 if (offset % 2 == 0) {
                     chunkData->blockData[offset] = chunkData->blockData[offset] & 0x0F | data << 8;
@@ -76,7 +77,7 @@ namespace editor::chunk {
             }
             case 12:
             case 13: {
-                const int offset = toPos(xIn, yIn, zIn);
+                c_int offset = toPos(xIn, yIn, zIn);
                 u16 value = block << 4 | data;
                 if (waterlogged) {
                     value |= 0x8000;
@@ -93,25 +94,25 @@ namespace editor::chunk {
     }
 
     MU inline void placeBlock(ChunkData* chunkData,
-        const int xIn, const int yIn, const int zIn,
-        const u16 block, const bool submerged = false) {
-        const bool waterloggedIn = block & 0x8000;
-        const bool dataIn = block & 0x0F;
-        const bool blockIn = block & 0x7FF0 >> 4;
+        c_int xIn, c_int yIn, c_int zIn,
+        c_u16 block, c_bool submerged = false) {
+        c_bool waterloggedIn = block & 0x8000;
+        c_bool dataIn = block & 0x0F;
+        c_bool blockIn = block & 0x7FF0 >> 4;
         placeBlock(chunkData, xIn, yIn, zIn, blockIn, dataIn, waterloggedIn, submerged);
     }
 
 
     /// Returns (blockID << 4 | dataTag).
     inline u16 getBlock(const ChunkData* chunkData,
-        const int xIn, const int yIn, const int zIn) {
+        c_int xIn, c_int yIn, c_int zIn) {
         switch (chunkData->lastVersion) {
             case 8:
             case 9:
             case 11: {
-                const int yOffset = yIn & 0x80 << 8;
-                const int offset = yOffset + toPos(xIn, yIn & 0x7F, zIn);
-                const u16 blockID = chunkData->newBlocks[offset];
+                c_int yOffset = yIn & 0x80 << 8;
+                c_int offset = yOffset + toPos(xIn, yIn & 0x7F, zIn);
+                c_u16 blockID = chunkData->newBlocks[offset];
                 u16 dataTag;
                 if (offset % 2 == 0) {
                     dataTag = chunkData->blockData[offset] & 0x0F;
@@ -122,7 +123,7 @@ namespace editor::chunk {
             }
             case 12:
             case 13: {
-                const int offset = toPos(xIn, yIn, zIn);
+                c_int offset = toPos(xIn, yIn, zIn);
                 return chunkData->newBlocks[offset];
             }
             default:

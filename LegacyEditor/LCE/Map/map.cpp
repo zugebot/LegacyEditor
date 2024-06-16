@@ -20,8 +20,8 @@ namespace editor::map {
         }
 
         DataManager mapManager(map->data);
-        const auto *const data = NBT::readTag(mapManager);
-        const auto* byteArray = NBTBase
+        c_auto *const data = NBT::readTag(mapManager);
+        c_auto* byteArray = NBTBase
                 ::toType<NBTTagCompound>(data)
                 ->getCompoundTag("data")
                 ->getByteArray("colors");

@@ -1,16 +1,18 @@
 #pragma once
 
 
-#include "LegacyEditor/utils/processor.hpp"
+
 #include <cstring>
 
 #include "LegacyEditor/utils/dataManager.hpp"
+
+#include "lce/processor.hpp"
 
 
 namespace editor::chunk {
 
 
-    static u32 toIndex(const u32 num) {
+    static u32 toIndex(c_u32 num) {
         return (num + 1) * 128;
     }
 
@@ -21,7 +23,7 @@ namespace editor::chunk {
      * @param ptr
      * @return true if all bits are zero, else 0.
      */
-    static bool is0_128_slow(const u8* ptr) {
+    static bool is0_128_slow(c_u8* ptr) {
         for (int i = 0; i < 128; ++i) {
             if (ptr[i] != 0x00) {
                 return false;
@@ -31,7 +33,7 @@ namespace editor::chunk {
     }
 
 
-    static bool is255_128_slow(const u8* ptr) {
+    static bool is255_128_slow(c_u8* ptr) {
         for (int i = 0; i < 128; ++i) {
             if (ptr[i] != 0xFF) {
                 return false;
@@ -58,7 +60,7 @@ namespace editor::chunk {
     }
 
 
-    static void readDataBlock(const u8* dataIn1, u8* dataIn2, u8_vec& dataOut) {
+    static void readDataBlock(c_u8* dataIn1, u8* dataIn2, u8_vec& dataOut) {
         static constexpr int DATA_SECTION_SIZE = 128;
         int offset = 0;
 
@@ -92,7 +94,7 @@ namespace editor::chunk {
         std::vector<u8*> dataArray(SIZE);
         for (int i = 0; i < SIZE; i++) {
             dataArray[i] = managerIn->ptr;
-            const u32 index = toIndex(managerIn->readInt32());
+            c_u32 index = toIndex(managerIn->readInt32());
             managerIn->incrementPointer(index);
             chunkData->DataGroupCount += index;
         }
@@ -112,13 +114,13 @@ namespace editor::chunk {
         // it does it twice, after the first interval, readOffset should be 32767
         for (int index = 0; index < 2; index++) {
 
-            const u32 start = managerIn->getPosition();
+            c_u32 start = managerIn->getPosition();
             managerIn->writeInt32(0);
             sectionOffsets.clear();
 
             // Write headers
             u32 sectionOffsetSize = 0;
-            const u8* ptr = dataIn.data() + readOffset;
+            c_u8* ptr = dataIn.data() + readOffset;
             for (int i = 0; i < DATA_SECTION_SIZE; i++) {
                 if (is0_128_slow(ptr)) {
                     managerIn->writeInt8(DATA_SECTION_SIZE);
@@ -133,13 +135,13 @@ namespace editor::chunk {
             }
 
             // Write light data sections
-            for (const u32 offset : sectionOffsets) {
+            for (c_u32 offset : sectionOffsets) {
                 managerIn->writeBytes(&dataIn[offset], DATA_SECTION_SIZE);
             }
 
             // Calculate and write the size
-            const u32 end = managerIn->getPosition();
-            const u32 size = (end - start - 4 - 128) / 128; // -4 to exclude size header
+            c_u32 end = managerIn->getPosition();
+            c_u32 size = (end - start - 4 - 128) / 128; // -4 to exclude size header
             managerIn->writeInt32AtOffset(start, size);
         } // end of for loop
 
@@ -148,7 +150,7 @@ namespace editor::chunk {
 
 
     template<int GRID_SIZE>
-    void fillAllBlocks(const u8* buffer, u8 grid[GRID_SIZE]) {
+    void fillAllBlocks(c_u8* buffer, u8 grid[GRID_SIZE]) {
         memcpy(grid, buffer, GRID_SIZE);
     }
 

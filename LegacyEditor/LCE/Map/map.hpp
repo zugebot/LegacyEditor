@@ -1,6 +1,8 @@
 #pragma once
 
-#include "LegacyEditor/utils/processor.hpp"
+#include "lce/processor.hpp"
+
+#include <string>
 
 
 namespace editor {

@@ -1277,7 +1277,7 @@ GHC_FS_API void appendUTF8(std::string& str, uint32_t unicode);
 GHC_FS_API bool is_surrogate(uint32_t c);
 GHC_FS_API bool is_high_surrogate(uint32_t c);
 GHC_FS_API bool is_low_surrogate(uint32_t c);
-GHC_FS_API unsigned consumeUtf8Fragment(const unsigned state, const uint8_t fragment, uint32_t& codepoint);
+GHC_FS_API unsigned consumeUtf8Fragment(const unsigned state, c_u8 fragment, uint32_t& codepoint);
 enum class portable_error {
     none = 0,
     exists,
@@ -1525,14 +1525,14 @@ GHC_INLINE void appendUTF8(std::string& str, uint32_t unicode)
 // Thanks to Bjoern Hoehrmann (https://bjoern.hoehrmann.de/utf-8/decoder/dfa/)
 // and Taylor R Campbell for the ideas to this DFA approach of UTF-8 decoding;
 // Generating debugging and shrinking my own DFA from scratch was a day of fun!
-GHC_INLINE unsigned consumeUtf8Fragment(const unsigned state, const uint8_t fragment, uint32_t& codepoint)
+GHC_INLINE unsigned consumeUtf8Fragment(const unsigned state, c_u8 fragment, uint32_t& codepoint)
 {
-    static const uint32_t utf8_state_info[] = {
+    static c_u32 utf8_state_info[] = {
         // encoded states
         0x11111111u, 0x11111111u, 0x77777777u, 0x77777777u, 0x88888888u, 0x88888888u, 0x88888888u, 0x88888888u, 0x22222299u, 0x22222222u, 0x22222222u, 0x22222222u, 0x3333333au, 0x33433333u, 0x9995666bu, 0x99999999u,
         0x88888880u, 0x22818108u, 0x88888881u, 0x88888882u, 0x88888884u, 0x88888887u, 0x88888886u, 0x82218108u, 0x82281108u, 0x88888888u, 0x88888883u, 0x88888885u, 0u,          0u,          0u,          0u,
     };
-    uint8_t category = fragment < 128 ? 0 : (utf8_state_info[(fragment >> 3) & 0xf] >> ((fragment & 7) << 2)) & 0xf;
+    u8 category = fragment < 128 ? 0 : (utf8_state_info[(fragment >> 3) & 0xf] >> ((fragment & 7) << 2)) & 0xf;
     codepoint = (state ? (codepoint << 6) | (fragment & 0x3fu) : (0xffu >> category) & fragment);
     return state == S_RJCT ? static_cast<unsigned>(S_RJCT) : static_cast<unsigned>((utf8_state_info[category + 16] >> (state << 2)) & 0xf);
 }
@@ -1543,7 +1543,7 @@ GHC_INLINE bool validUtf8(const std::string& utf8String)
     unsigned utf8_state = S_STRT;
     std::uint32_t codepoint = 0;
     while (iter < utf8String.end()) {
-        if ((utf8_state = consumeUtf8Fragment(utf8_state, static_cast<uint8_t>(*iter++), codepoint)) == S_RJCT) {
+        if ((utf8_state = consumeUtf8Fragment(utf8_state, static_cast<u8>(*iter++), codepoint)) == S_RJCT) {
             return false;
         }
     }
@@ -1574,7 +1574,7 @@ inline StringType fromUtf8(const Utf8String& utf8String, const typename StringTy
     unsigned utf8_state = S_STRT;
     std::uint32_t codepoint = 0;
     while (iter < utf8String.cend()) {
-        if ((utf8_state = consumeUtf8Fragment(utf8_state, static_cast<uint8_t>(*iter++), codepoint)) == S_STRT) {
+        if ((utf8_state = consumeUtf8Fragment(utf8_state, static_cast<u8>(*iter++), codepoint)) == S_STRT) {
             if (codepoint <= 0xffff) {
                 result += static_cast<typename StringType::value_type>(codepoint);
             }
@@ -1614,7 +1614,7 @@ inline StringType fromUtf8(const Utf8String& utf8String, const typename StringTy
     unsigned utf8_state = S_STRT;
     std::uint32_t codepoint = 0;
     while (iter < utf8String.cend()) {
-        if ((utf8_state = consumeUtf8Fragment(utf8_state, static_cast<uint8_t>(*iter++), codepoint)) == S_STRT) {
+        if ((utf8_state = consumeUtf8Fragment(utf8_state, static_cast<u8>(*iter++), codepoint)) == S_STRT) {
             result += static_cast<typename StringType::value_type>(codepoint);
             codepoint = 0;
         }
@@ -3155,7 +3155,7 @@ GHC_INLINE path path::extension() const
 {
     if (has_relative_path()) {
         auto iter = end();
-        const auto& fn = *--iter;
+        c_auto& fn = *--iter;
         impl_string_type::size_type pos = fn._path.rfind('.');
         if (pos != std::string::npos && pos > 0 && fn._path != "..") {
             return path(fn._path.substr(pos), native_format);
@@ -3170,7 +3170,7 @@ GHC_INLINE bool has_executable_extension(const path& p)
 {
     if (p.has_relative_path()) {
         auto iter = p.end();
-        const auto& fn = *--iter;
+        c_auto& fn = *--iter;
         auto pos = fn._path.find_last_of('.');
         if (pos == std::string::npos || pos == 0 || fn._path.length() - pos != 3) {
             return false;
@@ -3298,7 +3298,7 @@ GHC_INLINE path path::lexically_relative(const path& base) const
         return path(".");
     }
     int count = 0;
-    for (const auto& element : input_iterator_range<const_iterator>(b, base.end())) {
+    for (c_auto& element : input_iterator_range<const_iterator>(b, base.end())) {
         if (element != "." && element != "" && element != "..") {
             ++count;
         }
@@ -3316,7 +3316,7 @@ GHC_INLINE path path::lexically_relative(const path& base) const
     for (int i = 0; i < count; ++i) {
         result /= "..";
     }
-    for (const auto& element : input_iterator_range<const_iterator>(a, end())) {
+    for (c_auto& element : input_iterator_range<const_iterator>(a, end())) {
         result /= element;
     }
     return result;

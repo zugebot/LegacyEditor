@@ -6,12 +6,12 @@
 namespace editor::map {
 
     struct RGB {
-        uint8_t r, g, b;
-        RGB(const uint8_t rIn, const uint8_t gIn, const uint8_t bIn) : r(rIn), g(gIn), b(bIn) {}
+        u8 r, g, b;
+        RGB(c_u8 rIn, c_u8 gIn, c_u8 bIn) : r(rIn), g(gIn), b(bIn) {}
     };
 
 
-    inline RGB getRGB(const int mapRgb) {
+    inline RGB getRGB(c_int mapRgb) {
         static const std::vector<RGB> mapColors {
                 {0, 0, 0},
                 {0, 0, 0},

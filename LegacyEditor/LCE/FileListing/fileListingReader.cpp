@@ -8,12 +8,13 @@
 #include "include/tinf/tinf.h"
 #include "include/zlib-1.2.12/zlib.h"
 
-#include "headerUnion.hpp"
 #include "LegacyEditor/LCE/BinFile/BINSupport.hpp"
-#include "LegacyEditor/utils/XBOX_LZX/XboxCompression.hpp"
-#include "LegacyEditor/utils/RLE/rle_vita.hpp"
-#include <LegacyEditor/utils/RLE/rle_nsxps4.hpp>
 #include "LegacyEditor/utils/NBT.hpp"
+#include "LegacyEditor/utils/RLE/rle_vita.hpp"
+#include "LegacyEditor/utils/XBOX_LZX/XboxCompression.hpp"
+#include "headerUnion.hpp"
+#include "lce/processor.hpp"
+#include <LegacyEditor/utils/RLE/rle_nsxps4.hpp>
 
 
 static constexpr u32 CON_MAGIC = 0x434F4E20;
@@ -29,7 +30,7 @@ static constexpr char error3[43]
 namespace editor {
 
 
-    i16 extractMapNumber(stringRef_t str) {
+    i16 extractMapNumber(c_string_ref str) {
         static const std::string start = "map_";
         static const std::string end = ".dat";
         size_t startPos = str.find(start);
@@ -45,7 +46,7 @@ namespace editor {
     }
 
 
-    std::pair<int, int> extractRegionCoords(stringRef_t filename) {
+    std::pair<int, int> extractRegionCoords(c_string_ref filename) {
         const size_t lastDot = filename.find_last_of('.');
         const std::string relevantPart = filename.substr(0, lastDot);
 
@@ -66,8 +67,8 @@ namespace editor {
     void FileListing::readData(const Data &dataIn) {
         DataManager managerIn(dataIn, consoleIsBigEndian(console));
 
-        const u32 indexOffset = managerIn.readInt32();
-        const u32 fileCount = managerIn.readInt32();
+        c_u32 indexOffset = managerIn.readInt32();
+        c_u32 fileCount = managerIn.readInt32();
         oldestVersion = managerIn.readInt16();
         currentVersion = managerIn.readInt16();
 
@@ -83,7 +84,7 @@ namespace editor {
             u32 fileSize = managerIn.readInt32();
             total_size += fileSize;
 
-            const u32 index = managerIn.readInt32();
+            c_u32 index = managerIn.readInt32();
             u64 timestamp = managerIn.readInt64();
 
             if (fileSize == 0U) {
@@ -108,7 +109,7 @@ namespace editor {
                 } else if (fileName.starts_with("r")) {
                     file.fileType = LCEFileType::REGION_OVERWORLD;
                 }
-                const auto [fst, snd]
+                c_auto [fst, snd]
                     = extractRegionCoords(fileName);
                 file.nbt->setTag("x", createNBT_INT16(static_cast<i16>(fst)));
                 file.nbt->setTag("z", createNBT_INT16(static_cast<i16>(snd)));
@@ -135,7 +136,7 @@ namespace editor {
 
             if (fileName.starts_with("data/map_")) {
                 file.fileType = LCEFileType::MAP;
-                const i16 mapNumber = extractMapNumber(fileName);
+                c_i16 mapNumber = extractMapNumber(fileName);
                 file.nbt->setTag("#", createNBT_INT16(mapNumber));
                 continue;
             }
@@ -179,9 +180,9 @@ namespace editor {
     }
 
 
-    int FileListing::read(stringRef_t inFileStr, const bool readEXTFile) {
+    int FileListing::read(c_string_ref inFileStr, c_bool readEXTFile) {
 
-        const int status = readFile(inFileStr);
+        c_int status = readFile(inFileStr);
 
         // create file path / root
         std::string filepath = filename;
@@ -190,14 +191,14 @@ namespace editor {
         }
 
         if (readEXTFile && !hasLoadedFileInfo) {
-            const int status2 = readFileInfo(filepath);
+            c_int status2 = readFileInfo(filepath);
         }
 
         return status;
     }
 
 
-    int FileListing::readFile(stringRef_t inFilePath) {
+    int FileListing::readFile(c_string_ref inFilePath) {
         Data data;
 
         const char* inFileCStr = inFilePath.c_str();
@@ -209,7 +210,7 @@ namespace editor {
         filename = inFilePath;
 
         fseek(f_in, 0, SEEK_END);
-        const u64 source_bin_size = ftell(f_in);
+        c_u64 source_bin_size = ftell(f_in);
         fseek(f_in, 0, SEEK_SET);
 
         HeaderUnion headerUnion{};
@@ -230,7 +231,7 @@ namespace editor {
             // TODO: change this to write custom checker for FILE_COUNT * 144 == diff. with
             // TODO: with custom vitaRLE decompress checker
             } else {
-                const u32 indexFromSaveFile
+                c_u32 indexFromSaveFile
                     = headerUnion.getInt2Swapped() - headerUnion.getInt3Swapped();
                 if (indexFromSaveFile > 0 && indexFromSaveFile < 65536) {
                     file_size = headerUnion.getInt2Swapped();
@@ -242,8 +243,8 @@ namespace editor {
         } else if (headerUnion.getInt2() <= 2) {
             /// if (int2 == 0) it is an xbox savefile unless it's a massive
             /// file, but there won't be 2 files in a savegame file for PS3
-            const u32 file_size = headerUnion.getInt3();
-            const u32 src_size = headerUnion.getInt1();
+            c_u32 file_size = headerUnion.getInt3();
+            c_u32 src_size = headerUnion.getInt1();
             result = readXbox360DAT(f_in, data, file_size, src_size);
         } else if (headerUnion.getInt2() < 100) {
             /// otherwise if (int2) > 50 then it is a random file
@@ -270,7 +271,7 @@ namespace editor {
     }
 
 
-    int FileListing::readFileInfo(stringRef_t inFilePath) {
+    int FileListing::readFileInfo(c_string_ref inFilePath) {
         std::string filepath = inFilePath;
 
         switch (console) {
@@ -313,9 +314,9 @@ namespace editor {
      * \param inFilePath the directory containing the GAMEDATA files.
      * \return
      */
-    int FileListing::readExternalRegions(stringRef_t inFilePath) {
+    int FileListing::readExternalRegions(c_string_ref inFilePath) {
         int fileIndex = -1;
-        for (const auto& file :
+        for (c_auto& file :
             fs::directory_iterator(inFilePath)) {
 
             // TODO: place non-used files in a cache?
@@ -330,7 +331,7 @@ namespace editor {
             DataManager manager_in;
             manager_in.setLittleEndian();
             manager_in.readFromFile(filepath_in);
-            const uint32_t fileSize = manager_in.readInt32();
+            c_u32 fileSize = manager_in.readInt32();
 
             Data dat_out(fileSize);
             const DataManager manager_out(dat_out);
@@ -340,11 +341,11 @@ namespace editor {
             // manager_out.writeToFile("C:\\Users\\Jerrin\\CLionProjects\\LegacyEditor\\out\\" + filename);
 
             // TODO: get timestamp from file itself
-            uint32_t timestamp = 0;
+            u32 timestamp = 0;
             // TODO: should not be CONSOLE::NONE
             allFiles.emplace_back(lce::CONSOLE::NONE, dat_out.data, fileSize, timestamp);
             LCEFile &lFile = allFiles.back();
-            if (const auto dimChar = static_cast<char>(static_cast<int>(filename.at(12)) - 48);
+            if (c_auto dimChar = static_cast<char>(static_cast<int>(filename.at(12)) - 48);
                 dimChar < 0 || dimChar > 2) {
                 lFile.fileType = LCEFileType::NONE;
             } else {
@@ -355,9 +356,9 @@ namespace editor {
                 };
                 lFile.fileType = regDims[dimChar];
             }
-            const int16_t rX = static_cast<int8_t>(strtol(
+            c_i16 rX = static_cast<i8>(strtol(
                 filename.substr(13, 2).c_str(), nullptr, 16));
-            const int16_t rZ = static_cast<int8_t>(strtol(
+            c_i16 rZ = static_cast<i8>(strtol(
                 filename.substr(15, 2).c_str(), nullptr, 16));
             lFile.nbt->setTag("x", createNBT_INT16(rX));
             lFile.nbt->setTag("z", createNBT_INT16(rZ));
@@ -376,7 +377,7 @@ namespace editor {
      * @return
      */
     int FileListing::readVita(FILE* f_in, Data& data,
-        u64 source_binary_size, const u32 file_size) {
+        u64 source_binary_size, c_u32 file_size) {
         printf("Detected Vita savefile, converting\n\n");
         console = lce::CONSOLE::VITA;
 
@@ -401,7 +402,7 @@ namespace editor {
 
 
     int FileListing::readWiiU(FILE* f_in, Data& data,
-        u64 source_binary_size, const u32 file_size) {
+        u64 source_binary_size, c_u32 file_size) {
         printf("Detected WiiU savefile, converting\n\n");
         console = lce::CONSOLE::WIIU;
 
@@ -428,7 +429,7 @@ namespace editor {
 
 
     int FileListing::readNSXorPS4(FILE* f_in, Data& data,
-        u64 source_binary_size, const u32 file_size) {
+        u64 source_binary_size, c_u32 file_size) {
         printf("Detected Switch/Ps4 savefile, converting\n\n");
         console = lce::CONSOLE::SWITCH;
 
@@ -455,7 +456,7 @@ namespace editor {
     /// TODO: figure out if this comment is actually important or not
     /// TODO: check from regionFile chunk what console it is if uncompressed
     int FileListing::readPs3(FILE* f_in, Data& data,
-        const u64 source_binary_size, u32 file_size) {
+        c_u64 source_binary_size, u32 file_size) {
         printf("Detected compressed PS3 savefile, converting\n\n");
         console = lce::CONSOLE::PS3;
 
@@ -481,7 +482,7 @@ namespace editor {
 
 
     int FileListing::readRpcs3(FILE* f_in, Data& data,
-        const u64 source_binary_size) {
+        c_u64 source_binary_size) {
         printf("Detected uncompressed PS3 / RPCS3 savefile, converting\n\n");
         console = lce::CONSOLE::RPCS3;
         if (!data.allocate(source_binary_size)) {
@@ -494,7 +495,7 @@ namespace editor {
 
 
     int FileListing::readXbox360DAT(FILE* f_in, Data& data,
-        const u32 file_size, const u32 src_size) {
+        c_u32 file_size, c_u32 src_size) {
         printf("Detected Xbox360 .dat savefile, converting\n\n");
         console = lce::CONSOLE::XBOX360;
 
@@ -519,7 +520,7 @@ namespace editor {
 
     // TODO: IDK if it should but it is for now, get fileInfo out of it, fix memory leaks
     int FileListing::readXbox360BIN(FILE* f_in, Data& data,
-        const u64 source_binary_size) {
+        c_u64 source_binary_size) {
         console = lce::CONSOLE::XBOX360;
 
         printf("Detected Xbox360 .bin savefile, converting\n\n");
@@ -558,7 +559,7 @@ namespace editor {
 
         bin.deallocate();
 
-        const u32 srcSize = out.readInt32() - 8;
+        c_u32 srcSize = out.readInt32() - 8;
         data.size = out.readInt64();
 
         if (!data.allocate(data.size)) {

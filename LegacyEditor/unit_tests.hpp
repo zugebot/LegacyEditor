@@ -1,8 +1,16 @@
 #pragma once
 
-#include "LCE/include.hpp"
-#include "utils/processor.hpp"
+#include "lce/processor.hpp"
 
+#include "LCE/include.hpp"
+
+
+#ifdef UNIT_TESTS
+extern std::string dir_path;
+extern std::string out_path;
+extern std::string wiiu;
+extern std::string ps3_;
+#endif
 
 std::string dir_path, out_path, wiiu, ps3_;
 std::map<std::string, std::pair<std::string, std::string>> TESTS;

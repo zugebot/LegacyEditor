@@ -1,18 +1,19 @@
 #pragma once
 
+#include "lce/processor.hpp"
+
 #include "LegacyEditor/utils/dataManager.hpp"
-#include "LegacyEditor/utils/processor.hpp"
 
 
-static void RLE_decompress(u8* dataIn, const u32 sizeIn, u8* dataOut, u32& sizeOut) {
+static void RLE_decompress(u8* dataIn, c_u32 sizeIn, u8* dataOut, u32& sizeOut) {
     DataManager managerIn(dataIn, sizeIn);
     DataManager managerOut(dataOut, sizeOut);
 
     while (managerIn.getPosition() < sizeIn) {
-        if (const u8 byte1 = managerIn.readInt8(); byte1 != 255) {
+        if (c_u8 byte1 = managerIn.readInt8(); byte1 != 255) {
             managerOut.writeInt8(byte1);
         } else {
-            const u8 byte2 = managerIn.readInt8();
+            c_u8 byte2 = managerIn.readInt8();
             u8 value = 255;
             if (byte2 >= 3) {
                 value = managerIn.readInt8();
@@ -26,12 +27,12 @@ static void RLE_decompress(u8* dataIn, const u32 sizeIn, u8* dataOut, u32& sizeO
 }
 
 
-static void RLE_compress(const u8* dataIn, const u32 sizeIn, u8* dataOut, u32& sizeOut) {
+static void RLE_compress(c_u8* dataIn, c_u32 sizeIn, u8* dataOut, u32& sizeOut) {
     u32 dataIndex = 0;
     sizeOut = 0;
 
     while (dataIndex < sizeIn) {
-        const u8 value = dataIn[dataIndex];
+        c_u8 value = dataIn[dataIndex];
         u32 count = 1;
 
         // Count the run of the same byte

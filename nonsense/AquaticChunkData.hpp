@@ -8,10 +8,10 @@
 class AquaticChunkData {
 public:
     std::vector<uint16_t> blocks;
-    std::vector<uint8_t> blockLight;
-    std::vector<uint8_t> skyLight;
-    std::vector<uint8_t> heightMap;
-    std::vector<uint8_t> biomes;
+    std::vector<u8> blockLight;
+    std::vector<u8> skyLight;
+    std::vector<u8> heightMap;
+    std::vector<u8> biomes;
     NBTBase* NBTData = nullptr;
     short terrainPopulated;
     int64_t lastUpdate;
@@ -25,12 +25,12 @@ public:
 
 class LCEChunkData {
 public:
-    std::vector<uint8_t> blocks;
-    std::vector<uint8_t> data;
-    std::vector<uint8_t> blockLight;
-    std::vector<uint8_t> skyLight;
-    std::vector<uint8_t> heightMap;
-    std::vector<uint8_t> biomes;
+    std::vector<u8> blocks;
+    std::vector<u8> data;
+    std::vector<u8> blockLight;
+    std::vector<u8> skyLight;
+    std::vector<u8> heightMap;
+    std::vector<u8> biomes;
     NBTBase* NBTData = nullptr;
     short terrainPopulated;
     int64_t lastUpdate;

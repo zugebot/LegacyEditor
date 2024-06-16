@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../dataManager.hpp"
-#include "../processor.hpp"
 #include <cstring>
+#include "lce/processor.hpp"
+#include "LegacyEditor/utils/dataManager.hpp"
 
 
 /**
@@ -13,21 +13,21 @@
  * @param dataOut a pointer to allocated buffer_out
  * @param sizeOut the size of the allocated buffer_out
  */
-static u32 RLE_NSXPS4_DECOMPRESS(u8* dataIn, const u32 sizeIn, u8* dataOut, const u32 sizeOut) {
+static u32 RLE_NSXPS4_DECOMPRESS(u8* dataIn, c_u32 sizeIn, u8* dataOut, c_u32 sizeOut) {
     DataManager managerIn(dataIn, sizeIn);
     DataManager managerOut(dataOut, sizeOut);
 
     while (managerIn.getPosition() < sizeIn) {
 
-        if (const u8 value = managerIn.readInt8(); value != 0x00) {
+        if (c_u8 value = managerIn.readInt8(); value != 0x00) {
             managerOut.writeInt8(value);
 
         } else {
             int numZeros = managerIn.readInt8();
 
             if (numZeros == 0) {
-                const int numZeros1 = managerIn.readInt8();
-                const int numZeros2 = managerIn.readInt8();
+                c_int numZeros1 = managerIn.readInt8();
+                c_int numZeros2 = managerIn.readInt8();
                 numZeros = numZeros1 << 8 | numZeros2;
                 numZeros += 256;
             }
@@ -48,12 +48,12 @@ static u32 RLE_NSXPS4_DECOMPRESS(u8* dataIn, const u32 sizeIn, u8* dataOut, cons
  * @param dataOut a pointer to allocated buffer_out
  * @param sizeOut the size of the allocated buffer_out
  */
-static u32 RLE_NSXPS4_COMPRESS(const u8* dataIn, const u32 sizeIn, u8* dataOut, u32 sizeOut) {
+static u32 RLE_NSXPS4_COMPRESS(c_u8* dataIn, c_u32 sizeIn, u8* dataOut, u32 sizeOut) {
     u32 dataIndex = 0;
     sizeOut = 0;
 
     while (dataIndex < sizeIn) {
-        if (const u8 value = dataIn[dataIndex]; value != 0) {
+        if (c_u8 value = dataIn[dataIndex]; value != 0) {
             dataOut[sizeOut++] = value;
             continue;
         }

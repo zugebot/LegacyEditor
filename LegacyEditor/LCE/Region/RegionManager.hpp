@@ -1,7 +1,8 @@
 #pragma once
 
+#include "lce/processor.hpp"
+
 #include "ChunkManager.hpp"
-#include "LegacyEditor/utils/processor.hpp"
 
 
 namespace editor {

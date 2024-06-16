@@ -5,11 +5,12 @@
 #include <set>
 #include <list>
 
+#include "lce/processor.hpp"
+
 #include "LCEFile.hpp"
 #include "LegacyEditor/LCE/FileInfo/FileInfo.hpp"
 #include "LegacyEditor/LCE/Region/RegionManager.hpp"
 #include "LegacyEditor/utils/error_status.hpp"
-#include "LegacyEditor/utils/processor.hpp"
 
 
 namespace editor {
@@ -71,7 +72,7 @@ namespace editor {
 
         /// Functions
 
-        MU ND int saveToFolder(stringRef_t folderIn = "") const;
+        MU ND int saveToFolder(c_string_ref folderIn = "") const;
         MU void convertRegions(lce::CONSOLE consoleOut);
         void ensureAllRegionFilesExist();
 
@@ -84,31 +85,31 @@ namespace editor {
 
         /// Read / Write from console files
 
-        MU ND int read(stringRef_t inFileStr, bool readEXTFile = false);
-        MU ND int write(stringRef_t outfileStr, lce::CONSOLE consoleOut);
+        MU ND int read(c_string_ref inFileStr, bool readEXTFile = false);
+        MU ND int write(c_string_ref outfileStr, lce::CONSOLE consoleOut);
 
 
         /// Conversion
 
-        MU ND int convertTo(stringRef_t inFileStr, stringRef_t outFileStr, lce::CONSOLE consoleOut);
-        MU ND int convertAndReplaceRegions(stringRef_t inFileStr, stringRef_t inFileRegionReplacementStr,
-                                           stringRef_t outFileStr, lce::CONSOLE consoleOut);
+        MU ND int convertTo(c_string_ref inFileStr, c_string_ref outFileStr, lce::CONSOLE consoleOut);
+        MU ND int convertAndReplaceRegions(c_string_ref inFileStr, c_string_ref inFileRegionReplacementStr,
+                                           c_string_ref outFileStr, lce::CONSOLE consoleOut);
 
-        MU ND int readExternalRegions(stringRef_t inFilePath);
-        MU ND static int writeExternalRegions(stringRef_t outFilePath);
+        MU ND int readExternalRegions(c_string_ref inFilePath);
+        MU ND static int writeExternalRegions(c_string_ref outFilePath);
 
         /// Region Helpers
 
         MU void pruneRegions();
-        MU void replaceRegionOW(int regionIndex, editor::RegionManager& region, const lce::CONSOLE consoleOut);
+        MU void replaceRegionOW(int regionIndex, editor::RegionManager& region, lce::CONSOLE consoleOut);
 
 
     private:
 
         /// Reader
 
-        MU ND int readFile(stringRef_t inFilePath);
-        MU ND int readFileInfo(stringRef_t inFilePath);
+        MU ND int readFile(c_string_ref inFilePath);
+        MU ND int readFileInfo(c_string_ref inFilePath);
         MU ND int readWiiU(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
         MU ND int readNSXorPS4(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
         MU ND int readVita(FILE* f_in, Data& data, u64 source_binary_size, u32 file_size);
@@ -120,8 +121,8 @@ namespace editor {
 
         /// Writer
 
-        MU ND int writeFile(stringRef_t outfileStr, lce::CONSOLE consoleOut);
-        MU ND int writeFileInfo(stringRef_t outFilePath, lce::CONSOLE consoleOut) const;
+        MU ND int writeFile(c_string_ref outfileStr, lce::CONSOLE consoleOut);
+        MU ND int writeFileInfo(c_string_ref outFilePath, lce::CONSOLE consoleOut) const;
         MU ND static int writeWiiU(FILE* f_out, const Data& dataOut);
         MU ND static int writeVita(FILE* f_out, const Data& dataOut);
         MU ND static int writeRPCS3(FILE* f_out, const Data& dataOut);

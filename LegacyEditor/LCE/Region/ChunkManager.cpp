@@ -1,12 +1,13 @@
 #include "ChunkManager.hpp"
 
+#include "lce/processor.hpp"
+
 #include "include/tinf/tinf.h"
 #include "include/zlib-1.2.12/zlib.h"
 
 #include "LegacyEditor/utils/XBOX_LZX/XboxCompression.hpp"
 #include "LegacyEditor/utils/PS3_DEFLATE/deflateUsage.hpp"
 #include "LegacyEditor/utils/RLE/rle.hpp"
-#include "LegacyEditor/utils/processor.hpp"
 #include "LegacyEditor/LCE/Chunk/chunkData.hpp"
 
 #include "LegacyEditor/LCE/Chunk/v10.hpp"
@@ -210,7 +211,7 @@ namespace editor {
     }
 
 
-    void ChunkManager::setSizeFromReading(const u32 sizeIn) {
+    void ChunkManager::setSizeFromReading(c_u32 sizeIn) {
         fileData.setRLE(sizeIn >> 31);
         fileData.setUnknown(sizeIn >> 30 & 1);
         size = sizeIn & 0x00FFFFFF;

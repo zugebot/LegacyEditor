@@ -1,19 +1,19 @@
 #pragma once
 
-#include "processor.hpp"
+#include "lce/processor.hpp"
 
 
 static bool isSystemLittleEndian() {
     static constexpr int num = 1;
-    static const bool isLittle = *reinterpret_cast<const char*>(&num) == 1;
+    static c_bool isLittle = *reinterpret_cast<const char*>(&num) == 1;
     return isLittle;
 }
 
-static u16 swapEndian16(const u16 value) {
+static u16 swapEndian16(c_u16 value) {
     return value << 8 | value >> 8;
 }
 
-static u32 swapEndian32(const u32 value) {
+static u32 swapEndian32(c_u32 value) {
     return (value & 0xFF000000U) >> 24 |
            (value & 0x00FF0000U) >>  8 |
            (value & 0x0000FF00U) <<  8 |

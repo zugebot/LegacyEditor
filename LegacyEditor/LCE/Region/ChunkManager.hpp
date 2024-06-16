@@ -31,11 +31,11 @@ namespace editor {
                 timestamp = 0;
             }
 
-            MU void setTimestamp(const u32 val) { timestamp = val; }
-            MU void setDecSize(const u64 val) { decSize = val; }
-            MU void setRLE(const u64 val) { rleFlag = val; }
-            MU void setUnknown(const u64 val) { unknownFlag = val; }
-            MU void setCompressed(const u64 val) { isCompressed = val; }
+            MU void setTimestamp(c_u32 val) { timestamp = val; }
+            MU void setDecSize(c_u64 val) { decSize = val; }
+            MU void setRLE(c_u64 val) { rleFlag = val; }
+            MU void setUnknown(c_u64 val) { unknownFlag = val; }
+            MU void setCompressed(c_u64 val) { isCompressed = val; }
 
             MU ND u32 getTimestamp() const { return timestamp; }
             MU ND u64 getDecSize() const { return decSize; }

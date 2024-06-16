@@ -628,7 +628,7 @@ int tinf_uncompress(void *dest, unsigned int *destLen,
 unsigned char depacked[64 * 1024];
 
 extern int
-LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
+LLVMFuzzerTestOneInput(c_u8 *data, size_t size)
 {
 	if (size > UINT_MAX / 2) { return 0; }
 	unsigned int destLen = sizeof(depacked);

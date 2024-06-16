@@ -1,8 +1,9 @@
 #pragma once
 
+#include "lce/processor.hpp"
+
 #include "LegacyEditor/utils/Data.hpp"
 #include "LegacyEditor/utils/error_status.hpp"
-#include "LegacyEditor/utils/processor.hpp"
 #include "lce/enums.hpp"
 
 
@@ -20,7 +21,7 @@
 namespace editor {
 
     class FileInfo {
-        inline static const u8 IEND_DAT[12] = {
+        inline static c_u8 IEND_DAT[12] = {
             0x00, 0x00, 0x00, 0x00, // size = 0
             0x49, 0x45, 0x4E, 0x44, // "IEND"
             0xAE, 0x42, 0x60, 0x82  // crc

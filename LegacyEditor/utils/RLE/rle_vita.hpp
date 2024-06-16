@@ -1,21 +1,23 @@
 #pragma once
 
-#include "../processor.hpp"
-#include "../dataManager.hpp"
-
 #include <cstring>
 
+#include "lce/processor.hpp"
 
-static u32 RLEVITA_DECOMPRESS(u8* dataIn, const u32 sizeIn, u8* dataOut, const u32 sizeOut) {
+#include "LegacyEditor/utils/dataManager.hpp"
+
+
+
+static u32 RLEVITA_DECOMPRESS(u8* dataIn, c_u32 sizeIn, u8* dataOut, c_u32 sizeOut) {
     DataManager managerIn(dataIn, sizeIn);
     DataManager managerOut(dataOut, sizeOut);
 
     while (managerIn.getPosition() < sizeIn) {
 
-        if (const u8 value = managerIn.readInt8(); value != 0x00) {
+        if (c_u8 value = managerIn.readInt8(); value != 0x00) {
             managerOut.writeInt8(value);
         } else {
-            const int numZeros = managerIn.readInt8();
+            c_int numZeros = managerIn.readInt8();
             memset(managerOut.ptr, 0, numZeros);
             managerOut.incrementPointer(numZeros);
         }
@@ -32,7 +34,7 @@ static u32 RLEVITA_DECOMPRESS(u8* dataIn, const u32 sizeIn, u8* dataOut, const u
  * @param dataOut a pointer to allocated buffer_out
  * @param sizeOut the size of the allocated buffer_out
  */
-static u32 RLEVITA_COMPRESS(u8* dataIn, const u32 sizeIn, u8* dataOut, const u32 sizeOut) {
+static u32 RLEVITA_COMPRESS(u8* dataIn, c_u32 sizeIn, u8* dataOut, c_u32 sizeOut) {
     if (sizeOut < 2) {
         return 0;
     }
@@ -44,7 +46,7 @@ static u32 RLEVITA_COMPRESS(u8* dataIn, const u32 sizeIn, u8* dataOut, const u32
 
     for (u32 i = 0; i < sizeIn; ++i) {
 
-        if (const u8 value = managerIn.readInt8(); value != 0) {
+        if (c_u8 value = managerIn.readInt8(); value != 0) {
             if (zeroCount > 0) {
                 managerOut.writeInt8(0);
                 managerOut.writeInt8(zeroCount);

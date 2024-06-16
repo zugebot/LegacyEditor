@@ -15,23 +15,23 @@ struct LCEFixes;
 
 class LCE_universal {
 private:
-    static inline bool willBeWater(uint16_t block1_13, uint8_t data);
-    static inline uint8_t convertTo1_12Blocks(uint16_t block1_13, uint8_t& data);
-    static uint8_t convertBlockFrom1_13(LoadedChunks& adjacentChunks, BlockPos& blockPos);
+    static inline bool willBeWater(uint16_t block1_13, u8 data);
+    static inline u8 convertTo1_12Blocks(uint16_t block1_13, u8& data);
+    static u8 convertBlockFrom1_13(LoadedChunks& adjacentChunks, BlockPos& blockPos);
     static NBTTagList* convertEntities(NBTTagList* entitiesNbt);
     static NBTTagList* convertTileEntities(NBTTagList* tileEntitiesNbt, UniversalChunkFormat* chunkData);
     static NBTTagList* convertTileTicks(NBTTagList* tileTicksNbt);
-    static inline void convertPortal(uint8_t* dataOut, BlockWithPos& blockWithPos, LoadedChunks& chunks);
-    static inline uint8_t convertDoorNew(uint8_t data);
-    static inline uint8_t convertDoorOld(uint8_t data);
-    static inline void convertFlowerPotData(uint8_t data, NBTTagCompound* tileEntity);
+    static inline void convertPortal(u8* dataOut, BlockWithPos& blockWithPos, LoadedChunks& chunks);
+    static inline u8 convertDoorNew(u8 data);
+    static inline u8 convertDoorOld(u8 data);
+    static inline void convertFlowerPotData(u8 data, NBTTagCompound* tileEntity);
     static inline NBTTagCompound* convertTileEntityFromData(UniversalChunkFormat* currentChunk, BlockWithPos& blockWithPos, int xPos, int zPos, const std::string& id);
-    static int checkChestRotationViableBlock(uint8_t block);
-    static uint8_t alignDoubleChest(BlockPos blockPos, LoadedChunks& adjacentChunks, int direction);
-    static inline void checkForFixBlock(uint16_t block, uint8_t data, bool waterLogged, int x, int y, int z, LCEFixes& fixes);
+    static int checkChestRotationViableBlock(u8 block);
+    static u8 alignDoubleChest(BlockPos blockPos, LoadedChunks& adjacentChunks, int direction);
+    static inline void checkForFixBlock(uint16_t block, u8 data, bool waterLogged, int x, int y, int z, LCEFixes& fixes);
 
 public:
-    static uint8_t alignChest(BlockPos blockPos, LoadedChunks& adjacentChunks);
+    static u8 alignChest(BlockPos blockPos, LoadedChunks& adjacentChunks);
     static void applyFixes(UniversalChunkFormat* chunkData, LoadedChunks& adjacentChunks, LCEFixes& fixes);
     static UniversalChunkFormat* convertNBTChunkToUniversal(DataInputManager& input, DIMENSION dimension, LCEFixes& fixes);
     static UniversalChunkFormat* convertLCE1_13RegionToUniversal(AquaticChunkData& chunkData, DIMENSION dimension, LCEFixes& fixes);

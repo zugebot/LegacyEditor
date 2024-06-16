@@ -34,7 +34,7 @@ namespace fs = std::filesystem;
         try {
             // Check if the provided path is a directory
             if (fs::is_directory(path)) {
-                for (const auto& entry : fs::directory_iterator(path)) {
+                for (c_auto& entry : fs::directory_iterator(path)) {
                     // Check if the entry is a file
                     if (fs::is_regular_file(entry)) {
                         std::cout << "File: " << entry.path() << std::endl;

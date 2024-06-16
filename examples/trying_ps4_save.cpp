@@ -1,10 +1,12 @@
 #include <iostream>
 
+#include "lce/processor.hpp"
+
 #include "include/ghc/fs_std.hpp"
 
 #include "LegacyEditor/LCE/FileInfo/FileInfo.hpp"
 #include "LegacyEditor/LCE/include.hpp"
-#include "LegacyEditor/utils/processor.hpp"
+
 #include "LegacyEditor/utils/timer.hpp"
 
 #include "/LegacyEditor/unit_tests.hpp"
@@ -69,7 +71,7 @@ int main() {
     int chunksOut = 0;
     // figure out the bounds of each of the regions
     for (int i = 0; i < fileListing.region_overworld.size(); i++) {
-        const auto& regionFile = fileListing.region_overworld[i];
+        c_auto& regionFile = fileListing.region_overworld[i];
 
         auto region = editor::RegionManager();
         region.read(regionFile);
@@ -96,7 +98,7 @@ int main() {
             }*/
 
             chunk.readChunk(fileListing.console);
-            const auto* chunkData = chunk.chunkData;
+            c_auto* chunkData = chunk.chunkData;
             if (!chunkData->validChunk) { continue; }
 
             chunkCoords[chunkIndex] = std::make_pair(chunkData->chunkX, chunkData->chunkZ);
@@ -125,7 +127,7 @@ int main() {
 
     // edit regions (threaded)
     // add functions to "LegacyEditor/LCE/scripts.hpp"
-    const auto timer = Timer();
+    c_auto timer = Timer();
 
     // run_parallel<32>(editor::convertElytraToAquaticChunks, std::ref(fileListing));
     for (int i = 0; i < 32; i++) {

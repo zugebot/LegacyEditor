@@ -1,6 +1,6 @@
 #pragma once
 
-#include "LegacyEditor/utils/processor.hpp"
+#include "lce/processor.hpp"
 
 
 class Data {
@@ -10,14 +10,14 @@ public:
 
     Data() = default;
 
-    explicit Data(const u32 sizeIn) : size(sizeIn) {
+    explicit Data(c_u32 sizeIn) : size(sizeIn) {
         data = new u8[sizeIn];
     }
 
-    explicit Data(u8* dataIn, const u32 sizeIn) : size(sizeIn), data(dataIn) {}
+    explicit Data(u8* dataIn, c_u32 sizeIn) : size(sizeIn), data(dataIn) {}
 
 
-    bool allocate(const u32 sizeIn) {
+    bool allocate(c_u32 sizeIn) {
         size = sizeIn;
         delete[] data;
 

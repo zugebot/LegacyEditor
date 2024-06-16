@@ -22,7 +22,7 @@ namespace editor::chunk {
         allocChunk();
 
         dataManager->readInt8();
-        const auto* nbt = NBT::readTag(*dataManager);
+        c_auto* nbt = NBT::readTag(*dataManager);
         auto* chunkNBT = nbt->toType<NBTTagCompound>();
 
         chunkData->lastVersion = 10;
@@ -30,25 +30,25 @@ namespace editor::chunk {
         chunkData->chunkZ = chunkNBT->getPrimitive<i32>("zPos");
         chunkData->lastUpdate = chunkNBT->getPrimitive<i64>("LastUpdate");
 
-        const auto* blockArray = chunkNBT->getByteArray("Blocks");
+        c_auto* blockArray = chunkNBT->getByteArray("Blocks");
         memcpy(chunkData->oldBlocks.data(), blockArray->array, 65536);
 
-        const auto* blockDataArray = chunkNBT->getByteArray("Data");
+        c_auto* blockDataArray = chunkNBT->getByteArray("Data");
         memcpy(chunkData->blockData.data(), blockDataArray->array, 32768);
 
-        const auto* heightMapArray = chunkNBT->getByteArray("HeightMap");
+        c_auto* heightMapArray = chunkNBT->getByteArray("HeightMap");
         memcpy(chunkData->heightMap.data(), heightMapArray->array, 256);
 
-        const auto* biomeArray = chunkNBT->getByteArray("Biomes");
+        c_auto* biomeArray = chunkNBT->getByteArray("Biomes");
         memcpy(chunkData->biomes.data(), biomeArray->array, 256);
 
-        const auto* skyLightArray = chunkNBT->getByteArray("SkyLight");
+        c_auto* skyLightArray = chunkNBT->getByteArray("SkyLight");
         memcpy(chunkData->skyLight.data(), skyLightArray->array, 32768);
 
-        const auto* blockLightArray = chunkNBT->getByteArray("BlockLight");
+        c_auto* blockLightArray = chunkNBT->getByteArray("BlockLight");
         memcpy(chunkData->blockLight.data(), blockLightArray->array, 32768);
 
-        auto createAndCopy = [](const auto* byteArray, const size_t size) {
+        auto createAndCopy = [](c_auto* byteArray, const size_t size) {
             u8_vec result(size);
             memcpy(result.data(), byteArray->array, size);
             return result;

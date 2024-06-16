@@ -15,7 +15,7 @@ static u32 c2n(const char chara) {
 
 static i64 stringToHex(const std::string& str) {
     i64 result = 0;
-    const int stringSize = static_cast<int>(str.size());
+    c_int stringSize = static_cast<int>(str.size());
     for (size_t i = 0; i < stringSize; i++) { result = result * 16 + c2n(str[i]); }
     return result;
 }
@@ -30,14 +30,14 @@ static i64 stringToInt64(const std::string& str) {
         index++;
     }
 
-    for (const int stringSize = static_cast<int>(str.size()); index < stringSize; index++) {
+    for (c_int stringSize = static_cast<int>(str.size()); index < stringSize; index++) {
         result = result * 10 + (str[index] - '0');
     }
 
     return result * sign;
 }
 
-static char n2c(const u32 num) {
+static char n2c(c_u32 num) {
     if (num <= 9) {
         return static_cast<char>('0' + num);
     }
@@ -68,7 +68,7 @@ static std::string int64ToString(i64 num) {
     }
 
     std::string result;
-    const int sign = num < 0 ? -1 : 1;
+    c_int sign = num < 0 ? -1 : 1;
     num = std::abs(num);
 
     while (num > 0) {
@@ -121,13 +121,13 @@ namespace editor {
 
         isLoaded = true;
 
-        const u8* PNG_START = manager.ptr;
+        c_u8* PNG_START = manager.ptr;
 
         manager.incrementPointer(8);
 
         while (!manager.isEndOfData()) {
-            const u8* PNG_END;
-            const u32 chunkLength = manager.readInt32();
+            c_u8* PNG_END;
+            c_u32 chunkLength = manager.readInt32();
 
             if (std::string chunkType = manager.readString(4);
                     chunkType != "tEXt") {
@@ -136,7 +136,7 @@ namespace editor {
                 if (chunkType == "IEND") {
                     manager.incrementPointer4();
                     PNG_END = manager.ptr - 8;
-                    const u32 PNG_SIZE = PNG_END - PNG_START;
+                    c_u32 PNG_SIZE = PNG_END - PNG_START;
                     thumbnail.allocate(PNG_SIZE + 8);
                     memcpy(thumbnail.data, PNG_START, PNG_SIZE);
                     return;
@@ -148,7 +148,7 @@ namespace editor {
 
             PNG_END = manager.ptr - 8;
             {
-                const u32 PNG_SIZE = PNG_END - PNG_START;
+                c_u32 PNG_SIZE = PNG_END - PNG_START;
                 thumbnail.allocate(PNG_SIZE + 12);
                 memcpy(thumbnail.data, PNG_START, PNG_SIZE);
                 memcpy(thumbnail.data + PNG_SIZE, &IEND_DAT[0], 12);
@@ -276,7 +276,7 @@ namespace editor {
             // appendString(basesavename);
         }
 
-        const u32 out_size = header.size + (thumbnail.size - 12) + 4 + tEXt_chunk.size() + 4 + 12;
+        c_u32 out_size = header.size + (thumbnail.size - 12) + 4 + tEXt_chunk.size() + 4 + 12;
         const Data out(out_size);
         DataManager manager(out);
 
@@ -298,15 +298,15 @@ namespace editor {
         manager.incrementPointer(tEXt_chunk.size());
 
         // write tEXt chunk crc
-        const auto* chunkPtr = reinterpret_cast<const char*>(tEXt_chunk.data());
-        const int sizeIn = static_cast<int>(tEXt_chunk.size());
-        const u32 crc_val = crc(chunkPtr, sizeIn);
+        c_auto* chunkPtr = reinterpret_cast<const char*>(tEXt_chunk.data());
+        c_int sizeIn = static_cast<int>(tEXt_chunk.size());
+        c_u32 crc_val = crc(chunkPtr, sizeIn);
         manager.writeInt32(crc_val);
 
         // write IEND png chunk
         memcpy(manager.ptr, &IEND_DAT[0], 12);
 
-        const int status = manager.writeToFile(outFileStr);
+        c_int status = manager.writeToFile(outFileStr);
         return status;
 
     }

@@ -1,10 +1,10 @@
 #include <iostream>
 
+#include "lce/processor.hpp"
 
 #include "include/ghc/fs_std.hpp"
 
 #include "LegacyEditor/LCE/include.hpp"
-#include "LegacyEditor/utils/processor.hpp"
 
 #include "LegacyEditor/unit_tests.hpp"
 
@@ -24,7 +24,7 @@ int main() {
     if (fileListing.read(TEST_IN) != 0) {
         return printf_err("failed to load file\n");
     }
-    const auto consoleIn = fileListing.console;
+    c_auto consoleIn = fileListing.console;
 
 
     fileListing.printDetails();

@@ -23,7 +23,7 @@
     Output, unsigned long CRC, the CRC of the string.
 */
 inline unsigned long crc(const char* bufferIn, const int len) {
-    const auto* buf = reinterpret_cast<const unsigned char*>(bufferIn);
+    c_auto* buf = reinterpret_cast<const unsigned char*>(bufferIn);
 
     unsigned long crc = 0xffffffffL;
     static unsigned long crc_table[256];

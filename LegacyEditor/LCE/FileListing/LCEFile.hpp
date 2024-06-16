@@ -1,8 +1,9 @@
 #pragma once
 
+#include "lce/processor.hpp"
+
 #include "LegacyEditor/utils/data.hpp"
 #include "LegacyEditor/utils/error_status.hpp"
-#include "LegacyEditor/utils/processor.hpp"
 
 
 class NBTTagCompound;

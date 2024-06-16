@@ -1,5 +1,7 @@
 #include "fileListing.hpp"
 
+#include "lce/processor.hpp"
+
 #include <cstdio>
 
 #include "include/ghc/fs_std.hpp"
@@ -11,7 +13,6 @@
 // #include "LegacyEditor/utils/LZX/XboxCompression.hpp"
 // #include "LegacyEditor/utils/tinf/tinf.h"
 
-#include "LegacyEditor/utils/processor.hpp"
 
 
 namespace editor {
@@ -27,10 +28,10 @@ namespace editor {
             fileCount++;
             fileDataSize += file.data.getSize();
         }
-        const u32 fileInfoOffset = fileDataSize + 12;
+        c_u32 fileInfoOffset = fileDataSize + 12;
 
         // step 2: find total binary size and create its data buffer
-        const u32 totalFileSize = fileInfoOffset + FILE_HEADER_SIZE * fileCount;
+        c_u32 totalFileSize = fileInfoOffset + FILE_HEADER_SIZE * fileCount;
 
         const Data dataOut(totalFileSize);
         DataManager managerOut(dataOut, consoleIsBigEndian(consoleOut));
@@ -65,14 +66,14 @@ namespace editor {
     }
 
 
-    int FileListing::write(stringRef_t outfileStr,
+    int FileListing::write(c_string_ref outfileStr,
                            const lce::CONSOLE consoleOut) {
         if (outfileStr.empty()) {
             printf("FileListing::write: filename is empty!");
             return INVALID_ARGUMENT;
         }
 
-        const bool differentConsole = console != consoleOut;
+        c_bool differentConsole = console != consoleOut;
 
         if (AUTO_REMOVE_PLAYERS && differentConsole) {
             removeFileTypes({editor::LCEFileType::PLAYER});
@@ -84,17 +85,17 @@ namespace editor {
 
         convertRegions(consoleOut);
 
-        const int status = writeFile(outfileStr, consoleOut);
+        c_int status = writeFile(outfileStr, consoleOut);
 
         if (fileInfo.isLoaded) {
-            MU const int status2 = writeFileInfo(outfileStr, consoleOut);
+            MU c_int status2 = writeFileInfo(outfileStr, consoleOut);
         }
 
         return status;
     }
 
 
-    int FileListing::writeFile(stringRef_t outfileStr,
+    int FileListing::writeFile(c_string_ref outfileStr,
                                const lce::CONSOLE consoleOut) {
         const Data dataOut = writeData(consoleOut);
 
@@ -135,7 +136,7 @@ namespace editor {
     }
 
 
-    int FileListing::writeFileInfo(stringRef_t outFilePath,
+    int FileListing::writeFileInfo(c_string_ref outFilePath,
                                    const lce::CONSOLE consoleOut) const {
         std::string filepath = outFilePath;
         while (filepath.back() != '\\' && filepath.back() != '/') {
@@ -165,12 +166,12 @@ namespace editor {
         }
 
 
-        const int status = fileInfo.writeFile(filepath, consoleOut);
+        c_int status = fileInfo.writeFile(filepath, consoleOut);
         return status;
     }
 
 
-    int FileListing::writeExternalRegions(MU stringRef_t outFilePath) {
+    int FileListing::writeExternalRegions(MU c_string_ref outFilePath) {
         printf("FileListing::writeExternalRegions: not implemented!");
         return NOT_IMPLEMENTED;
     }

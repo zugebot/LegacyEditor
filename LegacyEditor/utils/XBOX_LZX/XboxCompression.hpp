@@ -4,13 +4,13 @@
 #include <iostream>
 #include <cstring>
 
-#include "LegacyEditor/utils/processor.hpp"
+#include "lce/processor.hpp"
 
 // https://github.com/matchaxnb/wimlib/blob/master/src/lzx-compress.c
 
 
 /// the max "amount" here is 0xffff which is only 2^16 - 1, so it won't overflow (0xff < 8) | 0xff
-inline int hasOverFlow(const i64 bytesRead, const i64 size, const int amount) {
+inline int hasOverFlow(const i64 bytesRead, const i64 size, c_int amount) {
     if (bytesRead + amount > size) {
         printf("Tried to readBytes past buffer when decompressing buffer with xmem\n");
         return 1;
@@ -19,7 +19,7 @@ inline int hasOverFlow(const i64 bytesRead, const i64 size, const int amount) {
 }
 
 
-static int XDecompress(u8* output, const u32* sizeOut, const u8* input, const u32 sizeIn) {
+static int XDecompress(u8* output, c_u32* sizeOut, c_u8* input, c_u32 sizeIn) {
     auto* dst = static_cast<u8*>(malloc(0x8000));
     auto* src = static_cast<u8*>(malloc(0x8000));
     if (src == nullptr || dst == nullptr) {
@@ -113,7 +113,7 @@ static int XDecompress(u8* output, const u32* sizeOut, const u8* input, const u3
         }
         memcpy(src, input, src_size);
         input += src_size;
-        const int error = lzx_decompress(strm, src, dst, src_size, dst_size);
+        c_int error = lzx_decompress(strm, src, dst, src_size, dst_size);
         if (error == 0) {
             memcpy(outputPointer, dst, dst_size);
             outputPointer += dst_size;

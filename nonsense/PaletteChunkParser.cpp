@@ -46,9 +46,9 @@ void PaletteChunkParser::readNBTData(DataManager& inputData) {
 
 
 void PaletteChunkParser::readData(DataManager& inputData) {
-    std::vector<std::vector<uint8_t>> dataArray;
+    std::vector<std::vector<u8>> dataArray;
     for (int i = 0; i < 6; i++) {
-        std::vector<uint8_t> item = PaletteChunkParser::read128(inputData);
+        std::vector<u8> item = PaletteChunkParser::read128(inputData);
         dataArray.push_back(item);
     }
     this->LCE_ChunkData.DataGroupCount =
@@ -56,18 +56,18 @@ void PaletteChunkParser::readData(DataManager& inputData) {
 
     int segments[6] = {0, 0, 1, 1, 2, 2};
     int offsets[6] = {0, 0x4000, 0, 0x4000, 0, 0x4000};
-    std::vector<std::vector<uint8_t>> nibbleData = {std::vector<uint8_t>(0x8000), std::vector<uint8_t>(0x8000),
-                                                    std::vector<uint8_t>(0x8000)};
+    std::vector<std::vector<u8>> nibbleData = {std::vector<u8>(0x8000), std::vector<u8>(0x8000),
+                                                    std::vector<u8>(0x8000)};
 
     for (int j = 0; j < 6; j++) {
         int startingIndex = offsets[j];
         int currentLightSegment = segments[j];
-        std::vector<uint8_t> data = dataArray[j];
+        std::vector<u8> data = dataArray[j];
         for (int k = 0; k < 0x80; k++) {
-            uint8_t headerValue = data[k];
+            u8 headerValue = data[k];
             if (headerValue == 0x80 || headerValue == 0x81) {
                 PaletteChunkParser::copyByte128(nibbleData[currentLightSegment], k * 0x80 + startingIndex,
-                                                (headerValue == (uint8_t) 0x80) ? (uint8_t) 0 : (uint8_t) 255);
+                                                (headerValue == (u8) 0x80) ? (u8) 0 : (u8) 255);
             } else {
                 PaletteChunkParser::copyArray128(data, (int) ((headerValue + 1) * 0x80),
                                                  nibbleData[currentLightSegment], k * 0x80 + startingIndex);
@@ -81,24 +81,24 @@ void PaletteChunkParser::readData(DataManager& inputData) {
 
 
 void PaletteChunkParser::readDataOnlyForAccess(DataManager& inputData) {
-    std::vector<uint8_t> dataTo128 = PaletteChunkParser::read128(inputData);
-    std::vector<uint8_t> dataFrom128 = PaletteChunkParser::read128(inputData);
+    std::vector<u8> dataTo128 = PaletteChunkParser::read128(inputData);
+    std::vector<u8> dataFrom128 = PaletteChunkParser::read128(inputData);
 
-    std::vector<uint8_t> blockData(0x8000);
+    std::vector<u8> blockData(0x8000);
     for (int k = 0; k < 0x80; k++) {
-        uint8_t headerValue = dataTo128[k];
+        u8 headerValue = dataTo128[k];
         if (headerValue == 0x80 || headerValue == 0x81) {
             PaletteChunkParser::copyByte128(blockData, k * 0x80,
-                                            (headerValue == (uint8_t) 0x80) ? (uint8_t) 0 : (uint8_t) 255);
+                                            (headerValue == (u8) 0x80) ? (u8) 0 : (u8) 255);
         } else {
             PaletteChunkParser::copyArray128(dataTo128, (int) ((headerValue + 1) * 0x80), blockData, k * 0x80);
         }
     }
     for (int k = 0; k < 0x80; k++) {
-        uint8_t headerValue = dataFrom128[k];
+        u8 headerValue = dataFrom128[k];
         if (headerValue == 0x80 || headerValue == 0x81) {
             PaletteChunkParser::copyByte128(blockData, k * 0x80 + 0x4000,
-                                            (headerValue == (uint8_t) 0x80) ? (uint8_t) 0 : (uint8_t) 255);
+                                            (headerValue == (u8) 0x80) ? (u8) 0 : (u8) 255);
         } else {
             PaletteChunkParser::copyArray128(dataFrom128, (int) ((headerValue + 1) * 0x80), blockData,
                                              k * 0x80 + 0x4000);
@@ -107,38 +107,38 @@ void PaletteChunkParser::readDataOnlyForAccess(DataManager& inputData) {
     this->LCE_ChunkData.data = blockData;
 }
 
-std::vector<uint8_t> PaletteChunkParser::read256(DataManager& inputData) {
-    std::vector<uint8_t> array1 = inputData.readIntoVector(256);
+std::vector<u8> PaletteChunkParser::read256(DataManager& inputData) {
+    std::vector<u8> array1 = inputData.readIntoVector(256);
     return array1;
 }
 
-std::vector<uint8_t> PaletteChunkParser::read128(DataManager& inputData) {
+std::vector<u8> PaletteChunkParser::read128(DataManager& inputData) {
     int num = (int) inputData.readInt32();
-    std::vector<uint8_t> array1;
+    std::vector<u8> array1;
     array1 = inputData.readIntoVector((num + 1) * 0x80);
     return array1;
 }
 
-void PaletteChunkParser::copyByte128(std::vector<uint8_t>& writeVector, int writeOffset, uint8_t value) {
+void PaletteChunkParser::copyByte128(std::vector<u8>& writeVector, int writeOffset, u8 value) {
     for (int i = 0; i < 0x80; i++) { writeVector[writeOffset + i] = value; }
 }
 
-void PaletteChunkParser::copyArray128(std::vector<uint8_t>& readVector, int readOffset,
-                                      std::vector<uint8_t>& writeVector, int writeOffset) {
+void PaletteChunkParser::copyArray128(std::vector<u8>& readVector, int readOffset,
+                                      std::vector<u8>& writeVector, int writeOffset) {
     for (int i = 0; i < 0x80; i++) { writeVector[writeOffset + i] = readVector[readOffset + i]; }
 }
 
 void PaletteChunkParser::parseBlocks(DataManager& inputData) {
-    this->LCE_ChunkData.blocks = std::vector<uint8_t>(0x10000);
+    this->LCE_ChunkData.blocks = std::vector<u8>(0x10000);
     for (int loop = 0; loop < 2; ++loop) {
         uint32_t blockLength = inputData.readInt32();
         blockLength -= 1024;
-        std::vector<uint8_t> header = inputData.readIntoVector(1024);
+        std::vector<u8> header = inputData.readIntoVector(1024);
         if (blockLength > 0) {
-            std::vector<uint8_t> data = inputData.readIntoVector((int) blockLength);
+            std::vector<u8> data = inputData.readIntoVector((int) blockLength);
             for (int i = 0; i < 1024; i += 2) {
-                uint8_t byte1 = header[i];
-                uint8_t byte2 = header[i + 1];
+                u8 byte1 = header[i];
+                u8 byte2 = header[i + 1];
                 int fillOffset = (loop == 0) ? 0 : 32768;
                 int putBlockOffset = fillOffset;
 
@@ -149,8 +149,8 @@ void PaletteChunkParser::parseBlocks(DataManager& inputData) {
                 } else {
                     int dataOffset = (byte1 & 252) / 2 + byte2 * 128;
                     int gridPosition = 1054 + dataOffset; // 1024 for header, and 30 for start
-                    uint8_t format = byte1 & 3;
-                    uint8_t grid[64];
+                    u8 format = byte1 & 3;
+                    u8 grid[64];
 
                     switch (format) {
                         case 0:
@@ -176,9 +176,9 @@ void PaletteChunkParser::parseBlocks(DataManager& inputData) {
     }
 }
 
-void PaletteChunkParser::fillWithByte(std::vector<uint8_t>& writeVector, int writeOffset, int counter,
-                                      uint8_t fillByte) {
-    uint8_t grid[64];
+void PaletteChunkParser::fillWithByte(std::vector<u8>& writeVector, int writeOffset, int counter,
+                                      u8 fillByte) {
+    u8 grid[64];
     int offset = PaletteChunkParser::calculateOffset(counter);
     for (unsigned char& i: grid) { i = fillByte; }
     PaletteChunkParser::putBlocks(writeVector, grid, writeOffset, offset);
@@ -192,13 +192,13 @@ int PaletteChunkParser::calculateOffset(int value) {
 }
 
 
-void PaletteChunkParser::maxBlocks(uint8_t const* buffer, uint8_t* grid) {
+void PaletteChunkParser::maxBlocks(u8 const* buffer, u8* grid) {
     std::copy_n(buffer, 64, grid);
 }
 
 
 void PaletteChunkParser::putBlocks(
-        std::vector<uint8_t>& writeVector, const uint8_t* readArray,
+        std::vector<u8>& writeVector, c_u8 * readArray,
         int writeOffset, int readOffset) {
     int num = 0;
     for (int i = 0; i < 4; i++) {
@@ -212,9 +212,9 @@ void PaletteChunkParser::putBlocks(
 }
 
 template<size_t BitsPerBlock>
-bool PaletteChunkParser::parse(uint8_t const* buffer, uint8_t* grid) {
+bool PaletteChunkParser::parse(u8 const* buffer, u8* grid) {
     int size = (1 << BitsPerBlock);
-    std::vector<uint8_t> palette(size);
+    std::vector<u8> palette(size);
     std::copy_n(buffer, size, palette.begin());
     int totalIndices = BitsPerBlock * 8;
     int blocksPerByte = 8 / BitsPerBlock;
