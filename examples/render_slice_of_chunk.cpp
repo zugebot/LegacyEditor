@@ -15,14 +15,6 @@
 
 
 int main() {
-
-
-    lce::registry::BlockRegistry blockReg;
-    blockReg.setup();
-    std::cout << blockReg.getBlockFromID(1)->getName() << std::endl;
-
-
-
     PREPARE_UNIT_TESTS();
 
     const std::string TEST_IN = wiiu + R"(230918230206)";
@@ -48,10 +40,16 @@ int main() {
     chunk->ensureDecompress(consoleIn);
     chunk->readChunk(consoleIn);
 
+    // this code has no purpose being here other than for show and tell
+    lce::registry::BlockRegistry blockReg;
+    blockReg.setup();
+    std::cout << blockReg.getBlockFromID(1)->getName() << std::endl;
 
-
+    // set up texture object and output folder
+    fs::create_directory("render");
     lce::registry::TextureRegistry textures;
     textures.setup();
+
     const int CHUNK_HEIGHT = 96;
     for (int zIter = 0; zIter < 16; zIter++) {
         Picture chunkRender(16 * 16, CHUNK_HEIGHT * 16, 4);
