@@ -41,11 +41,11 @@ namespace editor {
             folder = /*dir_path +*/ "dump/" + consoleToStr(console);
         }
 
+
         if (folder.length() < 20) {
             printf("tried to delete short directory, will not risk\n");
             return FILE_ERROR;
         }
-
         if (const fs::path _dir_path{folder}; exists(_dir_path) && is_directory(_dir_path)) {
             for (c_auto &entry: fs::directory_iterator(_dir_path)) {
                 try {
@@ -56,8 +56,9 @@ namespace editor {
             }
         }
 
+
         for (const LCEFile &file: allFiles) {
-            std::string fullPath = folder + "\\" + file.constructFileName(console, hasSeparateRegions);
+            std::string fullPath = folder + "/" + file.constructFileName(console, hasSeparateRegions);
 
             if (fs::path path(fullPath); !exists(path.parent_path())) {
                 create_directories(path.parent_path());
@@ -331,7 +332,6 @@ namespace editor {
                 ++iter;
                 continue;
             }
-
             c_i16 regionX = iter->nbt->getTag("x").toPrim<i16>();
             c_i16 regionZ = iter->nbt->getTag("z").toPrim<i16>();
 
@@ -342,6 +342,8 @@ namespace editor {
                 ++iter;
             }
         }
+
+
         clearPointers();
         updatePointers();
     }

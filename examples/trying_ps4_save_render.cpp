@@ -9,7 +9,9 @@
 
 #include "LegacyEditor/utils/timer.hpp"
 
-#include "/LegacyEditor/unit_tests.hpp"
+#include "LegacyEditor/unit_tests.hpp"
+#include "lce/registry/blockRegistry.hpp"
+#include "lce/registry/textureRegistry.hpp"
 
 
 int main() {
@@ -56,7 +58,7 @@ int main() {
 
     // editor::map::saveMapToPng(fileListing.maps[0], R"(C:\Users\jerrin\CLionProjects\LegacyEditor\)");
 
-    if (fileListing.saveToFolder() != 0) {
+    if (fileListing.saveToFolder("C:/Users/jerrin/CLionProjects/LegacyEditor/dump/ps4") != 0) {
         return printf_err("failed to save files to folder\n");
     }
 
@@ -66,6 +68,14 @@ int main() {
     fileListing.pruneRegions();
     fileListing.printFileList();
     fileListing.printDetails();
+
+
+    lce::registry::BlockRegistry blockReg;
+    blockReg.setup();
+
+    fs::create_directory("render");
+    lce::registry::TextureRegistry textures;
+    textures.setup();
 
 
     // figure out the bounds of each of the regions
@@ -78,18 +88,18 @@ int main() {
         int chunkIndex = -1;
         auto chunkCoords = std::map<int, std::pair<int, int>>();
 
+        auto* chunky = region.getNonEmptyChunk();
+
         for (auto& chunk : region.chunks) {
             chunkIndex++;
             if (chunk.size == 0) { continue; }
 
             chunk.ensureDecompress(fileListing.console);
-
             /*
             if (chunksOut < 5) {
                 DataManager chunkOut(chunk.data, chunk.size);
                 chunkOut.writeToFile(dir_path + "chunk" + std::to_string(chunksOut++));
             }*/
-
             chunk.readChunk(fileListing.console);
             c_auto* chunkData = chunk.chunkData;
             if (!chunkData->validChunk) { continue; }
@@ -97,8 +107,32 @@ int main() {
             chunkCoords[chunkIndex] = std::make_pair(chunkData->chunkX, chunkData->chunkZ);
 
 
-            chunk.writeChunk(fileListing.console);
-            chunk.ensureCompressed(fileListing.console);
+            const int zIter = 0;
+            const int CHUNK_HEIGHT = 128;
+
+            Picture chunkRender(16 * 16, CHUNK_HEIGHT * 16, 4);
+
+            for (int xIter = 0; xIter < 16; xIter++) {
+                for (int yIter = 0; yIter < CHUNK_HEIGHT; yIter++) {
+                    u16 block_id = editor::chunk::getBlock(chunk.chunkData, xIter, yIter, zIter) >> 4;
+                    Picture const* block_texture = textures.getBlockFromID(block_id);
+                    if (block_texture != nullptr) {
+                        const int xPix = xIter * 16;
+                        const int yPix = (CHUNK_HEIGHT - yIter - 1) * 16;
+                        chunkRender.placeSubImage(block_texture, xPix, yPix);
+                    }
+                }
+            }
+
+            chunkRender.saveWithName("chunk_render[" + std::to_string(chunkData->chunkX) + ", "
+                                             + std::to_string(chunkData->chunkZ) + "].png", "render/");
+
+
+
+
+
+            // chunk.writeChunk(fileListing.console);
+            // chunk.ensureCompressed(fileListing.console);
         }
 
         printf("done!");

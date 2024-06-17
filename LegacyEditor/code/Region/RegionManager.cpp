@@ -61,6 +61,7 @@ namespace editor {
 
         DataManager managerIn(dataIn, consoleIsBigEndian(console));
 
+
         for (chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
             c_u32 val = managerIn.readInt32();
             sectors[chunkIndex] = val & 0xFF;

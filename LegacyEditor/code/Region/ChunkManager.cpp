@@ -57,7 +57,7 @@ namespace editor {
                 chunk::ChunkV12(chunkData, &managerIn).readChunk();
                 break;
             case V_13:
-                // chunk::ChunkV13(chunkData, &managerIn).readChunk();
+                chunk::ChunkV13(chunkData, &managerIn).readChunk();
                 break;
             default:;
         }

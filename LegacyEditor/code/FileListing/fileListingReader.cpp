@@ -343,7 +343,7 @@ namespace editor {
             // TODO: get timestamp from file itself
             u32 timestamp = 0;
             // TODO: should not be CONSOLE::NONE
-            allFiles.emplace_back(lce::CONSOLE::NONE, dat_out.data, fileSize, timestamp);
+            allFiles.emplace_back(lce::CONSOLE::PS4, dat_out.data, fileSize, timestamp);
             LCEFile &lFile = allFiles.back();
             if (c_auto dimChar = static_cast<char>(static_cast<int>(filename.at(12)) - 48);
                 dimChar < 0 || dimChar > 2) {

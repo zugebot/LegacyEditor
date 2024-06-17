@@ -41,5 +41,5 @@ add_executable(LegacyEditor
     ${LEGACY_EDITOR_SOURCES}
     ${LCE_RESOURCES}
     ${INCLUDE_SOURCES}
-    examples/render_slice_of_chunk.cpp
+    examples/trying_ps4_save_render.cpp
 )

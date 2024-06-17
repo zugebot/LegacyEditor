@@ -15,13 +15,13 @@ extern std::string ps3_;
 std::string dir_path, out_path, wiiu, ps3_;
 std::map<std::string, std::pair<std::string, std::string>> TESTS;
 void TEST_PAIR(const std::string &key, const std::string &path_in, const std::string &out) {
-    std::string pathIn = dir_path + R"(saves\)" + path_in;
+    std::string pathIn = dir_path + R"(tests\)" + path_in;
     std::pair<std::string, std::string> pair = std::make_pair(pathIn, out);
     TESTS.insert(std::make_pair(key, pair));
 }
 
 static void PREPARE_UNIT_TESTS() {
-    dir_path = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\LegacyEditor\)";
+    dir_path = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\)";
     out_path = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\)";
     const std::string out_build = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\out\)";
     wiiu = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\)";
