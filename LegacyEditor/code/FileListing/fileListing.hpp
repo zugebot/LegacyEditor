@@ -8,8 +8,8 @@
 #include "lce/processor.hpp"
 
 #include "LCEFile.hpp"
-#include "LegacyEditor/LCE/FileInfo/FileInfo.hpp"
-#include "LegacyEditor/LCE/Region/RegionManager.hpp"
+#include "LegacyEditor/code/FileInfo/FileInfo.hpp"
+#include "LegacyEditor/code/Region/RegionManager.hpp"
 #include "LegacyEditor/utils/error_status.hpp"
 
 

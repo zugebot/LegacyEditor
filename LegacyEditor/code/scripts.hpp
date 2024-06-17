@@ -1,8 +1,8 @@
 #pragma once
 
-#include "LegacyEditor/LCE/Chunk/modifiers.hpp"
-#include "LegacyEditor/LCE/FileListing/fileListing.hpp"
-#include "LegacyEditor/LCE/Region/RegionManager.hpp"
+#include "LegacyEditor/code/Chunk/modifiers.hpp"
+#include "LegacyEditor/code/FileListing/fileListing.hpp"
+#include "LegacyEditor/code/Region/RegionManager.hpp"
 #include <cstring>
 namespace editor {
 

@@ -4,8 +4,8 @@
 
 #include "include/ghc/fs_std.hpp"
 
-#include "LegacyEditor/LCE/FileInfo/FileInfo.hpp"
-#include "LegacyEditor/LCE/include.hpp"
+#include "LegacyEditor/code/FileInfo/FileInfo.hpp"
+#include "LegacyEditor/code/include.hpp"
 
 #include "LegacyEditor/utils/timer.hpp"
 
@@ -126,7 +126,7 @@ int main() {
 
 
     // edit regions (threaded)
-    // add functions to "LegacyEditor/LCE/scripts.hpp"
+    // add functions to "LegacyEditor/code/scripts.hpp"
     c_auto timer = Timer();
 
     // run_parallel<32>(editor::convertElytraToAquaticChunks, std::ref(fileListing));

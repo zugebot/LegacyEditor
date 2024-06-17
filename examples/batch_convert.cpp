@@ -4,7 +4,7 @@
 
 #include "include/ghc/fs_std.hpp"
 
-#include "LegacyEditor/LCE/include.hpp"
+#include "LegacyEditor/code/include.hpp"
 
 
 void waitForEnter() {

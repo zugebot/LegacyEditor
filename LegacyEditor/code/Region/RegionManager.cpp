@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-#include "LegacyEditor/LCE/FileListing/LCEFile.hpp"
+#include "LegacyEditor/code/FileListing/LCEFile.hpp"
 #include "LegacyEditor/utils/dataManager.hpp"
 #include "LegacyEditor/utils/error_status.hpp"
 

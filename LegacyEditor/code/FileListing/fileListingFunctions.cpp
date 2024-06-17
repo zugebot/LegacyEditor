@@ -6,7 +6,7 @@
 #include "include/ghc/fs_std.hpp"
 
 #include "LegacyEditor/utils/NBT.hpp"
-#include "LegacyEditor/LCE/Region/RegionManager.hpp"
+#include "LegacyEditor/code/Region/RegionManager.hpp"
 
 
 namespace editor {

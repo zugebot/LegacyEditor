@@ -8,7 +8,7 @@
 #include "include/tinf/tinf.h"
 #include "include/zlib-1.2.12/zlib.h"
 
-#include "LegacyEditor/LCE/BinFile/BINSupport.hpp"
+#include "LegacyEditor/code/BinFile/BINSupport.hpp"
 #include "LegacyEditor/utils/NBT.hpp"
 #include "LegacyEditor/utils/RLE/rle_vita.hpp"
 #include "LegacyEditor/utils/XBOX_LZX/XboxCompression.hpp"

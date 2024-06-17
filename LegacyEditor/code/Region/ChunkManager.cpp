@@ -8,12 +8,12 @@
 #include "LegacyEditor/utils/XBOX_LZX/XboxCompression.hpp"
 #include "LegacyEditor/utils/PS3_DEFLATE/deflateUsage.hpp"
 #include "LegacyEditor/utils/RLE/rle.hpp"
-#include "LegacyEditor/LCE/Chunk/chunkData.hpp"
+#include "LegacyEditor/code/Chunk/chunkData.hpp"
 
-#include "LegacyEditor/LCE/Chunk/v10.hpp"
-#include "LegacyEditor/LCE/Chunk/v11.hpp"
-#include "LegacyEditor/LCE/Chunk/v12.hpp"
-#include "LegacyEditor/LCE/Chunk/v13.hpp"
+#include "LegacyEditor/code/Chunk/v10.hpp"
+#include "LegacyEditor/code/Chunk/v11.hpp"
+#include "LegacyEditor/code/Chunk/v12.hpp"
+#include "LegacyEditor/code/Chunk/v13.hpp"
 
 
 namespace editor {

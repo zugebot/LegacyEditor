@@ -3,7 +3,7 @@
 
 #include "lce/include/picture.hpp"
 
-#include "LegacyEditor/LCE/FileListing/LCEFile.hpp"
+#include "LegacyEditor/code/FileListing/LCEFile.hpp"
 #include "LegacyEditor/utils/NBT.hpp"
 
 

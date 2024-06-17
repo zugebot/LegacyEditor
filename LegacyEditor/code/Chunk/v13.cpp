@@ -3,7 +3,7 @@
 #include <cstring>
 #include <algorithm>
 
-#include "LegacyEditor/LCE/Chunk/helpers.hpp"
+#include "LegacyEditor/code/Chunk/helpers.hpp"
 #include "LegacyEditor/utils/NBT.hpp"
 #include "LegacyEditor/utils/dataManager.hpp"
 

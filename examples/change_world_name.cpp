@@ -1,5 +1,5 @@
 #include "../LegacyEditor/unit_tests.hpp"
-#include "LegacyEditor/LCE/include.hpp"
+#include "LegacyEditor/code/include.hpp"
 #include "LegacyEditor/utils/RLE/rle_nsxps4.hpp"
 
 int main() {
