@@ -13,7 +13,7 @@
  * @param dataOut a pointer to allocated buffer_out
  * @param sizeOut the size of the allocated buffer_out
  */
-static u32 RLE_NSXPS4_DECOMPRESS(u8* dataIn, c_u32 sizeIn, u8* dataOut, c_u32 sizeOut) {
+static u32 RLE_NSX_OR_PS4_DECOMPRESS(u8* dataIn, c_u32 sizeIn, u8* dataOut, c_u32 sizeOut) {
     DataManager managerIn(dataIn, sizeIn);
     DataManager managerOut(dataOut, sizeOut);
 

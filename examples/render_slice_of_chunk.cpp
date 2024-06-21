@@ -27,7 +27,7 @@ int main() {
     if (fileListing.read(TEST_IN) != 0) {
         return printf_err("failed to load file\n");
     }
-    c_auto consoleIn = fileListing.console;
+    c_auto consoleIn = fileListing.myConsole;
 
 
     fileListing.printDetails();

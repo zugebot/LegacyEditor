@@ -2,11 +2,13 @@
 
 #include <cstdio>
 #include <sstream>
+#include <regex>
 
 
 #include "include/ghc/fs_std.hpp"
 #include "include/tinf/tinf.h"
 #include "include/zlib-1.2.12/zlib.h"
+#include "include/sfo/sfo.hpp"
 
 #include "LegacyEditor/code/BinFile/BINSupport.hpp"
 #include "LegacyEditor/utils/NBT.hpp"
@@ -65,14 +67,14 @@ namespace editor {
 
 
     void FileListing::readData(const Data &dataIn) {
-        DataManager managerIn(dataIn, consoleIsBigEndian(console));
+        DataManager managerIn(dataIn, consoleIsBigEndian(myConsole));
 
         c_u32 indexOffset = managerIn.readInt32();
         c_u32 fileCount = managerIn.readInt32();
-        oldestVersion = managerIn.readInt16();
-        currentVersion = managerIn.readInt16();
+        myOldestVersion = managerIn.readInt16();
+        myCurrentVersion = managerIn.readInt16();
 
-        allFiles.clear();
+        myAllFiles.clear();
 
         u32 total_size = 0;
         u32 non_empty_file_count = 0;
@@ -96,8 +98,8 @@ namespace editor {
             u8* data = managerIn.readBytes(fileSize);
 
             // TODO: make sure all files are set with the correct console
-            allFiles.emplace_back(console, data, fileSize, timestamp);
-            LCEFile &file = allFiles.back();
+            myAllFiles.emplace_back(myConsole, data, fileSize, timestamp);
+            LCEFile &file = myAllFiles.back();
 
             // region file
             non_empty_file_count++;
@@ -154,8 +156,8 @@ namespace editor {
             if (fileName.starts_with("data/")) {
                 file.fileType = LCEFileType::STRUCTURE;
                 file.nbt->setString("filename", fileName);
-                if (fileName.starts_with("data/villages_") && console == lce::CONSOLE::SWITCH) {
-                    console = lce::CONSOLE::PS4;
+                if (fileName.starts_with("data/villages_") && myConsole == lce::CONSOLE::SWITCH) {
+                    myConsole = lce::CONSOLE::PS4;
                 }
                 continue;
             }
@@ -180,34 +182,43 @@ namespace editor {
     }
 
 
-    int FileListing::read(c_string_ref inFileStr, c_bool readEXTFile) {
+    int FileListing::read(const fs::path& inFilePath, c_bool readEXTFile) {
+        // reads the main gamedata file
+        int status = readFile(inFilePath);
 
-        c_int status = readFile(inFileStr);
-
-        // create file path / root
-        std::string filepath = filename;
-        while (filepath.back() != '\\' && filepath.back() != '/') {
-            filepath.pop_back();
+        // reads the associated fileInfo
+        if (readEXTFile && !myHasLoadedFileInfo) {
+            fs::path fileDir = myFilePath.parent_path();
+            c_int status2 = readFileInfo(fileDir);
         }
 
-        if (readEXTFile && !hasLoadedFileInfo) {
-            c_int status2 = readFileInfo(filepath);
+        // reads ps4 external regions
+        if (myConsole == lce::CONSOLE::PS4) {
+            auto folders = findExternalRegionFolders();
+            for (c_auto& folder : folders) {
+                status = readExternalRegions(folder);
+                if (status != 0) { break; }
+            }
         }
 
         return status;
     }
 
 
-    int FileListing::readFile(c_string_ref inFilePath) {
-        Data data;
+    int FileListing::readFile(const fs::path& inFilePath) {
+        myFilePath = inFilePath;
 
-        const char* inFileCStr = inFilePath.c_str();
-        FILE *f_in = fopen(inFileCStr, "rb");
-        if (f_in == nullptr) {
-            printf("Cannot open infile %s\n\n", inFileCStr);
-            return FILE_ERROR;
+        Data data;
+        FILE *f_in;
+
+        {
+            std::string inFileStr = myFilePath.string();
+            f_in = fopen(inFileStr.c_str(), "rb");
+            if (f_in == nullptr) {
+                printf("Cannot open infile %s\n\n", inFileStr.c_str());
+                return FILE_ERROR;
+            }
         }
-        filename = inFilePath;
 
         fseek(f_in, 0, SEEK_END);
         c_u64 source_bin_size = ftell(f_in);
@@ -225,6 +236,14 @@ namespace editor {
                 if (headerUnion.getInt2Swapped() < file_size) {
                     file_size = headerUnion.getInt2Swapped();
                     result = readNSXorPS4(f_in, data, source_bin_size, file_size);
+
+                    // has to figure out whether it is ps4 or switch
+                    std::string parentDir = myFilePath.parent_path().filename().string();
+                    if (parentDir == "savedata0") {
+                        myConsole = lce::CONSOLE::PS4;
+                    } else {
+                        myConsole = lce::CONSOLE::SWITCH;
+                    }
                 } else {
                     result = readWiiU(f_in, data, source_bin_size, file_size);
                 }
@@ -262,8 +281,9 @@ namespace editor {
             readData(data);
 
             // sets corresponding state booleans
-            if (console == lce::CONSOLE::PS4 || console == lce::CONSOLE::SWITCH) {
-                hasSeparateRegions = true;
+            if (myConsole == lce::CONSOLE::PS4
+                || myConsole == lce::CONSOLE::SWITCH) {
+                myHasSeparateRegions = true;
                 hasSeparateEntities = true;
             }
         }
@@ -271,23 +291,24 @@ namespace editor {
     }
 
 
-    int FileListing::readFileInfo(c_string_ref inFilePath) {
-        std::string filepath = inFilePath;
+    int FileListing::readFileInfo(const fs::path& inDirPath) {
+        fs::path filePath = inDirPath;
 
-        switch (console) {
+        switch (myConsole) {
             case lce::CONSOLE::XBOX360:
                 return NOT_IMPLEMENTED;
             case lce::CONSOLE::PS3:
             case lce::CONSOLE::RPCS3:
             case lce::CONSOLE::PS4:
-                filepath += "THUMB";
+                filePath /= "THUMB";
                 break;
             case lce::CONSOLE::VITA:
-                filepath += "THUMBDATA.BIN";
+                filePath /= "THUMBDATA.BIN";
                 break;
             case lce::CONSOLE::WIIU:
             case lce::CONSOLE::SWITCH: {
-                filepath = filename + ".ext";
+                filePath = myFilePath;
+                filePath += ".ext";
                 break;
             }
             case lce::CONSOLE::XBOX1:
@@ -297,9 +318,9 @@ namespace editor {
                 return INVALID_CONSOLE;
         }
 
-        if (fs::exists(filepath)) {
-            fileInfo.readFile(filepath);
-            hasLoadedFileInfo = true;
+        if (fs::exists(filePath)) {
+            fileInfo.readFile(filePath, myConsole);
+            myHasLoadedFileInfo = true;
 
         } else {
             printf("FileInfo file not found...\n");
@@ -309,65 +330,7 @@ namespace editor {
     }
 
 
-    /**
-     * \brief
-     * \param inFilePath the directory containing the GAMEDATA files.
-     * \return
-     */
-    int FileListing::readExternalRegions(c_string_ref inFilePath) {
-        int fileIndex = -1;
-        for (c_auto& file :
-            fs::directory_iterator(inFilePath)) {
 
-            // TODO: place non-used files in a cache?
-            if (is_directory(file)) { continue; }
-            fileIndex++;
-
-            // initiate filename and filepath
-            std::string filepath_in = file.path().string();
-            std::string filename = file.path().filename().string();
-
-            // open the file
-            DataManager manager_in;
-            manager_in.setLittleEndian();
-            manager_in.readFromFile(filepath_in);
-            c_u32 fileSize = manager_in.readInt32();
-
-            Data dat_out(fileSize);
-            const DataManager manager_out(dat_out);
-            RLE_NSXPS4_DECOMPRESS(manager_in.ptr, manager_in.size - 4,
-                                 manager_out.ptr, manager_out.size);
-
-            // manager_out.writeToFile("C:\\Users\\Jerrin\\CLionProjects\\LegacyEditor\\out\\" + filename);
-
-            // TODO: get timestamp from file itself
-            u32 timestamp = 0;
-            // TODO: should not be CONSOLE::NONE
-            allFiles.emplace_back(lce::CONSOLE::PS4, dat_out.data, fileSize, timestamp);
-            LCEFile &lFile = allFiles.back();
-            if (c_auto dimChar = static_cast<char>(static_cast<int>(filename.at(12)) - 48);
-                dimChar < 0 || dimChar > 2) {
-                lFile.fileType = LCEFileType::NONE;
-            } else {
-                static constexpr LCEFileType regDims[3] = {
-                    LCEFileType::REGION_OVERWORLD,
-                    LCEFileType::REGION_NETHER,
-                    LCEFileType::REGION_END
-                };
-                lFile.fileType = regDims[dimChar];
-            }
-            c_i16 rX = static_cast<i8>(strtol(
-                filename.substr(13, 2).c_str(), nullptr, 16));
-            c_i16 rZ = static_cast<i8>(strtol(
-                filename.substr(15, 2).c_str(), nullptr, 16));
-            lFile.nbt->setTag("x", createNBT_INT16(rX));
-            lFile.nbt->setTag("z", createNBT_INT16(rZ));
-        }
-
-        updatePointers();
-
-        return SUCCESS;
-    }
 
 
     /**
@@ -379,7 +342,7 @@ namespace editor {
     int FileListing::readVita(FILE* f_in, Data& data,
         u64 source_binary_size, c_u32 file_size) {
         printf("Detected Vita savefile, converting\n\n");
-        console = lce::CONSOLE::VITA;
+        myConsole = lce::CONSOLE::VITA;
 
         // total size of file
         source_binary_size -= 8;
@@ -404,7 +367,7 @@ namespace editor {
     int FileListing::readWiiU(FILE* f_in, Data& data,
         u64 source_binary_size, c_u32 file_size) {
         printf("Detected WiiU savefile, converting\n\n");
-        console = lce::CONSOLE::WIIU;
+        myConsole = lce::CONSOLE::WIIU;
 
         // total size of file
         source_binary_size -= 8;
@@ -431,14 +394,14 @@ namespace editor {
     int FileListing::readNSXorPS4(FILE* f_in, Data& data,
         u64 source_binary_size, c_u32 file_size) {
         printf("Detected Switch/Ps4 savefile, converting\n\n");
-        console = lce::CONSOLE::SWITCH;
+        myConsole = lce::CONSOLE::PS4_OR_NSX;
 
         if(!data.allocate(file_size)) {
             return MALLOC_FAILED;
         }
 
         source_binary_size -= 8;
-        auto src = Data(source_binary_size);
+        Data src(source_binary_size);
         fseek(f_in, 8, SEEK_SET);
         fread(src.start(), 1, source_binary_size, f_in);
 
@@ -458,7 +421,7 @@ namespace editor {
     int FileListing::readPs3(FILE* f_in, Data& data,
         c_u64 source_binary_size, u32 file_size) {
         printf("Detected compressed PS3 savefile, converting\n\n");
-        console = lce::CONSOLE::PS3;
+        myConsole = lce::CONSOLE::PS3;
 
         // destination
         if (!data.allocate(file_size)) {
@@ -484,7 +447,7 @@ namespace editor {
     int FileListing::readRpcs3(FILE* f_in, Data& data,
         c_u64 source_binary_size) {
         printf("Detected uncompressed PS3 / RPCS3 savefile, converting\n\n");
-        console = lce::CONSOLE::RPCS3;
+        myConsole = lce::CONSOLE::RPCS3;
         if (!data.allocate(source_binary_size)) {
             return MALLOC_FAILED;
         }
@@ -497,7 +460,7 @@ namespace editor {
     int FileListing::readXbox360DAT(FILE* f_in, Data& data,
         c_u32 file_size, c_u32 src_size) {
         printf("Detected Xbox360 .dat savefile, converting\n\n");
-        console = lce::CONSOLE::XBOX360;
+        myConsole = lce::CONSOLE::XBOX360;
 
         // allocate destination memory
         if (!data.allocate(file_size)) {
@@ -521,7 +484,7 @@ namespace editor {
     // TODO: IDK if it should but it is for now, get fileInfo out of it, fix memory leaks
     int FileListing::readXbox360BIN(FILE* f_in, Data& data,
         c_u64 source_binary_size) {
-        console = lce::CONSOLE::XBOX360;
+        myConsole = lce::CONSOLE::XBOX360;
 
         printf("Detected Xbox360 .bin savefile, converting\n\n");
 

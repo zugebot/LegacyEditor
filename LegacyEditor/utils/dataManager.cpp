@@ -1,5 +1,7 @@
 #include "dataManager.hpp"
 
+#include <filesystem>
+
 #include "LegacyEditor/code/FileListing/LCEFile.hpp"
 
 
@@ -271,10 +273,33 @@ std::wstring DataManager::readNullTerminatedWString() {
 }
 
 
+/**
+ * Only used by nintendo switch edition...
+ * @return
+ */
+std::wstring DataManager::readNullTerminatedWWWString() {
+    std::wstring returnString;
+    wchar_t nextChar1;
+    wchar_t nextChar2;
+    while (true) {
+        nextChar1 = readInt16();
+        nextChar2 = readInt16();
+        if (nextChar1 == 0 && nextChar2 == 0) {
+            break;
+        }
+        returnString += nextChar1;
+    }
+    return returnString;
+}
+
+
+
 std::wstring DataManager::readWString(c_u32 length) {
     std::wstring returnString;
     for (u32 i = 0; i < length; i++) {
-        if (c_auto c = static_cast<wchar_t>(this->readInt16()); c != 0) { returnString += c; }
+        if (c_auto c = static_cast<wchar_t>(this->readInt16()); c != 0) {
+            returnString += c;
+        }
     }
     return returnString;
 }
@@ -561,6 +586,28 @@ void DataManager::writeWString(const std::wstring& wstr, c_u32 upperbounds) {
     for (u32 i = 0; i < upperbounds && i < wstr_size_min; ++i) {
         writeInt16(wstr[i]);
     }
+    // hack, write null char if there is space
+    if (wstr_size_min < upperbounds) {
+        writeInt16(0);
+    }
+}
+
+
+/**
+ * Only used by nintendo switch edition...
+ * @param wstr
+ * @param upperbounds
+ */
+void DataManager::writeWWWString(const std::wstring& wstr, c_u32 upperbounds) {
+    c_u32 wstr_size_min = std::min(static_cast<u32>(wstr.size()), upperbounds);
+    for (u32 i = 0; i < upperbounds && i < wstr_size_min; ++i) {
+        writeInt16(wstr[i]);
+        writeInt16(0);
+    }
+    // hack, write null char if there is space
+    if (wstr_size_min < upperbounds) {
+        writeInt32(0);
+    }
 }
 
 
@@ -586,26 +633,32 @@ void DataManager::writeWStringFromString(const std::string& str, c_u32 upperboun
     }
 }
 
-int DataManager::writeToFile(const std::string& fileName) const {
-    FILE* f_out = fopen(fileName.c_str(), "wb");
+int DataManager::writeToFile(const fs::path& inFilePath) const {
+    std::string inFileStr = inFilePath.string();
+
+    FILE *f_out = fopen(inFileStr.c_str(), "wb");
     if (f_out == nullptr) {
-        printf("Failed to write data to output file '%s'\n", fileName.c_str());
+        printf("Failed to write data to output file '%s'\n", inFileStr.c_str());
         return -1;
     }
     fwrite(data, 1, size, f_out);
     fclose(f_out);
+
+
     return 0;
 }
 
 
-int DataManager::writeToFile(c_u8* ptrIn, c_u32 sizeIn, const std::string& fileName) const {
-    FILE* f_out = fopen(fileName.c_str(), "wb");
+int DataManager::writeToFile(c_u8* ptrIn, c_u32 sizeIn, const fs::path& inFilePath) const {
+    std::string inFileStr = inFilePath.string();
+
+    FILE* f_out = fopen(inFileStr.c_str(), "wb");
     if (f_out == nullptr) {
-        printf("Failed to write data to output file '%s'", fileName.c_str());
+        printf("Failed to write data to output file '%s'", inFileStr.c_str());
         return 1;
     }
     if (ptrIn < data || ptrIn + sizeIn > data + size) {
-        printf("Tried to write data out of bounds '%s'", fileName.c_str());
+        printf("Tried to write data out of bounds '%s'", inFileStr.c_str());
         return 1;
     }
 

@@ -21,10 +21,10 @@ int main() {
     editor::FileListing::AUTO_REMOVE_PLAYERS = false;
 
     editor::FileListing fileListing;
-    if (fileListing.read(TEST_IN) != 0) {
+    if (fileListing.read(TEST_IN, true) != 0) {
         return printf_err("failed to load file\n");
     }
-    c_auto consoleIn = fileListing.console;
+    c_auto consoleIn = fileListing.myConsole;
 
 
     fileListing.printDetails();
@@ -43,10 +43,10 @@ int main() {
     chunk->writeChunk(consoleOut);
     chunk->ensureCompressed(consoleOut);
 
-    fileListing.region_overworld[2]->data.deallocate();
-    fileListing.region_overworld[2]->data = region.write(consoleOut);
+    fileListing.replaceRegionOW(2, region, consoleOut);
 
-    // fileListing.fileInfo.basesavename = L"Fortnite";
+    fileListing.fileInfo.basesavename = L"Fortnite";
+
     const int statusOut = fileListing.write(TEST_OUT, consoleOut);
     if (statusOut != 0) {
         return printf_err({"converting to "

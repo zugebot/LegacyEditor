@@ -48,7 +48,7 @@ namespace editor::chunk {
 
         void readBlockData() const;
         template<size_t BitsPerBlock>
-        bool readGrid(c_u8* buffer, u8 grid[GRID_SIZE]) const;
+        bool readGrid(c_u8* buffer, uint8_t grid[128]) const;
         template<size_t BitsPerBlock>
         bool readGridSubmerged(u8 const* buffer, u8 blockGrid[GRID_SIZE], u8 SbmrgGrid[GRID_SIZE]) const;
 

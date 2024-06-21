@@ -1,6 +1,10 @@
-#include "../LegacyEditor/unit_tests.hpp"
+
 #include "LegacyEditor/code/include.hpp"
+
 #include "LegacyEditor/utils/RLE/rle_nsxps4.hpp"
+
+#include "LegacyEditor/unit_tests.hpp"
+
 
 int main() {
     PREPARE_UNIT_TESTS();

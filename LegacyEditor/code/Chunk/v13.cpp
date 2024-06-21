@@ -56,13 +56,21 @@ namespace editor::chunk {
 
     static void placeBlocks(u16_vec& writeVec, c_u8* grid, int writeOffset) {
         int readOffset = 0;
+
+        // these are used for debugging
+        u16 blockIndex = 0;
+        // these are used for debugging
+        u16 blockArray[64] = {0};
+
         for (int xIter = 0; xIter < 4; xIter++) {
             for (int zIter = 0; zIter < 4; zIter++) {
                 for (int yIter = 0; yIter < 4; yIter++) {
                     c_int currentOffset = yIter + zIter * 256 + xIter * 4096;
                     c_u8 num1 = grid[readOffset++];
                     c_u8 num2 = grid[readOffset++];
-                    writeVec[currentOffset + writeOffset] = static_cast<u16>(num1) | (static_cast<u16>(num2) << 8);
+                    c_u16 block = static_cast<u16>(num1) | (static_cast<u16>(num2) << 8);
+                    writeVec[currentOffset + writeOffset] = block;
+                    blockArray[blockIndex++] = block;
                 }
             }
         }
@@ -75,10 +83,11 @@ namespace editor::chunk {
 
         u16_vec sectionJumpTable(16);
         for (u32 i = 0; i < 16; i++) {
-            c_u16 address = dataManager->readInt16();
-            sectionJumpTable[i] = address;
+            sectionJumpTable[i] = dataManager->readInt16();
         }
-        c_u8* sizeOfSubChunks = dataManager->ptr; // size: 16
+
+        // size: 16
+        c_u8* sizeOfSubChunks = dataManager->ptr;
         dataManager->incrementPointer(16);
 
         if (maxSectionAddress == 0) {
@@ -102,88 +111,66 @@ namespace editor::chunk {
             u16 gridOffsets[64] = {0};
             u32 gridFormatIndex = 0;
             u32 gridOffsetIndex = 0;
+
             for (int gridX = 0; gridX < 4; gridX++) {
-                for (int gridZ = 0; gridZ < 4; gridZ++) {
-                    for (int gridY = 0; gridY < 4; gridY++) {
-                        c_int gridIndex = gridX * 16 + gridZ * 4 + gridY;
-                        u8 blockGrid[GRID_SIZE] = {0};
-                        u8 sbmrgGrid[GRID_SIZE] = {0};
+            for (int gridZ = 0; gridZ < 4; gridZ++) {
+            for (int gridY = 0; gridY < 4; gridY++) {
 
-                        c_u8 num1 = sectionHeader[gridIndex * 2];
-                        c_u8 num2 = sectionHeader[gridIndex * 2 + 1];
+                u8 blockGrid[GRID_SIZE] = {0};
+                u8 sbmrgGrid[GRID_SIZE] = {0};
+                c_int gridIndex = gridX * 16 + gridZ * 4 + gridY;
+                c_u8 blockLower = sectionHeader[gridIndex * 2];
+                c_u8 blockUpper = sectionHeader[gridIndex * 2 + 1];
+                c_u16 format = (blockUpper >> 4);
+                c_u16 offset = ((0x0F & blockUpper) << 8 | blockLower) * 4;
+                // 0x4c for start and 0x80 for header (26+2 chunk header, 50 section header, 128 grid header)
+                c_u16 gridPosition = 0xCE + address + offset;
+                c_int offsetInBlockWrite = (section * 16 + gridY * 4) + gridZ * 1024 + gridX * 16384;
 
-                        c_u16 format = (num2 >> 4);
-                        c_u16 offset = ((0x0f & num2) << 8 | num1) * 4;
+                gridFormats[gridFormatIndex++] = format;
+                gridOffsets[gridOffsetIndex++] = gridPosition - DATA_HEADER_SIZE;
 
-                        // 0x4c for start and 0x80 for header (26 chunk header, 50 section header, 128 grid header)
-                        c_u16 gridPosition = 0xcc + address + offset;
+                // ensure not reading past the memory buffer
+                if EXPECT_FALSE (gridPosition + V13_GRID_SIZES[format] >= dataManager->size && format != 0) return;
 
-                        c_int offsetInBlockWrite = (section * 16 + gridY * 4) + gridZ * 1024 + gridX * 16384;
-
-                        gridFormats[gridFormatIndex++] = format;
-                        gridOffsets[gridOffsetIndex++] = gridPosition - DATA_HEADER_SIZE;
-
-                        // ensure not reading past the memory buffer
-                        if EXPECT_FALSE (gridPosition + V13_GRID_SIZES[format] >= dataManager->size && format != 0) {
-                            return;
+                u8* bufferPtr = dataManager->data + gridPosition;
+                dataManager->ptr = bufferPtr + V13_GRID_SIZES[format] + 128;
+                bool success = true;
+                switch(format) {
+                    case V13_0_UNO:
+                        for (int i = 0; i < 128; i += 2) {
+                            blockGrid[i + 0] = blockLower;
+                            blockGrid[i + 1] = blockUpper;
                         }
-
-                        u8* bufferPtr = dataManager->data + gridPosition;
-                        dataManager->ptr = bufferPtr + V13_GRID_SIZES[format] + 128;
-                        bool success = true;
-                        switch(format) {
-                            case V13_0_UNO:
-                                for (int i = 0; i < 128; i += 2) {
-                                    blockGrid[i] = num1;
-                                    blockGrid[i + 1] = num2;
-                                }
-                                break;
-                            case V13_1_BIT:
-                                success = readGrid<1>(bufferPtr, blockGrid);
-                                break;
-                            case V13_1_BIT_SUBMERGED:
-                                success = readGridSubmerged<1>(bufferPtr, blockGrid, sbmrgGrid);
-                                break;
-                            case V13_2_BIT:
-                                success = readGrid<2>(bufferPtr, blockGrid);
-                                break;
-                            case V13_2_BIT_SUBMERGED:
-                                success = readGridSubmerged<2>(bufferPtr, blockGrid, sbmrgGrid);
-                                break;
-                            case V13_3_BIT:
-                                success = readGrid<3>(bufferPtr, blockGrid);
-                                break;
-                            case V13_3_BIT_SUBMERGED:
-                                success = readGridSubmerged<3>(bufferPtr, blockGrid, sbmrgGrid);
-                                break;
-                            case V13_4_BIT:
-                                success = readGrid<4>(bufferPtr, blockGrid);
-                                break;
-                            case V13_4_BIT_SUBMERGED:
-                                success = readGridSubmerged<4>(bufferPtr, blockGrid, sbmrgGrid);
-                                break;
-                            case V13_8_FULL:
-                                fillAllBlocks<GRID_SIZE>(bufferPtr, blockGrid);
-                                break;
-                            case V13_8_FULL_BLOCKS_SUBMERGED:
-                                fillAllBlocks<GRID_SIZE>(bufferPtr, blockGrid);
-                                fillAllBlocks<GRID_SIZE>(bufferPtr + 128, sbmrgGrid);
-                                break;
-                            default: // this should never occur
-                                return;
-                        }
-
-                        if EXPECT_FALSE (!success) {
-                            return;
-                        }
-
-                        placeBlocks(chunkData->newBlocks, blockGrid, offsetInBlockWrite);
-                        if ((format & 1) != 0) {
-                            chunkData->hasSubmerged = true;
-                            placeBlocks(chunkData->submerged, sbmrgGrid, offsetInBlockWrite);
-                        }
-                    }
+                        break;
+                    case V13_1_BIT:           success = readGrid<1>(bufferPtr, blockGrid); break;
+                    case V13_1_BIT_SUBMERGED: success = readGridSubmerged<1>(bufferPtr, blockGrid, sbmrgGrid); break;
+                    case V13_2_BIT:           success = readGrid<2>(bufferPtr, blockGrid); break;
+                    case V13_2_BIT_SUBMERGED: success = readGridSubmerged<2>(bufferPtr, blockGrid, sbmrgGrid); break;
+                    case V13_3_BIT:           success = readGrid<3>(bufferPtr, blockGrid); break;
+                    case V13_3_BIT_SUBMERGED: success = readGridSubmerged<3>(bufferPtr, blockGrid, sbmrgGrid); break;
+                    case V13_4_BIT:           success = readGrid<4>(bufferPtr, blockGrid); break;
+                    case V13_4_BIT_SUBMERGED: success = readGridSubmerged<4>(bufferPtr, blockGrid, sbmrgGrid); break;
+                    case V13_8_FULL:          fillAllBlocks<GRID_SIZE>(bufferPtr, blockGrid); break;
+                    case V13_8_FULL_BLOCKS_SUBMERGED:
+                        fillAllBlocks<GRID_SIZE>(bufferPtr +   0, blockGrid);
+                        fillAllBlocks<GRID_SIZE>(bufferPtr + 128, sbmrgGrid);
+                        break;
+                    default: // this should never occur
+                        return;
                 }
+
+                if EXPECT_FALSE (!success) {
+                    return;
+                }
+
+                placeBlocks(chunkData->newBlocks, blockGrid, offsetInBlockWrite);
+                if ((format & 1) != 0) {
+                    chunkData->hasSubmerged = true;
+                    placeBlocks(chunkData->submerged, sbmrgGrid, offsetInBlockWrite);
+                }
+            }
+            }
             }
         }
         dataManager->seek(DATA_HEADER_SIZE + SECTION_HEADER_SIZE + maxSectionAddress);
@@ -199,40 +186,31 @@ namespace editor::chunk {
      * @return
      */
     template<size_t BitsPerBlock>
-    bool ChunkV13::readGrid(c_u8* buffer, u8 grid[GRID_SIZE]) const {
+    bool ChunkV13::readGrid(c_u8* buffer, u8 grid[128]) const {
         c_int size = (1 << BitsPerBlock) * 2;
         u16_vec palette(size);
         std::copy_n(buffer, size, palette.begin());
 
-        int index = 0;
-        while (index < 64) {
+        for (int index = 0; index < 64; index++) {
             u8 vBlocks[BitsPerBlock];
 
             c_int row = index / 8;
             c_int column = index % 8;
-
-            for (int j = 0; j < BitsPerBlock; j++) {
+            for (int j = 0; j < BitsPerBlock; j++)
                 vBlocks[j] = buffer[size + row + j * 8];
-            }
 
-            u8 mask = 0b10000000 >> column;
             u16 idx = 0;
-
-            for (int k = 0; k < BitsPerBlock; k++) {
+            u8 mask = 0b10000000 >> column;
+            for (int k = 0; k < BitsPerBlock; k++)
                 idx |= ((vBlocks[k] & mask) >> (7 - column)) << k;
-            }
 
-            if EXPECT_FALSE (idx >= size) {
+            if EXPECT_FALSE (idx >= size)
                 return false;
-            }
 
             c_int gridIndex = index * 2;
             c_int paletteIndex = idx * 2;
-
             grid[gridIndex + 0] = palette[paletteIndex + 0];
             grid[gridIndex + 1] = palette[paletteIndex + 1];
-
-            index++;
         }
         return true;
     }
@@ -249,7 +227,9 @@ namespace editor::chunk {
      * @return
      */
     template<size_t BitsPerBlock>
-    bool ChunkV13::readGridSubmerged(u8 const* buffer, u8 blockGrid[GRID_SIZE], u8 SbmrgGrid[GRID_SIZE]) const {
+    bool ChunkV13::readGridSubmerged(c_u8* buffer,
+                                     u8 blockGrid[GRID_SIZE],
+                                     u8 SbmrgGrid[GRID_SIZE]) const {
         c_int size = (1 << BitsPerBlock) * 2;
         u16_vec palette(size);
         std::copy_n(buffer, size, palette.begin());
@@ -270,8 +250,8 @@ namespace editor::chunk {
                 u16 idxBlock = 0;
                 u16 idxSbmrg = 0;
                 for (int k = 0; k < BitsPerBlock; k++) {
-                    idxBlock |= (vBlocks[k] & mask) >> 7 - j << k;
-                    idxSbmrg |= (vWaters[k] & mask) >> 7 - j << k;
+                    idxBlock |= (vBlocks[k] & mask) >> (7 - j) << k;
+                    idxSbmrg |= (vWaters[k] & mask) >> (7 - j) << k;
                 }
 
                 if EXPECT_FALSE (idxBlock >= size || idxSbmrg >= size) {
@@ -318,7 +298,6 @@ namespace editor::chunk {
 
     }
 
-
     void ChunkV13::writeBlockData() const {
 
         u16_vec blockVector;
@@ -347,72 +326,74 @@ namespace editor::chunk {
         for (u32 sectionIndex = 0; sectionIndex < SECTION_COUNT; sectionIndex++) {
             c_u32 CURRENT_INC_SECT_JUMP = last_section_jump * 256;
             c_u32 CURRENT_SECTION_START = H_SECT_START + CURRENT_INC_SECT_JUMP;
-            u32 sectionSize = 0;
             u32 gridIndex = 0;
+            u32 sectionSize = 0;
 
             sectJumpTable[sectionIndex] = CURRENT_INC_SECT_JUMP;
 
             dataManager->ptr = dataManager->data + H_SECT_START + CURRENT_INC_SECT_JUMP + GRID_SIZE;
 
+            u32 blockX, blockY, blockZ;
+
             for (u32 gridX = 0; gridX < 65536; gridX += 16384) {
-                for (u32 gridZ = 0; gridZ < 4096; gridZ += 1024) {
-                    for (u32 gridY = 0; gridY < 16; gridY += 4) {
-                        blockVector.clear(); blockLocations.clear();
+            for (u32 gridZ = 0; gridZ < 4096; gridZ += 1024) {
+            for (u32 gridY = 0; gridY < 16; gridY += 4) {
+                blockVector.clear(); blockLocations.clear();
 
-                        // iterate over the blocks in the 4x4x4 subsection of the chunk, called a grid
-                        c_u32 offsetInBlock = sectionIndex * 16 + gridY + gridZ + gridX;
-                        for (u32 blockX = 0; blockX < 16384; blockX += 4096) {
-                            for (u32 blockZ = 0; blockZ < 1024; blockZ += 256) {
-                                for (u32 blockY = 0; blockY < 4; blockY++) {
+                // iterate over the blocks in the 4x4x4 subsection of the chunk, called a grid
+                c_u32 offsetInBlock = sectionIndex * 16 + gridY + gridZ + gridX;
+                for (blockX = 0; blockX < 16384; blockX += 4096) {
+                for (blockZ = 0; blockZ < 1024; blockZ += 256) {
+                for (blockY = 0; blockY < 4; blockY++) {
 
-                                    c_u32 blockIndex = offsetInBlock + blockY + blockZ + blockX;
+                    c_u32 blockIndex = offsetInBlock + blockY + blockZ + blockX;
 
-                                    if (u16 block = chunkData->newBlocks[blockIndex]; blockMap[block]) {
-                                        blockLocations.push_back(blockMap[block] - 1);
-                                    } else {
-                                        blockMap[block] = blockVector.size() + 1;
-                                        u16 location = blockVector.size();
-                                        blockVector.push_back(block);
-                                        blockLocations.push_back(location);
-                                    }
-                                }
-                            }
-                        }
-
-                        u16 gridID;
-                        u16 gridFormat;
-                        switch (blockVector.size()) {
-                            case  1: gridFormat = V13_0_UNO; gridID = blockVector[0]; blockMap[blockVector[0]] = 0; goto SWITCH_END;
-
-                            case  2: gridFormat = V13_1_BIT; writeGrid<1,  2, 0>(blockVector, blockLocations, blockMap); break;
-
-                            case  3: gridFormat = V13_2_BIT; writeGrid<2,  3, 1>(blockVector, blockLocations, blockMap); break;
-                            case  4: gridFormat = V13_2_BIT; writeGrid<2,  4, 0>(blockVector, blockLocations, blockMap); break;
-
-                            case  5: gridFormat = V13_3_BIT; writeGrid<3,  5, 3>(blockVector, blockLocations, blockMap); break;
-                            case  6: gridFormat = V13_3_BIT; writeGrid<3,  6, 2>(blockVector, blockLocations, blockMap); break;
-                            case  7: gridFormat = V13_3_BIT; writeGrid<3,  7, 1>(blockVector, blockLocations, blockMap); break;
-                            case  8: gridFormat = V13_3_BIT; writeGrid<3,  8, 0>(blockVector, blockLocations, blockMap); break;
-
-                            case  9: gridFormat = V13_4_BIT; writeGrid<4,  9, 7>(blockVector, blockLocations, blockMap); break;
-                            case 10: gridFormat = V13_4_BIT; writeGrid<4, 10, 6>(blockVector, blockLocations, blockMap); break;
-                            case 11: gridFormat = V13_4_BIT; writeGrid<4, 11, 5>(blockVector, blockLocations, blockMap); break;
-                            case 12: gridFormat = V13_4_BIT; writeGrid<4, 12, 4>(blockVector, blockLocations, blockMap); break;
-                            case 13: gridFormat = V13_4_BIT; writeGrid<4, 13, 3>(blockVector, blockLocations, blockMap); break;
-                            case 14: gridFormat = V13_4_BIT; writeGrid<4, 14, 2>(blockVector, blockLocations, blockMap); break;
-                            case 15: gridFormat = V13_4_BIT; writeGrid<4, 15, 1>(blockVector, blockLocations, blockMap); break;
-                            case 16: gridFormat = V13_4_BIT; writeGrid<4, 16, 0>(blockVector, blockLocations, blockMap); break;
-
-                            default: gridFormat = V13_8_FULL; writeWithMaxBlocks(blockVector, blockLocations, blockMap); break;
-                        }
-                        gridID = sectionSize / 4 | gridFormat << 12;
-                    SWITCH_END:;
-                        gridHeader[gridIndex++] = gridID;
-                        sectionSize += V13_GRID_SIZES[gridFormat];
-
+                    if (u16 block = chunkData->newBlocks[blockIndex]; blockMap[block]) {
+                        blockLocations.push_back(blockMap[block] - 1);
+                    } else {
+                        blockMap[block] = blockVector.size() + 1;
+                        u16 location = blockVector.size();
+                        blockVector.push_back(block);
+                        blockLocations.push_back(location);
                     }
 
                 }
+                }
+                }
+
+                u16 gridID;
+                u16 gridFormat;
+                switch (blockVector.size()) {
+                    case  1: gridFormat = V13_0_UNO; gridID = blockVector[0]; blockMap[blockVector[0]] = 0; goto SWITCH_END;
+
+                    case  2: gridFormat = V13_1_BIT; writeGrid<1,  2, 0>(blockVector, blockLocations, blockMap); break;
+
+                    case  3: gridFormat = V13_2_BIT; writeGrid<2,  3, 1>(blockVector, blockLocations, blockMap); break;
+                    case  4: gridFormat = V13_2_BIT; writeGrid<2,  4, 0>(blockVector, blockLocations, blockMap); break;
+
+                    case  5: gridFormat = V13_3_BIT; writeGrid<3,  5, 3>(blockVector, blockLocations, blockMap); break;
+                    case  6: gridFormat = V13_3_BIT; writeGrid<3,  6, 2>(blockVector, blockLocations, blockMap); break;
+                    case  7: gridFormat = V13_3_BIT; writeGrid<3,  7, 1>(blockVector, blockLocations, blockMap); break;
+                    case  8: gridFormat = V13_3_BIT; writeGrid<3,  8, 0>(blockVector, blockLocations, blockMap); break;
+
+                    case  9: gridFormat = V13_4_BIT; writeGrid<4,  9, 7>(blockVector, blockLocations, blockMap); break;
+                    case 10: gridFormat = V13_4_BIT; writeGrid<4, 10, 6>(blockVector, blockLocations, blockMap); break;
+                    case 11: gridFormat = V13_4_BIT; writeGrid<4, 11, 5>(blockVector, blockLocations, blockMap); break;
+                    case 12: gridFormat = V13_4_BIT; writeGrid<4, 12, 4>(blockVector, blockLocations, blockMap); break;
+                    case 13: gridFormat = V13_4_BIT; writeGrid<4, 13, 3>(blockVector, blockLocations, blockMap); break;
+                    case 14: gridFormat = V13_4_BIT; writeGrid<4, 14, 2>(blockVector, blockLocations, blockMap); break;
+                    case 15: gridFormat = V13_4_BIT; writeGrid<4, 15, 1>(blockVector, blockLocations, blockMap); break;
+                    case 16: gridFormat = V13_4_BIT; writeGrid<4, 16, 0>(blockVector, blockLocations, blockMap); break;
+
+                    default: gridFormat = V13_8_FULL; writeWithMaxBlocks(blockVector, blockLocations, blockMap); break;
+                }
+                gridID = sectionSize / 4 | gridFormat << 12;
+            SWITCH_END:;
+                gridHeader[gridIndex++] = gridID;
+                sectionSize += V13_GRID_SIZES[gridFormat];
+
+            }
+            }
             }
 
             // write grid header in subsection

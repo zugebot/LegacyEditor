@@ -37,7 +37,10 @@ static void PREPARE_UNIT_TESTS() {
     TEST_PAIR("X360_TU74",   R"(XBOX360_TU74.dat)"                             , dir_path + R"(saves\XBOX360_TU74.dat)" );
     TEST_PAIR("nether",      R"(nether)"                                       , wiiu + R"(231114151239)");
     TEST_PAIR("corrupt_save",R"(CODY_UUAS_2017010800565100288444\GAMEDATA)"    , wiiu + R"(231000000000)");
-    TEST_PAIR("PS4_khaloody",R"(PS4\00000008\savedata0\GAMEDATA)"              , out_build + R"(BLANK_SAVE)");
+    TEST_PAIR("PS4_khaloody",R"(PS4\00000008\savedata0\GAMEDATA)"              , wiiu + R"(240510172144)");
+    TEST_PAIR("flatTestPS4" ,R"(superflatTest\00000002\savedata0\GAMEDATA)"    , wiiu + R"(240510172144)");
+
+
     TEST_PAIR("PS4_to_wiiu" ,R"(BLANK_SAVE)"                                   , dir_path + "PS4_to_wiiu_to_wiiu");
     TEST_PAIR("BIG_WIIU"    ,R"(240219135035)"                                 , "");
     TEST_PAIR("XBOX_BIN"    ,R"(XBOX360_TU69.bin)", out_build + R"(xbox_to_wiiu)");

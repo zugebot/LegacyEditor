@@ -1,0 +1,50 @@
+void FileListing::ensureAllRegionFilesExist() {
+        bool dim[3][2][2] = {false};
+        {
+            int dimCount = 0;
+            for (c_auto *fileList : dimFileLists) {
+                for (c_auto* regionFile: *fileList) {
+                    if (regionFile->data.size != 0) {
+                        c_i16 regionX = regionFile->nbt->getTag("x").toPrim<i16>();
+                        c_i16 regionZ = regionFile->nbt->getTag("z").toPrim<i16>();
+                        dim[dimCount][regionX + 1][regionZ + 1] = true;
+                    }
+                }
+                dimCount++;
+            }
+        }
+
+        int filesAdded = 0;
+        for (size_t dim_i = 0; dim_i < 3; dim_i++) {
+            for (size_t xIter = 2; xIter --> 0;) {
+                for (size_t zIter = 2; zIter --> 0;) {
+                    if (dim[dim_i][xIter][zIter]) {
+                        continue;
+                    }
+
+                    filesAdded++;
+                    // TODO: should not be CONSOLE::NONE
+                    myAllFiles.emplace_back(lce::CONSOLE::NONE, nullptr, 0, 0);
+                    LCEFile &file = myAllFiles.back();
+
+                    file.nbt->setTag("x", createNBT_INT16(static_cast<i16>(xIter - 1)));
+                    file.nbt->setTag("z", createNBT_INT16(static_cast<i16>(zIter - 1)));
+                    switch (dim_i) {
+                        case 0:
+                            file.fileType = LCEFileType::REGION_NETHER;
+                            region_nether.push_back(&file);
+                            break;
+                        case 1:
+                            file.fileType = LCEFileType::REGION_OVERWORLD;
+                            region_overworld.push_back(&file);
+                            break;
+                        case 2:
+                            file.fileType = LCEFileType::REGION_END;
+                            region_end.push_back(&file);
+                            break;
+                        default:;
+                    }
+                }
+            }
+        }
+    }

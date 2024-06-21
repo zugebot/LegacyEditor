@@ -1,8 +1,11 @@
 #pragma once
 
+#include <filesystem>
 #include <string>
 
 #include "lce/processor.hpp"
+
+#include "include/ghc/fs_std.hpp"
 
 #include "LegacyEditor/utils/data.hpp"
 
@@ -80,6 +83,7 @@ public:
 
 
     std::wstring readNullTerminatedWString();
+    std::wstring readNullTerminatedWWWString();
     std::wstring readWString(u32 length);
     std::string readWAsString(u32 length);
 
@@ -122,8 +126,9 @@ public:
      * \param upperbounds
      */
     void writeWString(const std::wstring& wstr, u32 upperbounds);
+    void writeWWWString(const std::wstring& wstr, u32 upperbounds);
     void writeWStringFromString(const std::string& str, u32 upperbounds);
 
-    int writeToFile(const std::string& fileName) const;
-    int writeToFile(c_u8* ptrIn, u32 sizeIn, const std::string& fileName) const;
+    int writeToFile(const fs::path& inFilePath) const;
+    int writeToFile(c_u8* ptrIn, const uint32_t sizeIn, const fs::path& inFilePath) const;
 };

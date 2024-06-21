@@ -1,4 +1,5 @@
 #include "FileInfo.hpp"
+#include <filesystem>
 
 #include "LegacyEditor/utils/dataManager.hpp"
 #include "LegacyEditor/utils/error_status.hpp"
@@ -16,7 +17,9 @@ static u32 c2n(const char chara) {
 static i64 stringToHex(const std::string& str) {
     i64 result = 0;
     c_int stringSize = static_cast<int>(str.size());
-    for (size_t i = 0; i < stringSize; i++) { result = result * 16 + c2n(str[i]); }
+    for (size_t i = 0; i < stringSize; i++) {
+        result = result * 16 + c2n(str[i]);
+    }
     return result;
 }
 
@@ -38,14 +41,8 @@ static i64 stringToInt64(const std::string& str) {
 }
 
 static char n2c(c_u32 num) {
-    if (num <= 9) {
-        return static_cast<char>('0' + num);
-    }
-    if (num >= 10 && num <= 15) {
-        return static_cast<char>('a' + (num - 10));
-    }
-    // Return a default value if num is out of the 0-15 range
-    return '0';
+    if (num <= 9) return static_cast<char>('0' + num);
+    return static_cast<char>('a' + (num - 10));
 }
 
 static std::string hexToString(i64 hex) {
@@ -55,25 +52,37 @@ static std::string hexToString(i64 hex) {
 
     std::string result;
     while (hex > 0) {
-        // result = n2c(hex % 16) + result;
-        result += n2c(hex % 16);
+        result.insert(result.begin(), n2c(hex % 16));
         hex /= 16;
     }
     return result;
 }
+
+
+static std::wstring stringToWstring(const std::string& str) {
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    return converter.from_bytes(str);
+}
+
+
+static std::string wstringToString(const std::wstring& wstr) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+    return converter.to_bytes(wstr);
+}
+
 
 static std::string int64ToString(i64 num) {
     if (num == 0) {
         return "0";
     }
 
-    std::string result;
     c_int sign = num < 0 ? -1 : 1;
     num = std::abs(num);
 
+    std::string result;
     while (num > 0) {
-        // result = static_cast<char>('0' + num % 10) + result;
-        result += static_cast<char>('0' + num % 10);
+        result.insert(result.begin(),
+                      static_cast<char>('0' + (num % 10)));
         num /= 10;
     }
 
@@ -82,6 +91,7 @@ static std::string int64ToString(i64 num) {
     }
     return result;
 }
+
 
 bool isPngHeader(DataManager& manager) {
     static u8_vec PNG_HEADER{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
@@ -104,19 +114,38 @@ namespace editor {
 
     /**
      * \brief presumes that the tEXt header is located second to last inside the png.
-     * \param inFileStr
+     * \param inFilePath
      */
     // TODO: idk formatting of header for nintendo consoles
-    void FileInfo::readFile(const std::string& inFileStr) {
+    void FileInfo::readFile(const fs::path& inFilePath, const lce::CONSOLE inConsole) {
         DataManager manager;
-        manager.readFromFile(inFileStr);
+        manager.readFromFile(inFilePath.string());
 
-        // needs to be rewritten for different consoles
-        if (!isPngHeader(manager)) {
-            basesavename = manager.readWString(128);
-            if (!isPngHeader(manager)) {
-                return;
+        // TODO: needs to be rewritten for different consoles
+
+        switch (inConsole) {
+            case lce::CONSOLE::WIIU: {
+                basesavename = manager.readNullTerminatedWString();
+                u32 diff = 256 - (u32)(manager.ptr - manager.data);
+                manager.incrementPointer(diff);
+                break;
             }
+            case lce::CONSOLE::SWITCH: {
+                basesavename = manager.readNullTerminatedWWWString();
+                u32 diff = 512 - (u32)(manager.ptr - manager.data);
+                manager.incrementPointer(diff);
+                // there is a random u32, then a null u32
+                manager.incrementPointer(8);
+                break;
+            }
+            case lce::CONSOLE::VITA:
+            default:
+                break;
+
+        }
+
+        if (!isPngHeader(manager)) {
+            return;
         }
 
         isLoaded = true;
@@ -170,9 +199,12 @@ namespace editor {
                 }
                 length += key.size() + 1;
 
-                while ((nextChar = manager.readInt8()) != 0 && chunkLength != length) {
+                while ((nextChar = manager.readInt8()) != 0) {
                     text += static_cast<char>(nextChar);
                     length++;
+                    if (chunkLength - 1 == length) {
+                        break;
+                    }
                 }
 
                 if (key == "4J_SEED") {
@@ -184,44 +216,56 @@ namespace editor {
                 } else if (key == "4J_EXTRADATA") {
                     extradata = stringToHex(text);
                 } else if (key == "4J_#LOADS") {
-                    loads = stringToHex(text);
+                    loads = stringToInt64(text);
                 } else if (key == "4J_EXPLOREDCHUNKS") {
-                    exploredchunks = stringToHex(text);
+                    exploredchunks = stringToInt64(text);
+                } else if (key == "4J_BASESAVENAME") {
+                    basesavename = stringToWstring(text);
+                    manager.incrementPointer1();
                 }
-                // } else if (key == "4J_BASESAVENAME") {
-                    // basesavename = text;
 
-                if (chunkLength != length) {
+                if (chunkLength - 1 != length) {
                     length++;
                 } else {
-                    manager.decrementPointer(1);
                     break;
                 }
             }
+            // break early, no need to read the IEND thingy,
+            // since tEXT is always placed at the end
+            break;
         }
     }
 
 
-    int FileInfo::writeFile(const std::string& outFileStr, const lce::CONSOLE console) const {
+    int FileInfo::writeFile(const fs::path& outFilePath,
+                            const lce::CONSOLE outConsole) const {
         if (thumbnail.data == nullptr) {
             return FILE_ERROR;
         }
 
         DataManager header;
-        if (console == lce::CONSOLE::SWITCH) {
-            const Data fileHeader(528);
-            header.take(fileHeader);
+
+        switch(outConsole) {
+            // TODO: test switch edition writing
+            case lce::CONSOLE::SWITCH: {
+                const Data fileHeader(528 + 8);
+                header.take(fileHeader);
+                header.writeWWWString(basesavename, 128);
+                // TODO: figure out what this number is
+                c_u32 value = 0;
+                header.writeInt32(value);
+                header.writeInt32(0);
+                break;
+            }
+            case lce::CONSOLE::WIIU: {
+                const Data fileHeader(256);
+                header.take(fileHeader);
+                header.writeWString(basesavename, 128);
+                break;
+            }
+            default:
+                break;
         }
-
-        else if (console == lce::CONSOLE::WIIU) {
-            const Data fileHeader(256);
-            header.take(fileHeader);
-            header.writeWString(basesavename, 128);
-
-        } else {
-            // ps3, psvita,
-        }
-
 
 
         std::vector<u8> tEXt_chunk;
@@ -238,42 +282,49 @@ namespace editor {
             appendString("4J_SEED");
             addNull();
             appendString(int64ToString(seed));
+
             addNull();
 
             appendString("4J_HOSTOPTIONS");
             addNull();
             appendString(hexToString(hostoptions));
+
             addNull();
 
             appendString("4J_TEXTUREPACK");
             addNull();
             appendString(hexToString(texturepack));
+
             addNull();
 
             appendString("4J_EXTRADATA");
             addNull();
             appendString(hexToString(extradata));
 
+            addNull();
 
-            if (loads != 0) {
-                addNull();
-                appendString("4J_#LOADS");
-                addNull();
-                appendString(hexToString(loads));
-            }
+            appendString("4J_#LOADS");
+            addNull();
+            appendString(int64ToString(loads));
+
 
             if (exploredchunks != 0) {
                 addNull();
                 appendString("4J_EXPLOREDCHUNKS");
                 addNull();
-                appendString(hexToString(exploredchunks));
+                appendString(int64ToString(exploredchunks));
             }
 
-            // addNull();
-            // null count might not be right
-            // appendString("4J_BASESAVENAME");
-            // addNull();
-            // appendString(basesavename);
+            // TODO: find the full list, i think it's only used by xbox but idk
+            if (outConsole != lce::CONSOLE::WIIU
+                && outConsole != lce::CONSOLE::SWITCH
+                && outConsole != lce::CONSOLE::VITA) {
+                addNull();
+                appendString("4J_BASESAVENAME");
+                addNull();
+                appendString(wstringToString(basesavename));
+            }
+
         }
 
         c_u32 out_size = header.size + (thumbnail.size - 12) + 4 + tEXt_chunk.size() + 4 + 12;
@@ -306,7 +357,7 @@ namespace editor {
         // write IEND png chunk
         memcpy(manager.ptr, &IEND_DAT[0], 12);
 
-        c_int status = manager.writeToFile(outFileStr);
+        c_int status = manager.writeToFile(outFilePath);
         return status;
 
     }

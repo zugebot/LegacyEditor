@@ -17,12 +17,13 @@ int main(int argc, char *argv[]) {
     if (argc < 2) {
         std::cerr << "Must supply at least one save file to convert.\n";
         std::cerr << "You can do this by dragging and dropping a file onto the executable.\n";
+        std::cerr << "TODO: explain how to convert ps4\n";
         std::cerr << "click ENTER to exit.\n";
         waitForEnter();
         return -1;
     }
 
-    std::cout << "Supports reading WiiU, PS3, RPCS3, Xbox360, PSVITA\n"
+    std::cout << "Supports reading WiiU, PS3, RPCS3, Xbox360, PSVITA, PS4\n"
                  "Supports writing to WiiU, PSVITA\n";
 
     std::cout << "Name the console to output:";

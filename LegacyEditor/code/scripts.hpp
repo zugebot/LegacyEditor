@@ -1,13 +1,18 @@
 #pragma once
 
+#include <cstring>
+
+#include "lce/blocks/block_ids.hpp"
+
 #include "LegacyEditor/code/Chunk/modifiers.hpp"
 #include "LegacyEditor/code/FileListing/fileListing.hpp"
 #include "LegacyEditor/code/Region/RegionManager.hpp"
-#include <cstring>
+
+
 namespace editor {
 
     void processRegion(int regionIndex, FileListing& fileListing) {
-        const lce::CONSOLE console = fileListing.console;
+        const lce::CONSOLE console = fileListing.myConsole;
         if (regionIndex >= fileListing.region_overworld.size()) { return; }
 
         // read a region file
@@ -125,7 +130,7 @@ namespace editor {
      * @param fileListing
      */
     void removeNetherrack(int regionIndex, FileListing& fileListing) {
-        const lce::CONSOLE console = fileListing.console;
+        const lce::CONSOLE console = fileListing.myConsole;
         if (regionIndex >= fileListing.region_nether.size()) { return; }
 
         // read a region file
@@ -182,7 +187,7 @@ namespace editor {
      * @param fileListing
      */
     void convertElytraToAquaticChunks(int regionIndex, FileListing& fileListing) {
-        const lce::CONSOLE console = fileListing.console;
+        const lce::CONSOLE console = fileListing.myConsole;
         if (regionIndex >= fileListing.region_nether.size()) { return; }
 
         // read a region file
@@ -206,7 +211,6 @@ namespace editor {
 
             convertOldToNew(chunkData);
 
-
             chunkData->defaultNBT();
             chunkManager->writeChunk(console);
             chunkManager->ensureCompressed(console);
@@ -223,7 +227,8 @@ namespace editor {
      * @param fileListing
      */
     void ConvertPillagerToAquaticChunks(c_int regionIndex, const FileListing& fileListing) {
-        const lce::CONSOLE console = fileListing.console;
+        // TODO: make this a passed variable
+        const lce::CONSOLE consoleOut = fileListing.myConsole;
         if (regionIndex >= fileListing.region_overworld.size()) { return; }
 
         // read a region file
@@ -234,8 +239,9 @@ namespace editor {
             if (chunk.size == 0) {
                 continue;
             }
-            chunk.ensureDecompress(console);
-            chunk.readChunk(console);
+
+            chunk.ensureDecompress(consoleOut);
+            chunk.readChunk(consoleOut);
             auto* chunkData = chunk.chunkData;
             if (!chunkData->validChunk) {
                 continue;
@@ -244,29 +250,23 @@ namespace editor {
             // remove 1.14 blocks and items here...
             for (int i = 0; i < 65536; i++) {
                 chunkData->newBlocks[i] = 3;
-                /*
                 c_u16 id = chunkData->newBlocks[i] >> 4 & 1023;
                 if (id > 318) {
-                    chunkData->newBlocks[i] = 0;
+                    chunkData->newBlocks[i]
+                        = lce::blocks::ids::COBBLESTONE_ID;
                 }
-                */
             }
 
             chunkData->lastVersion = 0x0C;
             chunk.fileData.setRLE(1);
             chunkData->defaultNBT();
-            chunk.writeChunk(console);
-            chunk.ensureCompressed(console);
+            chunk.writeChunk(consoleOut);
+            chunk.ensureCompressed(consoleOut);
         }
 
         fileListing.region_overworld[regionIndex]->data.deallocate();
-        fileListing.region_overworld[regionIndex]->data = region.write(console);
-
-        if (regionIndex == 0) {
-            DataManager(fileListing.region_overworld[0]->data).writeToFile(/*dir_path +*/ "REGION_0");
-        }
-
+        fileListing.region_overworld[regionIndex]->data = region.write(consoleOut);
     }
 
 
-} // namespace editor
+}

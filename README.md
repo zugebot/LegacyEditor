@@ -14,8 +14,8 @@ for editing blocks / nbt.
 - **PSVita**
 - **Xbox 360 (.bin format)**
 - **Xbox 360 (.dat format)**
-- **Switch** (region/entity conversion imminent)
-- **PS4** (region/entity conversion imminent)
+- **PS4** (entity conversion missing)
+- **Switch** (region/entity conversion missing)
 
 ### Writing To:
 - **WiiU**
@@ -35,6 +35,7 @@ This project makes use of several external libraries, including:
 - [jibsen/tinf](https://github.com/jibsen/tinf) for data compression
 - LZX - Jed Wing <jedwin@ugcs.caltech.edu>
 - TINF - Joergen Ibsen
+- SFO - [hippie68 @github](https://github.com/hippie68/sfo)
 
 ## Outside Help
 

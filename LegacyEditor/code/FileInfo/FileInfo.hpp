@@ -1,10 +1,14 @@
 #pragma once
 
+#include <filesystem>
+
 #include "lce/processor.hpp"
+#include "lce/enums.hpp"
+
+#include "include/ghc/fs_std.hpp"
 
 #include "LegacyEditor/utils/Data.hpp"
 #include "LegacyEditor/utils/error_status.hpp"
-#include "lce/enums.hpp"
 
 
 /*
@@ -40,8 +44,9 @@ namespace editor {
         bool isLoaded;
 
         MU static void defaultThumbnail();
-        void readFile(const std::string& inFileStr);
-        ND int writeFile(const std::string& outFileStr, lce::CONSOLE console) const;
+        void readFile(const fs::path& inFilePath, const lce::CONSOLE inConsole);
+        ND int writeFile(const fs::path& outFilePath,
+                         const lce::CONSOLE outConsole) const;
     };
 
 }

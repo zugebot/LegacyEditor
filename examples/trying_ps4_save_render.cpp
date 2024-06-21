@@ -14,10 +14,11 @@
 #include "lce/registry/textureRegistry.hpp"
 
 
+
 int main() {
     PREPARE_UNIT_TESTS();
 
-    const std::string TEST_NAME = "PS4_khaloody"; //"PS4_khaloody";
+    const std::string TEST_NAME = "flatTestPS4"; // "PS4_khaloody";
     const std::string TEST_IN = TESTS[TEST_NAME].first;   // file to read from
     const std::string TEST_OUT = TESTS[TEST_NAME].second; // file to write to
     constexpr auto consoleOut = lce::CONSOLE::WIIU;
@@ -37,15 +38,8 @@ int main() {
 
     // read savedata
     editor::FileListing fileListing;
-
-    if (fileListing.read(TEST_IN) != 0) {
+    if (fileListing.read(TEST_IN, true) != 0) {
         return printf_err("failed to load file\n");
-    }
-
-
-    const std::string gamedata_files = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\tests\PS4\00000007\savedata0)";
-    if (const int status = fileListing.readExternalRegions(gamedata_files)) {
-        return status;
     }
 
     fileListing.removeFileTypes({
@@ -54,22 +48,14 @@ int main() {
         editor::LCEFileType::REGION_END
     });
 
-
-
-    // editor::map::saveMapToPng(fileListing.maps[0], R"(C:\Users\jerrin\CLionProjects\LegacyEditor\)");
-
-    if (fileListing.saveToFolder("C:/Users/jerrin/CLionProjects/LegacyEditor/dump/ps4") != 0) {
-        return printf_err("failed to save files to folder\n");
-    }
-
-    // fileListing.pruneRegions();
-    fileListing.fileInfo.basesavename = L"Khalooody PS4 World";
-    fileListing.fileInfo.seed = 0;
+    // fileListing.fileInfo.basesavename = L"Changed the name!";
+    // fileListing.fileInfo.seed = 69420;
     fileListing.pruneRegions();
     fileListing.printFileList();
     fileListing.printDetails();
 
 
+    /*
     lce::registry::BlockRegistry blockReg;
     blockReg.setup();
 
@@ -95,12 +81,9 @@ int main() {
             if (chunk.size == 0) { continue; }
 
             chunk.ensureDecompress(fileListing.console);
-            /*
-            if (chunksOut < 5) {
-                DataManager chunkOut(chunk.data, chunk.size);
-                chunkOut.writeToFile(dir_path + "chunk" + std::to_string(chunksOut++));
-            }*/
             chunk.readChunk(fileListing.console);
+
+
             c_auto* chunkData = chunk.chunkData;
             if (!chunkData->validChunk) { continue; }
 
@@ -129,30 +112,28 @@ int main() {
 
 
 
-
-
-            // chunk.writeChunk(fileListing.console);
-            // chunk.ensureCompressed(fileListing.console);
+            chunk.chunkData->lastVersion -= 1;
+            chunk.writeChunk(lce::CONSOLE::WIIU); // fileListing.console);
+            chunk.ensureCompressed(lce::CONSOLE::WIIU); // fileListing.console);
         }
 
-        printf("done!");
+            chunk.chunkData->lastVersion = 0x000C;
+            chunk.writeChunk(lce::CONSOLE::WIIU);       // fileListing.console);
+            chunk.ensureCompressed(lce::CONSOLE::WIIU); // fileListing.console);
 
+        }
     }
+    */
 
 
-
-
-
-    // edit regions (threaded)
-    // add functions to "LegacyEditor/code/scripts.hpp"
     c_auto timer = Timer();
-
     // run_parallel<32>(editor::convertElytraToAquaticChunks, std::ref(fileListing));
     for (int i = 0; i < 32; i++) {
         ConvertPillagerToAquaticChunks(i, fileListing);
     }
+    fileListing.convertRegions(consoleOut);
 
-    // fileListing.convertRegions(consoleOut);
+
     printf("Total Time: %.3f\n", timer.getSeconds());
 
     // fileListing.oldestVersion = 11;

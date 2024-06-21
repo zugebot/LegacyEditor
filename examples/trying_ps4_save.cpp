@@ -56,7 +56,7 @@ int main() {
 
     // editor::map::saveMapToPng(fileListing.maps[0], R"(C:\Users\jerrin\CLionProjects\LegacyEditor\)");
 
-    if (fileListing.saveToFolder() != 0) {
+    if (fileListing.dumpToFolder("") != 0) {
         return printf_err("failed to save files to folder\n");
     }
 
@@ -82,7 +82,7 @@ int main() {
             chunkIndex++;
             if (chunk.size == 0) { continue; }
 
-            chunk.ensureDecompress(fileListing.console);
+            chunk.ensureDecompress(fileListing.myConsole);
 
             /*
             if (chunksOut < 5) {
@@ -90,15 +90,15 @@ int main() {
                 chunkOut.writeToFile(dir_path + "chunk" + std::to_string(chunksOut++));
             }*/
 
-            chunk.readChunk(fileListing.console);
+            chunk.readChunk(fileListing.myConsole);
             c_auto* chunkData = chunk.chunkData;
             if (!chunkData->validChunk) { continue; }
 
             chunkCoords[chunkIndex] = std::make_pair(chunkData->chunkX, chunkData->chunkZ);
 
 
-            chunk.writeChunk(fileListing.console);
-            chunk.ensureCompressed(fileListing.console);
+            chunk.writeChunk(fileListing.myConsole);
+            chunk.ensureCompressed(fileListing.myConsole);
         }
 
         printf("done!");
