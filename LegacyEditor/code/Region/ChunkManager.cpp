@@ -39,7 +39,7 @@ namespace editor {
     }
 
 
-    MU void ChunkManager::readChunk(MU const lce::CONSOLE console) const {
+    MU void ChunkManager::readChunk(MU const lce::CONSOLE inConsole) const {
         auto managerIn = DataManager(data, size);
         managerIn.seekStart();
 

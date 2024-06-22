@@ -202,7 +202,7 @@ namespace editor {
                 while ((nextChar = manager.readInt8()) != 0) {
                     text += static_cast<char>(nextChar);
                     length++;
-                    if (chunkLength - 1 == length) {
+                    if (chunkLength - 1 <= length) {
                         break;
                     }
                 }
@@ -224,7 +224,7 @@ namespace editor {
                     manager.incrementPointer1();
                 }
 
-                if (chunkLength - 1 != length) {
+                if (chunkLength - 1 <= length) {
                     length++;
                 } else {
                     break;

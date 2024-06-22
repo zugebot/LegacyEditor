@@ -13,7 +13,8 @@ namespace editor::chunk {
 
 
     static u32 toIndex(c_u32 num) {
-        return (num + 1) * 128;
+        u32 val = (num + 1) * 128;
+        return val;
     }
 
 

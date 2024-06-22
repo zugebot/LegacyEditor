@@ -18,27 +18,31 @@ namespace editor::chunk {
     MU inline void convertOldToNew(ChunkData* chunkData) {
         chunkData->newBlocks = u16_vec(65536);
 
-        int count = 0;
-        for (int offset = 0; offset < 256; offset += 128) {
-            for (int xIter = 0; xIter < 16; xIter++) {
-                for (int zIter = 0; zIter < 16; zIter++) {
-                    for (int yIter = 0; yIter < 128; yIter++) {
-                        c_int index = toPos(xIter, yIter + offset, zIter);
-                        c_int newIndex = index / 2;
-                        u16 data = chunkData->blockData[newIndex];
-                        if (count % 2 == 0) {
-                            data >>= 4;
-                        } else {
-                            data &= 15;
-                        }
+        for (int xIter = 0; xIter < 16; xIter++) {
+            for (int zIter = 0; zIter < 16; zIter++) {
+                for (int yIter = 0; yIter < 256; yIter++) {
 
-                        c_u16 oldBlock = chunkData->oldBlocks[count];
-                        chunkData->newBlocks[index] = (oldBlock << 4) | data;
-                        count++;
+                    c_int offset = yIter * 256 + zIter * 16 + xIter;
+                    c_u16 blockID = chunkData->oldBlocks[offset];
+                    u16 dataTag;
+                    if (offset % 2 == 0) {
+                        dataTag = chunkData->blockData[offset / 2] & 0x0F;
+                    } else {
+                        dataTag = (chunkData->blockData[offset] & 0xF0) >> 8;
                     }
+                    u16 elytraBlock = blockID << 4 | dataTag;
+                    c_int AquaticOffset = yIter + 4096 * zIter + 256 * xIter;
+
+
+                    if (yIter == 64) {
+                        elytraBlock = lce::blocks::ids::GOLD_BLOCK_ID << 4 | dataTag;
+                    }
+
+                    chunkData->newBlocks[AquaticOffset] = elytraBlock;
                 }
             }
         }
+
 
         if (chunkData->NBTData != nullptr) {
             chunkData->NBTData->toType<NBTTagCompound>()->deleteAll();
@@ -66,8 +70,8 @@ namespace editor::chunk {
             case 8:
             case 9:
             case 11: {
-                c_int yOffset = yIn & 0x80 << 8;
-                c_int offset = yOffset + toPos(xIn, yIn & 0x7F, zIn);
+                c_int offset = yIn * 256 + zIn * 16 + xIn;
+
                 chunkData->oldBlocks[offset] = block;
                 if (offset % 2 == 0) {
                     chunkData->blockData[offset] = chunkData->blockData[offset] & 0x0F | data << 8;
@@ -75,6 +79,7 @@ namespace editor::chunk {
                     chunkData->blockData[offset] = chunkData->blockData[offset] & 0xF0 | data;
                 }
             }
+                break;
             case 12:
             case 13: {
                 c_int offset = toPos(xIn, yIn, zIn);
@@ -87,9 +92,10 @@ namespace editor::chunk {
                 } else {
                     chunkData->submerged[offset] = value;
                 }
-
+                break;
             }
-            default:;
+            default:
+                break;
         }
     }
 
@@ -110,9 +116,8 @@ namespace editor::chunk {
             case 8:
             case 9:
             case 11: {
-                c_int yOffset = yIn & 0x80 << 8;
-                c_int offset = yOffset + toPos(xIn, yIn & 0x7F, zIn);
-                c_u16 blockID = chunkData->newBlocks[offset];
+                c_int offset = yIn * 256 + zIn * 16 + xIn;
+                c_u16 blockID = chunkData->oldBlocks[offset];
                 u16 dataTag;
                 if (offset % 2 == 0) {
                     dataTag = chunkData->blockData[offset] & 0x0F;

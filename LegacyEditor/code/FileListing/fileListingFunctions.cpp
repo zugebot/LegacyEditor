@@ -27,7 +27,8 @@ namespace editor {
     void FileListing::printFileList() const {
         int index = 0;
         for (const auto & myAllFile : myAllFiles) {
-            printf("%.2d: %s\n", index, myAllFile.constructFileName(myConsole, myHasSeparateRegions).c_str());
+            printf("[%7d] %.2d: %s\n", myAllFile.data.size,
+                   index, myAllFile.constructFileName(myConsole, myHasSeparateRegions).c_str());
             index++;
         }
         printf("\n");
@@ -272,21 +273,18 @@ namespace editor {
 
 
     void FileListing::pruneRegions() {
-        auto iter = myAllFiles.begin();
-        while (iter != myAllFiles.end()) {
-            if (!iter->isRegionType()) {
-                ++iter;
-                continue;
-            }
-            c_i16 regionX = iter->nbt->getTag("x").toPrim<i16>();
-            c_i16 regionZ = iter->nbt->getTag("z").toPrim<i16>();
+        for (auto iter = myAllFiles.begin(); iter != myAllFiles.end(); ) {
+            if (iter->isRegionType()) {
+                c_i16 regionX = iter->nbt->getTag("x").toPrim<i16>();
+                c_i16 regionZ = iter->nbt->getTag("z").toPrim<i16>();
 
-            if (regionX < -1 || regionX > 0 || regionZ < -1 || regionZ > 0) {
-                iter->deleteData();
-                iter = myAllFiles.erase(iter);
-            } else {
-                ++iter;
+                if (!(regionX == 0 || regionX == -1) || !(regionZ == 0 || regionZ == -1)) {
+                    iter->deleteData();
+                    iter = myAllFiles.erase(iter);
+                    continue;
+                }
             }
+            ++iter;
         }
         clearPointers();
         updatePointers();

@@ -95,9 +95,17 @@ namespace editor {
         MU ND int convertAndReplaceRegions(const fs::path& inFilePath, const fs::path& inFileRegionReplacementPath,
                                            const fs::path& outFilePath, const lce::CONSOLE consoleOut);
 
-        std::vector<fs::path> findExternalRegionFolders();
-        MU ND int readExternalRegions(const fs::path& inDirPath);
-        MU ND static int writeExternalRegions(c_string_ref outFilePath);
+        /// Read / Write external PS4 folders
+        std::vector<fs::path> findExternalRegionPS4Folders();
+        MU ND int readExternalRegionsPS4_OR_NSX(const fs::path& inDirPath);
+        MU ND static int writeExternalRegionsPS4(const fs::path& outDirPath);
+
+        /// Read / Write external Nintendo Switch folders
+        fs::path findExternalRegionNSXFolders();
+        MU ND int readExternalRegionsNSX(const fs::path& inDirPath);
+        MU ND static int writeExternalRegionsNSX(const fs::path& outDirPath);
+
+
 
         /// Region Helpers
 

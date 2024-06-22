@@ -57,7 +57,7 @@ namespace editor {
         int ensureDecompress(lce::CONSOLE console);
         void ensureCompressed(lce::CONSOLE console);
 
-        MU void readChunk(lce::CONSOLE console) const;
+        MU void readChunk(lce::CONSOLE inConsole) const;
         MU void writeChunk(lce::CONSOLE console);
 
         void setSizeFromReading(u32 sizeIn);

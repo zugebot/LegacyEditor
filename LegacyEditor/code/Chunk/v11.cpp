@@ -14,11 +14,14 @@
 
 namespace editor::chunk {
 
+
     void ChunkV11::allocChunk() const {
         chunkData->oldBlocks = u8_vec(65536);
         chunkData->blockData = u8_vec(32768);
         chunkData->skyLight = u8_vec(32768);
         chunkData->blockLight = u8_vec(32768);
+        chunkData->heightMap = u8_vec(256);
+        chunkData->biomes = u8_vec(256);
     }
 
 
@@ -57,18 +60,29 @@ namespace editor::chunk {
         chunkData->validChunk = true;
     }
 
-    // xzy or zxy?
-    static void putBlocks(u16_vec& writeVec, c_u8* grid,
-        c_int writeOffset, c_int gridIndex) {
-        c_int num = gridIndex / 64;
-        c_int num2 = gridIndex / 2 % 32;
-        c_int gridOffset = writeOffset + num / 4 * 64 + num % 4 * 4 + num2 * 1024;
 
-        int gridIter = 0;
-        for (int i = 0; i < 64; i += 16) {
+
+    static int calcOffset(int value) {
+        int num = value / 32;
+        int num2 = value % 32;
+        return num / 4 * 64 + num % 4 * 4 + num2 * 1024;
+    }
+
+    // xzy or zxy?
+    /**
+     *
+     * @param writeVec
+     * @param grid
+     * @param writeOffset ALWAYS 32768 or 65536
+     * @param readOffset 1 to 64
+     */
+    static void putBlocks(u8_vec& writeVec, c_u8* grid, c_int writeOffset, c_int readOffset) {
+        int num = 0;
+        for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
-                for (int k = 0; k < 1024; k += 256) {
-                    writeVec[gridOffset + i + j + k] = static_cast<u16>(grid[gridIter++]);
+                for (int k = 0; k < 4; k++) {
+                    int num2 = readOffset + i * 16 + j + k * 256;
+                    writeVec[num2 + writeOffset] = grid[num++];
                 }
             }
         }
@@ -80,7 +94,7 @@ namespace editor::chunk {
         for (int putBlockOffset = 0; putBlockOffset < 65536; putBlockOffset += 32768) {
             c_i32 blockLength = static_cast<i32>(dataManager->readInt32()) - GRID_HEADER_SIZE;
 
-            if (blockLength <= 0) { continue; }
+            if (blockLength < 0) { continue; }
 
             // access: 0 <-> 1023
             c_u8* gridHeader = dataManager->ptr;
@@ -119,9 +133,11 @@ namespace editor::chunk {
 
                 if (byte2 == 0b111) {
                     // this is only here to optimize filling with air
-                    if (byte1 != 0) { for (u8& gridIter: grid) {
-                        gridIter = byte1;
-                    } }
+                    if (byte1 != 0) {
+                        for (u8& gridIter: grid) {
+                            gridIter = byte1;
+                        }
+                    }
 
                 } else {
                     // find the location of the grid's data
@@ -138,7 +154,7 @@ namespace editor::chunk {
                     }
                 }
                 // place the grid blocks into the chunkData
-                putBlocks(chunkData->newBlocks, grid, putBlockOffset, gridIndex);
+                putBlocks(chunkData->oldBlocks, grid, putBlockOffset, calcOffset(gridIndex / 2));
             }
         }
     }

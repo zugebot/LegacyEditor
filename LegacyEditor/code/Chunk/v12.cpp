@@ -326,6 +326,13 @@ namespace editor::chunk {
 
 
     void ChunkV12::writeBlockData() const {
+        if (chunkData->newBlocks.size() != 65536) {
+            chunkData->newBlocks = u16_vec(65536);
+        }
+        if (chunkData->submerged.size() != 65536) {
+            chunkData->submerged = u16_vec(65536);
+        }
+
 
         u16_vec blockVector;
         u16_vec blockLocations;

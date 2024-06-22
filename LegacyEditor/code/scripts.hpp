@@ -186,13 +186,14 @@ namespace editor {
      * @param regionIndex
      * @param fileListing
      */
-    void convertElytraToAquaticChunks(int regionIndex, FileListing& fileListing) {
-        const lce::CONSOLE console = fileListing.myConsole;
-        if (regionIndex >= fileListing.region_nether.size()) { return; }
+    void convertElytraToAquaticChunks(int regionIndex, FileList& fileList,
+                                      const lce::CONSOLE inConsole, const lce::CONSOLE outConsole) {
+
+        if (regionIndex >= fileList.size()) { return; }
 
         // read a region file
         RegionManager region;
-        region.read(fileListing.region_nether[regionIndex]);
+        region.read(fileList[regionIndex]);
 
         for (int index = 0; index < 1024; index++) {
             ChunkManager* chunkManager = &region.chunks[index];
@@ -201,8 +202,8 @@ namespace editor {
                 continue;
             }
 
-            chunkManager->ensureDecompress(console);
-            chunkManager->readChunk(console);
+            chunkManager->ensureDecompress(inConsole);
+            chunkManager->readChunk(inConsole);
             auto* chunkData = chunkManager->chunkData;
 
             if (!chunkData->validChunk) {
@@ -210,14 +211,17 @@ namespace editor {
             }
 
             convertOldToNew(chunkData);
+            memset(chunkData->heightMap.data(), 0, 256);
 
+            // TODO: properly down-date it
             chunkData->defaultNBT();
-            chunkManager->writeChunk(console);
-            chunkManager->ensureCompressed(console);
+            chunkManager->writeChunk(outConsole);
+            chunkManager->ensureCompressed(outConsole);
         }
 
-        fileListing.region_nether[regionIndex]->data.deallocate();
-        fileListing.region_nether[regionIndex]->data = region.write(console);
+        fileList[regionIndex]->data.deallocate();
+        fileList[regionIndex]->data = region.write(outConsole);
+        fileList[regionIndex]->console = outConsole;
     }
 
 

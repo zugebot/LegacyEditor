@@ -45,5 +45,8 @@ static void PREPARE_UNIT_TESTS() {
     TEST_PAIR("BIG_WIIU"    ,R"(240219135035)"                                 , "");
     TEST_PAIR("XBOX_BIN"    ,R"(XBOX360_TU69.bin)", out_build + R"(xbox_to_wiiu)");
     TEST_PAIR("XBOX_DAT"    ,R"(XBOX360_TU74.dat)", out_build + R"(xbox_to_wiiu)");
+
+    TEST_PAIR("SWITCH1"     ,R"(NS/231011215216.dat)", wiiu + R"(switch_to_wiiu)");
+    TEST_PAIR("ELYTRA1"     ,R"(elytra_tutorial)", wiiu + R"(elytraWiiU_to_wiiu)");
 }
 

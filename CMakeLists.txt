@@ -41,5 +41,5 @@ add_executable(LegacyEditor
     ${LEGACY_EDITOR_SOURCES}
     ${LCE_RESOURCES}
     ${INCLUDE_SOURCES}
-    examples/set_block_in_chunk.cpp
+    examples/testing_elytra_chunk_reading_writing.cpp
 )

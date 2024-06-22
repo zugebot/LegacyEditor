@@ -154,6 +154,7 @@ namespace editor {
                     case lce::CONSOLE::PS3:
                     case lce::CONSOLE::RPCS3:
                         managerOut.writeInt32(chunk.fileData.getDecSize());
+                        // no break here on purpose
                     default:
                         managerOut.writeInt32(chunk.fileData.getDecSize());
                         break;

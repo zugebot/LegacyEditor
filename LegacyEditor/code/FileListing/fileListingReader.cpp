@@ -182,6 +182,7 @@ namespace editor {
     }
 
 
+    /// TODO: figure out how to resolve returning status codes
     int FileListing::read(const fs::path& inFilePath, c_bool readEXTFile) {
         // reads the main gamedata file
         int status = readFile(inFilePath);
@@ -194,10 +195,18 @@ namespace editor {
 
         // reads ps4 external regions
         if (myConsole == lce::CONSOLE::PS4) {
-            auto folders = findExternalRegionFolders();
+            auto folders = findExternalRegionPS4Folders();
             for (c_auto& folder : folders) {
-                status = readExternalRegions(folder);
+                status = readExternalRegionsPS4_OR_NSX(folder);
                 if (status != 0) { break; }
+            }
+        // reads switch external regions
+        } else if (myConsole == lce::CONSOLE::SWITCH) {
+            auto folder = findExternalRegionNSXFolders();
+            if (!folder.empty()) {
+                status = readExternalRegionsPS4_OR_NSX(folder);
+            } else {
+                status = STATUS::FILE_ERROR;
             }
         }
 
@@ -308,7 +317,7 @@ namespace editor {
             case lce::CONSOLE::WIIU:
             case lce::CONSOLE::SWITCH: {
                 filePath = myFilePath;
-                filePath += ".ext";
+                filePath.replace_extension(".ext");
                 break;
             }
             case lce::CONSOLE::XBOX1:
