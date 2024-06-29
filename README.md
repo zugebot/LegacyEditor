@@ -37,6 +37,20 @@ This project makes use of several external libraries, including:
 - TINF - Joergen Ibsen
 - SFO - [hippie68 @github](https://github.com/hippie68/sfo)
 
+## Submodules
+
+This project uses a [separate project](https://github.com/zugebot/lce.git).
+Set this up by doing:
+```bash
+git submodule add https://github.com/zugebot/lce.git
+git submodule update --init
+```
+To use this as a submodule in another project, you can do
+```bash
+git submodule add https://github.com/UtterEvergreen1/LegacyCubiomes.git
+git submodule update --init
+```
+
 ## Outside Help
 
 PS-VITA: https://docs.google.com/document/d/1HUoeH9YcIwqYPYMx9ps0Ui3YF0x_g9QkluADAx_fTJQ
