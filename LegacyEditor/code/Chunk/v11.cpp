@@ -3,8 +3,8 @@
 #include <cstring>
 
 #include "LegacyEditor/utils/NBT.hpp"
-#include "LegacyEditor/code/chunk/chunkData.hpp"
-#include "LegacyEditor/code/chunk/helpers.hpp"
+#include "LegacyEditor/code/Chunk/chunkData.hpp"
+#include "LegacyEditor/code/Chunk/helpers.hpp"
 
 
 // TODO: I think I need to rewrite this all to place blocks as only u8's,

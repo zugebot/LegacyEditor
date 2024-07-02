@@ -2,7 +2,7 @@
 
 #include "lce/processor.hpp"
 
-#include "LegacyEditor/code/chunk/chunkData.hpp"
+#include "LegacyEditor/code/Chunk/chunkData.hpp"
 #include "LegacyEditor/utils/NBT.hpp"
 
 
