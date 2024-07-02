@@ -1,17 +1,15 @@
 #include <iostream>
 
-#include "lce/processor.hpp"
-
 #include "include/ghc/fs_std.hpp"
+
+#include "lce/processor.hpp"
+#include "lce/registry/blockRegistry.hpp"
+#include "lce/registry/textureRegistry.hpp"
 
 #include "LegacyEditor/code/FileInfo/FileInfo.hpp"
 #include "LegacyEditor/code/include.hpp"
-
 #include "LegacyEditor/utils/timer.hpp"
-
 #include "LegacyEditor/unit_tests.hpp"
-#include "lce/registry/blockRegistry.hpp"
-#include "lce/registry/textureRegistry.hpp"
 
 
 int main() {

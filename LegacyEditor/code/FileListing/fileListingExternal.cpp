@@ -8,7 +8,6 @@
 #include "LegacyEditor/utils/dataManager.hpp"
 
 
-
 namespace editor {
 
 
@@ -18,7 +17,7 @@ namespace editor {
      * \return
      */
     int FileListing::readExternalRegionsPS4_OR_NSX(const fs::path& inDirPath) {
-        int fileIndex = -1;
+        MU int fileIndex = -1;
         for (c_auto& file : fs::directory_iterator(inDirPath)) {
 
             // TODO: place non-used files in a cache?
@@ -56,14 +55,14 @@ namespace editor {
                         LCEFileType::REGION_NETHER,
                         LCEFileType::REGION_END
                 };
-                lFile.fileType = regDims[dimChar];
+                lFile.fileType = regDims[static_cast<int>(static_cast<u8>(dimChar))];
             }
             c_i16 rX = static_cast<i8>(strtol(
                     fileNameStr.substr(13, 2).c_str(), nullptr, 16));
             c_i16 rZ = static_cast<i8>(strtol(
                     fileNameStr.substr(15, 2).c_str(), nullptr, 16));
-            lFile.nbt->setTag("x", createNBT_INT16(rX));
-            lFile.nbt->setTag("z", createNBT_INT16(rZ));
+            lFile.setRegionX(rX);
+            lFile.setRegionZ(rZ);
         }
 
         updatePointers();

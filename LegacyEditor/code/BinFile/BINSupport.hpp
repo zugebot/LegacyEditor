@@ -30,11 +30,11 @@ namespace editor {
 
     struct StfsVD {
         u8 size;
-        //u8 reserved;
+        // u8 reserved;
         u8 blockSeparation;
         u16 fileTableBlockCount;
         int fileTableBlockNum;
-        //u8 topHashTableHash[0x14];
+        // u8 topHashTableHash[0x14];
         u32 allocBlockCount;
         u32 unallocatedBlockCount;
 

@@ -1,16 +1,16 @@
 #pragma once
 
-#include "lce/processor.hpp"
+#include <cstdint>
 
 
-MU static u64 getNanoSeconds();
-MU static u64 getMilliseconds();
-MU static u64 getSeconds();
+[[maybe_unused]] static uint64_t getNanoSeconds();
+[[maybe_unused]] static uint64_t getMilliseconds();
+[[maybe_unused]] static uint64_t getSeconds();
 
 
-class Timer {
-    u64 time = 0;
+class [[maybe_unused]] Timer {
+    uint64_t time = 0;
 public:
     Timer();
-    MU ND float getSeconds() const;
+    [[maybe_unused]] [[nodiscard]] float getSeconds() const;
 };

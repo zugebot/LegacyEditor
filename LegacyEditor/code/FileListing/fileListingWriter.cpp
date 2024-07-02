@@ -1,14 +1,14 @@
 #include "fileListing.hpp"
 
-#include "lce/processor.hpp"
-
 #include <cstdio>
+
+#include "lce/processor.hpp"
 
 #include "include/ghc/fs_std.hpp"
 #include "include/zlib-1.2.12/zlib.h"
 
 #include "LegacyEditor/utils/RLE/rle_vita.hpp"
-#include "LegacyEditor/utils/endian.hpp"
+#include "LegacyEditor/utils/utils.hpp"
 
 // #include "LegacyEditor/utils/LZX/XboxCompression.hpp"
 // #include "LegacyEditor/utils/tinf/tinf.h"
@@ -104,7 +104,7 @@ namespace editor {
             std::string outFileStr = outFilePath.string();
             f_out = fopen(outFileStr.c_str(), "wb");
             if (f_out == nullptr) {
-                printf("cannot create file \"%s\"", outFileStr.c_str());
+                printf("failed to write savefile to \"%s\"\n", outFileStr.c_str());
                 return FILE_ERROR;
             }
         }
@@ -161,7 +161,7 @@ namespace editor {
                 break;
             }
             case lce::CONSOLE::XBOX360:
-                printf("FileListing::writeFileInfo: not implemented! (xbox360)");
+                printf("FileListing::writeFileInfo: not implemented! (xbox360)\n");
                 return NOT_IMPLEMENTED;
             case lce::CONSOLE::NONE:
             default:
@@ -171,9 +171,6 @@ namespace editor {
         c_int status = fileInfo.writeFile(resultFilePath, consoleOut);
         return status;
     }
-
-
-
 
 
     /**
@@ -258,29 +255,29 @@ namespace editor {
 
 
     MU int FileListing::writePS3() {
-        printf("FileListing::writePS3: not implemented!");
+        printf("FileListing::writePS3: not implemented!\n");
         return NOT_IMPLEMENTED;
     }
 
 
     MU int FileListing::writeXbox360_DAT() {
-        printf("FileListing::writeXbox360_DAT: not implemented!");
+        printf("FileListing::writeXbox360_DAT: not implemented!\n");
         return NOT_IMPLEMENTED;
     }
 
 
     MU int FileListing::writeXbox360_BIN() {
-        printf("FileListing::writeXbox360_BIN: not implemented!");
+        printf("FileListing::writeXbox360_BIN: not implemented!\n");
         return NOT_IMPLEMENTED;
     }
 
     MU int FileListing::writeNSX() {
-        printf("FileListing::writeNSX: not implemented!");
+        printf("FileListing::writeNSX: not implemented!\n");
         return NOT_IMPLEMENTED;
     }
 
     MU int FileListing::writePs4() {
-        printf("FileListing::writePs4: not implemented!");
+        printf("FileListing::writePs4: not implemented!\n");
         return NOT_IMPLEMENTED;
     }
 }

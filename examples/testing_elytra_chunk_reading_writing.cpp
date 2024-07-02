@@ -1,16 +1,14 @@
 #include <iostream>
 
-#include "lce/processor.hpp"
-
 #include "include/ghc/fs_std.hpp"
 
-#include "LegacyEditor/code/include.hpp"
-
-#include "LegacyEditor/unit_tests.hpp"
-
+#include "lce/processor.hpp"
 #include "lce/blocks/block_ids.hpp"
 #include "lce/registry/blockRegistry.hpp"
 #include "lce/registry/textureRegistry.hpp"
+
+#include "LegacyEditor/code/include.hpp"
+#include "LegacyEditor/unit_tests.hpp"
 
 
 int main() {
@@ -81,13 +79,13 @@ int main() {
     fileListing.replaceRegionOW(2, region, consoleOut);
     */
 
-    for (int index = 0; index < fileListing.region_overworld.size(); index++) {
+    for (size_t index = 0; index < fileListing.region_overworld.size(); index++) {
         editor::convertElytraToAquaticChunks(index, fileListing.region_overworld, fileListing.myConsole, consoleOut);
     }
-    for (int index = 0; index < fileListing.region_nether.size(); index++) {
+    for (size_t index = 0; index < fileListing.region_nether.size(); index++) {
         editor::convertElytraToAquaticChunks(index, fileListing.region_nether, fileListing.myConsole, consoleOut);
     }
-    for (int index = 0; index < fileListing.region_end.size(); index++) {
+    for (size_t index = 0; index < fileListing.region_end.size(); index++) {
         editor::convertElytraToAquaticChunks(index, fileListing.region_end, fileListing.myConsole, consoleOut);
     }
 

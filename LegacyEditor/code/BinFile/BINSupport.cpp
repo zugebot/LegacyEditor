@@ -162,7 +162,7 @@ namespace editor {
             }
         }
         const Data ret(out2.size());
-        memcpy(ret.data, out2.data(), out2.size());
+        std::memcpy(ret.data, out2.data(), out2.size());
         return ret;
     }
 
@@ -595,7 +595,7 @@ namespace editor {
         return options;
     }
 
-    /*
+
     std::optional<std::chrono::system_clock::time_point> TimePointFromFatTimestamp(u32 fat) {
         u32 year = (fat >> 25) + 1980;
         u32 month = 0xf & (fat >> 21);
@@ -657,7 +657,7 @@ namespace editor {
 
         if (out.size) {
             auto saveFile = new u8[out.size];
-            memcpy(saveFile, out.data, out.size);
+            std::memcpy(saveFile, out.data, out.size);
             saveGame.saveFileData = DataManager(saveFile, out.size);
         }
 

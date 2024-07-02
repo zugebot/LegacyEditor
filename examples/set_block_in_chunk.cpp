@@ -1,14 +1,12 @@
 #include <iostream>
 
-#include "lce/processor.hpp"
-
 #include "include/ghc/fs_std.hpp"
 
-#include "LegacyEditor/code/include.hpp"
-
-#include "LegacyEditor/unit_tests.hpp"
-
+#include "lce/processor.hpp"
 #include "lce/blocks/block_ids.hpp"
+
+#include "LegacyEditor/code/include.hpp"
+#include "LegacyEditor/unit_tests.hpp"
 
 
 int main() {

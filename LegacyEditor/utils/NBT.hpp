@@ -6,11 +6,11 @@
 #include <ranges>
 
 #include "lce/processor.hpp"
-#include "dataManager.hpp"
+#include "LegacyEditor/utils/dataManager.hpp"
 #include "LegacyEditor/utils/PS3_DEFLATE/deflateUsage.hpp"
 
-class DataManager;
 
+class DataManager;
 
 enum NBTType : u8 {
     NBT_NONE = 0,
@@ -71,7 +71,7 @@ public:
     NBTBase() : NBTBase(nullptr, NBT_NONE) {}
 
     NBTBase(void* dataIn, c_int dataSizeIn, const NBTType typeIn) : NBTBase(dataIn, typeIn) {
-        memcpy(data, dataIn, dataSizeIn);
+        std::memcpy(data, dataIn, dataSizeIn);
     }
 
     void write(DataManager& output) const;
@@ -135,7 +135,7 @@ public:
     explicit NBTTagString(const std::string& dataIn) {
         size = static_cast<int>(dataIn.size());
         data = static_cast<char*>(malloc(size));
-        memcpy(data, dataIn.c_str(), size);
+        std::memcpy(data, dataIn.c_str(), size);
     }
 
     ND bool hasNoTags() const { return size != 0; }
@@ -221,9 +221,9 @@ public:
     NBTTagList() : tagType(NBT_NONE) {}
 
     void appendTag(NBTBase nbt);
-    void set(int index, NBTBase nbt);
-    void insert(int index, NBTBase nbt);
-    void removeTag(int index);
+    void set(const uint32_t index, const NBTBase nbt);
+    void insert(const uint32_t index, const NBTBase nbt);
+    void removeTag(const uint32_t index);
     void deleteAll();
     ND bool hasNoTags() const;
 
@@ -239,13 +239,13 @@ public:
         return static_cast<classType>(0);
     }
 
-    ND NBTTagByteArray* getByteArrayAt(int index) const;
-    ND std::string getStringTagAt(int index) const;
-    ND NBTTagList* getListTagAt(int index) const;
-    ND NBTTagCompound* getCompoundTagAt(int index) const;
-    ND NBTTagIntArray* getIntArrayAt(int index) const;
-    ND NBTTagLongArray* getLongArrayAt(int index) const;
-    ND NBTBase get(int index) const;
+    ND NBTTagByteArray* getByteArrayAt(const uint32_t index) const;
+    ND std::string getStringTagAt(const uint32_t index) const;
+    ND NBTTagList* getListTagAt(const uint32_t index) const;
+    ND NBTTagCompound* getCompoundTagAt(const uint32_t index) const;
+    ND NBTTagIntArray* getIntArrayAt(const uint32_t index) const;
+    ND NBTTagLongArray* getLongArrayAt(const uint32_t index) const;
+    ND NBTBase get(const uint32_t index) const;
     ND int tagCount() const;
     ND NBTType getTagType() const;
 };
@@ -273,7 +273,7 @@ public:
 static NBTBase createNBT_INT8(c_i8 dataIn) {
     NBTBase nbtBase;
     nbtBase.data = malloc(sizeof(dataIn));
-    memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
+    std::memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
     nbtBase.type = NBT_INT8;
     return nbtBase;
 }
@@ -282,7 +282,7 @@ static NBTBase createNBT_INT8(c_i8 dataIn) {
 static NBTBase createNBT_INT16(c_i16 dataIn) {
     NBTBase nbtBase;
     nbtBase.data = malloc(sizeof(dataIn));
-    memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
+    std::memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
     nbtBase.type = NBT_INT16;
     return nbtBase;
 }
@@ -291,7 +291,7 @@ static NBTBase createNBT_INT16(c_i16 dataIn) {
 static NBTBase createNBT_INT32(c_i32 dataIn) {
     NBTBase nbtBase;
     nbtBase.data = malloc(sizeof(dataIn));
-    memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
+    std::memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
     nbtBase.type = NBT_INT32;
     return nbtBase;
 }
@@ -300,7 +300,7 @@ static NBTBase createNBT_INT32(c_i32 dataIn) {
 static NBTBase createNBT_INT64(const i64 dataIn) {
     NBTBase nbtBase;
     nbtBase.data = malloc(sizeof(dataIn));
-    memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
+    std::memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
     nbtBase.type = NBT_INT64;
     return nbtBase;
 }
@@ -309,7 +309,7 @@ static NBTBase createNBT_INT64(const i64 dataIn) {
 static NBTBase createNBT_FLOAT(const float dataIn) {
     NBTBase nbtBase;
     nbtBase.data = malloc(sizeof(dataIn));
-    memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
+    std::memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
     nbtBase.type = NBT_FLOAT;
     return nbtBase;
 }
@@ -318,7 +318,7 @@ static NBTBase createNBT_FLOAT(const float dataIn) {
 static NBTBase createNBT_DOUBLE(const double dataIn) {
     NBTBase nbtBase;
     nbtBase.data = malloc(sizeof(dataIn));
-    memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
+    std::memcpy(nbtBase.data, &dataIn, sizeof(dataIn));
     nbtBase.type = NBT_DOUBLE;
     return nbtBase;
 }

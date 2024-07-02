@@ -20,15 +20,15 @@ namespace editor {
         printf("1. Filename: %s\n", myFilePath.string().c_str());
         printf("2. Oldest Version: %d\n", myOldestVersion);
         printf("3. Current Version: %d\n", myCurrentVersion);
-        printf("4. Total File Count: %llu\n", myAllFiles.size());
-        printf("5. Player File Count: %llu\n\n", players.size());
+        printf("4. Total File Count: %zu\n", myAllFiles.size());
+        printf("5. Player File Count: %zu\n\n", players.size());
     }
 
     void FileListing::printFileList() const {
         int index = 0;
-        for (const auto & myAllFile : myAllFiles) {
-            printf("[%7d] %.2d: %s\n", myAllFile.data.size,
-                   index, myAllFile.constructFileName(myConsole, myHasSeparateRegions).c_str());
+        for (c_auto& myAllFile : myAllFiles) {
+            printf("%.2d [%7d]: %s\n", index, myAllFile.data.size,
+                   myAllFile.constructFileName(myConsole, myHasSeparateRegions).c_str());
             index++;
         }
         printf("\n");
@@ -275,9 +275,8 @@ namespace editor {
     void FileListing::pruneRegions() {
         for (auto iter = myAllFiles.begin(); iter != myAllFiles.end(); ) {
             if (iter->isRegionType()) {
-                c_i16 regionX = iter->nbt->getTag("x").toPrim<i16>();
-                c_i16 regionZ = iter->nbt->getTag("z").toPrim<i16>();
-
+                c_i16 regionX = iter->getRegionX();
+                c_i16 regionZ = iter->getRegionZ();
                 if (!(regionX == 0 || regionX == -1) || !(regionZ == 0 || regionZ == -1)) {
                     iter->deleteData();
                     iter = myAllFiles.erase(iter);
@@ -291,7 +290,7 @@ namespace editor {
     }
 
 
-    void FileListing::replaceRegionOW(int regionIndex, editor::RegionManager& region, const lce::CONSOLE consoleOut) {
+    MU void FileListing::replaceRegionOW(size_t regionIndex, editor::RegionManager& region, const lce::CONSOLE consoleOut) {
         if (regionIndex >= region_overworld.size()) {
             throw std::runtime_error(
                 "attempted to call FileListing::replaceRegionOW with an index that is out of bounds.");

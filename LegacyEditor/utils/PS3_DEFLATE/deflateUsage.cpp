@@ -4,6 +4,7 @@
 
 #define ZIPCHUNK_SIZE 32768
 
+
 /// negative window bits for deflate (no zlib header) regular for zlib and regular + 16 is gzip header
 static int def(u8* inBuffer, u8* outBuffer, uLongf sizeIn, uLongf* sizeOut, int windowBits) {
     // Prepare output buffer memory.

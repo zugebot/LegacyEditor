@@ -11,18 +11,20 @@
 
 namespace editor {
 
-    void processRegion(int regionIndex, FileListing& fileListing) {
+    void processRegion(size_t regionIndex, FileListing& fileListing) {
         const lce::CONSOLE console = fileListing.myConsole;
         if (regionIndex >= fileListing.region_overworld.size()) { return; }
 
         // read a region file
         RegionManager region;
         region.read(fileListing.region_overworld[regionIndex]);
-
+#ifdef DEBUG
         int h = -1;
-
+#endif
         for (ChunkManager& chunkManager: region.chunks) {
+#ifdef DEBUG
             h++;
+#endif
             if (chunkManager.size == 0) {
                 continue;
             }
@@ -104,7 +106,7 @@ namespace editor {
                 }
             }
 
-            memcpy(&chunkData->newBlocks[0], &blocks[0], 131072);
+            std::memcpy(&chunkData->newBlocks[0], &blocks[0], 131072);
             // shuffleArray(&chunkData->newBlocks[0], 65535);
             // memset(&chunkData->biomes[0], 0x0B, 256);
             // memset(&chunkData->blockLight[0], 0xFF, 32768);
@@ -129,7 +131,7 @@ namespace editor {
      * @param regionIndex
      * @param fileListing
      */
-    void removeNetherrack(int regionIndex, FileListing& fileListing) {
+    void removeNetherrack(size_t regionIndex, FileListing& fileListing) {
         const lce::CONSOLE console = fileListing.myConsole;
         if (regionIndex >= fileListing.region_nether.size()) { return; }
 
@@ -166,7 +168,7 @@ namespace editor {
                 }
             }
 
-            memcpy(chunkData->newBlocks.data(), &blocks[0], 131072);
+            std::memcpy(chunkData->newBlocks.data(), &blocks[0], 131072);
             memset(chunkData->blockLight.data(), 0xFF, 32768);
             memset(chunkData->skyLight.data(), 0xFF, 32768);
             chunkData->terrainPopulated = 2046;
@@ -186,7 +188,7 @@ namespace editor {
      * @param regionIndex
      * @param fileListing
      */
-    void convertElytraToAquaticChunks(int regionIndex, FileList& fileList,
+    void convertElytraToAquaticChunks(size_t regionIndex, FileList& fileList,
                                       const lce::CONSOLE inConsole, const lce::CONSOLE outConsole) {
 
         if (regionIndex >= fileList.size()) { return; }
@@ -230,7 +232,7 @@ namespace editor {
      * @param regionIndex
      * @param fileListing
      */
-    void ConvertPillagerToAquaticChunks(c_int regionIndex, const FileListing& fileListing) {
+    void ConvertPillagerToAquaticChunks(size_t regionIndex, const FileListing& fileListing) {
         // TODO: make this a passed variable
         const lce::CONSOLE consoleOut = fileListing.myConsole;
         if (regionIndex >= fileListing.region_overworld.size()) { return; }

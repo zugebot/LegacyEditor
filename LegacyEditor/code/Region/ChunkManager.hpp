@@ -1,5 +1,7 @@
 #pragma once
 
+#include "lce/enums.hpp"
+
 #include "LegacyEditor/utils/data.hpp"
 #include "LegacyEditor/utils/error_status.hpp"
 
@@ -21,27 +23,27 @@ namespace editor {
                 u64 isCompressed : 1;
                 u64 rleFlag : 1;
                 u64 unknownFlag : 1;
-            };
+            } anon{};
         public:
             FileData() {
-                decSize = 0;
-                isCompressed = 1;
-                rleFlag = 1;
-                unknownFlag = 1;
-                timestamp = 0;
+                anon.decSize = 0;
+                anon.isCompressed = 1;
+                anon.rleFlag = 1;
+                anon.unknownFlag = 1;
+                anon.timestamp = 0;
             }
 
-            MU void setTimestamp(c_u32 val) { timestamp = val; }
-            MU void setDecSize(c_u64 val) { decSize = val; }
-            MU void setRLE(c_u64 val) { rleFlag = val; }
-            MU void setUnknown(c_u64 val) { unknownFlag = val; }
-            MU void setCompressed(c_u64 val) { isCompressed = val; }
+            MU void setTimestamp(c_u32 val) { anon.timestamp = val; }
+            MU void setDecSize(c_u64 val) { anon.decSize = val; }
+            MU void setRLE(c_u64 val) { anon.rleFlag = val; }
+            MU void setUnknown(c_u64 val) { anon.unknownFlag = val; }
+            MU void setCompressed(c_u64 val) { anon.isCompressed = val; }
 
-            MU ND u32 getTimestamp() const { return timestamp; }
-            MU ND u64 getDecSize() const { return decSize; }
-            MU ND u64 getRLE() const { return rleFlag; }
-            MU ND u64 getUnknown() const { return unknownFlag; }
-            MU ND u64 getCompressed() const { return isCompressed; }
+            MU ND u32 getTimestamp() const { return anon.timestamp; }
+            MU ND u64 getDecSize() const { return anon.decSize; }
+            MU ND u64 getRLE() const { return anon.rleFlag; }
+            MU ND u64 getUnknown() const { return anon.unknownFlag; }
+            MU ND u64 getCompressed() const { return anon.isCompressed; }
         };
 
         FileData fileData;

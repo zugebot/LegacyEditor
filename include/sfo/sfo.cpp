@@ -1,25 +1,24 @@
 #include "sfo.hpp"
 
-
+#include <cstring>
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 #include <stdexcept>
 
 
 std::vector<SFOManager::Attribute> SFOManager::getAttributes() const {
     std::vector<Attribute> attributes;
-    for (int i = 0; i < header.entries_count; i++) {
+    for (uint32_t i = 0; i < myHeader.myEntriesCount; i++) {
         Attribute attr;
-        attr.key = &key_table.content[entries[i].key_offset];
-        switch (entries[i].param_fmt) {
+        attr.myKey = &myKeyTable.content[myEntries[i].key_offset];
+        switch (myEntries[i].param_fmt) {
             case 516:
             case 1024:
-                attr.value = &data_table.content[entries[i].data_offset];
+                attr.myValue = &myDataTable.content[myEntries[i].data_offset];
                 break;
             case 1028: {
-                auto* integer = (uint32_t*)&data_table.content[entries[i].data_offset];
-                attr.value = std::to_string(*integer);
+                auto* integer = (uint32_t*)&myDataTable.content[myEntries[i].data_offset];
+                attr.myValue = std::to_string(*integer);
                 break;
             }
         }
@@ -29,16 +28,14 @@ std::vector<SFOManager::Attribute> SFOManager::getAttributes() const {
 }
 
 
-
-
-void SFOManager::addParam(const std::string& type, const std::string& key, const std::string& value) {
-    struct index_table_entry new_entry = {0};
-    int new_index = 0;
+[[maybe_unused]] void SFOManager::addParam(const std::string& theType, const std::string& theKey, const std::string& value) {
+    struct index_table_entry new_entry = {};
+    uint32_t new_index = 0;
 
     // Get new entry's .param_len and .param_max_len
-    if (type == "str") {
+    if (theType == "str") {
         new_entry.param_fmt = 516;
-        new_entry.param_max_len = getReservedStringLen(key);
+        new_entry.param_max_len = getReservedStringLen(theKey);
         new_entry.param_len = value.length() + 1;
         if (new_entry.param_max_len < new_entry.param_len) {
             new_entry.param_max_len = new_entry.param_len;
@@ -54,152 +51,152 @@ void SFOManager::addParam(const std::string& type, const std::string& key, const
     }
 
     // Get new entry's index and offsets
-    for (int i = 0; i < header.entries_count; i++) {
-        int result = key.compare(&key_table.content[entries[i].key_offset]);
+    for (uint32_t i = 0; i < myHeader.myEntriesCount; i++) {
+        int result = theKey.compare(&myKeyTable.content[myEntries[i].key_offset]);
         if (result == 0) { // Parameter already exists
-            throw std::runtime_error("Could not add \"" + key + "\": parameter already exists.");
+            throw std::runtime_error("Could not add \"" + theKey + "\": parameter already exists.");
         } else if (result < 0) {
             new_index = i;
-            new_entry.key_offset = entries[i].key_offset;
-            new_entry.data_offset = entries[i].data_offset;
+            new_entry.key_offset = myEntries[i].key_offset;
+            new_entry.data_offset = myEntries[i].data_offset;
             break;
-        } else if (i == header.entries_count - 1) {
+        } else if (i == myHeader.myEntriesCount - 1) {
             new_index = i + 1;
-            new_entry.key_offset = entries[i].key_offset +
-                                   strlen(&key_table.content[entries[i].key_offset]) + 1;
-            new_entry.data_offset = entries[i].data_offset + entries[i].param_max_len;
+            new_entry.key_offset = myEntries[i].key_offset +
+                                   strlen(&myKeyTable.content[myEntries[i].key_offset]) + 1;
+            new_entry.data_offset = myEntries[i].data_offset + myEntries[i].param_max_len;
             break;
         }
     }
 
     // Make room for the new index table entry by moving the old ones
-    header.entries_count++;
-    entries = static_cast<index_table_entry*>(
-            realloc(entries, sizeof(struct index_table_entry) * header.entries_count));
-    for (int i = (int)header.entries_count - 1; i > new_index; i--) {
-        entries[i] = entries[i - 1];
-        entries[i].key_offset += key.length() + 1;
-        entries[i].data_offset += new_entry.param_max_len;
+    myHeader.myEntriesCount++;
+    myEntries = static_cast<index_table_entry*>(
+            realloc(myEntries, sizeof(struct index_table_entry) * myHeader.myEntriesCount));
+    for (int i = (int) myHeader.myEntriesCount - 1; i > static_cast<int>(new_index); i--) {
+        myEntries[i] = myEntries[i - 1];
+        myEntries[i].key_offset += theKey.length() + 1;
+        myEntries[i].data_offset += new_entry.param_max_len;
     }
 
     // Insert new index table entry
-    memcpy(&entries[new_index], &new_entry, sizeof(struct index_table_entry));
+    std::memcpy(&myEntries[new_index], &new_entry, sizeof(struct index_table_entry));
 
     // Resize key table
-    key_table.size += key.length() + 1;
-    key_table.content = static_cast<char*>(realloc(key_table.content, key_table.size));
+    myKeyTable.size += theKey.length() + 1;
+    myKeyTable.content = static_cast<char*>(realloc(myKeyTable.content, myKeyTable.size));
     // Move higher indexed keys to make room for new key
-    for (int i = (int)key_table.size - 1; i > new_entry.key_offset + key.length(); i--) {
-        key_table.content[i] = key_table.content[i - key.length() - 1];
+    for (int i = (int) myKeyTable.size - 1; i > static_cast<int>(new_entry.key_offset + theKey.length()); i--) {
+        myKeyTable.content[i] = myKeyTable.content[i - theKey.length() - 1];
     }
     // Insert new key
-    memcpy(&key_table.content[new_entry.key_offset], key.c_str(), key.length() + 1);
-    padTable(&key_table);
+    std::memcpy(&myKeyTable.content[new_entry.key_offset], theKey.c_str(), theKey.length() + 1);
+    padTable(&myKeyTable);
 
     // Resize data table
     expandDataTable((int)new_entry.data_offset, (int)new_entry.param_max_len);
 
     // Insert new data
-    if (type == "str") {
-        memset(&data_table.content[entries[new_index].data_offset],
+    if (theType == "str") {
+        memset(&myDataTable.content[myEntries[new_index].data_offset],
                0, new_entry.param_len); // Overwrite whole space with zeros first
-        memcpy(&data_table.content[entries[new_index].data_offset],
-               value.c_str(), value.length() + 1); // Then copy new value
-    } else if (type == "int") {
+        std::memcpy(&myDataTable.content[myEntries[new_index].data_offset],
+                    value.c_str(), value.length() + 1); // Then copy new value
+    } else if (theType == "int") {
         uint32_t new_value = strtoul(value.c_str(), nullptr, 0);
-        memcpy(&data_table.content[entries[new_index].data_offset], &new_value, 4);
+        std::memcpy(&myDataTable.content[myEntries[new_index].data_offset], &new_value, 4);
     }
 }
 
 
-void SFOManager::deleteParam(const std::string& key) {
-    int index = getIndex(key);
+[[maybe_unused]] void SFOManager::deleteParam(const std::string& theKey) {
+    int index = getIndex(theKey);
     if (index < 0) { // Parameter not found
-        throw std::runtime_error("Could not delete \"" + key + "\": parameter not found.");
+        throw std::runtime_error("Could not delete \"" + theKey + "\": parameter not found.");
     }
 
     // Delete parameter from key table
-    for (int i = entries[index].key_offset; i < key_table.size - key.length() - 1; i++) {
-        key_table.content[i] = key_table.content[i + key.length() + 1];
+    for (uint32_t i = myEntries[index].key_offset; i < myKeyTable.size - theKey.length() - 1; i++) {
+        myKeyTable.content[i] = myKeyTable.content[i + theKey.length() + 1];
     }
 
     // Resize key table
-    key_table.size -= key.length() + 1;
-    key_table.content = static_cast<char*>(realloc(key_table.content, key_table.size));
-    padTable(&key_table);
+    myKeyTable.size -= theKey.length() + 1;
+    myKeyTable.content = static_cast<char*>(realloc(myKeyTable.content, myKeyTable.size));
+    padTable(&myKeyTable);
 
     // Delete parameter from data table
-    for (int i = (int)entries[index].data_offset; i < data_table.size - entries[index].param_max_len; i++) {
-        data_table.content[i] = data_table.content[i + entries[index].param_max_len];
+    for (int i = (int) myEntries[index].data_offset; i < static_cast<int>(myDataTable.size - myEntries[index].param_max_len); i++) {
+        myDataTable.content[i] = myDataTable.content[i + myEntries[index].param_max_len];
     }
 
     // Resize data table
-    data_table.size -= entries[index].param_max_len;
-    if (data_table.size) {
-        data_table.content = static_cast<char*>(realloc(data_table.content, data_table.size));
+    myDataTable.size -= myEntries[index].param_max_len;
+    if (myDataTable.size) {
+        myDataTable.content = static_cast<char*>(realloc(myDataTable.content, myDataTable.size));
     } else {
-        free(data_table.content);
-        data_table.content = nullptr;
+        free(myDataTable.content);
+        myDataTable.content = nullptr;
     }
 
     // Delete parameter from index table
-    int param_max_len = (int)entries[index].param_max_len;
-    for (int i = index; i < header.entries_count - 1; i++) {
-        entries[i] = entries[i + 1];
-        entries[i].key_offset -= key.length() + 1;
-        entries[i].data_offset -= param_max_len;
+    int param_max_len = (int) myEntries[index].param_max_len;
+    for (uint32_t i = index; i < myHeader.myEntriesCount - 1; i++) {
+        myEntries[i] = myEntries[i + 1];
+        myEntries[i].key_offset -= theKey.length() + 1;
+        myEntries[i].data_offset -= param_max_len;
     }
 
     // Resize index table
-    header.entries_count--;
-    if (header.entries_count) {
-        entries = static_cast<index_table_entry*>(
-                realloc(entries, sizeof(struct index_table_entry) * header.entries_count));
+    myHeader.myEntriesCount--;
+    if (myHeader.myEntriesCount) {
+        myEntries = static_cast<index_table_entry*>(
+                realloc(myEntries, sizeof(struct index_table_entry) * myHeader.myEntriesCount));
     } else {
-        free(entries);
-        entries = nullptr;
+        free(myEntries);
+        myEntries = nullptr;
     }
 }
 
 
-void SFOManager::editParam(const std::string& key, const std::string& value) {
-    int index = getIndex(key);
+[[maybe_unused]] void SFOManager::editParam(const std::string& theKey, const std::string& theValue) {
+    int index = getIndex(theKey);
     if (index < 0) { // Parameter not found
-        throw std::runtime_error("Could not edit \"" + key + "\": parameter not found.");
+        throw std::runtime_error("Could not edit \"" + theKey + "\": parameter not found.");
     }
 
-    switch (entries[index].param_fmt) {
+    switch (myEntries[index].param_fmt) {
         case 516: // String
         case 1024: { // Special mode string
-            entries[index].param_len = value.length() + 1;
+            myEntries[index].param_len = theValue.length() + 1;
             // Enlarge data table if new string is longer than allowed
-            int diff = (int)(entries[index].param_len - entries[index].param_max_len);
+            int diff = (int)(myEntries[index].param_len - myEntries[index].param_max_len);
             if (diff > 0) {
-                int offset = (int)(entries[index].data_offset + entries[index].param_max_len);
-                entries[index].param_max_len = entries[index].param_len;
+                int offset = (int)(myEntries[index].data_offset + myEntries[index].param_max_len);
+                myEntries[index].param_max_len = myEntries[index].param_len;
 
                 // 4-byte alignment
-                while (entries[index].param_max_len % 4) {
-                    entries[index].param_max_len++;
+                while (myEntries[index].param_max_len % 4) {
+                    myEntries[index].param_max_len++;
                     diff++;
                 }
 
                 expandDataTable(offset, diff);
 
                 // Adjust follow-up index table entries' data offsets
-                for (int i = index + 1; i < header.entries_count; i++) {
-                    entries[i].data_offset += diff;
+                for (uint32_t i = index + 1; i < myHeader.myEntriesCount; i++) {
+                    myEntries[i].data_offset += diff;
                 }
             }
             // Overwrite old data with zeros
-            memset(&data_table.content[entries[index].data_offset], 0, entries[index].param_max_len);
+            memset(&myDataTable.content[myEntries[index].data_offset], 0, myEntries[index].param_max_len);
             // Save new string to data table
-            snprintf(&data_table.content[entries[index].data_offset], entries[index].param_max_len, "%s", value.c_str());
+            snprintf(&myDataTable.content[myEntries[index].data_offset], myEntries[index].param_max_len, "%s", theValue.c_str());
             break;
         }
         case 1028: { // Integer
-            uint32_t integer = strtoul(value.c_str(), nullptr, 0);
-            memcpy(&data_table.content[entries[index].data_offset], &integer, 4);
+            uint32_t integer = strtoul(theValue.c_str(), nullptr, 0);
+            std::memcpy(&myDataTable.content[myEntries[index].data_offset], &integer, 4);
             break;
         }
     }
@@ -209,34 +206,34 @@ void SFOManager::editParam(const std::string& key, const std::string& value) {
 std::string SFOManager::getAttribute(const std::string& theKey) const {
     auto attrs = getAttributes();
     for (const auto& attr : attrs) {
-        if (attr.key == theKey) {
-            return attr.value;
+        if (attr.myKey == theKey) {
+            return attr.myValue;
         }
     }
     return "";
 }
 
 
-void SFOManager::saveToFile(const std::string& outputPath) {
+[[maybe_unused]] void SFOManager::saveToFile(const std::string& outputPath) {
     FILE* outFile = fopen(outputPath.c_str(), "wb");
     if (outFile == nullptr) {
         throw std::runtime_error("Could not open file \"" + outputPath + "\" in write mode.");
     }
 
     // Adjust header's table offsets before saving
-    header.key_table_offset = sizeof(struct header) + sizeof(struct index_table_entry) * header.entries_count;
-    header.data_table_offset = header.key_table_offset + key_table.size;
+    myHeader.myKeyTableOffset = sizeof(struct header) + sizeof(struct index_table_entry) * myHeader.myEntriesCount;
+    myHeader.myDataTableOffset = myHeader.myKeyTableOffset + myKeyTable.size;
 
-    if (fwrite(&header, sizeof(struct header), 1, outFile) != 1) {
+    if (fwrite(&myHeader, sizeof(struct header), 1, outFile) != 1) {
         throw std::runtime_error("Could not write header to file \"" + outputPath + "\".");
     }
-    if (header.entries_count && fwrite(entries, sizeof(struct index_table_entry) * header.entries_count, 1, outFile) != 1) {
+    if (myHeader.myEntriesCount && fwrite(myEntries, sizeof(struct index_table_entry) * myHeader.myEntriesCount, 1, outFile) != 1) {
         throw std::runtime_error("Could not write index table to file \"" + outputPath + "\".");
     }
-    if (key_table.size && fwrite(key_table.content, key_table.size, 1, outFile) != 1) {
+    if (myKeyTable.size && fwrite(myKeyTable.content, myKeyTable.size, 1, outFile) != 1) {
         throw std::runtime_error("Could not write key table to file \"" + outputPath + "\".");
     }
-    if (data_table.size && fwrite(data_table.content, data_table.size, 1, outFile) != 1) {
+    if (myDataTable.size && fwrite(myDataTable.content, myDataTable.size, 1, outFile) != 1) {
         throw std::runtime_error("Could not write data table to file \"" + outputPath + "\".");
     }
 
@@ -251,19 +248,19 @@ static uint32_t bswap_32(uint32_t val) {
 
 
 void SFOManager::loadFile() {
-    file = fopen(filePath.c_str(), "rb");
-    if (!file) {
-        throw std::runtime_error("Could not open file \"" + filePath + "\".");
+    myFile = fopen(myFilePath.c_str(), "rb");
+    if (!myFile) {
+        throw std::runtime_error("Could not open file \"" + myFilePath + "\".");
     }
 
     uint32_t magic;
-    fread(&magic, 4, 1, file);
+    fread(&magic, 4, 1, myFile);
     if (magic == 1414415231) { // PS4 PKG file
-        fseek(file, getPS4PkgOffset(), SEEK_SET);
+        fseek(myFile, getPS4PkgOffset(), SEEK_SET);
     } else if (magic == 1128612691) { // Disc param.sfo
-        fseek(file, 0x800, SEEK_SET);
+        fseek(myFile, 0x800, SEEK_SET);
     } else if (magic == 1179865088) { // Param.sfo file
-        rewind(file);
+        rewind(myFile);
     } else {
         throw std::runtime_error("Param.sfo magic number not found.");
     }
@@ -278,12 +275,15 @@ void SFOManager::loadFile() {
 long int SFOManager::getPS4PkgOffset() {
     uint32_t pkg_table_offset;
     uint32_t pkg_file_count;
-    fseek(file, 0x00C, SEEK_SET);
-    fread(&pkg_file_count, 4, 1, file);
-    fseek(file, 0x018, SEEK_SET);
-    fread(&pkg_table_offset, 4, 1, file);
+
+    fseek(myFile, 0x00C, SEEK_SET);
+    fread(&pkg_file_count, 4, 1, myFile);
+    fseek(myFile, 0x018, SEEK_SET);
+    fread(&pkg_table_offset, 4, 1, myFile);
+
     pkg_file_count = bswap_32(pkg_file_count);
     pkg_table_offset = bswap_32(pkg_table_offset);
+
     struct pkg_table_entry {
         uint32_t id;
         uint32_t filename_offset;
@@ -292,171 +292,172 @@ long int SFOManager::getPS4PkgOffset() {
         uint32_t offset;
         uint32_t size;
         uint64_t padding;
-    } pkg_table_entry[pkg_file_count];
-    fseek(file, (long)pkg_table_offset, SEEK_SET);
-    fread(pkg_table_entry, sizeof(struct pkg_table_entry), pkg_file_count, file);
-    for (int i = 0; i < pkg_file_count; i++) {
-        if (pkg_table_entry[i].id == 1048576) {// param.sfo ID
-            return (long)bswap_32(pkg_table_entry[i].offset);
+    };
+
+    std::vector<pkg_table_entry> pkg_table_entries(pkg_file_count);
+
+    fseek(myFile, (long)pkg_table_offset, SEEK_SET);
+    fread(pkg_table_entries.data(), sizeof(pkg_table_entry), pkg_file_count, myFile);
+
+    for (uint32_t i = 0; i < pkg_file_count; i++) {
+        if (pkg_table_entries[i].id == 1048576) { // param.sfo ID
+            return (long)bswap_32(pkg_table_entries[i].offset);
         }
     }
+
     throw std::runtime_error("Could not find a param.sfo file inside the PS4 PKG.");
 }
 
 
 void SFOManager::loadHeader() {
-    if (fread(&header, sizeof(struct header), 1, file) != 1) {
+    if (fread(&myHeader, sizeof(struct header), 1, myFile) != 1) {
         throw std::runtime_error("Could not read header.");
     }
 }
 
 
 void SFOManager::loadEntries() {
-    unsigned int size = sizeof(struct index_table_entry) * header.entries_count;
-    entries = static_cast<index_table_entry*>(malloc(size));
-    if (entries == nullptr) {
+    unsigned int size = sizeof(struct index_table_entry) * myHeader.myEntriesCount;
+    myEntries = static_cast<index_table_entry*>(malloc(size));
+    if (myEntries == nullptr) {
         throw std::runtime_error("Could not allocate memory for index table.");
     }
-    if (size && fread(entries, size, 1, file) != 1) {
+    if (size && fread(myEntries, size, 1, myFile) != 1) {
         throw std::runtime_error("Could not read index table entries.");
     }
 }
 
 
 void SFOManager::loadKeyTable() {
-    key_table.size = header.data_table_offset - header.key_table_offset;
-    key_table.content = static_cast<char*>(malloc(key_table.size));
-    if (key_table.content == nullptr) {
+    myKeyTable.size = myHeader.myDataTableOffset - myHeader.myKeyTableOffset;
+    myKeyTable.content = static_cast<char*>(malloc(myKeyTable.size));
+    if (myKeyTable.content == nullptr) {
         throw std::runtime_error("Could not allocate memory for key table.");
     }
-    if (key_table.size && fread(key_table.content, key_table.size, 1, file) != 1) {
+    if (myKeyTable.size && fread(myKeyTable.content, myKeyTable.size, 1, myFile) != 1) {
         throw std::runtime_error("Could not read key table.");
     }
 }
 
 
 void SFOManager::loadDataTable() {
-    if (header.entries_count) {
-        data_table.size = entries[header.entries_count - 1].data_offset + entries[header.entries_count - 1].param_max_len;
+    if (myHeader.myEntriesCount) {
+        myDataTable.size = myEntries[myHeader.myEntriesCount - 1].data_offset + myEntries[myHeader.myEntriesCount - 1].param_max_len;
     } else {
-        data_table.size = 0; // For newly created, empty param.sfo files
+        myDataTable.size = 0; // For newly created, empty param.sfo files
     }
-    data_table.content = static_cast<char*>(malloc(data_table.size));
-    if (data_table.content == nullptr) {
+    myDataTable.content = static_cast<char*>(malloc(myDataTable.size));
+    if (myDataTable.content == nullptr) {
         throw std::runtime_error("Could not allocate memory for data table.");
     }
-    if (data_table.size && fread(data_table.content, data_table.size, 1, file) != 1) {
+    if (myDataTable.size && fread(myDataTable.content, myDataTable.size, 1, myFile) != 1) {
         throw std::runtime_error("Could not read data table.");
     }
 }
 
 
-int SFOManager::getIndex(const std::string& key) {
-    for (int i = 0; i < header.entries_count; i++) {
-        if (key == &key_table.content[entries[i].key_offset]) {
-            return i;
+int SFOManager::getIndex(const std::string& theKey) {
+    for (uint32_t i = 0; i < myHeader.myEntriesCount; i++) {
+        if (theKey == &myKeyTable.content[myEntries[i].key_offset]) {
+            return static_cast<int>(i);
         }
     }
     return -1;
 }
 
 
-int SFOManager::getReservedStringLen(const std::string& key) {
+int SFOManager::getReservedStringLen(const std::string& theKey) {
     int len = 0;
-    if (key == "CATEGORY" || key == "FORMAT") {
+    if (theKey == "CATEGORY" || theKey == "FORMAT") {
         len = 4;
-    } else if (key == "APP_VER" || key == "CONTENT_VER" || key == "VERSION") {
+    } else if (theKey == "APP_VER" || theKey == "CONTENT_VER" || theKey == "VERSION") {
         len = 8;
-    } else if (key == "INSTALL_DIR_SAVEDATA" || key == "TITLE_ID") {
+    } else if (theKey == "INSTALL_DIR_SAVEDATA" || theKey == "TITLE_ID") {
         len = 12;
-    } else if (key == "SERVICE_ID_ADDCONT_ADD_1" ||
-               key == "SERVICE_ID_ADDCONT_ADD_2" ||
-               key == "SERVICE_ID_ADDCONT_ADD_3" ||
-               key == "SERVICE_ID_ADDCONT_ADD_4" ||
-               key == "SERVICE_ID_ADDCONT_ADD_5" ||
-               key == "SERVICE_ID_ADDCONT_ADD_6" ||
-               key == "SERVICE_ID_ADDCONT_ADD_7") {
+    } else if (theKey == "SERVICE_ID_ADDCONT_ADD_1" ||
+               theKey == "SERVICE_ID_ADDCONT_ADD_2" ||
+               theKey == "SERVICE_ID_ADDCONT_ADD_3" ||
+               theKey == "SERVICE_ID_ADDCONT_ADD_4" ||
+               theKey == "SERVICE_ID_ADDCONT_ADD_5" ||
+               theKey == "SERVICE_ID_ADDCONT_ADD_6" ||
+               theKey == "SERVICE_ID_ADDCONT_ADD_7") {
         len = 20;
-    } else if (key == "CONTENT_ID") {
+    } else if (theKey == "CONTENT_ID") {
         len = 48;
-    } else if (key == "PROVIDER" || key == "TITLE" ||
-               key == "PROVIDER_00" || key == "TITLE_00" ||
-               key == "PROVIDER_01" || key == "TITLE_01" ||
-               key == "PROVIDER_02" || key == "TITLE_02" ||
-               key == "PROVIDER_03" || key == "TITLE_03" ||
-               key == "PROVIDER_04" || key == "TITLE_04" ||
-               key == "PROVIDER_05" || key == "TITLE_05" ||
-               key == "PROVIDER_06" || key == "TITLE_06" ||
-               key == "PROVIDER_07" || key == "TITLE_07" ||
-               key == "PROVIDER_08" || key == "TITLE_08" ||
-               key == "PROVIDER_09" || key == "TITLE_09" ||
-               key == "PROVIDER_10" || key == "TITLE_10" ||
-               key == "PROVIDER_11" || key == "TITLE_11" ||
-               key == "PROVIDER_12" || key == "TITLE_12" ||
-               key == "PROVIDER_13" || key == "TITLE_13" ||
-               key == "PROVIDER_14" || key == "TITLE_14" ||
-               key == "PROVIDER_15" || key == "TITLE_15" ||
-               key == "PROVIDER_16" || key == "TITLE_16" ||
-               key == "PROVIDER_17" || key == "TITLE_17" ||
-               key == "PROVIDER_18" || key == "TITLE_18" ||
-               key == "PROVIDER_19" || key == "TITLE_19" ||
-               key == "PROVIDER_20" || key == "TITLE_20" ||
-               key == "TITLE_21" || key == "TITLE_22" ||
-               key == "TITLE_23" || key == "TITLE_24" ||
-               key == "TITLE_25" || key == "TITLE_26" ||
-               key == "TITLE_27" || key == "TITLE_28" ||
-               key == "TITLE_29") {
+    } else if (theKey == "PROVIDER" || theKey == "TITLE" ||
+               theKey == "PROVIDER_00" || theKey == "TITLE_00" ||
+               theKey == "PROVIDER_01" || theKey == "TITLE_01" ||
+               theKey == "PROVIDER_02" || theKey == "TITLE_02" ||
+               theKey == "PROVIDER_03" || theKey == "TITLE_03" ||
+               theKey == "PROVIDER_04" || theKey == "TITLE_04" ||
+               theKey == "PROVIDER_05" || theKey == "TITLE_05" ||
+               theKey == "PROVIDER_06" || theKey == "TITLE_06" ||
+               theKey == "PROVIDER_07" || theKey == "TITLE_07" ||
+               theKey == "PROVIDER_08" || theKey == "TITLE_08" ||
+               theKey == "PROVIDER_09" || theKey == "TITLE_09" ||
+               theKey == "PROVIDER_10" || theKey == "TITLE_10" ||
+               theKey == "PROVIDER_11" || theKey == "TITLE_11" ||
+               theKey == "PROVIDER_12" || theKey == "TITLE_12" ||
+               theKey == "PROVIDER_13" || theKey == "TITLE_13" ||
+               theKey == "PROVIDER_14" || theKey == "TITLE_14" ||
+               theKey == "PROVIDER_15" || theKey == "TITLE_15" ||
+               theKey == "PROVIDER_16" || theKey == "TITLE_16" ||
+               theKey == "PROVIDER_17" || theKey == "TITLE_17" ||
+               theKey == "PROVIDER_18" || theKey == "TITLE_18" ||
+               theKey == "PROVIDER_19" || theKey == "TITLE_19" ||
+               theKey == "PROVIDER_20" || theKey == "TITLE_20" ||
+               theKey == "TITLE_21" || theKey == "TITLE_22" ||
+               theKey == "TITLE_23" || theKey == "TITLE_24" ||
+               theKey == "TITLE_25" || theKey == "TITLE_26" ||
+               theKey == "TITLE_27" || theKey == "TITLE_28" ||
+               theKey == "TITLE_29") {
         len = 128;
-    } else if (key == "PUBTOOLINFO" || key == "PS3_TITLE_ID_LIST_FOR_BOOT" ||
-               key == "SAVE_DATA_TRANSFER_TITLE_ID_LIST_1" ||
-               key == "SAVE_DATA_TRANSFER_TITLE_ID_LIST_2" ||
-               key == "SAVE_DATA_TRANSFER_TITLE_ID_LIST_3" ||
-               key == "SAVE_DATA_TRANSFER_TITLE_ID_LIST_4" ||
-               key == "SAVE_DATA_TRANSFER_TITLE_ID_LIST_5" ||
-               key == "SAVE_DATA_TRANSFER_TITLE_ID_LIST_6" ||
-               key == "SAVE_DATA_TRANSFER_TITLE_ID_LIST_7") {
+    } else if (theKey == "PUBTOOLINFO" || theKey == "PS3_TITLE_ID_LIST_FOR_BOOT" ||
+               theKey == "SAVE_DATA_TRANSFER_TITLE_ID_LIST_1" ||
+               theKey == "SAVE_DATA_TRANSFER_TITLE_ID_LIST_2" ||
+               theKey == "SAVE_DATA_TRANSFER_TITLE_ID_LIST_3" ||
+               theKey == "SAVE_DATA_TRANSFER_TITLE_ID_LIST_4" ||
+               theKey == "SAVE_DATA_TRANSFER_TITLE_ID_LIST_5" ||
+               theKey == "SAVE_DATA_TRANSFER_TITLE_ID_LIST_6" ||
+               theKey == "SAVE_DATA_TRANSFER_TITLE_ID_LIST_7") {
         len = 512;
     }
     return len;
 }
 
 
-void SFOManager::expandDataTable(int offset, int additional_size) {
-    data_table.size += additional_size;
-    data_table.content = static_cast<char*>(realloc(data_table.content, data_table.size));
+void SFOManager::expandDataTable(int theOffset, int theAdditionalSize) {
+    myDataTable.size += theAdditionalSize;
+    myDataTable.content = static_cast<char*>(realloc(myDataTable.content, myDataTable.size));
     // Move higher indexed data to make room for new data
-    for (int i = (int)data_table.size - 1; i >= offset + additional_size; i--) {
-        data_table.content[i] = data_table.content[i - additional_size];
+    for (int i = (int) myDataTable.size - 1; i >= theOffset + theAdditionalSize; i--) {
+        myDataTable.content[i] = myDataTable.content[i - theAdditionalSize];
     }
     // Set new memory to zero
-    memset(&data_table.content[offset], 0, additional_size);
+    memset(&myDataTable.content[theOffset], 0, theAdditionalSize);
 }
 
 
-void SFOManager::padTable(struct table* table) {
+void SFOManager::padTable(struct table* theTable) {
     // Remove all trailing zeros
-    while (table->size > 0 && table->content[table->size - 1] == '\0') {
-        table->size--;
+    while (theTable->size > 0 && theTable->content[theTable->size - 1] == '\0') {
+        theTable->size--;
     }
-    if (table->size) table->size++;// Re-add 1 zero if there are strings left
+    if (theTable->size) theTable->size++;// Re-add 1 zero if there are strings left
 
-    table->content = static_cast<char*>(realloc(table->content, table->size));
+    theTable->content = static_cast<char*>(realloc(theTable->content, theTable->size));
     // Pad table with zeros
-    while (table->size % 4) {
-        table->size++;
-        table->content = static_cast<char*>(realloc(table->content, table->size));
-        table->content[table->size - 1] = '\0';
+    while (theTable->size % 4) {
+        theTable->size++;
+        theTable->content = static_cast<char*>(realloc(theTable->content, theTable->size));
+        theTable->content[theTable->size - 1] = '\0';
     }
 }
 
 
 void SFOManager::cleanExit() {
-    if (entries) free(entries);
-    if (key_table.content) free(key_table.content);
-    if (data_table.content) free(data_table.content);
-    if (file) fclose(file);
+    if (myEntries) free(myEntries);
+    if (myKeyTable.content) free(myKeyTable.content);
+    if (myDataTable.content) free(myDataTable.content);
+    if (myFile) fclose(myFile);
 }
-
-
-
-

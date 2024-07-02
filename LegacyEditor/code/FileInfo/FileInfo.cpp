@@ -1,5 +1,6 @@
 #include "FileInfo.hpp"
-#include <filesystem>
+
+#include <cstring>
 
 #include "LegacyEditor/utils/dataManager.hpp"
 #include "LegacyEditor/utils/error_status.hpp"
@@ -17,7 +18,7 @@ static u32 c2n(const char chara) {
 static i64 stringToHex(const std::string& str) {
     i64 result = 0;
     c_int stringSize = static_cast<int>(str.size());
-    for (size_t i = 0; i < stringSize; i++) {
+    for (int i = 0; i < stringSize; i++) {
         result = result * 16 + c2n(str[i]);
     }
     return result;
@@ -33,7 +34,7 @@ static i64 stringToInt64(const std::string& str) {
         index++;
     }
 
-    for (c_int stringSize = static_cast<int>(str.size()); index < stringSize; index++) {
+    for (size_t stringSize = str.size(); index < stringSize; index++) {
         result = result * 10 + (str[index] - '0');
     }
 
@@ -167,7 +168,7 @@ namespace editor {
                     PNG_END = manager.ptr - 8;
                     c_u32 PNG_SIZE = PNG_END - PNG_START;
                     thumbnail.allocate(PNG_SIZE + 8);
-                    memcpy(thumbnail.data, PNG_START, PNG_SIZE);
+                    std::memcpy(thumbnail.data, PNG_START, PNG_SIZE);
                     return;
                 }
 
@@ -179,8 +180,8 @@ namespace editor {
             {
                 c_u32 PNG_SIZE = PNG_END - PNG_START;
                 thumbnail.allocate(PNG_SIZE + 12);
-                memcpy(thumbnail.data, PNG_START, PNG_SIZE);
-                memcpy(thumbnail.data + PNG_SIZE, &IEND_DAT[0], 12);
+                std::memcpy(thumbnail.data, PNG_START, PNG_SIZE);
+                std::memcpy(thumbnail.data + PNG_SIZE, &IEND_DAT[0], 12);
             }
 
 
@@ -333,19 +334,19 @@ namespace editor {
 
         // write header
         if (header.size != 0) {
-            memcpy(manager.ptr, header.data, header.size);
+            std::memcpy(manager.ptr, header.data, header.size);
             manager.incrementPointer(header.size);
         }
 
         // write png data (excluding IEND)
-        memcpy(manager.ptr, thumbnail.data, thumbnail.size - 12);
+        std::memcpy(manager.ptr, thumbnail.data, thumbnail.size - 12);
         manager.incrementPointer(thumbnail.size - 12);
 
         // write tEXt chunk size
         manager.writeInt32(tEXt_chunk.size() - 4);
 
         // write tEXt chunk data
-        memcpy(manager.ptr, tEXt_chunk.data(), tEXt_chunk.size());
+        std::memcpy(manager.ptr, tEXt_chunk.data(), tEXt_chunk.size());
         manager.incrementPointer(tEXt_chunk.size());
 
         // write tEXt chunk crc
@@ -355,7 +356,7 @@ namespace editor {
         manager.writeInt32(crc_val);
 
         // write IEND png chunk
-        memcpy(manager.ptr, &IEND_DAT[0], 12);
+        std::memcpy(manager.ptr, &IEND_DAT[0], 12);
 
         c_int status = manager.writeToFile(outFilePath);
         return status;

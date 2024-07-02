@@ -7,7 +7,6 @@
 #include "LegacyEditor/utils/dataManager.hpp"
 
 
-
 static u32 RLEVITA_DECOMPRESS(u8* dataIn, c_u32 sizeIn, u8* dataOut, c_u32 sizeOut) {
     DataManager managerIn(dataIn, sizeIn);
     DataManager managerOut(dataOut, sizeOut);

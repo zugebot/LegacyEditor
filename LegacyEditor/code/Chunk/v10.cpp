@@ -1,4 +1,7 @@
 #include "v10.hpp"
+
+#include <cstring>
+
 #include "LegacyEditor/utils/NBT.hpp"
 
 
@@ -31,26 +34,26 @@ namespace editor::chunk {
         chunkData->lastUpdate = chunkNBT->getPrimitive<i64>("LastUpdate");
 
         c_auto* blockArray = chunkNBT->getByteArray("Blocks");
-        memcpy(chunkData->oldBlocks.data(), blockArray->array, 65536);
+        std::memcpy(chunkData->oldBlocks.data(), blockArray->array, 65536);
 
         c_auto* blockDataArray = chunkNBT->getByteArray("Data");
-        memcpy(chunkData->blockData.data(), blockDataArray->array, 32768);
+        std::memcpy(chunkData->blockData.data(), blockDataArray->array, 32768);
 
         c_auto* heightMapArray = chunkNBT->getByteArray("HeightMap");
-        memcpy(chunkData->heightMap.data(), heightMapArray->array, 256);
+        std::memcpy(chunkData->heightMap.data(), heightMapArray->array, 256);
 
         c_auto* biomeArray = chunkNBT->getByteArray("Biomes");
-        memcpy(chunkData->biomes.data(), biomeArray->array, 256);
+        std::memcpy(chunkData->biomes.data(), biomeArray->array, 256);
 
         c_auto* skyLightArray = chunkNBT->getByteArray("SkyLight");
-        memcpy(chunkData->skyLight.data(), skyLightArray->array, 32768);
+        std::memcpy(chunkData->skyLight.data(), skyLightArray->array, 32768);
 
         c_auto* blockLightArray = chunkNBT->getByteArray("BlockLight");
-        memcpy(chunkData->blockLight.data(), blockLightArray->array, 32768);
+        std::memcpy(chunkData->blockLight.data(), blockLightArray->array, 32768);
 
         auto createAndCopy = [](c_auto* byteArray, const size_t size) {
             u8_vec result(size);
-            memcpy(result.data(), byteArray->array, size);
+            std::memcpy(result.data(), byteArray->array, size);
             return result;
         };
 

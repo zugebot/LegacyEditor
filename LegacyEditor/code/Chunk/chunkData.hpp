@@ -1,6 +1,9 @@
 #pragma once
 
+#include "lce/processor.hpp"
+
 #include "LegacyEditor/utils/error_status.hpp"
+
 
 class NBTBase;
 

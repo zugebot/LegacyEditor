@@ -1,6 +1,6 @@
 #pragma once
 
-#include "chunkData.hpp"
+#include "LegacyEditor/code/chunk/chunkData.hpp"
 
 class DataManager;
 

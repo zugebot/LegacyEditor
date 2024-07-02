@@ -8,37 +8,37 @@ void NBTBase::write(DataManager& output) const {
     switch (type) {
         case NBT_INT8: {
             u8 writeVal = 0;
-            memcpy(&writeVal, data, 1);
+            std::memcpy(&writeVal, data, 1);
             output.writeInt8(writeVal);
             return;
         }
         case NBT_INT16: {
             i16 writeVal = 0;
-            memcpy(&writeVal, data, 2);
+            std::memcpy(&writeVal, data, 2);
             output.writeInt16(writeVal);
             return;
         }
         case NBT_INT32: {
             i32 writeVal = 0;
-            memcpy(&writeVal, data, 4);
+            std::memcpy(&writeVal, data, 4);
             output.writeInt32(writeVal);
             return;
         }
         case NBT_INT64: {
             i64 writeVal = 0;
-            memcpy(&writeVal, data, 8);
+            std::memcpy(&writeVal, data, 8);
             output.writeInt64(writeVal);
             return;
         }
         case NBT_FLOAT: {
             float writeVal = 0;
-            memcpy(&writeVal, data, 4);
+            std::memcpy(&writeVal, data, 4);
             output.writeFloat(writeVal);
             return;
         }
         case NBT_DOUBLE: {
             double writeVal = 0;
-            memcpy(&writeVal, data, 8);
+            std::memcpy(&writeVal, data, 8);
             output.writeDouble(writeVal);
             return;
         }
@@ -57,13 +57,15 @@ void NBTBase::write(DataManager& output) const {
             c_auto* val = toType<NBTTagList>();
             output.writeInt8(val->tagType);
             output.writeInt32(val->tagList.size());
-            for (c_auto& item: val->tagList) { item.write(output); }
+            for (c_auto& item: val->tagList) {
+                item.write(output);
+            }
             return;
         }
         case TAG_COMPOUND: {
             auto* val = toType<NBTTagCompound>();
             auto iter = val->tagMap.begin();
-            for (int sizeIter = 0; sizeIter < val->tagMap.size(); sizeIter++) {
+            for (size_t sizeIter = 0; sizeIter < val->tagMap.size(); sizeIter++) {
                 NBTTagCompound::writeEntry(iter->first, iter->second, output);
                 ++iter;
             }
@@ -149,32 +151,32 @@ std::string NBTBase::toString() const {
             return "END";
         case NBT_INT8: {
             u8 val = 0;
-            memcpy(&val, this->data, 1);
+            std::memcpy(&val, this->data, 1);
             return std::to_string(val) + "b";
         }
         case NBT_INT16: {
             i16 val = 0;
-            memcpy(&val, this->data, 2);
+            std::memcpy(&val, this->data, 2);
             return std::to_string(val) + "s";
         }
         case NBT_INT32: {
             i32 val = 0;
-            memcpy(&val, this->data, 4);
+            std::memcpy(&val, this->data, 4);
             return std::to_string(val);
         }
         case NBT_INT64: {
             i64 val = 0;
-            memcpy(&val, this->data, 8);
+            std::memcpy(&val, this->data, 8);
             return std::to_string(val) + "L";
         }
         case NBT_FLOAT: {
             float val = 0;
-            memcpy(&val, this->data, 4);
+            std::memcpy(&val, this->data, 4);
             return std::to_string(val) + "f";
         }
         case NBT_DOUBLE: {
             double val = 0;
-            memcpy(&val, this->data, 8);
+            std::memcpy(&val, this->data, 8);
             return std::to_string(val) + "d";
         }
         case TAG_BYTE_ARRAY: {
@@ -201,7 +203,7 @@ std::string NBTBase::toString() const {
             c_auto* val = toType<NBTTagList>();
             std::string stringBuilder = "[";
 
-            for (int i = 0; i < val->tagList.size(); ++i) {
+            for (size_t i = 0; i < val->tagList.size(); ++i) {
                 if (i != 0) { stringBuilder.append(", "); }
 
                 stringBuilder.append(val->tagList.at(i).toString());
@@ -243,7 +245,7 @@ std::string NBTBase::toString() const {
             c_auto* val = toType<NBTTagLongArray>();
             std::string stringBuilder = "[L;";
 
-            for (int i = 0; i < stringBuilder.length(); ++i) {
+            for (size_t i = 0; i < stringBuilder.length(); ++i) {
                 if (i != 0) { stringBuilder.append(", "); }
 
                 stringBuilder.append(std::to_string(val->array[i]));
@@ -262,37 +264,37 @@ void NBTBase::read(DataManager& input) {
         case NBT_INT8: {
             c_u8 readData = input.readInt8();
             data = malloc(1);
-            memcpy(data, &readData, 1);
+            std::memcpy(data, &readData, 1);
             return;
         }
         case NBT_INT16: {
             c_auto readData = static_cast<i16>(input.readInt16());
             data = malloc(2);
-            memcpy(data, &readData, 2);
+            std::memcpy(data, &readData, 2);
             return;
         }
         case NBT_INT32: {
             c_auto readData = static_cast<i32>(input.readInt32());
             data = malloc(4);
-            memcpy(data, &readData, 4);
+            std::memcpy(data, &readData, 4);
             return;
         }
         case NBT_INT64: {
             c_auto readData = static_cast<i64>(input.readInt64());
             data = malloc(8);
-            memcpy(data, &readData, 8);
+            std::memcpy(data, &readData, 8);
             return;
         }
         case NBT_FLOAT: {
             const float readData = input.readFloat();
             data = malloc(4);
-            memcpy(data, &readData, 4);
+            std::memcpy(data, &readData, 4);
             return;
         }
         case NBT_DOUBLE: {
             const double readData = input.readDouble();
             data = malloc(8);
-            memcpy(data, &readData, 8);
+            std::memcpy(data, &readData, 8);
             return;
         }
         case TAG_BYTE_ARRAY: {
@@ -307,7 +309,7 @@ void NBTBase::read(DataManager& input) {
             const std::string inputString = input.readUTF();
             c_int size = static_cast<int>(inputString.size());
             val->data = static_cast<char*>(malloc(size));
-            memcpy(val->data, inputString.c_str(), size);
+            std::memcpy(val->data, inputString.c_str(), size);
             val->size = size;
             return;
         }
@@ -377,39 +379,39 @@ NBTBase NBTBase::copy() const {
     switch (type) {
         case NBT_INT8: {
             auto* copyData = static_cast<u8*>(malloc(1));
-            memcpy(copyData, data, 1);
+            std::memcpy(copyData, data, 1);
             return {copyData, type};
         }
         case NBT_INT16: {
             auto* copyData = static_cast<i16*>(malloc(2));
-            memcpy(copyData, data, 2);
+            std::memcpy(copyData, data, 2);
             return {copyData, type};
         }
         case NBT_INT32: {
             auto* copyData = static_cast<i32*>(malloc(4));
-            memcpy(copyData, data, 4);
+            std::memcpy(copyData, data, 4);
             return {copyData, type};
         }
         case NBT_INT64: {
             auto* copyData = static_cast<i64*>(malloc(8));
-            memcpy(copyData, data, 8);
+            std::memcpy(copyData, data, 8);
             return {copyData, type};
         }
         case NBT_FLOAT: {
             auto* copyData = static_cast<float*>(malloc(4));
-            memcpy(copyData, data, 4);
+            std::memcpy(copyData, data, 4);
             return {copyData, type};
         }
         case NBT_DOUBLE: {
             auto* copyData = static_cast<double*>(malloc(8));
-            memcpy(copyData, data, 8);
+            std::memcpy(copyData, data, 8);
             return {copyData, type};
         }
         case TAG_BYTE_ARRAY: {
             c_auto* val = toType<NBTTagByteArray>();
             c_int size = val->size;
             auto* aByte = static_cast<u8*>(malloc(size));
-            memcpy(aByte, val->array, size);
+            std::memcpy(aByte, val->array, size);
             return {new NBTTagByteArray(aByte, size), TAG_BYTE_ARRAY};
         }
         case TAG_STRING: {
@@ -442,14 +444,14 @@ NBTBase NBTBase::copy() const {
             c_auto* val = toType<NBTTagIntArray>();
             c_int size = val->size * 4;
             auto* const anInt = static_cast<int*>(malloc(size)); //size is in the number of ints
-            memcpy(anInt, val->array, size);
+            std::memcpy(anInt, val->array, size);
             return {new NBTTagIntArray(anInt, val->size), TAG_INT_ARRAY};
         }
         case TAG_LONG_ARRAY: {
             c_auto* val = toType<NBTTagLongArray>();
             c_int size = val->size * 8; // size is in the number of longs
             auto* along = static_cast<i64*>(malloc(size));
-            memcpy(along, val->array, size);
+            std::memcpy(along, val->array, size);
             return {new NBTTagLongArray(along, val->size), TAG_LONG_ARRAY};
         }
         case NBT_NONE:
@@ -554,7 +556,7 @@ void NBTTagCompound::setString(const std::string& key, const std::string& value)
 void NBTTagCompound::setByteArray(const std::string& key, c_u8* value, c_int size) {
     if (tagMap.contains(key)) { tagMap[key].NbtFree(); }
     auto* data = static_cast<u8*>(malloc(size)); // so the original can be safely deleted
-    memcpy(data, value, size);
+    std::memcpy(data, value, size);
     tagMap[key] = NBTBase(new NBTTagByteArray(data, size), TAG_BYTE_ARRAY);
 }
 
@@ -562,7 +564,7 @@ void NBTTagCompound::setByteArray(const std::string& key, c_u8* value, c_int siz
 void NBTTagCompound::setIntArray(const std::string& key, c_int* value, c_int size) {
     if (tagMap.contains(key)) { tagMap[key].NbtFree(); }
     auto* const data = static_cast<int*>(malloc(size * 4)); // so the original can be safely deleted
-    memcpy(data, value, size * 4);
+    std::memcpy(data, value, size * 4);
     tagMap[key] = NBTBase(new NBTTagIntArray(data, size), TAG_INT_ARRAY);
 }
 
@@ -570,7 +572,7 @@ void NBTTagCompound::setIntArray(const std::string& key, c_int* value, c_int siz
 void NBTTagCompound::setLongArray(const std::string& key, const i64* value, c_int size) {
     if (tagMap.contains(key)) { tagMap[key].NbtFree(); }
     auto* data = static_cast<i64*>(malloc(size * 8)); //so the original can be safely deleted
-    memcpy(data, value, size * 8);                    //the endianness is maintained because it is copied raw
+    std::memcpy(data, value, size * 8);                    //the endianness is maintained because it is copied raw
     tagMap[key] = NBTBase(new NBTTagLongArray(data, size), TAG_LONG_ARRAY);
 }
 
@@ -715,7 +717,7 @@ void NBTTagCompound::removeTag(const std::string& key) {
 }
 
 
-bool NBTTagCompound::hasNoTags() const { return tagMap.empty(); }
+MU bool NBTTagCompound::hasNoTags() const { return tagMap.empty(); }
 
 
 void NBTTagCompound::merge(NBTTagCompound* other) {
@@ -738,7 +740,7 @@ void NBTTagCompound::merge(NBTTagCompound* other) {
 }
 
 
-void NBTTagList::appendTag(const NBTBase nbt) {
+MU void NBTTagList::appendTag(const NBTBase nbt) {
     if (tagType == NBT_NONE) {
         tagType = nbt.getId();
     } else if (tagType != nbt.getId()) {
@@ -749,8 +751,8 @@ void NBTTagList::appendTag(const NBTBase nbt) {
 }
 
 
-void NBTTagList::set(c_int index, const NBTBase nbt) {
-    if (index >= 0 && index < tagList.size()) {
+void NBTTagList::set(c_u32 index, const NBTBase nbt) {
+    if (index < tagList.size()) {
         tagList[index].NbtFree();
         tagList[index] = nbt;
     } else {
@@ -759,8 +761,8 @@ void NBTTagList::set(c_int index, const NBTBase nbt) {
 }
 
 
-void NBTTagList::insert(c_int index, const NBTBase nbt) {
-    if (index >= 0 && index < tagList.size()) {
+void NBTTagList::insert(c_u32 index, const NBTBase nbt) {
+    if (index < tagList.size()) {
         tagList.insert(tagList.begin() + index, nbt);
     } else {
         nbt.NbtFree();
@@ -768,8 +770,8 @@ void NBTTagList::insert(c_int index, const NBTBase nbt) {
 }
 
 
-void NBTTagList::removeTag(c_int index) {
-    if (index >= 0 && index < tagList.size()) {
+MU void NBTTagList::removeTag(c_u32 index) {
+    if (index < tagList.size()) {
         tagList[index].NbtFree();
         tagList.erase(tagList.begin() + index);
     }
@@ -777,7 +779,9 @@ void NBTTagList::removeTag(c_int index) {
 
 
 void NBTTagList::deleteAll() {
-    for (auto& pair: tagList) { pair.NbtFree(); }
+    for (auto& pair: tagList) {
+        pair.NbtFree();
+    }
     tagList.clear();
 }
 
@@ -785,14 +789,14 @@ void NBTTagList::deleteAll() {
 bool NBTTagList::hasNoTags() const { return tagList.empty(); }
 
 
-NBTBase NBTTagList::get(c_int index) const {
-    return (index >= 0 && index < tagList.size() ? tagList[index] : NBTBase(nullptr, NBT_NONE));
+NBTBase NBTTagList::get(c_u32 index) const {
+    return (index < tagList.size() ? tagList[index] : NBTBase(nullptr, NBT_NONE));
 }
 
 
-NBTTagByteArray* NBTTagList::getByteArrayAt(c_int index) const {
+NBTTagByteArray* NBTTagList::getByteArrayAt(c_u32 index) const {
     if (tagType == TAG_BYTE_ARRAY) {
-        if (index >= 0 && index < tagList.size()) {
+        if (index < tagList.size()) {
             const NBTBase nbtBase = tagList.at(index);
             return NBTBase::toType<NBTTagByteArray>(nbtBase);
         }
@@ -801,9 +805,9 @@ NBTTagByteArray* NBTTagList::getByteArrayAt(c_int index) const {
 }
 
 
-std::string NBTTagList::getStringTagAt(c_int index) const {
+std::string NBTTagList::getStringTagAt(c_u32 index) const {
     if (tagType == TAG_STRING) {
-        if (index >= 0 && index < tagList.size()) {
+        if (index < tagList.size()) {
             const NBTBase nbtBase = tagList.at(index);
             return NBTBase::toType<NBTTagString>(nbtBase)->getString();
         }
@@ -812,9 +816,9 @@ std::string NBTTagList::getStringTagAt(c_int index) const {
 }
 
 
-NBTTagList* NBTTagList::getListTagAt(c_int index) const {
+NBTTagList* NBTTagList::getListTagAt(c_u32 index) const {
     if (tagType == TAG_LIST) {
-        if (index >= 0 && index < tagList.size()) {
+        if (index < tagList.size()) {
             const NBTBase nbtBase = tagList.at(index);
             return NBTBase::toType<NBTTagList>(nbtBase);
         }
@@ -823,9 +827,9 @@ NBTTagList* NBTTagList::getListTagAt(c_int index) const {
 }
 
 
-NBTTagCompound* NBTTagList::getCompoundTagAt(c_int index) const {
+MU NBTTagCompound* NBTTagList::getCompoundTagAt(c_u32 index) const {
     if (tagType == TAG_COMPOUND) {
-        if (index >= 0 && index < tagList.size()) {
+        if (index < tagList.size()) {
             const NBTBase nbtBase = tagList.at(index);
             return NBTBase::toType<NBTTagCompound>(nbtBase);
         }
@@ -834,9 +838,9 @@ NBTTagCompound* NBTTagList::getCompoundTagAt(c_int index) const {
 }
 
 
-NBTTagIntArray* NBTTagList::getIntArrayAt(c_int index) const {
+MU NBTTagIntArray* NBTTagList::getIntArrayAt(c_u32 index) const {
     if (tagType == TAG_INT_ARRAY) {
-        if (index >= 0 && index < tagList.size()) {
+        if (index < tagList.size()) {
             const NBTBase nbtBase = tagList.at(index);
             return NBTBase::toType<NBTTagIntArray>(nbtBase);
         }
@@ -845,9 +849,9 @@ NBTTagIntArray* NBTTagList::getIntArrayAt(c_int index) const {
 }
 
 
-NBTTagLongArray* NBTTagList::getLongArrayAt(c_int index) const {
+NBTTagLongArray* NBTTagList::getLongArrayAt(c_u32 index) const {
     if (tagType == TAG_LONG_ARRAY) {
-        if (index >= 0 && index < tagList.size()) {
+        if (index < tagList.size()) {
             const NBTBase nbtBase = tagList.at(index);
             return NBTBase::toType<NBTTagLongArray>(nbtBase);
         }
@@ -916,7 +920,7 @@ NBTBase* NBT::readTag(DataManager& input) {
 }
 
 
-NBTBase* NBT::readNBT(const NBTType tagID, const std::string& key, DataManager& input) {
+NBTBase* NBT::readNBT(const NBTType tagID, MU const std::string& key, DataManager& input) {
     NBTBase* pNbtBase = createNewByType(tagID);
     pNbtBase->read(input);
     return pNbtBase;

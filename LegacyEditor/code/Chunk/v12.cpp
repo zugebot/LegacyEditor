@@ -88,7 +88,7 @@ namespace editor::chunk {
         }
 
         for (int section = 0; section < 16; section++) {
-            c_int address = sectionJumpTable[section];
+            c_u32 address = sectionJumpTable[section];
             // 26 chunk header + 50 section header
             dataManager->seek(76U + address);
             if (address == maxSectionAddress) {
@@ -101,11 +101,12 @@ namespace editor::chunk {
             // size: 128 bytes
             c_u8* sectionHeader = dataManager->ptr;
             dataManager->incrementPointer(128);
-
+#ifdef DEBUG
             u16 gridFormats[64] = {};
             u16 gridOffsets[64] = {};
             u32 gridFormatIndex = 0;
             u32 gridOffsetIndex = 0;
+#endif
             for (int gridX = 0; gridX < 4; gridX++) {
                 for (int gridZ = 0; gridZ < 4; gridZ++) {
                     for (int gridY = 0; gridY < 4; gridY++) {
@@ -123,10 +124,10 @@ namespace editor::chunk {
                         c_u16 gridPosition = 0xcc + address + offset;
 
                         c_int offsetInBlockWrite = (section * 16 + gridY * 4) + gridZ * 1024 + gridX * 16384;
-
+#ifdef DEBUG
                         gridFormats[gridFormatIndex++] = format;
                         gridOffsets[gridOffsetIndex++] = gridPosition - 26;
-
+#endif
                         // ensure not reading past the memory buffer
                         if EXPECT_FALSE (gridPosition + V12_GRID_SIZES[format] >= dataManager->size && format != 0) {
                             return;
@@ -215,14 +216,14 @@ namespace editor::chunk {
             c_int row = index / 8;
             c_int column = index % 8;
 
-            for (int j = 0; j < BitsPerBlock; j++) {
+            for (u32 j = 0; j < BitsPerBlock; j++) {
                 vBlocks[j] = buffer[size + row + j * 8];
             }
 
             u8 mask = 128U >> column;
             u16 idx = 0;
 
-            for (int k = 0; k < BitsPerBlock; k++) {
+            for (u32 k = 0; k < BitsPerBlock; k++) {
                 idx |= ((vBlocks[k] & mask) >> (7 - column)) << k;
             }
 
@@ -264,7 +265,7 @@ namespace editor::chunk {
             u8 vWaters[BitsPerBlock];
 
             // this loads the pieces into a buffer
-            for (int j = 0; j < BitsPerBlock; j++) {
+            for (u32 j = 0; j < BitsPerBlock; j++) {
                 c_int offset = size + i + j * 8;
                 vBlocks[j] = buffer[offset];
                 vWaters[j] = buffer[offset + BitsPerBlock * 8];
@@ -274,7 +275,7 @@ namespace editor::chunk {
                 u8 mask = 0b10000000U >> j;
                 u16 idxBlock = 0;
                 u16 idxSbmrg = 0;
-                for (int k = 0; k < BitsPerBlock; k++) {
+                for (u32 k = 0; k < BitsPerBlock; k++) {
                     idxBlock |= (vBlocks[k] & mask) >> (7 - j) << k;
                     idxSbmrg |= (vWaters[k] & mask) >> (7 - j) << k;
                 }
@@ -378,7 +379,7 @@ namespace editor::chunk {
                         sbmgdLocations.clear();
 
                         // iterate over the blocks in the 4x4x4 subsection of the chunk, called a grid
-                        bool noSubmerged = true;
+                        MU bool noSubmerged = true;
                         c_u32 offsetInBlock = sectionIndex * 16 + gridY + gridZ + gridX;
                         for (u32 blockX = 0; blockX < 16384; blockX += 4096) {
                             for (u32 blockZ = 0; blockZ < 1024; blockZ += 256) {
@@ -517,7 +518,7 @@ namespace editor::chunk {
 
         // write the palette data
         dataManager->setLittleEndian();
-        #pragma unroll
+        // #pragma unroll
         for (size_t blockIndex = 0; blockIndex < BlockCount; blockIndex++) {
             dataManager->writeInt16(blockVector[blockIndex]);
         }
@@ -526,7 +527,7 @@ namespace editor::chunk {
         // fill rest of empty palette with 0xFF's
         // TODO: IDK if this is actually necessary
         if constexpr (EmptyCount != 0) {
-            #pragma unroll EmptyCount
+            // #pragma unroll EmptyCount
             for (size_t rest = 0; rest < EmptyCount; rest++) {
                 dataManager->writeInt16(0xFFFF);
             }

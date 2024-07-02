@@ -13,7 +13,7 @@ Offset   Length
 • The rest of the `.mcr` file is dedicated to storing the actual chunk's data. The size of the chunk data is shown in the chunk index, multiplied by **0x1000**, so if the length is 03, **0x3000** bytes are reserved for the chunk data. Missing chunks are not stored here. You can tell where a chunk's data starts if it has the bytes `C0` or `80` at the beginning.   
   
 __A chunk's data is stored like so:__  
-The first 8 bytes contain the decompressed and compressed sizes of the chunk (not including the header here):  
+The first 8 bytes contain the decompressed and compressed sizes of the chunk (not including the myHeader here):  
 ```diff
 + C0 00 02 EB 00 00 0C 73
   ^^^^^^^^^^^ ^^^^^^^^^^^

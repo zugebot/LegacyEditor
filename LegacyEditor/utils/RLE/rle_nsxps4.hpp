@@ -1,7 +1,9 @@
 #pragma once
 
 #include <cstring>
+
 #include "lce/processor.hpp"
+
 #include "LegacyEditor/utils/dataManager.hpp"
 
 

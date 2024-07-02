@@ -1,5 +1,6 @@
 #pragma once
 
+#include "lce/enums.hpp"
 #include "lce/processor.hpp"
 
 #include "LegacyEditor/utils/data.hpp"
@@ -63,8 +64,8 @@ namespace editor {
 
 
     class LCEFile {
-    public:
         NBTTagCompound* nbt = nullptr;
+    public:
         Data data;
         u64 timestamp = 0;
         u32 additionalData = 0;
@@ -97,11 +98,21 @@ namespace editor {
         MU ND bool isEmpty() const { return data.size != 0; }
         MU ND std::string toString() const;
 
-    private:
+        MU void setRegionX(i16 regionX);
         MU ND i16 getRegionX() const;
+
+        MU void setRegionZ(i16 regionZ);
         MU ND i16 getRegionZ() const;
+
+        MU void setMapNumber(i16 mapNumber);
         MU ND i16 getMapNumber() const;
+
+        MU void setFileName(const std::string& filename) const;
         MU ND std::string getFileName() const;
+
+    private:
+        MU void setTag(const std::string& key, i16 value) const;
+        MU ND i16 getTag(const std::string& key) const;
 
     };
 

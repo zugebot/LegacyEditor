@@ -24,11 +24,11 @@ int run_parallel(Function func, Args... args) {
 template int run_parallel<4>(std::function<void(int)> func);
 
 template int run_parallel<4>(
-        void (*)(int, editor::FileListing&),
+        void (*)(size_t, editor::FileListing&),
         std::reference_wrapper<editor::FileListing>
 );
 
 template int run_parallel<32>(
-        void (*)(int, editor::FileListing&),
+        void (*)(size_t, editor::FileListing&),
         std::reference_wrapper<editor::FileListing>
 );

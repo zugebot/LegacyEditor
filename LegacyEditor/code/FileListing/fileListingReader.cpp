@@ -1,21 +1,19 @@
 #include "fileListing.hpp"
 
 #include <cstdio>
-#include <sstream>
-#include <regex>
-
 
 #include "include/ghc/fs_std.hpp"
 #include "include/tinf/tinf.h"
-#include "include/zlib-1.2.12/zlib.h"
 #include "include/sfo/sfo.hpp"
+#include "include/zlib-1.2.12/zlib.h"
 
+#include "lce/processor.hpp"
+
+#include "LegacyEditor/code/FileListing/headerUnion.hpp"
 #include "LegacyEditor/code/BinFile/BINSupport.hpp"
 #include "LegacyEditor/utils/NBT.hpp"
 #include "LegacyEditor/utils/RLE/rle_vita.hpp"
 #include "LegacyEditor/utils/XBOX_LZX/XboxCompression.hpp"
-#include "headerUnion.hpp"
-#include "lce/processor.hpp"
 #include <LegacyEditor/utils/RLE/rle_nsxps4.hpp>
 
 
@@ -76,9 +74,9 @@ namespace editor {
 
         myAllFiles.clear();
 
-        u32 total_size = 0;
-        u32 non_empty_file_count = 0;
-        for (int fileIndex = 0; fileIndex < fileCount; fileIndex++) {
+        MU u32 total_size = 0;
+        MU u32 non_empty_file_count = 0;
+        for (u32 fileIndex = 0; fileIndex < fileCount; fileIndex++) {
             managerIn.seek(indexOffset + fileIndex * FILE_HEADER_SIZE);
 
             std::string fileName = managerIn.readWAsString(WSTRING_SIZE);
@@ -113,8 +111,8 @@ namespace editor {
                 }
                 c_auto [fst, snd]
                     = extractRegionCoords(fileName);
-                file.nbt->setTag("x", createNBT_INT16(static_cast<i16>(fst)));
-                file.nbt->setTag("z", createNBT_INT16(static_cast<i16>(snd)));
+                file.setRegionX(static_cast<i16>(fst));
+                file.setRegionZ(static_cast<i16>(snd));
                 continue;
             }
 
@@ -139,7 +137,7 @@ namespace editor {
             if (fileName.starts_with("data/map_")) {
                 file.fileType = LCEFileType::MAP;
                 c_i16 mapNumber = extractMapNumber(fileName);
-                file.nbt->setTag("#", createNBT_INT16(mapNumber));
+                file.setMapNumber(mapNumber);
                 continue;
             }
 
@@ -155,7 +153,7 @@ namespace editor {
 
             if (fileName.starts_with("data/")) {
                 file.fileType = LCEFileType::STRUCTURE;
-                file.nbt->setString("filename", fileName);
+                file.setFileName(fileName);
                 if (fileName.starts_with("data/villages_") && myConsole == lce::CONSOLE::SWITCH) {
                     myConsole = lce::CONSOLE::PS4;
                 }
@@ -167,9 +165,9 @@ namespace editor {
                 continue;
             }
 
-            if (fileName.starts_with("players/") || fileName.find('/') == -1) {
+            if (fileName.starts_with("players/") || fileName.find('/') == -1LLU) {
                 file.fileType = LCEFileType::PLAYER;
-                file.nbt->setString("filename", fileName);
+                file.setFileName(fileName);
                 continue;
             }
 
@@ -190,7 +188,7 @@ namespace editor {
         // reads the associated fileInfo
         if (readEXTFile && !myHasLoadedFileInfo) {
             fs::path fileDir = myFilePath.parent_path();
-            c_int status2 = readFileInfo(fileDir);
+            MU c_int status2 = readFileInfo(fileDir);
         }
 
         // reads ps4 external regions

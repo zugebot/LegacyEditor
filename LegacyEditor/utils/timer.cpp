@@ -3,17 +3,17 @@
 #include <chrono>
 
 
-u64 getNanoSeconds() {
+[[maybe_unused]] uint64_t getNanoSeconds() {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
 
-inline u64 getMilliseconds() {
+[[maybe_unused]] uint64_t getMilliseconds() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
 
-inline u64 getSeconds() {
+[[maybe_unused]] uint64_t getSeconds() {
     return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
@@ -23,8 +23,8 @@ Timer::Timer() {
 }
 
 
-float Timer::getSeconds() const {
+[[maybe_unused]] float Timer::getSeconds() const {
     static constexpr int NANO_TO_SEC = 1000000000;
-    c_u64 end = getNanoSeconds();
+    const uint64_t end = getNanoSeconds();
     return static_cast<float>(end - time) / static_cast<float>(NANO_TO_SEC);
 }

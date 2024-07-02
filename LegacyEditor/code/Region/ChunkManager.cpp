@@ -1,19 +1,21 @@
 #include "ChunkManager.hpp"
 
-#include "lce/processor.hpp"
+#include <cstring>
 
 #include "include/tinf/tinf.h"
 #include "include/zlib-1.2.12/zlib.h"
 
+#include "lce/processor.hpp"
+
 #include "LegacyEditor/utils/XBOX_LZX/XboxCompression.hpp"
-#include "LegacyEditor/utils/PS3_DEFLATE/deflateUsage.hpp"
 #include "LegacyEditor/utils/RLE/rle.hpp"
-#include "LegacyEditor/code/Chunk/chunkData.hpp"
+#include "LegacyEditor/utils/PS3_DEFLATE/deflateUsage.hpp"
 
 #include "LegacyEditor/code/Chunk/v10.hpp"
 #include "LegacyEditor/code/Chunk/v11.hpp"
 #include "LegacyEditor/code/Chunk/v12.hpp"
 #include "LegacyEditor/code/Chunk/v13.hpp"
+#include "LegacyEditor/code/Chunk/chunkData.hpp"
 
 
 namespace editor {
@@ -86,7 +88,7 @@ namespace editor {
         }
 
         const Data outData(managerOut.getPosition());
-        memcpy(outData.data, outBuffer.data, outData.size);
+        std::memcpy(outData.data, outBuffer.data, outData.size);
         outBuffer.deallocate();
         deallocate();
 

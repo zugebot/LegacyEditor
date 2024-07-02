@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RegionManager.hpp"
+#include "LegacyEditor/code/Region/RegionManager.hpp"
 
 namespace editor {
 class LCEFile;

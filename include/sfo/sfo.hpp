@@ -2,6 +2,7 @@
  * Modified by Jerrin Shirks, 6/20/2024
  * made with ChatGPT :sunglasses:
  *
+ * Old Details:
  * Reads a file to print or modify its SFO parameters.
  * Supported file types:
  *   - PS4 param.sfo (print and modify)
@@ -9,7 +10,7 @@
  *   - PS4 PKG (print only)
  * Made with info from https://www.psdevwiki.com/ps4/Param.sfo.
  * Get updates and Windows binaries at https://github.com/hippie68/sfo.
- */
+*/
 
 #pragma once
 
@@ -20,8 +21,8 @@
 
 class SFOManager {
 public:
-    explicit SFOManager(std::string filePath)
-        : filePath(std::move(filePath)), file(nullptr), entries(nullptr) {
+    explicit SFOManager(std::string theFilePath)
+        : myFilePath(std::move(theFilePath)), myFile(nullptr), myEntries(nullptr) {
         loadFile();
     }
 
@@ -31,11 +32,11 @@ public:
 
     class Attribute {
     public:
-        std::string key;
-        std::string value;
+        std::string myKey;
+        std::string myValue;
 
-        [[nodiscard]] std::string toString() const {
-            return key + ": " + value;
+        [[maybe_unused]] [[nodiscard]] std::string toString() const {
+            return myKey + ": " + myValue;
         }
 
     };
@@ -50,39 +51,38 @@ public:
         uint32_t data_offset;
     };
 
-    void addParam(const std::string& type, const std::string& key, const std::string& value);
+    [[maybe_unused]] void addParam(const std::string& theType, const std::string& theKey, const std::string& value);
 
-    void deleteParam(const std::string& key);
+    [[maybe_unused]] void deleteParam(const std::string& theKey);
 
-    void editParam(const std::string& key, const std::string& value);
-
+    [[maybe_unused]] void editParam(const std::string& theKey, const std::string& value);
 
     // TODO: this code is slow
     [[nodiscard]] std::string getAttribute(const std::string& theKey) const;
 
-    void saveToFile(const std::string& outputPath);
+    [[maybe_unused]] void saveToFile(const std::string& outputPath);
 
 private:
-    std::string filePath;
-    FILE* file;
-    struct index_table_entry* entries;
+    std::string myFilePath;
+    FILE* myFile;
+    struct index_table_entry* myEntries;
     struct table {
         unsigned int size;
         char* content;
-    } key_table{}, data_table{};
+    } myKeyTable{}, myDataTable{};
 
     struct header {
-        uint32_t magic;
-        uint32_t version;
-        uint32_t key_table_offset;
-        uint32_t data_table_offset;
-        uint32_t entries_count;
+        uint32_t myMagic;
+        uint32_t myVersion;
+        uint32_t myKeyTableOffset;
+        uint32_t myDataTableOffset;
+        uint32_t myEntriesCount;
 
-        header() : magic(0), version(0), key_table_offset(0), data_table_offset(0), entries_count(0) {
-            (void)(magic);
-            (void)(version);
+        header() : myMagic(0), myVersion(0), myKeyTableOffset(0), myDataTableOffset(0), myEntriesCount(0) {
+            (void)(myMagic);
+            (void)(myVersion);
         }
-    } header;
+    } myHeader;
 
     void loadFile();
 
@@ -96,13 +96,13 @@ private:
 
     void loadDataTable();
 
-    int getIndex(const std::string& key);
+    int getIndex(const std::string& theKey);
 
-    static int getReservedStringLen(const std::string& key);
+    static int getReservedStringLen(const std::string& theKey);
 
-    void expandDataTable(int offset, int additional_size);
+    void expandDataTable(int theOffset, int theAdditionalSize);
 
-    static void padTable(struct table* table);
+    static void padTable(struct table* theTable);
 
     void cleanExit();
 };

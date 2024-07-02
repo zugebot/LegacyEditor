@@ -1,12 +1,10 @@
 #include "v11.hpp"
 
-#include <algorithm>
 #include <cstring>
 
 #include "LegacyEditor/utils/NBT.hpp"
-#include "LegacyEditor/utils/dataManager.hpp"
-#include "chunkData.hpp"
-#include "helpers.hpp"
+#include "LegacyEditor/code/chunk/chunkData.hpp"
+#include "LegacyEditor/code/chunk/helpers.hpp"
 
 
 // TODO: I think I need to rewrite this all to place blocks as only u8's,
@@ -172,10 +170,10 @@ namespace editor::chunk {
         for (size_t byteOffset = 0; byteOffset < 8 * BitsPerBlock; byteOffset++) {
             u16 currentByte = buffer[size + byteOffset];
             // iterates over each block in a byte
-            for (int j = 0; j < blocksPerByte; j++) {
+            for (u32 j = 0; j < blocksPerByte; j++) {
                 u16 paletteIndex = 0;
                 // iterates over each bit in the byte, could be made faster?
-                for (int bitPerBlock = 0; bitPerBlock < BitsPerBlock; bitPerBlock++) {
+                for (u32 bitPerBlock = 0; bitPerBlock < BitsPerBlock; bitPerBlock++) {
                     paletteIndex |= (currentByte & 1) << bitPerBlock;
                     currentByte >>= 1;
                 }

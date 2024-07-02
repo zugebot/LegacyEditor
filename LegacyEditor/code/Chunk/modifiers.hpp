@@ -1,9 +1,9 @@
 #pragma once
 
-#include "chunkData.hpp"
-
-#include "LegacyEditor/utils/NBT.hpp"
 #include "lce/processor.hpp"
+
+#include "LegacyEditor/code/chunk/chunkData.hpp"
+#include "LegacyEditor/utils/NBT.hpp"
 
 
 namespace editor::chunk {
@@ -74,9 +74,9 @@ namespace editor::chunk {
 
                 chunkData->oldBlocks[offset] = block;
                 if (offset % 2 == 0) {
-                    chunkData->blockData[offset] = chunkData->blockData[offset] & 0x0F | data << 8;
+                    chunkData->blockData[offset] = (chunkData->blockData[offset] & 0x0F) | data << 8;
                 } else {
-                    chunkData->blockData[offset] = chunkData->blockData[offset] & 0xF0 | data;
+                    chunkData->blockData[offset] = (chunkData->blockData[offset] & 0xF0) | data;
                 }
             }
                 break;

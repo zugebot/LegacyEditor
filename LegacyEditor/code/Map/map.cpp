@@ -1,8 +1,8 @@
 #include "map.hpp"
-#include "mapcolors.hpp"
 
 #include "lce/include/picture.hpp"
 
+#include "LegacyEditor/code/Map/mapcolors.hpp"
 #include "LegacyEditor/code/FileListing/LCEFile.hpp"
 #include "LegacyEditor/utils/NBT.hpp"
 

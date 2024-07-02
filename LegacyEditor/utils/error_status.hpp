@@ -1,13 +1,11 @@
 #pragma once
 
-#include "lce/processor.hpp"
-#include "lce/enums.hpp"
-
 #include <algorithm>
 #include <cctype>
+#include <cstdint>
 
 
-enum STATUS : i8 {
+enum STATUS : int8_t {
     SUCCESS = 0,
     COMPRESS = -1,
     DECOMPRESS = -2,

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "chunkData.hpp"
-
+#include "LegacyEditor/code/chunk/chunkData.hpp"
 #include "LegacyEditor/utils/error_status.hpp"
 
 

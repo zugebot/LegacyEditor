@@ -3,11 +3,10 @@
 #include "include/ghc/fs_std.hpp"
 #include "include/sfo/sfo.hpp"
 
-#include "LegacyEditor/utils/stringutils.hpp"
 #include "LegacyEditor/utils/NBT.hpp"
 #include "LegacyEditor/utils/RLE/rle_nsxps4.hpp"
 #include "LegacyEditor/utils/dataManager.hpp"
-
+#include "LegacyEditor/utils/utils.hpp"
 
 
 namespace editor {
@@ -87,7 +86,7 @@ namespace editor {
     }
 
 
-    int FileListing::writeExternalRegionsPS4(const fs::path& outDirPath) {
+    int FileListing::writeExternalRegionsPS4(MU const fs::path& outDirPath) {
         printf("FileListing::writeExternalRegionsPS4: not implemented!");
         return NOT_IMPLEMENTED;
     }

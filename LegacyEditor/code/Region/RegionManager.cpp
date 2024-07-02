@@ -1,6 +1,7 @@
 #include "RegionManager.hpp"
 
 #include <stdexcept>
+#include <cstring>
 
 #include "LegacyEditor/code/FileListing/LCEFile.hpp"
 #include "LegacyEditor/utils/dataManager.hpp"
@@ -23,7 +24,7 @@ namespace editor {
     }
 
 
-    MU ChunkManager* RegionManager::getChunk(c_int index) {
+    MU ChunkManager* RegionManager::getChunk(c_u32 index) {
         if (index > SECTOR_INTS) { return nullptr; }
         return &chunks[index];
     }
@@ -100,7 +101,7 @@ namespace editor {
                     chunk.fileData.setDecSize(managerIn.readInt32()); // final dec size
                     break;
                 }
-                memcpy(chunk.start(), managerIn.ptr, chunk.size);
+                std::memcpy(chunk.start(), managerIn.ptr, chunk.size);
             }
         }
 
@@ -123,7 +124,7 @@ namespace editor {
             // 1: Sectors Block
             // 2: Locations Block
             int total_sectors = 2;
-            for (int chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
+            for (u32 chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
                 if (ChunkManager& chunk = chunks[chunkIndex]; chunk.size != 0) {
                     chunk.ensureCompressed(consoleIn);
                     sectors[chunkIndex] = (chunk.size + CHUNK_HEADER_SIZE) / SECTOR_BYTES + 1;
@@ -136,15 +137,15 @@ namespace editor {
             c_auto dataOut = Data(data_size);
             DataManager managerOut(dataOut, consoleIsBigEndian(consoleIn));
 
-            for (int chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
+            for (u32 chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
                 managerOut.writeInt32(sectors[chunkIndex] | locations[chunkIndex] << 8);
             }
 
-            for (int chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
+            for (u32 chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
                 managerOut.writeInt32(chunks[chunkIndex].fileData.getTimestamp());
             }
 
-            for (int chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
+            for (u32 chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
                 if (sectors[chunkIndex] == 0) { continue; }
 
                 ChunkManager& chunk = chunks[chunkIndex];
@@ -154,7 +155,8 @@ namespace editor {
                     case lce::CONSOLE::PS3:
                     case lce::CONSOLE::RPCS3:
                         managerOut.writeInt32(chunk.fileData.getDecSize());
-                        // no break here on purpose
+                        managerOut.writeInt32(chunk.fileData.getDecSize());
+                        break;
                     default:
                         managerOut.writeInt32(chunk.fileData.getDecSize());
                         break;

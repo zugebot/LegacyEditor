@@ -56,12 +56,10 @@ namespace editor::chunk {
 
     static void placeBlocks(u16_vec& writeVec, c_u8* grid, int writeOffset) {
         int readOffset = 0;
-
-        // these are used for debugging
+#ifdef DEBUG
         u16 blockIndex = 0;
-        // these are used for debugging
         u16 blockArray[64] = {0};
-
+#endif
         for (int xIter = 0; xIter < 4; xIter++) {
             for (int zIter = 0; zIter < 4; zIter++) {
                 for (int yIter = 0; yIter < 4; yIter++) {
@@ -70,7 +68,9 @@ namespace editor::chunk {
                     c_u8 num2 = grid[readOffset++];
                     c_u16 block = static_cast<u16>(num1) | (static_cast<u16>(num2) << 8);
                     writeVec[currentOffset + writeOffset] = block;
+#ifdef DEBUG
                     blockArray[blockIndex++] = block;
+#endif
                 }
             }
         }
@@ -106,12 +106,12 @@ namespace editor::chunk {
             // TODO: replace with telling cpu to cache that address, and use a ptr?
             c_u8* sectionHeader = dataManager->ptr; // size: 128 bytes
             dataManager->incrementPointer(128);
-
+#ifdef DEBUG
             u16 gridFormats[64] = {0};
             u16 gridOffsets[64] = {0};
             u32 gridFormatIndex = 0;
             u32 gridOffsetIndex = 0;
-
+#endif
             for (int gridX = 0; gridX < 4; gridX++) {
             for (int gridZ = 0; gridZ < 4; gridZ++) {
             for (int gridY = 0; gridY < 4; gridY++) {
@@ -126,10 +126,10 @@ namespace editor::chunk {
                 // 0x4c for start and 0x80 for header (26+2 chunk header, 50 section header, 128 grid header)
                 c_u16 gridPosition = 0xCE + address + offset;
                 c_int offsetInBlockWrite = (section * 16 + gridY * 4) + gridZ * 1024 + gridX * 16384;
-
+#ifdef DEBUG
                 gridFormats[gridFormatIndex++] = format;
                 gridOffsets[gridOffsetIndex++] = gridPosition - DATA_HEADER_SIZE;
-
+#endif
                 // ensure not reading past the memory buffer
                 if EXPECT_FALSE (gridPosition + V13_GRID_SIZES[format] >= dataManager->size && format != 0) return;
 
@@ -196,12 +196,12 @@ namespace editor::chunk {
 
             c_int row = index / 8;
             c_int column = index % 8;
-            for (int j = 0; j < BitsPerBlock; j++)
+            for (u32 j = 0; j < BitsPerBlock; j++)
                 vBlocks[j] = buffer[size + row + j * 8];
 
             u16 idx = 0;
             u8 mask = 0b10000000 >> column;
-            for (int k = 0; k < BitsPerBlock; k++)
+            for (u32 k = 0; k < BitsPerBlock; k++)
                 idx |= ((vBlocks[k] & mask) >> (7 - column)) << k;
 
             if EXPECT_FALSE (idx >= size)
@@ -239,7 +239,7 @@ namespace editor::chunk {
             u8 vWaters[BitsPerBlock];
 
             // this loads the pieces into a buffer
-            for (int j = 0; j < BitsPerBlock; j++) {
+            for (u32 j = 0; j < BitsPerBlock; j++) {
                 c_int offset = size + i + j * 8;
                 vBlocks[j] = buffer[offset];
                 vWaters[j] = buffer[offset + BitsPerBlock * 8];
@@ -249,7 +249,7 @@ namespace editor::chunk {
                 u8 mask = 0b10000000 >> j;
                 u16 idxBlock = 0;
                 u16 idxSbmrg = 0;
-                for (int k = 0; k < BitsPerBlock; k++) {
+                for (u32 k = 0; k < BitsPerBlock; k++) {
                     idxBlock |= (vBlocks[k] & mask) >> (7 - j) << k;
                     idxSbmrg |= (vWaters[k] & mask) >> (7 - j) << k;
                 }

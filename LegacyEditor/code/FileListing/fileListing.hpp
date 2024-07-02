@@ -6,11 +6,11 @@
 #include <map>
 #include <set>
 
-#include "lce/processor.hpp"
-
 #include "include/ghc/fs_std.hpp"
 
-#include "LCEFile.hpp"
+#include "lce/processor.hpp"
+
+#include "LegacyEditor/code/FileListing/LCEFile.hpp"
 #include "LegacyEditor/code/FileInfo/FileInfo.hpp"
 #include "LegacyEditor/code/Region/RegionManager.hpp"
 #include "LegacyEditor/utils/error_status.hpp"
@@ -101,7 +101,7 @@ namespace editor {
         MU ND static int writeExternalRegionsPS4(const fs::path& outDirPath);
 
         /// Read / Write external Nintendo Switch folders
-        fs::path findExternalRegionNSXFolders();
+        MU ND fs::path findExternalRegionNSXFolders() const;
         MU ND int readExternalRegionsNSX(const fs::path& inDirPath);
         MU ND static int writeExternalRegionsNSX(const fs::path& outDirPath);
 
@@ -110,7 +110,7 @@ namespace editor {
         /// Region Helpers
 
         MU void pruneRegions();
-        MU void replaceRegionOW(int regionIndex, editor::RegionManager& region, lce::CONSOLE consoleOut);
+        MU void replaceRegionOW(size_t regionIndex, editor::RegionManager& region, const lce::CONSOLE consoleOut);
 
 
     private:

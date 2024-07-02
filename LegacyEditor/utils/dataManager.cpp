@@ -1,6 +1,6 @@
 #include "dataManager.hpp"
 
-#include <filesystem>
+#include <cstring>
 
 #include "LegacyEditor/code/FileListing/LCEFile.hpp"
 
@@ -34,7 +34,7 @@ void DataManager::seekEnd() {
 }
 
 
-void DataManager::seek(const i64 position) {
+void DataManager::seek(c_i64 position) {
     seekStart();
     incrementPointer(static_cast<i32>(position));
 }
@@ -356,7 +356,7 @@ double DataManager::readDouble() {
 u8* DataManager::readWithOffset(c_i32 offset, c_i32 amount) {
     auto *const val = new u8[amount];
     incrementPointer(offset);
-    memcpy(val, data, amount);
+    std::memcpy(val, data, amount);
     incrementPointer(amount);
     return val;
 }
@@ -364,14 +364,14 @@ u8* DataManager::readWithOffset(c_i32 offset, c_i32 amount) {
 
 u8* DataManager::readBytes(c_u32 length) {
     auto *val = new u8[length];
-    memcpy(val, ptr, length);
+    std::memcpy(val, ptr, length);
     incrementPointer(static_cast<i32>(length));
     return val;
 }
 
 
 void DataManager::readOntoData(c_u32 length, u8* dataIn) {
-    memcpy(dataIn, ptr, length);
+    std::memcpy(dataIn, ptr, length);
     incrementPointer(static_cast<i32>(length));
 }
 
@@ -554,7 +554,7 @@ void DataManager::writeDouble(double doubleIn) {
 
 
 void DataManager::writeBytes(c_u8* dataPtrIn, c_u32 length) {
-    memcpy(ptr, dataPtrIn, length);
+    std::memcpy(ptr, dataPtrIn, length);
     incrementPointer(static_cast<i32>(length));
 }
 
@@ -638,7 +638,7 @@ int DataManager::writeToFile(const fs::path& inFilePath) const {
 
     FILE *f_out = fopen(inFileStr.c_str(), "wb");
     if (f_out == nullptr) {
-        printf("Failed to write data to output file '%s'\n", inFileStr.c_str());
+        printf("Failed to write data to output file \"%s\"\n", inFileStr.c_str());
         return -1;
     }
     fwrite(data, 1, size, f_out);
@@ -654,11 +654,11 @@ int DataManager::writeToFile(c_u8* ptrIn, c_u32 sizeIn, const fs::path& inFilePa
 
     FILE* f_out = fopen(inFileStr.c_str(), "wb");
     if (f_out == nullptr) {
-        printf("Failed to write data to output file '%s'", inFileStr.c_str());
+        printf("Failed to write data to output file \"%s\"\n", inFileStr.c_str());
         return 1;
     }
     if (ptrIn < data || ptrIn + sizeIn > data + size) {
-        printf("Tried to write data out of bounds '%s'", inFileStr.c_str());
+        printf("Tried to write data out of bounds \"%s\"\n", inFileStr.c_str());
         return 1;
     }
 

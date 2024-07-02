@@ -2,7 +2,7 @@
 
 #include "lce/processor.hpp"
 
-#include "LegacyEditor/utils/endian.hpp"
+#include "LegacyEditor/utils/utils.hpp"
 
 
 namespace editor {
@@ -16,7 +16,6 @@ namespace editor {
             return isSystemLittleEndian();
         }
 
-    public:
         union {
             /// header size: 12 bytes
             struct {
@@ -35,23 +34,24 @@ namespace editor {
                 u16 zlib_magic;
             } ZLIB;
 
-        };
+        } UNION;
+    public:
         /// bytes 0-3
-        ND u32 getInt1() const { return isSystemLittle() ? swapEndian32(INT_VIEW.int1) : INT_VIEW.int1; }
+        ND u32 getInt1() const { return isSystemLittle() ? swapEndian32(UNION.INT_VIEW.int1) : UNION.INT_VIEW.int1; }
         /// bytes 4-7
-        ND u32 getInt2() const { return isSystemLittle() ? swapEndian32(INT_VIEW.int2) : INT_VIEW.int2; }
+        ND u32 getInt2() const { return isSystemLittle() ? swapEndian32(UNION.INT_VIEW.int2) : UNION.INT_VIEW.int2; }
         /// bytes 8-11
-        ND u32 getInt3() const { return isSystemLittle() ? swapEndian32(INT_VIEW.int3) : INT_VIEW.int3; }
+        ND u32 getInt3() const { return isSystemLittle() ? swapEndian32(UNION.INT_VIEW.int3) : UNION.INT_VIEW.int3; }
         /// bytes 8-9
-        ND u32 getShort5() const { return isSystemLittle() ? swapEndian16(ZLIB.zlib_magic) : ZLIB.zlib_magic; }
+        ND u32 getShort5() const { return isSystemLittle() ? swapEndian16(UNION.ZLIB.zlib_magic) : UNION.ZLIB.zlib_magic; }
         /// bytes 0-7
-        ND u64 getDestSize() const { return isSystemLittle() ? swapEndian64(ZLIB.dest_size) : ZLIB.dest_size; }
+        ND u64 getDestSize() const { return isSystemLittle() ? swapEndian64(UNION.ZLIB.dest_size) : UNION.ZLIB.dest_size; }
         /// bytes 0-3
-        ND u32 getInt1Swapped() const { return isSystemLittle() ? INT_VIEW.int1 : swapEndian32(INT_VIEW.int1); }
+        ND u32 getInt1Swapped() const { return isSystemLittle() ? UNION.INT_VIEW.int1 : swapEndian32(UNION.INT_VIEW.int1); }
         /// bytes 4-7
-        ND u32 getInt2Swapped() const { return isSystemLittle() ? INT_VIEW.int2 : swapEndian32(INT_VIEW.int2); }
+        ND u32 getInt2Swapped() const { return isSystemLittle() ? UNION.INT_VIEW.int2 : swapEndian32(UNION.INT_VIEW.int2); }
         /// bytes 8-11
-        ND u32 getInt3Swapped() const { return isSystemLittle() ? INT_VIEW.int3 : swapEndian32(INT_VIEW.int3); }
+        ND u32 getInt3Swapped() const { return isSystemLittle() ? UNION.INT_VIEW.int3 : swapEndian32(UNION.INT_VIEW.int3); }
     };
 
 }

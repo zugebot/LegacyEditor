@@ -2,7 +2,7 @@
 
 #include "lce/processor.hpp"
 
-#include "ChunkManager.hpp"
+#include "LegacyEditor/code/Region/ChunkManager.hpp"
 
 
 namespace editor {
@@ -27,7 +27,7 @@ namespace editor {
         /// FUNCTIONS
 
         MU ChunkManager* getChunk(int xIn, int zIn);
-        MU ChunkManager* getChunk(int index);
+        MU ChunkManager* getChunk(const uint32_t index);
         MU ChunkManager* getNonEmptyChunk();
 
         /// READ AND WRITE

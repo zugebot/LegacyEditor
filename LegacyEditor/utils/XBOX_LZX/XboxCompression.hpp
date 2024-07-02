@@ -1,8 +1,9 @@
 #pragma once
 
-#include "include/lzx/lzx.h"
 #include <iostream>
 #include <cstring>
+
+#include "include/lzx/lzx.h"
 
 #include "lce/processor.hpp"
 
@@ -111,11 +112,11 @@ static int XDecompress(u8* output, c_u32* sizeOut, c_u8* input, c_u32 sizeIn) {
             // goto DECOMP_ERROR;
             break;
         }
-        memcpy(src, input, src_size);
+        std::memcpy(src, input, src_size);
         input += src_size;
         c_int error = lzx_decompress(strm, src, dst, src_size, dst_size);
         if (error == 0) {
-            memcpy(outputPointer, dst, dst_size);
+            std::memcpy(outputPointer, dst, dst_size);
             outputPointer += dst_size;
             bytes += dst_size;
         } else {

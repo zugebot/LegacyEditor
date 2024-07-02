@@ -1,12 +1,10 @@
 #pragma once
 
-
-
 #include <cstring>
 
-#include "LegacyEditor/utils/dataManager.hpp"
-
 #include "lce/processor.hpp"
+
+#include "LegacyEditor/utils/dataManager.hpp"
 
 
 namespace editor::chunk {
@@ -54,7 +52,7 @@ namespace editor::chunk {
             } else if (dataIn[k] == DATA_SECTION_SIZE + 1) {
                 memset(&dataOut[offset], 255, DATA_SECTION_SIZE);
             } else {
-                memcpy(&dataOut[offset], &dataIn[toIndex(dataIn[k])], DATA_SECTION_SIZE);
+                std::memcpy(&dataOut[offset], &dataIn[toIndex(dataIn[k])], DATA_SECTION_SIZE);
             }
             offset += DATA_SECTION_SIZE;
         }
@@ -72,7 +70,7 @@ namespace editor::chunk {
             } else if (dataIn1[k] == DATA_SECTION_SIZE + 1) {
                 memset(&dataOut[offset], 255, DATA_SECTION_SIZE);
             } else {
-                memcpy(&dataOut[offset], &dataIn1[toIndex(dataIn1[k])], DATA_SECTION_SIZE);
+                std::memcpy(&dataOut[offset], &dataIn1[toIndex(dataIn1[k])], DATA_SECTION_SIZE);
             }
             offset += DATA_SECTION_SIZE;
         }
@@ -84,7 +82,7 @@ namespace editor::chunk {
             } else if (dataIn2[k] == DATA_SECTION_SIZE + 1) {
                 memset(&dataOut[offset], 255, DATA_SECTION_SIZE);
             } else {
-                memcpy(&dataOut[offset], &dataIn2[toIndex(dataIn2[k])], DATA_SECTION_SIZE);
+                std::memcpy(&dataOut[offset], &dataIn2[toIndex(dataIn2[k])], DATA_SECTION_SIZE);
             }
             offset += DATA_SECTION_SIZE;
         }
@@ -152,7 +150,7 @@ namespace editor::chunk {
 
     template<int GRID_SIZE>
     void fillAllBlocks(c_u8* buffer, u8 grid[GRID_SIZE]) {
-        memcpy(grid, buffer, GRID_SIZE);
+        std::memcpy(grid, buffer, GRID_SIZE);
     }
 
 
