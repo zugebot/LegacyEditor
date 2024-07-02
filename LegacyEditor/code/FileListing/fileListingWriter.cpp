@@ -226,12 +226,16 @@ namespace editor {
             compSize = swapEndian32(compSize);
         }
 
+        DataManager datOut(self);
+        datOut.writeToFile("path/to/file.ext");
+
         // 4-bytes of '0'
         // 4-bytes of total decompressed fileListing size
         // N-bytes fileListing data
         fwrite(&num, sizeof(u32), 1, f_out);
         fwrite(&compSize, sizeof(u32), 1, f_out);
         fwrite(self.data, 1, self.size, f_out);
+        self.deallocate();
 
         fclose(f_out);
 
