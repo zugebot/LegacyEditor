@@ -1,0 +1,3 @@
+[submodule "lce"]
+	path = lce
+	url = https://github.com/zugebot/lce.git
