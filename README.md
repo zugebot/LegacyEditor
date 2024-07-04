@@ -47,7 +47,7 @@ git submodule update --init
 ```
 To use this as a submodule in another project, you can do
 ```bash
-git submodule add https://github.com/UtterEvergreen1/LegacyCubiomes.git
+git submodule add https://github.com/zugebot/LegacyEditor.git
 git submodule update --init
 ```
 
