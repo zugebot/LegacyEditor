@@ -5,6 +5,8 @@ all "Minecraft Console Edition" consoles and all their specific versions. It wil
 player conversion, and be usable in such a way to be easily scriptable
 for editing blocks / nbt.
 
+IF YOU FIND ANY ISSUES, PLEASE REPORT THEM! It helps me develop faster :)
+
 ## Supported Consoles and Formats
 
 ### Reading From:
