@@ -7,7 +7,6 @@ class DataManager;
 
 namespace editor::chunk {
 
-
     /// "NBT" chunks.
     class ChunkV10 {
         ChunkData* chunkData = nullptr;

@@ -8,30 +8,28 @@ int main() {
 
 
     const std::string TEST_NAME = "vita";
-    const std::string TEST_IN = TESTS[TEST_NAME].first;   // file to read from
-    const std::string TEST_OUT = TESTS[TEST_NAME].second; // file to write to
+    c_auto [fst, snd] = TESTS[TEST_NAME];
     constexpr auto consoleOut = lce::CONSOLE::VITA;
 
     editor::FileListing fileListing;
-    if (fileListing.read(TEST_IN) != 0) {
-        return printf_err("failed to load file\n");
+    int status = fileListing.read(fst);
+    if (status != 0) {
+        return printf_err(status, "failed to load file '%s'\n", fst.c_str());
     }
 
     fileListing.fileInfo.basesavename = L"Fortnite";
 
     fileListing.removeFileTypes({
-        editor::LCEFileType::PLAYER,
-        editor::LCEFileType::DATA_MAPPING});
+        lce::FILETYPE::PLAYER,
+        lce::FILETYPE::DATA_MAPPING});
 
     fileListing.printDetails();
-    fileListing.printFileList();
 
-    const int statusOut = fileListing.write(TEST_OUT, consoleOut);
+    const int statusOut = fileListing.write(snd, consoleOut);
     if (statusOut != 0) {
-        return printf_err({"converting to "
-            + consoleToStr(consoleOut) + " failed...\n"});
+        return printf_err(-1, "converting to %s failed...\n", consoleToCStr(consoleOut));
     }
-    printf("Finished!\nFile Out: %s", TEST_OUT.c_str());
+    printf("Finished!\nFile Out: %s", snd.c_str());
 
     return 0;
 }

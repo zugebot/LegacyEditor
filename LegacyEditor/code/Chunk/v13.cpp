@@ -46,7 +46,7 @@ namespace editor::chunk {
         chunkData->terrainPopulated = static_cast<i16>(dataManager->readInt16());
         dataManager->readOntoData(256, chunkData->biomes.data());
 
-        if (*dataManager->ptr == 0xA) {
+        if (*dataManager->ptr == 0x0A) {
             chunkData->NBTData = NBT::readTag(*dataManager);
         }
 
@@ -429,8 +429,8 @@ namespace editor::chunk {
 
 
     /**
-     * Used to writeData only the palette and positions.\n
-     * It does not writeData liquid data
+     * Used to writeGameData only the palette and positions.\n
+     * It does not writeGameData liquid data
      * 2: 1 |  2 | [_4] palette, [_8] positions
      * 4: 2 |  4 | [_8] palette, [16] positions
      * 6: 3 |  8 | [16] palette, [24] positions
@@ -474,7 +474,7 @@ namespace editor::chunk {
 
 
     /// make this copy all u16 blocks from the grid location or whatnot
-    /// used to writeData full block data, instead of using palette.
+    /// used to writeGameData full block data, instead of using palette.
     void ChunkV13::writeWithMaxBlocks(const u16_vec& blockVector, const u16_vec& blockLocations, u8 blockMap[MAP_SIZE]) const {
         dataManager->setLittleEndian();
         for (size_t i = 0; i < GRID_COUNT; i++) {

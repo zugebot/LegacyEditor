@@ -14,19 +14,19 @@
 int main() {
     PREPARE_UNIT_TESTS();
 
-    const std::string TEST_NAME = "SWITCH1";
-    const std::string TEST_IN = TESTS[TEST_NAME].first;
-    const std::string TEST_OUT = TESTS[TEST_NAME].second;
+    const std::string FILE_IN = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\tests\elytra_tutorial)";
+    const std::string FILE_OUT = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\ely_to_aqua)";
     constexpr auto consoleOut = lce::CONSOLE::WIIU;
 
     editor::FileListing fileListing;
-    if (fileListing.read(TEST_IN, true) != 0) {
-        return printf_err("failed to load file\n");
-    }
+    int status = fileListing.read(FILE_IN);
+    if (status != 0)
+        return printf_err(status, "failed to load file '%s'\n", FILE_IN.c_str());
 
+    fileListing.fileInfo.basesavename = L"Elytra -> Aquatic";
     fileListing.printDetails();
-    fileListing.pruneRegions();
-    fileListing.printFileList();
+
+    fileListing.removeFileTypes({lce::FILETYPE::REGION_NETHER, lce::FILETYPE::REGION_END});
 
     /*
     editor::RegionManager region;
@@ -80,25 +80,23 @@ int main() {
     */
 
     for (size_t index = 0; index < fileListing.region_overworld.size(); index++) {
-        editor::convertElytraToAquaticChunks(index, fileListing.region_overworld, fileListing.myConsole, consoleOut);
+        editor::updateChunksToAquatic(index, fileListing.region_overworld, fileListing.myConsole, consoleOut);
     }
     for (size_t index = 0; index < fileListing.region_nether.size(); index++) {
-        editor::convertElytraToAquaticChunks(index, fileListing.region_nether, fileListing.myConsole, consoleOut);
+        editor::updateChunksToAquatic(index, fileListing.region_nether, fileListing.myConsole, consoleOut);
     }
     for (size_t index = 0; index < fileListing.region_end.size(); index++) {
-        editor::convertElytraToAquaticChunks(index, fileListing.region_end, fileListing.myConsole, consoleOut);
+        editor::updateChunksToAquatic(index, fileListing.region_end, fileListing.myConsole, consoleOut);
     }
 
     fileListing.myOldestVersion = 11;
     fileListing.myCurrentVersion = 11;
 
-    fileListing.fileInfo.basesavename = L"Fortnite";
-    const int statusOut = fileListing.write(TEST_OUT, consoleOut);
-    if (statusOut != 0) {
-        return printf_err({"converting to "
-                           + consoleToStr(consoleOut) + " failed...\n"});
-    }
-    printf("Finished!\nFile Out: %s", TEST_OUT.c_str());
+    const int statusOut = fileListing.write(FILE_OUT, consoleOut);
+    if (statusOut != 0)
+        return printf_err(statusOut, "converting to %s failed...\n", consoleToCStr(consoleOut));
+
+    printf("Finished!\nFile Out: %s", FILE_OUT.c_str());
 
     return 0;
 }

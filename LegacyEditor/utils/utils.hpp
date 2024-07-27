@@ -1,8 +1,13 @@
 #pragma once
 
+#include <cstdint>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <cstdint>
+
+
+
+
 
 
 std::vector<std::string> split(const std::string &s, char delimiter);
@@ -32,4 +37,38 @@ static uint64_t swapEndian64(uint64_t value) {
     value = (value & 0x0000FFFF0000FFFFLL) << 16 | (value & 0xFFFF0000FFFF0000LL) >> 16;
     value = (value & 0x00FF00FF00FF00FFLL) <<  8 | (value & 0xFF00FF00FF00FF00LL) >>  8;
     return value;
+}
+
+
+static int16_t extractMapNumber(const std::string& str) {
+    static const std::string start = "map_";
+    static const std::string end = ".dat";
+    size_t startPos = str.find(start);
+    const size_t endPos = str.find(end);
+
+    if (startPos != std::string::npos && endPos != std::string::npos) {
+        startPos += start.length();
+
+        const std::string numberStr = str.substr(startPos, endPos - startPos);
+        return static_cast<int16_t>(std::stoi(numberStr));
+    }
+    return 32767;
+}
+
+
+static std::pair<int, int> extractRegionCoords(const std::string& filename) {
+    const size_t lastDot = filename.find_last_of('.');
+    const std::string relevantPart = filename.substr(0, lastDot);
+
+    std::istringstream iss(relevantPart);
+    std::string part;
+    std::vector<std::string> parts;
+
+    while (std::getline(iss, part, '.')) {
+        parts.push_back(part);
+    }
+
+    int num1 = std::stoi(parts[parts.size() - 2]);
+    int num2 = std::stoi(parts[parts.size() - 1]);
+    return {num1, num2};
 }

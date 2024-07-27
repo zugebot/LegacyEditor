@@ -2,10 +2,17 @@
 
 #include <cstring>
 
+#include "include/png/crc.hpp"
+
 #include "LegacyEditor/utils/dataManager.hpp"
 #include "LegacyEditor/utils/error_status.hpp"
 
-#include "include/png/crc.hpp"
+
+inline static c_u8 IEND_DAT[12] = {
+        0x00, 0x00, 0x00, 0x00, // size = 0
+        0x49, 0x45, 0x4E, 0x44, // "IEND"
+        0xAE, 0x42, 0x60, 0x82  // crc
+};
 
 
 static u32 c2n(const char chara) {
@@ -59,7 +66,7 @@ static std::string hexToString(i64 hex) {
     return result;
 }
 
-
+/*
 static std::wstring stringToWstring(const std::string& str) {
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
     return converter.from_bytes(str);
@@ -69,6 +76,27 @@ static std::wstring stringToWstring(const std::string& str) {
 static std::string wstringToString(const std::wstring& wstr) {
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
     return converter.to_bytes(wstr);
+}
+ */
+
+
+std::string wStringToString(const std::wstring& wstr) {
+    std::mbstate_t state = std::mbstate_t();
+    const wchar_t* src = wstr.c_str();
+    std::size_t len = std::wcsrtombs(nullptr, &src, 0, &state);
+    if (len == static_cast<std::size_t>(-1)) {
+        throw std::runtime_error("Conversion error");
+    }
+
+    std::string dest(len, '\0');
+    std::wcsrtombs(&dest[0], &src, len, &state);
+    return dest;
+}
+
+// Function to append std::wstring to std::string
+void appendWStringToString(std::string& str, const std::wstring& wstr) {
+    std::string convertedStr = wStringToString(wstr);
+    str.append(convertedStr);
 }
 
 
@@ -105,11 +133,25 @@ bool isPngHeader(DataManager& manager) {
 namespace editor {
 
     /**
-     * \brief Gives FileInfo a default ico for creation
-     * TODO: write the code
+     * \brief loads a new default thumbnail
+     * TODO: Make it return a status
      */
-    void FileInfo::defaultThumbnail() {
+    void FileInfo::loadIngameThumbnail(const std::string& inFilePath) {
+        DataManager defaultPhoto;
+        defaultPhoto.readFromFile(inFilePath);
+        ingameThumbnail.data = defaultPhoto.data;
+        ingameThumbnail.size = defaultPhoto.size;
+    }
 
+    void FileInfo::defaultSettings() {
+        seed = 0;
+        loads = 0;
+        hostoptions = 0;
+        texturepack = 0;
+        extradata = 0;
+        exploredchunks = 0;
+        basesavename = L"converted by LCEditor";
+        isLoaded = true;
     }
 
 
@@ -119,6 +161,7 @@ namespace editor {
      */
     // TODO: idk formatting of header for nintendo consoles
     void FileInfo::readFile(const fs::path& inFilePath, const lce::CONSOLE inConsole) {
+        isLoaded = false;
         DataManager manager;
         manager.readFromFile(inFilePath.string());
 
@@ -149,8 +192,6 @@ namespace editor {
             return;
         }
 
-        isLoaded = true;
-
         c_u8* PNG_START = manager.ptr;
 
         manager.incrementPointer(8);
@@ -163,12 +204,13 @@ namespace editor {
                     chunkType != "tEXt") {
 
                 // this may not work
+                // TODO: what does the above comment even mean?
                 if (chunkType == "IEND") {
                     manager.incrementPointer4();
                     PNG_END = manager.ptr - 8;
                     c_u32 PNG_SIZE = PNG_END - PNG_START;
-                    thumbnail.allocate(PNG_SIZE + 8);
-                    std::memcpy(thumbnail.data, PNG_START, PNG_SIZE);
+                    ingameThumbnail.allocate(PNG_SIZE + 8);
+                    std::memcpy(ingameThumbnail.data, PNG_START, PNG_SIZE);
                     return;
                 }
 
@@ -179,9 +221,9 @@ namespace editor {
             PNG_END = manager.ptr - 8;
             {
                 c_u32 PNG_SIZE = PNG_END - PNG_START;
-                thumbnail.allocate(PNG_SIZE + 12);
-                std::memcpy(thumbnail.data, PNG_START, PNG_SIZE);
-                std::memcpy(thumbnail.data + PNG_SIZE, &IEND_DAT[0], 12);
+                ingameThumbnail.allocate(PNG_SIZE + 12);
+                std::memcpy(ingameThumbnail.data, PNG_START, PNG_SIZE);
+                std::memcpy(ingameThumbnail.data + PNG_SIZE, &IEND_DAT[0], 12);
             }
 
 
@@ -221,7 +263,7 @@ namespace editor {
                 } else if (key == "4J_EXPLOREDCHUNKS") {
                     exploredchunks = stringToInt64(text);
                 } else if (key == "4J_BASESAVENAME") {
-                    basesavename = stringToWstring(text);
+                    appendWStringToString(text, basesavename);
                     manager.incrementPointer1();
                 }
 
@@ -235,21 +277,19 @@ namespace editor {
             // since tEXT is always placed at the end
             break;
         }
+        isLoaded = true;
     }
 
 
-    int FileInfo::writeFile(const fs::path& outFilePath,
-                            const lce::CONSOLE outConsole) const {
-        if (thumbnail.data == nullptr) {
-            return FILE_ERROR;
-        }
-
+    Data FileInfo::writeFile(MU const fs::path& outFilePath,
+                             const lce::CONSOLE outConsole) const {
         DataManager header;
 
         switch(outConsole) {
             // TODO: test switch edition writing
             case lce::CONSOLE::SWITCH: {
-                const Data fileHeader(528 + 8);
+                Data fileHeader;
+                fileHeader.allocate(528 + 8);
                 header.take(fileHeader);
                 header.writeWWWString(basesavename, 128);
                 // TODO: figure out what this number is
@@ -259,7 +299,8 @@ namespace editor {
                 break;
             }
             case lce::CONSOLE::WIIU: {
-                const Data fileHeader(256);
+                Data fileHeader;
+                fileHeader.allocate(256);
                 header.take(fileHeader);
                 header.writeWString(basesavename, 128);
                 break;
@@ -323,13 +364,14 @@ namespace editor {
                 addNull();
                 appendString("4J_BASESAVENAME");
                 addNull();
-                appendString(wstringToString(basesavename));
+                appendString(wStringToString(basesavename));
             }
 
         }
 
-        c_u32 out_size = header.size + (thumbnail.size - 12) + 4 + tEXt_chunk.size() + 4 + 12;
-        const Data out(out_size);
+        c_u32 out_size = header.size + (ingameThumbnail.size - 12) + 4 + tEXt_chunk.size() + 4 + 12;
+        Data out;
+        out.allocate(out_size);
         DataManager manager(out);
 
         // write header
@@ -339,8 +381,8 @@ namespace editor {
         }
 
         // write png data (excluding IEND)
-        std::memcpy(manager.ptr, thumbnail.data, thumbnail.size - 12);
-        manager.incrementPointer(thumbnail.size - 12);
+        std::memcpy(manager.ptr, ingameThumbnail.data, ingameThumbnail.size - 12);
+        manager.incrementPointer(ingameThumbnail.size - 12);
 
         // write tEXt chunk size
         manager.writeInt32(tEXt_chunk.size() - 4);
@@ -350,16 +392,16 @@ namespace editor {
         manager.incrementPointer(tEXt_chunk.size());
 
         // write tEXt chunk crc
-        c_auto* chunkPtr = reinterpret_cast<const char*>(tEXt_chunk.data());
-        c_int sizeIn = static_cast<int>(tEXt_chunk.size());
-        c_u32 crc_val = crc(chunkPtr, sizeIn);
+        c_u32 crc_val = crc(tEXt_chunk.data(), tEXt_chunk.size());
         manager.writeInt32(crc_val);
 
         // write IEND png chunk
         std::memcpy(manager.ptr, &IEND_DAT[0], 12);
 
-        c_int status = manager.writeToFile(outFilePath);
-        return status;
+        Data outData;
+        outData.data = manager.data;
+        outData.size = manager.size;
+        return outData;
 
     }
 }

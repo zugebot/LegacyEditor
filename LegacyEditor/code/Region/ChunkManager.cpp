@@ -41,6 +41,17 @@ namespace editor {
     }
 
 
+    int ChunkManager::checkVersion() const {
+        if (this->data == nullptr) {
+            return -1;
+        }
+        DataManager checker(data, size);
+        int version = checker.readInt16AtOffset(0);
+        return version;
+
+    }
+
+
     MU void ChunkManager::readChunk(MU const lce::CONSOLE inConsole) const {
         auto managerIn = DataManager(data, size);
         managerIn.seekStart();
@@ -67,7 +78,8 @@ namespace editor {
 
 
     MU void ChunkManager::writeChunk(MU lce::CONSOLE console) {
-        Data outBuffer(CHUNK_BUFFER_SIZE);
+        Data outBuffer;
+        outBuffer.allocate(CHUNK_BUFFER_SIZE);
         memset(outBuffer.data, 0, CHUNK_BUFFER_SIZE);
         auto managerOut = DataManager(outBuffer);
 
@@ -87,7 +99,8 @@ namespace editor {
             default:;
         }
 
-        const Data outData(managerOut.getPosition());
+        Data outData;
+        outData.allocate(managerOut.getPosition());
         std::memcpy(outData.data, outBuffer.data, outData.size);
         outBuffer.deallocate();
         deallocate();
@@ -99,33 +112,43 @@ namespace editor {
 
 
     // TODO: rewrite to return status
-    int ChunkManager::ensureDecompress(const lce::CONSOLE console) {
-        if (fileData.getCompressed() == 0U
-            || console == lce::CONSOLE::NONE
+    int ChunkManager::ensureDecompress(lce::CONSOLE consoleIn) {
+        if (fileData.getCompressedFlag() == 0U
+            /*|| console == lce::CONSOLE::NONE*/
             || data == nullptr
             || size == 0) {
             return SUCCESS;
         }
-        fileData.setCompressed(0U);
 
-        u32 dec_size_copy = fileData.getDecSize();
-        Data decompData(fileData.getDecSize());
+        fileData.setCompressedFlag(0U);
+
+        u32 dec_size = fileData.getDecSize();
+        Data decompData;
+        decompData.setScopeDealloc(true);
+        decompData.allocate(fileData.getDecSize());
 
         // TODO: XBOX1 case is not handled
         int result = SUCCESS;
-        switch (console) {
-            case lce::CONSOLE::XBOX360:
-                dec_size_copy = XDecompress(decompData.start(), &decompData.size, data, size);
+        switch (consoleIn) {
+            case lce::CONSOLE::XBOX360: {
+                u8 *ptr = data;
+                dec_size = XDecompress(
+                        decompData.start(), &decompData.size, ptr, size);
+                decompData.size = dec_size;
                 break;
+            }
             case lce::CONSOLE::RPCS3:
-            case lce::CONSOLE::PS3:
-                result = tinf_uncompress(decompData.start(), &decompData.size, data, size);
+            case lce::CONSOLE::PS3: {
+                result = tinf_uncompress(
+                        decompData.start(), &decompData.size, data, size);
                 break;
+            }
             case lce::CONSOLE::SWITCH:
             case lce::CONSOLE::WIIU:
             case lce::CONSOLE::VITA:
             case lce::CONSOLE::PS4:
-                result = tinf_zlib_uncompress(decompData.start(), &decompData.size, data, size);
+                result = tinf_zlib_uncompress(
+                        decompData.start(), &decompData.size, data, size);
                 break;
             default:
                 break;
@@ -133,63 +156,77 @@ namespace editor {
 
         deallocate();
 
-        if (fileData.getRLE() != 0U) {
-            allocate(fileData.getDecSize());
+        if (fileData.getRLEFlag() != 0U) {
+            allocate(fileData.getRLESize());
             RLE_decompress(decompData.start(),
-                decompData.size, start(), dec_size_copy);
+                decompData.size, start(), dec_size);
+
             decompData.deallocate();
+
         } else {
             data = decompData.data;
-            size = dec_size_copy;
+            size = dec_size;
             decompData.reset();
         }
+
         return result;
     }
 
 
     // TODO: rewrite to return status
-    void ChunkManager::ensureCompressed(const lce::CONSOLE console) {
-        if (fileData.getCompressed() != 0U
+    int ChunkManager::ensureCompressed(const lce::CONSOLE console) {
+        if (fileData.getCompressedFlag() != 0U
             || console == lce::CONSOLE::NONE
             || data == nullptr
             || size == 0) {
-            return;
+            return SUCCESS;
         }
-        fileData.setCompressed(1U);
+        fileData.setCompressedFlag(1U);
         fileData.setDecSize(size);
 
-        if (fileData.getRLE() != 0U) {
-            Data rleBuffer(size);
+        if (fileData.getRLEFlag() != 0U) {
+            Data rleBuffer;
+            rleBuffer.allocate(size);
             RLE_compress(data, size, rleBuffer.data, rleBuffer.size);
             deallocate();
             data = rleBuffer.data;
             size = rleBuffer.size;
+            fileData.setRLESize(size);
             rleBuffer.reset();
         }
 
         // allocate memory and recompress
-        auto *const comp_ptr = new u8[size];
-        uLongf comp_size = size;
+
 
         // TODO: Does it work for vita?
-        int status;
+        int status = 0;
         switch (console) {
             case lce::CONSOLE::XBOX360:
+                printf("trying to write xbox360 chunk with ChunkManager::ensureCompressed, not supported yet\n");
                 // TODO: leaks memory
                 // XCompress(comp_ptr, comp_size, data_ptr, data_size);
                 break;
-            case lce::CONSOLE::PS3:
-                // TODO: leaks memory
-                // tinf_compress(comp_ptr, comp_size, data_ptr, data_size);
-                break;
 
+            case lce::CONSOLE::PS3:
             case lce::CONSOLE::RPCS3: {
-                if (status = compress(comp_ptr, &comp_size, data, size); status != 0) {
-                    printf("error has occurred compressing chunk\n");
-                }
+                auto *comp_ptr = new u8[size];
+                uLongf comp_size = size;
+
+                status = compress(comp_ptr, &comp_size, data, size);
                 deallocate();
-                data = comp_ptr;
-                size = comp_size;
+                if (status != 0) {
+                    printf("error has occurred compressing chunk\n");
+                    return MALLOC_FAILED;
+                }
+
+                // copy it over, and remove ZLIB header
+                data = new u8[comp_size - 2];
+                size = comp_size - 2;
+                std::memcpy(data, comp_ptr + 2, size);
+                // zero out ending integrity check, as the console does
+                // std::memset(data + comp_size - 6, 0, 4);
+
+                delete[] comp_ptr;
                 comp_size = 0;
                 break;
             }
@@ -197,33 +234,40 @@ namespace editor {
             case lce::CONSOLE::SWITCH:
             case lce::CONSOLE::PS4:
             case lce::CONSOLE::WIIU:
-            case lce::CONSOLE::VITA:
-                if (status = compress(comp_ptr, &comp_size, data, size); status != 0) {
-                    printf("error has occurred compressing chunk\n");
-                }
+            case lce::CONSOLE::VITA: {
+                auto* comp_ptr = new u8[size];
+                uLongf comp_size = size;
+
+                status = compress(comp_ptr, &comp_size, data, size);
                 deallocate();
+                if (status != 0) {
+                    printf("error has occurred compressing chunk\n");
+                    return MALLOC_FAILED;
+                }
                 data = comp_ptr;
                 size = comp_size;
                 comp_size = 0;
                 break;
+            }
             default:
                 break;
         }
 
+        return SUCCESS;
     }
 
 
     void ChunkManager::setSizeFromReading(c_u32 sizeIn) {
-        fileData.setRLE(sizeIn >> 31);
-        fileData.setUnknown(sizeIn >> 30 & 1);
+        fileData.setRLEFlag(sizeIn >> 31);
+        fileData.setUnknownFlag(sizeIn >> 30 & 1);
         size = sizeIn & 0x00FFFFFF;
     }
 
 
     u32 ChunkManager::getSizeForWriting() const {
         u32 sizeOut = size;
-        if (fileData.getRLE() != 0U) { sizeOut |= 0x80000000; }
-        if (fileData.getUnknown() != 0U) { sizeOut |= 0x40000000; }
+        if (fileData.getRLEFlag() != 0U) { sizeOut |= 0x80000000; }
+        if (fileData.getUnknownFlag() != 0U) { sizeOut |= 0x40000000; }
         return sizeOut;
     }
 

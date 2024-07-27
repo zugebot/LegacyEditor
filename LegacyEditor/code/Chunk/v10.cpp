@@ -33,23 +33,20 @@ namespace editor::chunk {
         chunkData->chunkZ = chunkNBT->getPrimitive<i32>("zPos");
         chunkData->lastUpdate = chunkNBT->getPrimitive<i64>("LastUpdate");
 
+        /*
         c_auto* blockArray = chunkNBT->getByteArray("Blocks");
         std::memcpy(chunkData->oldBlocks.data(), blockArray->array, 65536);
-
         c_auto* blockDataArray = chunkNBT->getByteArray("Data");
         std::memcpy(chunkData->blockData.data(), blockDataArray->array, 32768);
-
         c_auto* heightMapArray = chunkNBT->getByteArray("HeightMap");
         std::memcpy(chunkData->heightMap.data(), heightMapArray->array, 256);
-
         c_auto* biomeArray = chunkNBT->getByteArray("Biomes");
         std::memcpy(chunkData->biomes.data(), biomeArray->array, 256);
-
         c_auto* skyLightArray = chunkNBT->getByteArray("SkyLight");
         std::memcpy(chunkData->skyLight.data(), skyLightArray->array, 32768);
-
         c_auto* blockLightArray = chunkNBT->getByteArray("BlockLight");
         std::memcpy(chunkData->blockLight.data(), blockLightArray->array, 32768);
+        */
 
         auto createAndCopy = [](c_auto* byteArray, const size_t size) {
             u8_vec result(size);
@@ -58,7 +55,7 @@ namespace editor::chunk {
         };
 
         chunkData->oldBlocks = createAndCopy(chunkNBT->getByteArray("Blocks"), 65536);
-        chunkData->blockData = createAndCopy(chunkNBT->getByteArray("Data"), 256);
+        chunkData->blockData = createAndCopy(chunkNBT->getByteArray("Data"), 32768);
         chunkData->heightMap = createAndCopy(chunkNBT->getByteArray("HeightMap"), 256);
         chunkData->biomes = createAndCopy(chunkNBT->getByteArray("Biomes"), 256);
         chunkData->skyLight = createAndCopy(chunkNBT->getByteArray("SkyLight"), 32768);

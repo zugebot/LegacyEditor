@@ -3,18 +3,12 @@
 #include <stdexcept>
 #include <cstring>
 
-#include "LegacyEditor/code/FileListing/LCEFile.hpp"
+#include "LegacyEditor/code/LCEFile/LCEFile.hpp"
 #include "LegacyEditor/utils/dataManager.hpp"
 #include "LegacyEditor/utils/error_status.hpp"
 
 
 namespace editor {
-
-
-    RegionManager::RegionManager() = default;
-
-
-    RegionManager::~RegionManager() = default;
 
 
     MU ChunkManager* RegionManager::getChunk(c_int xIn, c_int zIn) {
@@ -50,8 +44,12 @@ namespace editor {
      * step 7: each chunk gets its own memory
      * @param fileIn
      */
-    void RegionManager::read(const LCEFile* fileIn) {
-        console = fileIn->console;
+    int RegionManager::read(const LCEFile* fileIn) {
+        if (fileIn->data.size == 0) {
+            return SUCCESS;
+        }
+
+        myConsole = fileIn->console;
         auto* dataIn = &fileIn->data;
 
         c_u32 totalSectors = dataIn->size / SECTOR_BYTES + 1;
@@ -60,21 +58,28 @@ namespace editor {
         u8 sectors[SECTOR_INTS];
         u32 locations[SECTOR_INTS];
 
-        DataManager managerIn(dataIn, consoleIsBigEndian(console));
+        DataManager managerIn(dataIn, consoleIsBigEndian(myConsole));
 
 
+        managerIn.incrementPointer(0x2000);
         for (chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
-            c_u32 val = managerIn.readInt32();
-            sectors[chunkIndex] = val & 0xFF;
-            locations[chunkIndex] = val >> 8;
-        }
 
-        for (chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
-            chunks[chunkIndex].fileData.setTimestamp(managerIn.readInt32());
-        }
+            // first
+            {
+                c_u32 val = managerIn.readInt32AtOffset(0x0 + chunkIndex * 4);
+                sectors[chunkIndex] = val & 0xFF;
+                locations[chunkIndex] = val >> 8;
+            }
 
-        for (chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
-            if (sectors[chunkIndex] == 0) { continue; }
+            // second
+            {
+                c_u32 timestamp = managerIn.readInt32AtOffset(0x1000 + chunkIndex * 4);
+                chunks[chunkIndex].fileData.setTimestamp(timestamp);
+            }
+
+            if (sectors[chunkIndex] == 0) {
+                continue;
+            }
 
             ChunkManager& chunk = chunks[chunkIndex];
 
@@ -85,25 +90,47 @@ namespace editor {
             }
 
             managerIn.seek(SECTOR_BYTES * locations[chunkIndex]);
-
             chunk.setSizeFromReading(managerIn.readInt32());
-            chunk.allocate(chunk.size);
 
-            switch (console) {
+
+            bool status = chunk.allocate(chunk.size);
+            if (!status) {
+                printf("Failed to allocate %d bytes for chunk", chunk.size);
+                return STATUS::MALLOC_FAILED;
+            }
+            std::memset(chunk.data, 0, chunk.size);
+
+            switch (myConsole) {
                 case lce::CONSOLE::PS3:
                 case lce::CONSOLE::RPCS3: {
-                    c_u32 num1 = managerIn.readInt32();
-                    managerIn.readInt32();
-                    chunk.fileData.setDecSize(num1); // rle dec size
+                    chunk.fileData.setDecSize(managerIn.readInt32());
+                    chunk.fileData.setRLESize(managerIn.readInt32());
                     break;
                 }
                 default:
-                    chunk.fileData.setDecSize(managerIn.readInt32()); // final dec size
+                    c_u32 dec_and_rle_size = managerIn.readInt32();
+                    chunk.fileData.setDecSize(dec_and_rle_size);
+                    chunk.fileData.setRLESize(dec_and_rle_size);
                     break;
-                }
-                std::memcpy(chunk.start(), managerIn.ptr, chunk.size);
             }
+            std::memcpy(chunk.start(), managerIn.ptr, chunk.size);
+
         }
+        return SUCCESS;
+    }
+
+
+    void RegionManager::convertChunks(lce::CONSOLE consoleIn) {
+        MU int index = 0;
+        for (auto& chunk: chunks) {
+            if (chunk.size != 0) {
+                // printf("chunk %d\n", index);
+                chunk.ensureDecompress(myConsole);
+                chunk.ensureCompressed(consoleIn);
+            }
+            index++;
+        }
+    }
 
 
     /**
@@ -117,14 +144,16 @@ namespace editor {
      * @param consoleIn
      * @return
      */
-        Data RegionManager::write(const lce::CONSOLE consoleIn) {
-            u8 sectors[SECTOR_INTS] = {};
-            u32 locations[SECTOR_INTS] = {};
+    Data RegionManager::write(const lce::CONSOLE consoleIn) {
+        u8 sectors[SECTOR_INTS] = {};
+        u32 locations[SECTOR_INTS] = {};
 
-            // 1: Sectors Block
-            // 2: Locations Block
-            int total_sectors = 2;
-            for (u32 chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
+        // 1: Sectors Block
+        // 2: Locations Block
+        int total_sectors = 2;
+        for (u32 x = 0; x < 32; x++) {
+            for (u32 z = 0; z < 32; z++) {
+                u32 chunkIndex = z * 32 + x;
                 if (ChunkManager& chunk = chunks[chunkIndex]; chunk.size != 0) {
                     chunk.ensureCompressed(consoleIn);
                     sectors[chunkIndex] = (chunk.size + CHUNK_HEADER_SIZE) / SECTOR_BYTES + 1;
@@ -132,37 +161,60 @@ namespace editor {
                     total_sectors += sectors[chunkIndex];
                 }
             }
+        }
 
-            c_u32 data_size = total_sectors * SECTOR_BYTES;
-            c_auto dataOut = Data(data_size);
-            DataManager managerOut(dataOut, consoleIsBigEndian(consoleIn));
+        c_u32 data_size = total_sectors * SECTOR_BYTES;
+        Data dataOut;
+        dataOut.allocate(data_size);
+        DataManager managerOut(dataOut, consoleIsBigEndian(consoleIn));
+        std::memset(dataOut.data, 0, dataOut.size);
 
-            for (u32 chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
-                managerOut.writeInt32(sectors[chunkIndex] | locations[chunkIndex] << 8);
-            }
+        u32 largestOffset = 0;
+        managerOut.incrementPointer(0x2000);
+        for (u32 x = 0; x < 32; x++) {
+            for (u32 z = 0; z < 32; z++) {
+                u32 chunkIndex = z * 32 + x;
 
-            for (u32 chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
-                managerOut.writeInt32(chunks[chunkIndex].fileData.getTimestamp());
-            }
+                u32 chunk_header = sectors[chunkIndex] | locations[chunkIndex] << 8;
+                managerOut.writeInt32AtOffset(0x0 + chunkIndex * 4, chunk_header);
 
-            for (u32 chunkIndex = 0; chunkIndex < SECTOR_INTS; chunkIndex++) {
-                if (sectors[chunkIndex] == 0) { continue; }
+                u32 chunk_timestamp = chunks[chunkIndex].fileData.getTimestamp();
+                managerOut.writeInt32AtOffset(0x1000 + chunkIndex * 4, chunk_timestamp);
 
-                ChunkManager& chunk = chunks[chunkIndex];
-                managerOut.seek(locations[chunkIndex] * SECTOR_BYTES);
-                managerOut.writeInt32(chunk.getSizeForWriting());
-                switch (console) {
-                    case lce::CONSOLE::PS3:
-                    case lce::CONSOLE::RPCS3:
-                        managerOut.writeInt32(chunk.fileData.getDecSize());
-                        managerOut.writeInt32(chunk.fileData.getDecSize());
-                        break;
-                    default:
-                        managerOut.writeInt32(chunk.fileData.getDecSize());
-                        break;
+
+                if (sectors[chunkIndex] == 0) {
+                    managerOut.seek(locations[chunkIndex] * SECTOR_BYTES);
+                    managerOut.incrementPointer(8);
+                    if (consoleIn == lce::CONSOLE::PS3 || consoleIn == lce::CONSOLE::RPCS3) {
+                        managerOut.incrementPointer(4);
+                    }
+
+                } else {
+                    ChunkManager& chunk = chunks[chunkIndex];
+                    managerOut.seek(locations[chunkIndex] * SECTOR_BYTES);
+                    managerOut.writeInt32(chunk.getSizeForWriting());
+                    switch (consoleIn) {
+                        case lce::CONSOLE::PS3:
+                        case lce::CONSOLE::RPCS3:
+                            managerOut.writeInt32(chunk.fileData.getDecSize());
+                            managerOut.writeInt32(chunk.fileData.getRLESize());
+                            break;
+                        default:
+                            managerOut.writeInt32(chunk.fileData.getDecSize());
+                            break;
+                    }
+                    managerOut.writeBytes(chunk.start(), chunk.size);
+                    if (managerOut.getPosition() > largestOffset) {
+                        largestOffset = managerOut.getPosition();
+                    }
                 }
-                managerOut.writeBytes(chunk.start(), chunk.size);
+
+
+
             }
+        }
+
+        dataOut.size = largestOffset;
         return dataOut;
     }
 }

@@ -2,7 +2,7 @@
 
 #include <cstring>
 
-#include "LegacyEditor/code/FileListing/LCEFile.hpp"
+#include "LegacyEditor/code/LCEFile/LCEFile.hpp"
 
 
 static constexpr u8 FF_MASK = 0xFF;
@@ -586,9 +586,12 @@ void DataManager::writeWString(const std::wstring& wstr, c_u32 upperbounds) {
     for (u32 i = 0; i < upperbounds && i < wstr_size_min; ++i) {
         writeInt16(wstr[i]);
     }
-    // hack, write null char if there is space
+    // hack, write null char if there is space, and fill rest of space with null as well
     if (wstr_size_min < upperbounds) {
-        writeInt16(0);
+        u32 count = upperbounds - wstr_size_min;
+        for (u32 i = 0; i < count; i++) {
+            writeInt16(0);
+        }
     }
 }
 

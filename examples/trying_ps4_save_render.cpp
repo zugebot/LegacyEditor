@@ -16,8 +16,7 @@ int main() {
     PREPARE_UNIT_TESTS();
 
     const std::string TEST_NAME = "flatTestPS4"; // "PS4_khaloody";
-    const std::string TEST_IN = TESTS[TEST_NAME].first;   // file to read from
-    const std::string TEST_OUT = TESTS[TEST_NAME].second; // file to write to
+    c_auto [fst, snd] = TESTS[TEST_NAME];
     constexpr auto consoleOut = lce::CONSOLE::WIIU;
 
     /*
@@ -35,20 +34,20 @@ int main() {
 
     // read savedata
     editor::FileListing fileListing;
-    if (fileListing.read(TEST_IN, true) != 0) {
-        return printf_err("failed to load file\n");
+    int status = fileListing.read(fst);
+    if (status != 0) {
+        return printf_err(status, "failed to load file '%s'\n", fst.c_str());
     }
 
     fileListing.removeFileTypes({
-        editor::LCEFileType::PLAYER,
-        editor::LCEFileType::REGION_NETHER,
-        editor::LCEFileType::REGION_END
+        lce::FILETYPE::PLAYER,
+        lce::FILETYPE::REGION_NETHER,
+        lce::FILETYPE::REGION_END
     });
 
     // fileListing.fileInfo.basesavename = L"Changed the name!";
     // fileListing.fileInfo.seed = 69420;
     fileListing.pruneRegions();
-    fileListing.printFileList();
     fileListing.printDetails();
 
 
@@ -137,11 +136,11 @@ int main() {
     // fileListing.currentVersion = 11;
 
     // convert to fileListing
-    const int statusOut = fileListing.write(TEST_OUT, consoleOut);
+    const int statusOut = fileListing.write(snd, consoleOut);
     if (statusOut != 0) {
-        return printf_err({"converting to " + consoleToStr(consoleOut) + " failed...\n"});
+        return printf_err(statusOut, "converting to %s failed...\n", consoleToCStr(consoleOut));
     }
-    printf("Finished!\nFile Out: %s", TEST_OUT.c_str());
+    printf("Finished!\nFile Out: %s", snd.c_str());
 
 
     return statusOut;

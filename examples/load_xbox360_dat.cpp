@@ -14,20 +14,19 @@ int main() {
     constexpr auto consoleOut = lce::CONSOLE::WIIU;
 
     editor::FileListing fileListing;
-    if (fileListing.read(fst) != 0) {
-        return printf_err("failed to load file\n");
+    int status = fileListing.read(fst);
+    if (status != 0) {
+        return printf_err(status, "failed to load file '%s'\n", fst.c_str());
     }
 
     fileListing.printDetails();
-    fileListing.printFileList();
 
     // fileListing.fileInfo.basesavename = L"Fortnite";
     const int statusOut = fileListing.write(snd, consoleOut);
     if (statusOut != 0) {
-        return printf_err({"converting to "
-            + consoleToStr(consoleOut) + " failed...\n"});
+        return printf_err(statusOut, "converting to %s failed...\n", consoleToCStr(consoleOut));
     }
-    printf("Finished!\nFile Out: %s",snd.c_str());
 
+    printf("Finished!\nFile Out: %s",snd.c_str());
     return 0;
 }

@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    std::cout << "Supports reading WiiU, PS3, RPCS3, Xbox360, PSVITA, PS4\n"
+    std::cout << "Supports reading Xbox360, PS3, RPCS3, PSVITA, PS4, WiiU, Switch\n"
                  "Supports writing to WiiU, PSVITA\n";
 
     std::cout << "Name the console to output:";

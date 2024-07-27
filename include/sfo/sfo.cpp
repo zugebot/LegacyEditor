@@ -11,11 +11,19 @@ std::vector<SFOManager::Attribute> SFOManager::getAttributes() const {
     for (uint32_t i = 0; i < myHeader.myEntriesCount; i++) {
         Attribute attr;
         attr.myKey = &myKeyTable.content[myEntries[i].key_offset];
+        if (myEntries[i].param_len == 1024) {
+            attr.myValue = "// too long to display //";
+            continue;
+        }
         switch (myEntries[i].param_fmt) {
+            case 4:
             case 516:
-            case 1024:
-                attr.myValue = &myDataTable.content[myEntries[i].data_offset];
+            case 1024: {
+                const char* ptr = &myDataTable.content[myEntries[i].data_offset];
+                attr.myValue = std::string(ptr, myEntries[i].param_len - 1);
+                attr.myValue = "\"" + attr.myValue + "\"";
                 break;
+            }
             case 1028: {
                 auto* integer = (uint32_t*)&myDataTable.content[myEntries[i].data_offset];
                 attr.myValue = std::to_string(*integer);
@@ -165,19 +173,29 @@ std::vector<SFOManager::Attribute> SFOManager::getAttributes() const {
         throw std::runtime_error("Could not edit \"" + theKey + "\": parameter not found.");
     }
 
-    switch (myEntries[index].param_fmt) {
+    index_table_entry& entry = myEntries[index];
+
+    if (theKey == "ACCOUNT_ID") {
+        memset(&myDataTable.content[entry.data_offset], 0, entry.param_max_len);
+        snprintf(&myDataTable.content[entry.data_offset], entry.param_max_len + 1, "%s", theValue.c_str());
+        return;
+    }
+
+
+    switch (entry.param_fmt) {
+        case 4: // IDK added by jerrin
         case 516: // String
         case 1024: { // Special mode string
-            myEntries[index].param_len = theValue.length() + 1;
+            entry.param_len = theValue.length() + 1;
             // Enlarge data table if new string is longer than allowed
-            int diff = (int)(myEntries[index].param_len - myEntries[index].param_max_len);
+            int diff = (int)(entry.param_len - entry.param_max_len);
             if (diff > 0) {
-                int offset = (int)(myEntries[index].data_offset + myEntries[index].param_max_len);
-                myEntries[index].param_max_len = myEntries[index].param_len;
+                int offset = (int)(entry.data_offset + entry.param_max_len);
+                entry.param_max_len = entry.param_len;
 
                 // 4-byte alignment
-                while (myEntries[index].param_max_len % 4) {
-                    myEntries[index].param_max_len++;
+                while (entry.param_max_len % 4) {
+                    entry.param_max_len++;
                     diff++;
                 }
 
@@ -189,14 +207,14 @@ std::vector<SFOManager::Attribute> SFOManager::getAttributes() const {
                 }
             }
             // Overwrite old data with zeros
-            memset(&myDataTable.content[myEntries[index].data_offset], 0, myEntries[index].param_max_len);
+            memset(&myDataTable.content[entry.data_offset], 0, entry.param_max_len);
             // Save new string to data table
-            snprintf(&myDataTable.content[myEntries[index].data_offset], myEntries[index].param_max_len, "%s", theValue.c_str());
+            snprintf(&myDataTable.content[entry.data_offset], entry.param_max_len, "%s", theValue.c_str());
             break;
         }
         case 1028: { // Integer
             uint32_t integer = strtoul(theValue.c_str(), nullptr, 0);
-            std::memcpy(&myDataTable.content[myEntries[index].data_offset], &integer, 4);
+            std::memcpy(&myDataTable.content[entry.data_offset], &integer, 4);
             break;
         }
     }

@@ -5,6 +5,10 @@ all "Minecraft Console Edition" consoles and all their specific versions. It wil
 player conversion, and be usable in such a way to be easily scriptable
 for editing blocks / nbt.
 
+IF YOU FIND ANY ISSUES, PLEASE REPORT THEM! It helps me develop faster :)
+
+Known issues: PS3 / RPCS3 -> WiiU does not work
+
 ## Supported Consoles and Formats
 
 ### Reading From:
@@ -12,20 +16,25 @@ for editing blocks / nbt.
 - **PS3**
 - **RPCS3 Emulator**
 - **PSVita**
-- **Xbox 360 (.bin format)**
 - **Xbox 360 (.dat format)**
+
+### Partially Reading From:
+- **Xbox 360 (.bin format)** (needs testing)
 - **PS4** (entity conversion missing)
 - **Switch** (region/entity conversion missing)
 
 ### Writing To:
 - **WiiU**
 - **PSVita**
-- **PS3** (METADATA not yet resignable)
-- **RPCS3 Emulator** (METADATA not yet resignable)
+- **RPCS3 Emulator**
+
+### Partially Writing To:
+- **PS3** (PARAM.PFD not yet resignable)
 
 ## Usage
 
-Refer to the `examples/` directory to see different ways the code can be used. For unit testing, edit the folder locations in `LegacyEditor/examples/unit_tests.cpp` to the directory that contains your saves (e.g., `/saves/`).
+Refer to the `examples/` directory to see different ways the code can be used.
+For unit testing, edit the folder locations in `LegacyEditor/unit_tests.cpp` to the directory that contains your saves (e.g., `tests/`).
 
 ## Dependencies
 
@@ -33,23 +42,21 @@ This project makes use of several external libraries, including:
 - [gulrak/filesystem](https://github.com/gulrak/filesystem) for filesystem operations
 - [stb](http://nothings.org/stb) by Sean Barrett
 - [jibsen/tinf](https://github.com/jibsen/tinf) for data compression
+- [unicode](https://github.com/unicode-org/icu/tree/main) for up to date unicode stuff
 - LZX - Jed Wing <jedwin@ugcs.caltech.edu>
 - TINF - Joergen Ibsen
 - SFO - [hippie68 @github](https://github.com/hippie68/sfo)
 
+## Building
+
+- ``CLion`` - Have the IDE auto-detect the ``CMakeLists.txt``.
+- ``Windows`` - Run ``build.bat``.
+- ``Linux`` - Run ``build.sh``. I have not tested this one.
+
 ## Submodules
 
 This project uses a [separate project](https://github.com/zugebot/lce.git).
-Set this up by doing:
-```bash
-git submodule add https://github.com/zugebot/lce.git
-git submodule update --init
-```
-To use this as a submodule in another project, you can do
-```bash
-git submodule add https://github.com/zugebot/LegacyEditor.git
-git submodule update --init
-```
+
 
 ## Outside Help
 

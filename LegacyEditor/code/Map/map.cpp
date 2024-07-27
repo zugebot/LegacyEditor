@@ -2,8 +2,8 @@
 
 #include "lce/include/picture.hpp"
 
+#include "LegacyEditor/code/LCEFile/LCEFile.hpp"
 #include "LegacyEditor/code/Map/mapcolors.hpp"
-#include "LegacyEditor/code/FileListing/LCEFile.hpp"
 #include "LegacyEditor/utils/NBT.hpp"
 
 
@@ -11,8 +11,7 @@ namespace editor::map {
 
 
     MU void saveMapToPng(const LCEFile* map,
-                         const std::string& path,
-                         const std::string& filename) {
+                         const fs::path& filename) {
         static constexpr int MAP_BYTE_SIZE = 16384;
 
         if (map->data.data == nullptr) {
@@ -35,6 +34,6 @@ namespace editor::map {
             picture.myData[count++] = rgb.b;
         }
 
-        picture.saveWithName(filename, path);
+        picture.saveWithName(filename.string());
     }
 }

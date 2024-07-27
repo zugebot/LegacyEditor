@@ -424,12 +424,15 @@ namespace editor::chunk {
                             switch (blockVector.size()) {
                                 case  1: gridFormat = V12_0_UNO; gridID = blockVector[0]; blockMap[blockVector[0]] = 0; goto SWITCH_END;
                                 case  2: gridFormat = V12_1_BIT; writeGrid<1,  2, 0>(blockVector, blockLocations, blockMap); break;
+
                                 case  3: gridFormat = V12_2_BIT; writeGrid<2,  3, 1>(blockVector, blockLocations, blockMap); break;
                                 case  4: gridFormat = V12_2_BIT; writeGrid<2,  4, 0>(blockVector, blockLocations, blockMap); break;
+
                                 case  5: gridFormat = V12_3_BIT; writeGrid<3,  5, 3>(blockVector, blockLocations, blockMap); break;
                                 case  6: gridFormat = V12_3_BIT; writeGrid<3,  6, 2>(blockVector, blockLocations, blockMap); break;
                                 case  7: gridFormat = V12_3_BIT; writeGrid<3,  7, 1>(blockVector, blockLocations, blockMap); break;
                                 case  8: gridFormat = V12_3_BIT; writeGrid<3,  8, 0>(blockVector, blockLocations, blockMap); break;
+
                                 case  9: gridFormat = V12_4_BIT; writeGrid<4,  9, 7>(blockVector, blockLocations, blockMap); break;
                                 case 10: gridFormat = V12_4_BIT; writeGrid<4, 10, 6>(blockVector, blockLocations, blockMap); break;
                                 case 11: gridFormat = V12_4_BIT; writeGrid<4, 11, 5>(blockVector, blockLocations, blockMap); break;
@@ -438,6 +441,7 @@ namespace editor::chunk {
                                 case 14: gridFormat = V12_4_BIT; writeGrid<4, 14, 2>(blockVector, blockLocations, blockMap); break;
                                 case 15: gridFormat = V12_4_BIT; writeGrid<4, 15, 1>(blockVector, blockLocations, blockMap); break;
                                 case 16: gridFormat = V12_4_BIT; writeGrid<4, 16, 0>(blockVector, blockLocations, blockMap); break;
+
                                 default: gridFormat = V12_8_FULL; writeWithMaxBlocks(blockVector, blockLocations, blockMap); break;
                             }
                         } else {
@@ -504,8 +508,8 @@ namespace editor::chunk {
 
 
     /**
-     * Used to writeData only the palette and positions.\n
-     * It does not writeData liquid data
+     * Used to writeGameData only the palette and positions.\n
+     * It does not writeGameData liquid data
      * 2: 1 |  2 | [_4] palette, [_8] positions
      * 4: 2 |  4 | [_8] palette, [16] positions
      * 6: 3 |  8 | [16] palette, [24] positions
@@ -554,7 +558,7 @@ namespace editor::chunk {
 
 
     /// make this copy all u16 blocks from the grid location or whatnot
-    /// used to writeData full block data, instead of using palette.
+    /// used to writeGameData full block data, instead of using palette.
     void ChunkV12::writeWithMaxBlocks(const u16_vec& blockVector,
         const u16_vec& blockLocations, u8 blockMap[MAP_SIZE]) const {
         dataManager->setLittleEndian();
@@ -570,7 +574,7 @@ namespace editor::chunk {
     }
 
     /**
-     * Used to writeData only the palette and both block and sbmgd positions.\n
+     * Used to writeGameData only the palette and both block and sbmgd positions.\n
      * 2: 1 |  2 | [_4] palette, [_8] positions
      * 4: 2 |  4 | [_8] palette, [16] positions
      * 6: 3 |  8 | [16] palette, [24] positions

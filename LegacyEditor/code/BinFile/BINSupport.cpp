@@ -161,7 +161,8 @@ namespace editor {
                 write(out2, buffer, (int) fileSize);
             }
         }
-        const Data ret(out2.size());
+        Data ret;
+        ret.allocate(out2.size());
         std::memcpy(ret.data, out2.data(), out2.size());
         return ret;
     }
@@ -438,7 +439,7 @@ namespace editor {
         tablesPerLvl[2] = (tablesPerLvl[1] / 0xAA) + ((tablesPerLvl[1] % 0xAA != 0 && metaData.stfsVD.allocBlockCount > 0x70E4) ? 1 : 0);
 
         // calculateOffset the level of the top table
-        topLevel = calculateTopLevel();
+        topLevel = static_cast<uint8_t>(calculateTopLevel());
 
         // read in the top hash table
         topTable.trueBlockNumber = computeLevelNBackingHashBlockNumber(0, topLevel);

@@ -18,13 +18,7 @@ namespace editor {
         // read a region file
         RegionManager region;
         region.read(fileListing.region_overworld[regionIndex]);
-#ifdef DEBUG
-        int h = -1;
-#endif
         for (ChunkManager& chunkManager: region.chunks) {
-#ifdef DEBUG
-            h++;
-#endif
             if (chunkManager.size == 0) {
                 continue;
             }
@@ -128,6 +122,7 @@ namespace editor {
 
     /**
      * Removes all blocks in the nether except for netherrack
+     * DO NOT USE THIS IT NEEDS FIXED
      * @param regionIndex
      * @param fileListing
      */
@@ -188,7 +183,7 @@ namespace editor {
      * @param regionIndex
      * @param fileListing
      */
-    void convertElytraToAquaticChunks(size_t regionIndex, FileList& fileList,
+    void updateChunksToAquatic(size_t regionIndex, FileList& fileList,
                                       const lce::CONSOLE inConsole, const lce::CONSOLE outConsole) {
 
         if (regionIndex >= fileList.size()) { return; }
@@ -212,11 +207,16 @@ namespace editor {
                 continue;
             }
 
-            convertOldToNew(chunkData);
-            memset(chunkData->heightMap.data(), 0, 256);
+            if (chunkData->lastVersion == 8 ||
+                chunkData->lastVersion == 9 ||
+                chunkData->lastVersion == 11) {
+                convertOldToAquatic(chunkData);
+            } else if (chunkData->lastVersion == 10) {
+                convertNBTToAquatic(chunkData);
+            }
 
-            // TODO: properly down-date it
-            chunkData->defaultNBT();
+
+            memset(chunkData->heightMap.data(), 0, 256);
             chunkManager->writeChunk(outConsole);
             chunkManager->ensureCompressed(outConsole);
         }
@@ -263,9 +263,9 @@ namespace editor {
                 }
             }
 
-            chunkData->lastVersion = 0x0C;
-            chunk.fileData.setRLE(1);
-            chunkData->defaultNBT();
+            chunkData->lastVersion = 12;
+            chunk.fileData.setRLEFlag(1);
+            chunkData->defaultNBT(); // This for now, until nbt can be cleaned up
             chunk.writeChunk(consoleOut);
             chunk.ensureCompressed(consoleOut);
         }

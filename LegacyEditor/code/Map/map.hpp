@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "include/ghc/fs_std.hpp"
+
 #include "lce/processor.hpp"
 
 
@@ -13,8 +15,7 @@ namespace editor {
 
 
         MU void saveMapToPng(const LCEFile* map,
-                             const std::string& path,
-                             const std::string& filename = "map_0.png");
+                             const fs::path& filename = "map_0.png");
     }
 }
 

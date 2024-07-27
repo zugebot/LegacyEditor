@@ -48,13 +48,12 @@ Discussion:
     Input, int LEN, the number of characters in the string.
     Output, unsigned long CRC, the CRC of the string.
                     */
-inline uint32_t crc(const char* bufferIn, const int len) {
-    const auto* buf = reinterpret_cast<const uint8_t*>(bufferIn);
+inline uint32_t crc(const uint8_t* bufferIn, const uint32_t len) {
     static constexpr auto crc_table = generate_crc_table();
 
     uint32_t crc = CRC_INITIAL;
-    for (int index = 0; index < len; ++index) {
-        crc = crc_table[(crc ^ buf[index]) & 0xff] ^ (crc >> 8);
+    for (uint32_t index = 0; index < len; ++index) {
+        crc = crc_table[(crc ^ bufferIn[index]) & 0xff] ^ (crc >> 8);
     }
     return crc ^ CRC_XOR_OUT;
 }

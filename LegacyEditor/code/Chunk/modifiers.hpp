@@ -15,49 +15,51 @@ namespace editor::chunk {
     }
 
 
-    MU inline void convertOldToNew(ChunkData* chunkData) {
+    MU inline void convertNBTToAquatic(ChunkData* chunkData) {
         chunkData->newBlocks = u16_vec(65536);
-
         for (int xIter = 0; xIter < 16; xIter++) {
-            for (int zIter = 0; zIter < 16; zIter++) {
-                for (int yIter = 0; yIter < 256; yIter++) {
-
-                    c_int offset = yIter * 256 + zIter * 16 + xIter;
-                    c_u16 blockID = chunkData->oldBlocks[offset];
-                    u16 dataTag;
-                    if (offset % 2 == 0) {
-                        dataTag = chunkData->blockData[offset / 2] & 0x0F;
-                    } else {
-                        dataTag = (chunkData->blockData[offset] & 0xF0) >> 8;
-                    }
-                    u16 elytraBlock = blockID << 4 | dataTag;
-                    c_int AquaticOffset = yIter + 4096 * zIter + 256 * xIter;
-
-
-                    if (yIter == 64) {
-                        elytraBlock = lce::blocks::ids::GOLD_BLOCK_ID << 4 | dataTag;
-                    }
-
-                    chunkData->newBlocks[AquaticOffset] = elytraBlock;
-                }
+        for (int zIter = 0; zIter < 16; zIter++) {
+        for (int yIter = 0; yIter < 256; yIter++) {
+            c_int offset = (yIter % 128) + xIter * 128 + zIter * 128 * 16 + 32768 * (yIter > 127);
+            c_u16 blockID = chunkData->oldBlocks[offset];
+            u16 dataTag;
+            if (offset % 2 == 0) {
+                dataTag = chunkData->blockData[offset / 2] & 0x0F;
+            } else {
+                dataTag = (chunkData->blockData[offset / 2] & 0xF0) >> 4;
             }
+            u16 elytraBlock = blockID << 4 | dataTag;
+            c_int AquaticOffset = yIter + 4096 * zIter + 256 * xIter;
+            chunkData->newBlocks[AquaticOffset] = elytraBlock;
         }
-
-
-        if (chunkData->NBTData != nullptr) {
-            chunkData->NBTData->toType<NBTTagCompound>()->deleteAll();
-            delete chunkData->NBTData;
-            chunkData->NBTData = nullptr;
         }
-
-        /*
-        u16 data;
-        for (int i = 0; i < 65536; i++) {
-            data = chunkData.blockData[i / 2] >> 4 * ((i + 1) % 2);
-            chunkData.newBlocks[i] = chunkData.oldBlocks[i] << 4 | data;
         }
-         */
+        chunkData->lastVersion = 12;
+        u8_vec().swap(chunkData->oldBlocks);
+    }
 
+
+
+
+    MU inline void convertOldToAquatic(ChunkData* chunkData) {
+        chunkData->newBlocks = u16_vec(65536);
+        for (int xIter = 0; xIter < 16; xIter++) {
+        for (int zIter = 0; zIter < 16; zIter++) {
+        for (int yIter = 0; yIter < 256; yIter++) {
+            c_int offset = yIter * 256 + zIter * 16 + xIter;
+            c_u16 blockID = chunkData->oldBlocks[offset];
+            u16 dataTag;
+            if (offset % 2 == 0) {
+                dataTag = chunkData->blockData[offset / 2] & 0x0F;
+            } else {
+                dataTag = (chunkData->blockData[offset] & 0xF0) >> 8;
+            }
+            u16 elytraBlock = blockID << 4 | dataTag;
+            c_int AquaticOffset = yIter + 4096 * zIter + 256 * xIter;
+            chunkData->newBlocks[AquaticOffset] = elytraBlock;
+        }
+        }
+        }
         chunkData->lastVersion = 12;
         u8_vec().swap(chunkData->oldBlocks);
     }
@@ -67,14 +69,24 @@ namespace editor::chunk {
         c_int xIn, c_int yIn, c_int zIn,
         c_u16 block, c_u16 data, c_bool waterlogged, c_bool submerged = false) {
         switch (chunkData->lastVersion) {
+            case 10: {
+                int offset = (yIn % 128) + xIn * 128 + zIn * 128 * 16;
+                offset += 32768 * (yIn > 127);
+                chunkData->oldBlocks[offset] = block;
+                if (offset % 2 == 0) {
+                    chunkData->blockData[offset] = (chunkData->blockData[offset] & 0x0F) | data << 4;
+                } else {
+                    chunkData->blockData[offset] = (chunkData->blockData[offset] & 0xF0) | data;
+                }
+                break;
+            }
             case 8:
             case 9:
             case 11: {
                 c_int offset = yIn * 256 + zIn * 16 + xIn;
-
                 chunkData->oldBlocks[offset] = block;
                 if (offset % 2 == 0) {
-                    chunkData->blockData[offset] = (chunkData->blockData[offset] & 0x0F) | data << 8;
+                    chunkData->blockData[offset] = (chunkData->blockData[offset] & 0x0F) | data << 4;
                 } else {
                     chunkData->blockData[offset] = (chunkData->blockData[offset] & 0xF0) | data;
                 }
@@ -113,6 +125,18 @@ namespace editor::chunk {
     inline u16 getBlock(const ChunkData* chunkData,
         c_int xIn, c_int yIn, c_int zIn) {
         switch (chunkData->lastVersion) {
+            case 10: {
+                int offset = (yIn % 128) + xIn * 128 + zIn * 128 * 16;
+                offset += 32768 * (yIn > 127);
+                c_u16 blockID = chunkData->oldBlocks[offset];
+                u16 dataTag;
+                if (offset % 2 == 0) {
+                    dataTag = chunkData->blockData[offset] & 0x0F;
+                } else {
+                    dataTag = (chunkData->blockData[offset] & 0xF0) >> 4;
+                }
+                return blockID << 4 | dataTag;
+            }
             case 8:
             case 9:
             case 11: {
@@ -122,7 +146,7 @@ namespace editor::chunk {
                 if (offset % 2 == 0) {
                     dataTag = chunkData->blockData[offset] & 0x0F;
                 } else {
-                    dataTag = (chunkData->blockData[offset] & 0xF0) >> 8;
+                    dataTag = (chunkData->blockData[offset] & 0xF0) >> 4;
                 }
                 return blockID << 4 | dataTag;
             }
