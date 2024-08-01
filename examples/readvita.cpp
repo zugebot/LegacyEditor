@@ -1,3 +1,4 @@
+#include "LegacyEditor/code/FileListing/fileListing.hpp"
 #include "LegacyEditor/code/include.hpp"
 #include "LegacyEditor/unit_tests.hpp"
 #include <string>
@@ -6,7 +7,6 @@
 int main() {
     PREPARE_UNIT_TESTS();
     auto [fst, snd] = TESTS["vita"];
-    fst = R"(D:\Emulator Folders\rpcs3-v0.0.18-12904-12efd291_win64\dev_hdd0\home\00000001\savedata\NPEB01899--240707021150\GAMEDATA)";
     lce::CONSOLE consoleOut = lce::CONSOLE::WIIU;
 
     editor::FileListing fileListing;

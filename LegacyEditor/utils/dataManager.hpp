@@ -59,6 +59,7 @@ public:
     // READING SECTION
 
     u8 readInt8();
+    char readChar();
     u16 readInt16();
     i32 readInt24();
     i32 readInt24(bool isLittleIn);

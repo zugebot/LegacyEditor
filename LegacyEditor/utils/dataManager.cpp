@@ -81,6 +81,13 @@ u8 DataManager::readInt8() {
 }
 
 
+char DataManager::readChar() {
+    char value = static_cast<char>(ptr[0]);
+    incrementPointer1();
+    return value;
+}
+
+
 u16 DataManager::readInt16() {
     u16 value;
     if (isBig) {

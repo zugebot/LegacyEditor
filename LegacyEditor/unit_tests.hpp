@@ -1,5 +1,8 @@
 #pragma once
 
+#include <map>
+#include <string>
+
 
 #ifdef UNIT_TESTS
 extern std::string dir_path;
@@ -25,6 +28,7 @@ static void PREPARE_UNIT_TESTS() {
     // VITA
     TEST_PAIR("vita"        , R"(VITA/save/PCSB00560-231005063840/GAMEDATA.bin)", wiiu + R"(VITA_SAVE)");
     TEST_PAIR("vita_mcs"    , R"(VITA/CavernLarge_MG01.mcs)"                    , wiiu + R"(VITA_MCS_SAVE)");
+    TEST_PAIR("VITA_1_00"    , R"(VITA/v1.0.0/PCSE00491/PCSE00491-240725153321/GAMEDATA.bin)", wiiu + R"(VITA_1_00)");
     // RPCS3
     TEST_PAIR("RPCS3_1"     , R"(RPCS3/NPUB31419--240424132851/GAMEDATA)"       , wiiu + R"(RPCS3_SAVE)");
     // XBOX360

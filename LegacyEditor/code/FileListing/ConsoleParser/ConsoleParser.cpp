@@ -168,8 +168,9 @@ Data ConsoleParser::writeListing(editor::FileListing* theListing, const lce::CON
 
 int ConsoleParser::readFileInfo(editor::FileListing* theListing) const {
     fs::path filePath = myFilePath.parent_path();
+    fs::path cachePathVita = myFilePath.parent_path().parent_path();
+    cachePathVita /= "CACHE.BIN";
 
-    bool has_external_fileinfo = true;
     switch (myConsole) {
         case lce::CONSOLE::PS3:
         case lce::CONSOLE::RPCS3:
@@ -186,27 +187,32 @@ int ConsoleParser::readFileInfo(editor::FileListing* theListing) const {
             break;
         }
         case lce::CONSOLE::XBOX360:
-            has_external_fileinfo = false;
-            break;
+            goto XBOX360_SKIP_READING_FILEINFO;
         case lce::CONSOLE::NONE:
         default:
             return INVALID_CONSOLE;
     }
 
     int status;
-    if (has_external_fileinfo) {
-        if (fs::exists(filePath)) {
-            theListing->fileInfo.readFile(filePath, myConsole);
-            status = SUCCESS;
-        } else {
-            printf("FileInfo file not found/corrupt, setting defaulted data.\n");
-            status = FILE_ERROR;
-        }
+
+    if (fs::exists(filePath)) {
+        theListing->fileInfo.readFile(filePath, myConsole);
+        status = SUCCESS;
+
+    } else if (myConsole == lce::CONSOLE::VITA && fs::exists(cachePathVita)) {
+        std::string folderName = myFilePath.parent_path().filename().string();
+        theListing->fileInfo.readCacheFile(cachePathVita, folderName);
+        status = SUCCESS;
+
+    } else {
+        printf("FileInfo file not found/corrupt, setting defaulted data.\n");
+        status = FILE_ERROR;
     }
 
+XBOX360_SKIP_READING_FILEINFO:
     if (!theListing->fileInfo.isLoaded) {
         theListing->fileInfo.defaultSettings();
-        theListing->fileInfo.loadIngameThumbnail("assets/LegacyEditor/world-icon.png");
+        theListing->fileInfo.loadFileAsThumbnail("assets/LegacyEditor/world-icon.png");
         status = SUCCESS;
     }
 

@@ -132,17 +132,6 @@ bool isPngHeader(DataManager& manager) {
 
 namespace editor {
 
-    /**
-     * \brief loads a new default thumbnail
-     * TODO: Make it return a status
-     */
-    void FileInfo::loadIngameThumbnail(const std::string& inFilePath) {
-        DataManager defaultPhoto;
-        defaultPhoto.readFromFile(inFilePath);
-        ingameThumbnail.data = defaultPhoto.data;
-        ingameThumbnail.size = defaultPhoto.size;
-    }
-
     void FileInfo::defaultSettings() {
         seed = 0;
         loads = 0;
@@ -156,96 +145,152 @@ namespace editor {
 
 
     /**
+     * \brief loads a new default thumbnail
+     * TODO: Make it return a status
+     */
+    void FileInfo::loadFileAsThumbnail(const std::string& inFilePath) {
+        DataManager defaultPhoto;
+        defaultPhoto.readFromFile(inFilePath);
+        ingameThumbnail.data = defaultPhoto.data;
+        ingameThumbnail.size = defaultPhoto.size;
+    }
+
+
+    /**
      * \brief presumes that the tEXt header is located second to last inside the png.
      * \param inFilePath
      */
     // TODO: idk formatting of header for nintendo consoles
-    void FileInfo::readFile(const fs::path& inFilePath, const lce::CONSOLE inConsole) {
+    int FileInfo::readFile(const fs::path& inFilePath, const lce::CONSOLE inConsole) {
         isLoaded = false;
         DataManager manager;
         manager.readFromFile(inFilePath.string());
 
-        // TODO: needs to be rewritten for different consoles
+        readHeader(manager, inConsole);
 
-        switch (inConsole) {
+        int status = readPNG(manager);
+        if (status == 0) {
+            isLoaded = true;
+        }
+        return status;
+    }
+
+
+    /**
+     * It is assumed that the console is PSVita, otherwise this function shouldn't be called.
+     * The file is called "CACHE.BIN" and appears in early versions of PSVita.
+     * @param inFilePath
+     * @return
+     */
+    int FileInfo::readCacheFile(const fs::path& inFilePath, MU const std::string& folderName) {
+        isLoaded = false;
+        DataManager manager;
+        manager.setLittleEndian();
+
+        manager.readFromFile(inFilePath.string());
+
+        bool foundInfo = false;
+        u32 pngOffset = 0;
+        u16 filesFound = manager.readInt16();
+        for (u16 _ = 0; _ < filesFound; _++) {
+            MU u16 var0 = manager.readInt16(); // lies in the range ``0+x`` to ``fileFound+x``
+            MU u32 var1 = manager.readInt32(); // probably a CRC
+            MU u32 iterImageSize = manager.readInt32();
+            std::string iterFolderName = manager.readString(64);
+            std::string iterWorldName = manager.readString(128);
+
+            if (folderName == iterFolderName) {
+                foundInfo = true;
+            }
+
+            if (!foundInfo) {
+                pngOffset += iterImageSize;
+            }
+        }
+
+        manager.incrementPointer(pngOffset);
+
+        manager.setBigEndian();
+        int status = readPNG(manager);
+        if (status == 0) {
+            isLoaded = true;
+        }
+        return status;
+    }
+
+
+    int FileInfo::readHeader(DataManager& theManager, lce::CONSOLE theConsole) {
+        // TODO: check if the file is long enough
+
+        switch (theConsole) {
             case lce::CONSOLE::WIIU: {
-                basesavename = manager.readNullTerminatedWString();
-                u32 diff = 256 - (u32)(manager.ptr - manager.data);
-                manager.incrementPointer(diff);
+                basesavename = theManager.readNullTerminatedWString();
+                u32 diff = 256 - (u32)(theManager.ptr - theManager.data);
+                theManager.incrementPointer(diff);
                 break;
             }
             case lce::CONSOLE::SWITCH: {
-                basesavename = manager.readNullTerminatedWWWString();
-                u32 diff = 512 - (u32)(manager.ptr - manager.data);
-                manager.incrementPointer(diff);
+                basesavename = theManager.readNullTerminatedWWWString();
+                u32 diff = 512 - (u32)(theManager.ptr - theManager.data);
+                theManager.incrementPointer(diff);
                 // there is a random u32, then a null u32
-                manager.incrementPointer(8);
+                theManager.incrementPointer(8);
                 break;
             }
-            case lce::CONSOLE::VITA:
             default:
                 break;
+        }
+        return SUCCESS;
+    }
 
+
+    int FileInfo::readPNG(DataManager& theManager) {
+        if (!isPngHeader(theManager)) {
+            return FILE_ERROR;
         }
 
-        if (!isPngHeader(manager)) {
-            return;
-        }
+        c_u8* PNG_START = theManager.ptr;
+        c_u8* PNG_END;
 
-        c_u8* PNG_START = manager.ptr;
+        theManager.incrementPointer(8);
 
-        manager.incrementPointer(8);
+        while (!theManager.isEndOfData()) {
+            c_u32 chunkLength = theManager.readInt32();
+            std::string chunkType = theManager.readString(4);
 
-        while (!manager.isEndOfData()) {
-            c_u8* PNG_END;
-            c_u32 chunkLength = manager.readInt32();
-
-            if (std::string chunkType = manager.readString(4);
-                    chunkType != "tEXt") {
-
-                // this may not work
-                // TODO: what does the above comment even mean?
+            if (chunkType != "tEXt") {
                 if (chunkType == "IEND") {
-                    manager.incrementPointer4();
-                    PNG_END = manager.ptr - 8;
+                    theManager.incrementPointer4();
+                    PNG_END = theManager.ptr - 8;
                     c_u32 PNG_SIZE = PNG_END - PNG_START;
                     ingameThumbnail.allocate(PNG_SIZE + 8);
                     std::memcpy(ingameThumbnail.data, PNG_START, PNG_SIZE);
-                    return;
+                    return SUCCESS;
                 }
-
-                manager.incrementPointer(chunkLength + 4);
+                theManager.incrementPointer(chunkLength + 4);
                 continue;
             }
 
-            PNG_END = manager.ptr - 8;
-            {
-                c_u32 PNG_SIZE = PNG_END - PNG_START;
-                ingameThumbnail.allocate(PNG_SIZE + 12);
-                std::memcpy(ingameThumbnail.data, PNG_START, PNG_SIZE);
-                std::memcpy(ingameThumbnail.data + PNG_SIZE, &IEND_DAT[0], 12);
-            }
+            PNG_END = theManager.ptr - 8;
+            c_u32 PNG_SIZE = PNG_END - PNG_START;
+            ingameThumbnail.allocate(PNG_SIZE + 12);
+            std::memcpy(ingameThumbnail.data, PNG_START, PNG_SIZE);
+            std::memcpy(ingameThumbnail.data + PNG_SIZE, &IEND_DAT[0], 12);
 
+            u32 endOfChunk = theManager.getPosition() + chunkLength;
 
-            // add thumbnail
-
-            size_t length = 0;
-
-            while (true) {
+            while (theManager.getPosition() < endOfChunk) {
                 std::string key;
                 std::string text;
 
-
-                u8 nextChar;
-                while ((nextChar = manager.readInt8()) != 0) {
-                    key += static_cast<char>(nextChar);
+                char nextChar;
+                while ((nextChar = theManager.readChar()) != 0) {
+                    key += nextChar;
                 }
-                length += key.size() + 1;
 
-                while ((nextChar = manager.readInt8()) != 0) {
-                    text += static_cast<char>(nextChar);
-                    length++;
-                    if (chunkLength - 1 <= length) {
+                while ((nextChar = theManager.readChar()) != 0) {
+                    text += nextChar;
+                    if (theManager.getPosition() >= endOfChunk) {
                         break;
                     }
                 }
@@ -264,20 +309,16 @@ namespace editor {
                     exploredchunks = stringToInt64(text);
                 } else if (key == "4J_BASESAVENAME") {
                     appendWStringToString(text, basesavename);
-                    manager.incrementPointer1();
-                }
-
-                if (chunkLength - 1 <= length) {
-                    length++;
-                } else {
-                    break;
+                    // TODO: verify this given how I changed it to rely off the size of the chunk and the
+                    // TODO: dataManager pointer, instead of counting the length.
+                    theManager.incrementPointer1();
                 }
             }
-            // break early, no need to read the IEND thingy,
-            // since tEXT is always placed at the end
+
             break;
         }
-        isLoaded = true;
+
+        return SUCCESS;
     }
 
 
