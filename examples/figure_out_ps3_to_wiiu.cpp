@@ -49,7 +49,7 @@ int main() {
     if (status != 0) return printf_err(status, "failed to dump listing\n");
 
     fs::path OUT = R"(C:\Users\jerrin\Desktop\OUT\GAMEDATA)";
-    status = theListing.write(OUT, lce::CONSOLE::RPCS3);
+    status = theListing.write({lce::CONSOLE::RPCS3, OUT});
     if (status != 0) return printf_err(status, "failed to write listing\n");
 
 

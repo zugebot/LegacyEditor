@@ -202,7 +202,7 @@ namespace editor {
 
         convertRegions(consoleOut);
 
-        status = write(outFilePath, consoleOut);
+        status = write({consoleOut, outFilePath});
         return status;
     }
 
@@ -231,7 +231,7 @@ namespace editor {
 
         replace.deallocate();
 
-        status = write(outFilePath, consoleOut);
+        status = write({consoleOut, outFilePath});
         return status;
     }
 

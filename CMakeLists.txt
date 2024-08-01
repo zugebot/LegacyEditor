@@ -69,7 +69,8 @@ add_executable(LegacyEditor
         ${LCE_SOURCES}
         ${INCLUDE_SOURCES}
         # examples/figure_out_vita_1_00.cpp
-        examples/readvita.cpp
+        # examples/readvita.cpp
+        examples/batch_convert.cpp
 )
 
 add_dependencies(LegacyEditor copy_assets)

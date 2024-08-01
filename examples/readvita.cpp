@@ -27,7 +27,9 @@ int main() {
     }
 
 
-    const int statusOut = fileListing.write(snd, consoleOut);
+    fileListing.fileInfo.basesavename = L"lolza admireU skibidi toilet";
+    const int statusOut = fileListing.write({consoleOut, snd});
+
     if (statusOut != 0) {
         return printf_err(statusOut, "converting to %s failed...\n", consoleToCStr(consoleOut));
     }

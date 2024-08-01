@@ -179,7 +179,8 @@ namespace editor {
 
 
     /**
-     * Removes all blocks in the nether except for netherrack
+     * .
+     *
      * @param regionIndex
      * @param fileListing
      */
@@ -228,7 +229,7 @@ namespace editor {
 
 
     /**
-     * Removes all blocks in the nether except for netherrack
+     * .
      * @param regionIndex
      * @param fileListing
      */

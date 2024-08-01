@@ -8,7 +8,7 @@
 namespace editor {
     /**
      * Console File header that holds 12 bytes
-     * uses many struct unions to interpret header for different consoles
+     * uses many struct unions to interpret the header for the save file of different consoles.
      */
     class HeaderUnion {
 
@@ -46,8 +46,6 @@ namespace editor {
         ND u32 getShort5() const { return isSystemLittle() ? swapEndian16(UNION.ZLIB.zlib_magic) : UNION.ZLIB.zlib_magic; }
         /// bytes 0-7
         ND u64 getDestSize() const { return isSystemLittle() ? swapEndian64(UNION.ZLIB.dest_size) : UNION.ZLIB.dest_size; }
-        /// bytes 0-3
-        ND u32 getInt1Swapped() const { return isSystemLittle() ? UNION.INT_VIEW.int1 : swapEndian32(UNION.INT_VIEW.int1); }
         /// bytes 4-7
         ND u32 getInt2Swap() const { return isSystemLittle() ? UNION.INT_VIEW.int2 : swapEndian32(UNION.INT_VIEW.int2); }
         /// bytes 8-11

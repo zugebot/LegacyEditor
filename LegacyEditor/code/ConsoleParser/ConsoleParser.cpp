@@ -216,6 +216,10 @@ XBOX360_SKIP_READING_FILEINFO:
         status = SUCCESS;
     }
 
+    if (theListing->fileInfo.basesavename.empty()) {
+        theListing->fileInfo.basesavename = L"New World";
+    }
+
     return status;
 }
 

@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 
         fs::path outFile = outDir / filePath.filename();
         outFile += "_" + consoleIn;
-        const int statusOut = fileListing.write(outFile.string(), consoleOut);
+        const int statusOut = fileListing.write({consoleOut, outFile.string()});
         if (statusOut != 0) {
             std::cerr << "Converting to " << consoleToStr(consoleOut)
                       << " failed for file: " << filePath << "\n";

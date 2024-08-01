@@ -27,7 +27,7 @@ int main() {
 
 
 
-    const int statusOut = fileListing.write(FILE_OUT, consoleOut);
+    const int statusOut = fileListing.write({consoleOut, FILE_OUT});
     if (statusOut != 0) return printf_err(statusOut, error2, consoleToCStr(consoleOut));
 
     printf("Finished!\nFile Out: %s", FILE_OUT.c_str());

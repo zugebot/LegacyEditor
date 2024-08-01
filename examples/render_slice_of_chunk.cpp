@@ -64,7 +64,7 @@ int main() {
             }
         }
 
-        chunkRender.saveWithName("chunk_render_xy_" + std::to_string(zIter) + ".png", "render/");
+        chunkRender.saveWithName("render/chunk_render_xy_" + std::to_string(zIter) + ".png");
     }
 
 
@@ -75,7 +75,7 @@ int main() {
 
 
     // fileListing.fileInfo.basesavename = L"Fortnite";
-    const int statusOut = fileListing.write(TEST_OUT, consoleOut);
+    const int statusOut = fileListing.write({consoleOut, TEST_OUT});
     if (statusOut != 0) {
         return printf_err(statusOut, "converting to %s failed...\n", consoleToCStr(consoleOut));
     }

@@ -98,7 +98,7 @@ int main() {
 
 
 
-    if (int statusOut = fileListing.write(snd1, consoleOut); statusOut != 0) {
+    if (int statusOut = fileListing.write({consoleOut, snd1}); statusOut != 0) {
         return printf_err(statusOut, WRITE_ERROR, consoleToCStr(consoleOut));
     }
 

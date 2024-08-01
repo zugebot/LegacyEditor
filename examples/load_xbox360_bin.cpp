@@ -21,7 +21,7 @@ int main() {
 
     fileListing.printDetails();
 
-    const int statusOut = fileListing.write(snd, consoleOut);
+    const int statusOut = fileListing.write({consoleOut, snd});
     if (statusOut != 0) {
         return printf_err(statusOut, "converting to %s failed...\n", consoleToCStr(consoleOut));
     }

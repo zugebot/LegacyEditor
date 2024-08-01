@@ -9,8 +9,8 @@
 
 #include "LegacyEditor/utils/NBT.hpp"
 
-#include "LegacyEditor/code/FileListing/ConsoleParser/headerUnion.hpp"
-#include "LegacyEditor/code/FileListing/ConsoleParser/include.hpp"
+#include "LegacyEditor/code/ConsoleParser/headerUnion.hpp"
+#include "LegacyEditor/code/ConsoleParser/include.hpp"
 
 
 
@@ -65,45 +65,44 @@ namespace editor {
     }
 
 
-    int FileListing::write(const fs::path& outFilePath,
-                           const lce::CONSOLE consoleOut) {
-        if (outFilePath.empty()) {
-            printf("FileListing::write: filename is empty!");
-            return INVALID_ARGUMENT;
-        }
-
-        MU c_bool differentConsole = myConsole != consoleOut;
-
-        if (AUTO_REMOVE_PLAYERS && differentConsole) {
-            removeFileTypes({lce::FILETYPE::PLAYER});
-        }
-        if (AUTO_REMOVE_DATA_MAPPING && differentConsole) {
-            removeFileTypes({lce::FILETYPE::DATA_MAPPING});
-        }
-        if (differentConsole) {
-            removeFileTypes({lce::FILETYPE::GRF});
-        }
-
-        convertRegions(consoleOut);
-
-        int status = writeSave(outFilePath, consoleOut);
-        if (status != 0) {
-            printf("failed to write gamedata to %s", outFilePath.string().c_str());
-        }
-        return status;
-    }
-
-
-    int FileListing::writeSave(const fs::path& outFilePath, const lce::CONSOLE consoleOut) {
-        auto it = consoleInstances.find(consoleOut);
+    int FileListing::writeSave(const ConvSettings& theSettings) {
+        auto it = consoleInstances.find(theSettings.getConsole());
         if (it != consoleInstances.end()) {
-            int status = it->second->write(this, outFilePath);
+            int status = it->second->write(this, theSettings.getFilePath());
             if (status != 0) {
-                printf("failed to write save %s.\n", outFilePath.string().c_str());
+                printf("failed to write save %s.\n", theSettings.getFilePath().string().c_str());
             }
             return status;
         }
         return INVALID_CONSOLE;
+    }
+
+
+    int FileListing::write(const ConvSettings& theSettings) {
+        if (!theSettings.areSettingsValid()) {
+            printf("Write Settings are not valid, exiting\n");
+            return STATUS::INVALID_ARGUMENT;
+        }
+
+        // TODO: create default output file path if not set
+
+        if (myConsole != theSettings.getConsole()) {
+            if (AUTO_REMOVE_PLAYERS) {
+                removeFileTypes({lce::FILETYPE::PLAYER});
+            }
+            if (AUTO_REMOVE_DATA_MAPPING) {
+                removeFileTypes({lce::FILETYPE::DATA_MAPPING});
+            }
+            removeFileTypes({lce::FILETYPE::GRF});
+        }
+
+        convertRegions(theSettings.getConsole());
+
+        int status = writeSave(theSettings);
+        if (status != 0) {
+            printf("failed to write gamedata to %s", theSettings.getFilePath().string().c_str());
+        }
+        return status;
     }
 
 

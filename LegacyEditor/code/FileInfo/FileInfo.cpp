@@ -309,8 +309,7 @@ namespace editor {
                     exploredchunks = stringToInt64(text);
                 } else if (key == "4J_BASESAVENAME") {
                     appendWStringToString(text, basesavename);
-                    // TODO: verify this given how I changed it to rely off the size of the chunk and the
-                    // TODO: dataManager pointer, instead of counting the length.
+
                     theManager.incrementPointer1();
                 }
             }

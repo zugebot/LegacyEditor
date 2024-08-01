@@ -9,13 +9,15 @@
 #include "include/ghc/fs_std.hpp"
 
 #include "lce/processor.hpp"
+#include "lce/include/picture.hpp"
 
+#include "conversionSettings.hpp"
+
+#include "LegacyEditor/code/ConsoleParser/ConsoleParser.hpp"
 #include "LegacyEditor/code/FileInfo/FileInfo.hpp"
-#include "LegacyEditor/code/FileListing/ConsoleParser/ConsoleParser.hpp"
 #include "LegacyEditor/code/LCEFile/LCEFile.hpp"
 #include "LegacyEditor/code/Region/RegionManager.hpp"
 #include "LegacyEditor/utils/error_status.hpp"
-#include "lce/include/picture.hpp"
 
 
 class ConsoleParser;
@@ -99,7 +101,7 @@ namespace editor {
         /// Parse from console files
 
         MU ND int read(const fs::path& inFilePath);
-        MU ND int write(const fs::path& outFilePath, const lce::CONSOLE consoleOut);
+        MU ND int write(const ConvSettings& theSettings);
 
         /// Conversion
 
@@ -124,7 +126,7 @@ namespace editor {
 
         MU ND int findConsole(const fs::path& inFilePath);
         MU ND int readSave();
-        int writeSave(const fs::path& outFilePath, const lce::CONSOLE consoleOut);
+        int writeSave(const ConvSettings& theSettings);
 
 
         /// For use in removeFileTypes
