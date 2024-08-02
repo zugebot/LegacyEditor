@@ -48,8 +48,8 @@ int main() {
     status = theListing.dumpToFolder(R"(C:\\Users\\jerrin\\Desktop\\OUT\\)");
     if (status != 0) return printf_err(status, "failed to dump listing\n");
 
-    fs::path OUT = R"(C:\Users\jerrin\Desktop\OUT\GAMEDATA)";
-    status = theListing.write({lce::CONSOLE::RPCS3, OUT});
+    fs::path OUT = R"(C:\Users\jerrin\Desktop\OUT\)";
+    status = theListing.write({lce::CONSOLE::RPCS3, editor::ePS3ProductCode::NPUB31419, OUT});
     if (status != 0) return printf_err(status, "failed to write listing\n");
 
 

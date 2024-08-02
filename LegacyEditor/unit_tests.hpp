@@ -30,7 +30,7 @@ static void PREPARE_UNIT_TESTS() {
     TEST_PAIR("vita_mcs"    , R"(VITA/CavernLarge_MG01.mcs)"                    , wiiu + R"(VITA_MCS_SAVE)");
     TEST_PAIR("VITA_1_00"    , R"(VITA/v1.0.0/PCSE00491/PCSE00491-240725153321/GAMEDATA.bin)", wiiu + R"(VITA_1_00)");
     // RPCS3
-    TEST_PAIR("RPCS3_1"     , R"(RPCS3/NPUB31419--240424132851/GAMEDATA)"       , wiiu + R"(RPCS3_SAVE)");
+    TEST_PAIR("RPCS3_1"     , R"(RPCS3/NPUB31419--240424132851)"       , wiiu + R"(RPCS3_SAVE)");
     // XBOX360
     TEST_PAIR("X360_TU69"   , R"(XBOX360/XBOX360_TU69.bin)"                     , wiiu + R"(saves\XBOX360_TU69.bin)" );
     TEST_PAIR("X360_TU74"   , R"(XBOX360/XBOX360_TU74.dat)"                     , wiiu + R"(saves\XBOX360_TU74.dat)" );

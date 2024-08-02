@@ -1,18 +1,18 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <sstream>
 #include <string>
 #include <vector>
 
 
-
-
-
-
 std::vector<std::string> split(const std::string &s, char delimiter);
 
 std::wstring stringToWstring(const std::string& str);
+
+std::string wStringToString(const std::wstring& wstr);
+
 
 static bool isSystemLittleEndian() {
     static constexpr int num = 1;
@@ -72,3 +72,34 @@ static std::pair<int, int> extractRegionCoords(const std::string& filename) {
     int num2 = std::stoi(parts[parts.size() - 1]);
     return {num1, num2};
 }
+
+
+/**
+ * Gets the current UTC time and creates a string from it.
+ * This is used by LCE for filenames and folders for saves.
+ * @return the UTC time string.
+ */
+[[maybe_unused]] static std::string getCurrentDateTimeString() {
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+    std::tm* utc_tm = std::gmtime(&now_c);
+
+    std::ostringstream oss;
+    oss << std::setfill('0') << std::setw(2) << ((utc_tm->tm_year + 1900) % 100);
+    oss << std::setfill('0') << std::setw(2) << utc_tm->tm_mon + 1;
+    oss << std::setfill('0') << std::setw(2) << utc_tm->tm_mday;
+    oss << std::setfill('0') << std::setw(2) << utc_tm->tm_hour;
+    oss << std::setfill('0') << std::setw(2) << utc_tm->tm_min;
+    oss << std::setfill('0') << std::setw(2) << utc_tm->tm_sec;
+    return oss.str();
+}
+
+
+
+
+
+
+
+
+
+

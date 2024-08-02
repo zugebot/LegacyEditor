@@ -6,6 +6,7 @@
 
 #include "LegacyEditor/utils/dataManager.hpp"
 #include "LegacyEditor/utils/error_status.hpp"
+#include "LegacyEditor/utils/utils.hpp"
 
 
 inline static c_u8 IEND_DAT[12] = {
@@ -66,32 +67,6 @@ static std::string hexToString(i64 hex) {
     return result;
 }
 
-/*
-static std::wstring stringToWstring(const std::string& str) {
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-    return converter.from_bytes(str);
-}
-
-
-static std::string wstringToString(const std::wstring& wstr) {
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-    return converter.to_bytes(wstr);
-}
- */
-
-
-std::string wStringToString(const std::wstring& wstr) {
-    std::mbstate_t state = std::mbstate_t();
-    const wchar_t* src = wstr.c_str();
-    std::size_t len = std::wcsrtombs(nullptr, &src, 0, &state);
-    if (len == static_cast<std::size_t>(-1)) {
-        throw std::runtime_error("Conversion error");
-    }
-
-    std::string dest(len, '\0');
-    std::wcsrtombs(&dest[0], &src, len, &state);
-    return dest;
-}
 
 // Function to append std::wstring to std::string
 void appendWStringToString(std::string& str, const std::wstring& wstr) {

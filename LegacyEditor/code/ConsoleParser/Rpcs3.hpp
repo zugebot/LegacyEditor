@@ -113,11 +113,18 @@ namespace editor {
 
 
         // TODO: missing other files
-        ND int write(editor::FileListing* theListing, const fs::path& gameDataPath) const override {
+        ND int write(editor::FileListing* theListing, MU const editor::ConvSettings& theSettings) const override {
+            fs::path rootPath = theSettings.getFilePath();
+
+            auto productCode = theSettings.myProductCodes.getPS3();
+            std::string strProductCode = ProductCodes::toString(productCode);
+            std::string strCurrentTime = getCurrentDateTimeString();
+            std::string folderName = strProductCode + "--" + strCurrentTime;
+            rootPath /= folderName;
+            fs::create_directories(rootPath);
 
             // fileInfo
-            fs::path fileInfoPath = gameDataPath.parent_path();
-            fileInfoPath /= "THUMB";
+            fs::path fileInfoPath = rootPath / "THUMB";
             Data fileInfoData = theListing->fileInfo.writeFile(fileInfoPath, myConsole);
             fileInfoData.setScopeDealloc(true);
             printf("fileInfo final size: %u\n", fileInfoData.size);
@@ -137,13 +144,12 @@ namespace editor {
                 theListing->icon0png.placeAndStretchSubImage(&fileInfoPng, 72, 0, 176, 176);
                 // theListing->icon0png.placeSubImage(&fileInfoPng, 128, 56);
             }
-            fs::path icon0pngPath = gameDataPath.parent_path();
-            icon0pngPath /= "ICON0.PNG";
-            icon0pngPath.make_preferred();
+            fs::path icon0pngPath = rootPath / "ICON0.PNG";
             theListing->icon0png.saveWithName(icon0pngPath.string());
 
 
             // GAMEDATA
+            fs::path gameDataPath = rootPath / "GAMEDATA";
             Data deflatedData = ConsoleParser::writeListing(theListing, myConsole);
             Data inflatedData;
             inflatedData.setScopeDealloc(true);
@@ -154,9 +160,7 @@ namespace editor {
 
 
             // METADATA
-            // TODO: ensure endian is correct
-            fs::path metadataPath = gameDataPath.parent_path();
-            metadataPath /= "METADATA";
+            fs::path metadataPath = rootPath / "METADATA";
             // TODO: replace with u8[256]
             Data _;
             _.setScopeDealloc(true);
@@ -166,11 +170,9 @@ namespace editor {
             managerMETADATA.writeInt32(3);
             managerMETADATA.writeInt32(deflatedData.size);
             managerMETADATA.writeInt32(fileInfoData.size);
-
-            u32 crc1 = crc(deflatedData.data, deflatedData.size);
+            c_u32 crc1 = crc(deflatedData.data, deflatedData.size);
             managerMETADATA.writeInt32(crc1);
-
-            u32 crc2 = crc(fileInfoData.data, fileInfoData.size);
+            c_u32 crc2 = crc(fileInfoData.data, fileInfoData.size);
             managerMETADATA.writeInt32(crc2);
             // file operations
             int status3 = managerMETADATA.writeToFile(metadataPath);
@@ -179,8 +181,27 @@ namespace editor {
                 metadataPath.string().c_str());
 
 
-            // write PARAM.SFO
-            // ...
+            // PARAM.SFO
+            fs::path sfoPath = rootPath / "PARAM.SFO";
+            SFOManager sfo;
+            sfo.addParam(eSFO_FMT::INT, "*GAMEDATA", "0");
+            sfo.addParam(eSFO_FMT::INT, "*ICON0.PNG", "0");
+            sfo.addParam(eSFO_FMT::INT, "*METADATA", "1");
+            sfo.addParam(eSFO_FMT::INT, "*THUMB", "0");
+            sfo.addParam(eSFO_FMT::UTF8_SPECIAL, "ACCOUNT_ID", "0000000000000000");
+            sfo.addParam(eSFO_FMT::INT, "ATTRIBUTE", "0");
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "CATEGORY", "SD");
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "DETAIL", " ");
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "PARAMS", "");
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "PARAMS2", "");
+            sfo.addParam(eSFO_FMT::INT, "PARENTAL_LEVEL", "0");
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "RPCS3_BLIST", "ICON0.PNG/METADATA/THUMB/GAMEDATA");
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SAVEDATA_DIRECTORY", folderName);
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SAVEDATA_LIST_PARAM", "0");
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SUB_TITLE", wStringToString(theListing->fileInfo.basesavename));
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "TITLE", "Minecraft: PlayStation®3 Edition");
+            sfo.setMagic(eSFO_MAGIC::PS3_HDD);
+            sfo.saveToFile(sfoPath.string());
 
 
             return SUCCESS;

@@ -71,6 +71,8 @@ add_executable(LegacyEditor
         # examples/figure_out_vita_1_00.cpp
         # examples/readvita.cpp
         examples/batch_convert.cpp
+        # examples/write_sfo_from_scratch.cpp
+        # examples/figure_out_ps3_to_wiiu.cpp
 )
 
 add_dependencies(LegacyEditor copy_assets)

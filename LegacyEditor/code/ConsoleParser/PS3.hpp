@@ -131,7 +131,7 @@ namespace editor {
         }
 
 
-        int write(MU editor::FileListing* theListing, MU const fs::path& gameDataPath) const override {
+        int write(MU editor::FileListing* theListing, MU const editor::ConvSettings& theSettings) const override {
             return NOT_IMPLEMENTED;
         }
 

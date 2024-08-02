@@ -95,7 +95,8 @@ namespace editor {
         }
 
 
-        ND int write(editor::FileListing* theListing, const fs::path& gameDataPath) const override {
+        ND int write(editor::FileListing* theListing, MU const editor::ConvSettings& theSettings) const override {
+            fs::path gameDataPath = theSettings.getFilePath();
 
             // GAMEDATA
             Data deflatedData = ConsoleParser::writeListing(theListing, myConsole);

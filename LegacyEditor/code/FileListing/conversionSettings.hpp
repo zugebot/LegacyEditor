@@ -2,44 +2,12 @@
 
 #include <utility>
 
+#include "include/ghc/fs_std.hpp"
+
 #include "lce/enums.hpp"
 #include "lce/processor.hpp"
 
-#include "include/ghc/fs_std.hpp"
-
-
-
-
-namespace editor::productcode {
-
-    enum class PS3 : u8 {
-        NONE,
-        NPEB01899, // Europe (HDD)
-        NPUB31419, // USA (HDD)
-        NPJB00549, // Japan (HDD)
-        BLES01976, // Europe (Disc)
-        BLUS31426, // USA (Disc)
-    };
-
-
-    enum class VITA : u8 {
-        NONE,
-        PCSE00491, // USA (HDD)
-        PCSB00560, // Europe (HDD)
-        PCSG00302, // Japan (HDD)
-    };
-
-
-    enum class PS4 : u8 {
-        NONE,
-        CUSA00744, // USA
-        CUSA00283, // Japan
-        CUSA00265, // Europe
-    };
-
-}
-
-
+#include "productcodes.hpp"
 
 
 namespace editor {
@@ -56,64 +24,44 @@ namespace editor {
     class MU ConvSettings {
         lce::CONSOLE myConsole;
         fs::path myFilePath;
-
-        struct ProductCodes {
-            productcode::PS3 PS3;
-            productcode::PS4 PS4;
-            productcode::VITA Vita;
-
-            ProductCodes() {
-                PS3 = productcode::PS3::NONE;
-                PS4 = productcode::PS4::NONE;
-                Vita = productcode::VITA::NONE;
-            }
-        } myProductCodes;
     public:
+        ProductCodes myProductCodes;
 
 
-        ConvSettings() : myConsole(lce::CONSOLE::NONE) {
-            myProductCodes = ProductCodes();
-        }
+        ConvSettings() : myConsole(lce::CONSOLE::NONE) {}
 
         MU explicit ConvSettings(lce::CONSOLE theConsole)
-            : myConsole(theConsole) {
-            myProductCodes = ProductCodes();
-        }
+            : myConsole(theConsole) {}
 
-        MU ConvSettings(lce::CONSOLE theConsole, fs::path theFilePath)
+        MU ConvSettings(const lce::CONSOLE theConsole, fs::path theFilePath)
+            : myConsole(theConsole), myFilePath(std::move(theFilePath)) {}
+        
+        
+        MU ConvSettings(const lce::CONSOLE theConsole, const ePS3ProductCode thePCode, fs::path theFilePath)
             : myConsole(theConsole), myFilePath(std::move(theFilePath)) {
-            myProductCodes = ProductCodes();
+            myProductCodes.setPS3(thePCode);
         }
-
-        MU ND lce::CONSOLE getConsole() const {
-            return myConsole;
+        
+        MU ConvSettings(const lce::CONSOLE theConsole, const eVITAProductCode thePCode, fs::path theFilePath)
+            : myConsole(theConsole), myFilePath(std::move(theFilePath)) {
+            myProductCodes.setVITA(thePCode);
         }
-
-        MU ND fs::path getFilePath() const {
-            return myFilePath;
+        
+        MU ConvSettings(const lce::CONSOLE theConsole, const ePS4ProductCode thePCode, fs::path theFilePath)
+            : myConsole(theConsole), myFilePath(std::move(theFilePath)) {
+            myProductCodes.setPS4(thePCode);
         }
+        
+        MU ND lce::CONSOLE getConsole() const { return myConsole; }
 
+        MU ND fs::path getFilePath() const { return myFilePath; }
 
         MU ND bool areSettingsValid() const {
-
-            if (myConsole == lce::CONSOLE::PS3
-                && myProductCodes.PS3 == productcode::PS3::NONE) {
-                return false;
-            }
-
-            if (myConsole == lce::CONSOLE::PS4
-                && myProductCodes.PS4 == productcode::PS4::NONE) {
-                return false;
-            }
-
-            if (myConsole == lce::CONSOLE::VITA
-                && myProductCodes.Vita == productcode::VITA::NONE) {
-                return false;
-            }
-
+            if (myConsole == lce::CONSOLE::PS3 && myProductCodes.isVarSetPS3()) return false;
+            if (myConsole == lce::CONSOLE::PS4 && myProductCodes.isVarSetPS4()) return false;
+            if (myConsole == lce::CONSOLE::VITA && myProductCodes.isVarSetVITA()) return false;
             return true;
         }
-
     };
 
 

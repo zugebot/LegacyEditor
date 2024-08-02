@@ -45,7 +45,7 @@ namespace editor {
         }
 
 
-        ND int write(MU editor::FileListing* theListing, MU const fs::path& gameDataPath) const override {
+        ND int write(MU editor::FileListing* theListing, MU const editor::ConvSettings& theSettings) const override {
             printf("Xbox1.write(): not implemented!\n");
             return NOT_IMPLEMENTED;
         }

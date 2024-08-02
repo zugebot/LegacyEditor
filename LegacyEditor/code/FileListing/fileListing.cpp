@@ -68,7 +68,7 @@ namespace editor {
     int FileListing::writeSave(const ConvSettings& theSettings) {
         auto it = consoleInstances.find(theSettings.getConsole());
         if (it != consoleInstances.end()) {
-            int status = it->second->write(this, theSettings.getFilePath());
+            int status = it->second->write(this, theSettings);
             if (status != 0) {
                 printf("failed to write save %s.\n", theSettings.getFilePath().string().c_str());
             }

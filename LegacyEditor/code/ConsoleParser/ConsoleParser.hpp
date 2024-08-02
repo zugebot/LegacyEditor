@@ -22,7 +22,7 @@ public:
     virtual ~ConsoleParser() = default;
 
     ND virtual int read(editor::FileListing* theListing, const fs::path& inFilePath) = 0;
-    ND virtual int write(editor::FileListing* theListing, const fs::path& outFilePath) const = 0;
+    ND virtual int write(editor::FileListing* theListing, const editor::ConvSettings& theSettings) const = 0;
 
 protected:
 

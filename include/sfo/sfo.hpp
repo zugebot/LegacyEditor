@@ -1,5 +1,6 @@
 /*
  * Modified by Jerrin Shirks, 6/20/2024
+ * Updated by Jerrin Shirks, 8/1/2024
  * made with ChatGPT :sunglasses:
  *
  * Old Details:
@@ -11,7 +12,6 @@
  * Made with info from https://www.psdevwiki.com/ps4/Param.sfo.
  * Get updates and Windows binaries at https://github.com/hippie68/sfo.
 */
-
 #pragma once
 
 #include <string>
@@ -19,12 +19,33 @@
 #include <cstdint>
 
 
+enum eSFO_FMT : uint32_t {
+    /// utf8 Special Mode, NOT NULL terminated
+    UTF8_SPECIAL  = 4,
+    /// utf8 char string, NULL terminated
+    UTF8_NORMAL = 516,
+    /// integer 32 bits unsigned
+    INT        = 1028,
+};
+
+
+enum eSFO_MAGIC {
+    /// PS4 PKG file
+    PS4_PKG = 1414415231,
+    /// Disc param.sfo
+    PS3_DISC = 1128612691,
+    /// Param.sfo file
+    PS3_HDD = 1179865088
+};
+
+
 class SFOManager {
+    bool myIsLoadedFromFile = false;
 public:
-    explicit SFOManager(std::string theFilePath)
-        : myFilePath(std::move(theFilePath)), myFile(nullptr), myEntries(nullptr) {
-        loadFile();
-    }
+    explicit SFOManager(std::string theFilePath);
+
+    SFOManager();
+
 
     ~SFOManager() {
         cleanExit();
@@ -51,14 +72,17 @@ public:
         uint32_t data_offset;
     };
 
-    [[maybe_unused]] void addParam(const std::string& theType, const std::string& theKey, const std::string& value);
+    static constexpr uint32_t INDEX_TABLE_ENTRY_SIZE = 16;
+
+    [[maybe_unused]] void addParam(const eSFO_FMT& theType, const std::string& theKey, const std::string& value);
 
     [[maybe_unused]] void deleteParam(const std::string& theKey);
 
     [[maybe_unused]] void editParam(const std::string& theKey, const std::string& value);
 
-    // TODO: this code is slow
     [[nodiscard]] std::string getAttribute(const std::string& theKey) const;
+
+    [[maybe_unused]] void setMagic(eSFO_MAGIC magic);
 
     [[maybe_unused]] void saveToFile(const std::string& outputPath);
 
@@ -86,6 +110,7 @@ private:
 
     void loadFile();
 
+
     long int getPS4PkgOffset();
 
     void loadHeader();
@@ -100,7 +125,7 @@ private:
 
     static int getReservedStringLen(const std::string& theKey);
 
-    void expandDataTable(int theOffset, int theAdditionalSize);
+    void expandDataTable(uint32_t theOffset, uint32_t theAdditionalSize);
 
     static void padTable(struct table* theTable);
 

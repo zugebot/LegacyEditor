@@ -13,20 +13,56 @@ void waitForEnter() {
 }
 
 
+
+int getNumberFromUser(const std::string& param, int lower, int upper) {
+    int number;
+
+    while (true) {
+        std::cout << param;
+        std::cin >> number;
+
+        // Check if the input is an integer and within the specified range
+        if (std::cin.fail() || number < lower || number > upper) {
+            std::cin.clear(); // Clear the error flag
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Discard invalid input
+            std::cout << "[X] Invalid input. Please try again." << std::endl;
+        } else {
+            break; // Valid input received, exit the loop
+        }
+    }
+    return number;
+}
+
+
 int main(int argc, char *argv[]) {
+    std::cout << "\n";
+    std::cout << "[-] Find the project here! https://github.com/zugebot/LegacyEditor" << std::endl;
+    std::cout << "\n";
+    std::cout << "[-] Supports reading [ Xbox360, PS3, RPCS3, PSVITA, PS4, WiiU, Switch ]\n"
+                 "[-] Supports writing [ -------  ---  RPCS3, PSVITA, ---  WiiU  ------ ]\n";
+
+
+    // Make sure user provides files
     if (argc < 2) {
-        std::cerr << "Must supply at least one save file to convert.\n";
-        std::cerr << "You can do this by dragging and dropping a file onto the executable.\n";
-        std::cerr << "TODO: explain how to convert ps4\n";
+        std::cerr << "\nMust supply at least one save file to convert.\n";
+        std::cerr << "You can do this by dragging and dropping file[s] onto the executable, or passing them as command line arguments.\n";
         std::cerr << "click ENTER to exit.\n";
         waitForEnter();
         return -1;
     }
 
-    std::cout << "Supports reading Xbox360, PS3, RPCS3, PSVITA, PS4, WiiU, Switch\n"
-                 "Supports writing to WiiU, PSVITA\n";
 
-    std::cout << "Name the console to output:";
+    // Ensure the "out" directory exists
+    fs::path dirMain(argv[0]);
+    fs::path outDir = dirMain.parent_path() / "out";
+    if (!fs::exists(outDir)) {
+        fs::create_directory(outDir);
+    }
+
+
+    // Gets the console out
+    std::cout << "\n[*] Name the console you want your saves converted to (don't include spaces)."
+                 "\n[>] Console:";
     std::string consoleIn;
     std::cin >> consoleIn;
     const lce::CONSOLE consoleOut = lce::strToConsole(consoleIn);
@@ -37,13 +73,25 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    // Ensure the "out" directory exists
-    fs::path dirMain(argv[0]);
-    fs::path outDir = dirMain.parent_path() / "out";
-    if (!fs::exists(outDir)) {
-        fs::create_directory(outDir);
+
+    // gets ps3 product code, if ps3 / rpcs3 are chosen
+    editor::ConvSettings settings(consoleOut, outDir);
+    if (consoleOut == lce::CONSOLE::RPCS3 ||
+        consoleOut == lce::CONSOLE::PS3) {
+        std::cout << "\n[*] Please select a PS3 region (type the index number):" << std::endl;
+        std::cout << "[1] NPEB01899 | Europe (HDD)\n"
+                  << "[2] NPUB31419 | USA    (HDD)\n"
+                  << "[3] NPJB00549 | Japan  (HDD)\n"
+                  << "[4] BLES01976 | Europe (Disc)(not tested)\n"
+                  << "[5] BLUS31426 | USA    (Disc)(not tested)\n";
+        std::string prompt = "[>] Region:";
+        int selection = getNumberFromUser(prompt, 1, 5);
+        auto pCode = editor::PS3ProductCodeArray[selection];
+        settings.myProductCodes.setPS3(pCode);
     }
 
+
+    // iterate over all the files they gave
     for (int i = 1; i < argc; ++i) {
         fs::path filePath(argv[i]);
         if (!fs::exists(filePath)) {
@@ -57,15 +105,15 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
-        fs::path outFile = outDir / filePath.filename();
-        outFile += "_" + consoleIn;
-        const int statusOut = fileListing.write({consoleOut, outFile.string()});
+        const int statusOut = fileListing.write(settings);
         if (statusOut != 0) {
             std::cerr << "Converting to " << consoleToStr(consoleOut)
                       << " failed for file: " << filePath << "\n";
             continue;
         }
-        std::cout << "Finished!\nFile Out: " << outFile << "\n";
+
+
+        std::cout << "Converted file: " << filePath << "\n";
     }
 
     std::cout << "click ENTER to exit.\n";
