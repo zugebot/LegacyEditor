@@ -26,12 +26,13 @@ static void PREPARE_UNIT_TESTS() {
     // VITA
     TEST_PAIR("vita"        , R"(VITA/save/PCSB00560-231005063840/GAMEDATA.bin)", wiiu);
     TEST_PAIR("vita_mcs"    , R"(VITA/CavernLarge_MG01.mcs)"                    , wiiu);
-    TEST_PAIR("VITA_1_00"    , R"(VITA/PCSE00491/PCSE00491-240725153321/GAMEDATA.bin)", wiiu;
+    TEST_PAIR("VITA_1_00"    , R"(VITA/PCSE00491/PCSE00491-240725153321/GAMEDATA.bin)", wiiu);
     // RPCS3
     TEST_PAIR("RPCS3_1"     , R"(RPCS3/NPUB31419--240424132851)"       , wiiu);
+    TEST_PAIR("RPCS3_1.00"  , R"(RPCS3/BLES01976--240802043920)"       , wiiu);
     // XBOX360
-    TEST_PAIR("X360_TU69"   , R"(XBOX360/XBOX360_TU69.bin)"                     , wiiu + R"(saves\XBOX360_TU69.bin)" );
-    TEST_PAIR("X360_TU74"   , R"(XBOX360/XBOX360_TU74.dat)"                     , wiiu + R"(saves\XBOX360_TU74.dat)" );
+    TEST_PAIR("X360_TU69", R"(XBOX360/XBOX360_TU69.bin)", wiiu + R"(saves\XBOX360_TU69.bin)" );
+    TEST_PAIR("X360_TU74", R"(XBOX360/XBOX360_TU74.dat)", wiiu + R"(saves\XBOX360_TU74.dat)" );
     // PS4
     TEST_PAIR("PS4_khaloody", R"(PS4/folder/00000008/savedata0/GAMEDATA)"       , wiiu);
     TEST_PAIR("flatTestPS4" , R"(PS4/superflatTest/00000002/savedata0/GAMEDATA)", wiiu);

@@ -199,7 +199,12 @@ namespace editor {
             sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SAVEDATA_DIRECTORY", folderName);
             sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SAVEDATA_LIST_PARAM", "0");
             sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SUB_TITLE", wStringToString(theListing->fileInfo.basesavename));
-            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "TITLE", "Minecraft: PlayStation®3 Edition");
+            std::string title = "Minecraft: PlayStation®3 Edition";
+            if (productCode == ePS3ProductCode::BLES01976 ||
+                productCode == ePS3ProductCode::BLUS31426) {
+                title += " (" + ProductCodes::toString(productCode) + ")";
+            }
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "TITLE", title);
             sfo.setMagic(eSFO_MAGIC::PS3_HDD);
             sfo.saveToFile(sfoPath.string());
 
