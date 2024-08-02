@@ -17,7 +17,8 @@ int main() {
     if (status != 0) return printf_err(status, "failed to dump listing\n");
 
     fs::path OUT = R"(C:\Users\jerrin\Desktop\OUT\)";
-    status = theListing.write({lce::CONSOLE::RPCS3, editor::ePS3ProductCode::NPUB31419, OUT});
+    editor::ConvSettings settings(lce::CONSOLE::RPCS3, editor::ePS3ProductCode::NPUB31419, OUT);
+    status = theListing.write(settings);
     if (status != 0) return printf_err(status, "failed to write listing\n");
 
 

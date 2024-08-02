@@ -101,7 +101,7 @@ namespace editor {
         /// Parse from console files
 
         MU ND int read(const fs::path& inFilePath);
-        MU ND int write(const ConvSettings& theSettings);
+        MU ND int write(ConvSettings& theSettings);
 
         /// Conversion
 
@@ -126,7 +126,7 @@ namespace editor {
 
         MU ND int findConsole(const fs::path& inFilePath);
         MU ND int readSave();
-        int writeSave(const ConvSettings& theSettings);
+        int writeSave(ConvSettings& theSettings);
 
 
         /// For use in removeFileTypes

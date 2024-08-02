@@ -23,7 +23,8 @@ namespace editor {
      */
     class MU ConvSettings {
         lce::CONSOLE myConsole;
-        fs::path myFilePath;
+        fs::path myInFolderPath;
+        fs::path myOutFilePath;
     public:
         ProductCodes myProductCodes;
 
@@ -34,32 +35,36 @@ namespace editor {
             : myConsole(theConsole) {}
 
         MU ConvSettings(const lce::CONSOLE theConsole, fs::path theFilePath)
-            : myConsole(theConsole), myFilePath(std::move(theFilePath)) {}
+            : myConsole(theConsole), myInFolderPath(std::move(theFilePath)) {}
         
         
         MU ConvSettings(const lce::CONSOLE theConsole, const ePS3ProductCode thePCode, fs::path theFilePath)
-            : myConsole(theConsole), myFilePath(std::move(theFilePath)) {
+            : myConsole(theConsole), myInFolderPath(std::move(theFilePath)) {
             myProductCodes.setPS3(thePCode);
         }
         
         MU ConvSettings(const lce::CONSOLE theConsole, const eVITAProductCode thePCode, fs::path theFilePath)
-            : myConsole(theConsole), myFilePath(std::move(theFilePath)) {
+            : myConsole(theConsole), myInFolderPath(std::move(theFilePath)) {
             myProductCodes.setVITA(thePCode);
         }
         
         MU ConvSettings(const lce::CONSOLE theConsole, const ePS4ProductCode thePCode, fs::path theFilePath)
-            : myConsole(theConsole), myFilePath(std::move(theFilePath)) {
+            : myConsole(theConsole), myInFolderPath(std::move(theFilePath)) {
             myProductCodes.setPS4(thePCode);
         }
         
         MU ND lce::CONSOLE getConsole() const { return myConsole; }
 
-        MU ND fs::path getFilePath() const { return myFilePath; }
+        MU ND fs::path getInFolderPath() const { return myInFolderPath; }
+
+        MU ND fs::path getOutFilePath() const { return myOutFilePath; }
+
+        MU void setOutFilePath(const fs::path& theOutFilePath) { myOutFilePath = theOutFilePath; }
 
         MU ND bool areSettingsValid() const {
-            if (myConsole == lce::CONSOLE::PS3 && myProductCodes.isVarSetPS3()) return false;
-            if (myConsole == lce::CONSOLE::PS4 && myProductCodes.isVarSetPS4()) return false;
-            if (myConsole == lce::CONSOLE::VITA && myProductCodes.isVarSetVITA()) return false;
+            if (myConsole == lce::CONSOLE::PS3 && !myProductCodes.isVarSetPS3()) return false;
+            if (myConsole == lce::CONSOLE::PS4 && !myProductCodes.isVarSetPS4()) return false;
+            if (myConsole == lce::CONSOLE::VITA && !myProductCodes.isVarSetVITA()) return false;
             return true;
         }
     };

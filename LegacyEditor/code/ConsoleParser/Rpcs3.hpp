@@ -113,8 +113,8 @@ namespace editor {
 
 
         // TODO: missing other files
-        ND int write(editor::FileListing* theListing, MU const editor::ConvSettings& theSettings) const override {
-            fs::path rootPath = theSettings.getFilePath();
+        ND int write(editor::FileListing* theListing, MU editor::ConvSettings& theSettings) const override {
+            fs::path rootPath = theSettings.getInFolderPath();
 
             auto productCode = theSettings.myProductCodes.getPS3();
             std::string strProductCode = ProductCodes::toString(productCode);
@@ -127,7 +127,6 @@ namespace editor {
             fs::path fileInfoPath = rootPath / "THUMB";
             Data fileInfoData = theListing->fileInfo.writeFile(fileInfoPath, myConsole);
             fileInfoData.setScopeDealloc(true);
-            printf("fileInfo final size: %u\n", fileInfoData.size);
             // file operations
             int status2 = DataManager(fileInfoData).writeToFile(fileInfoPath);
             if (status2 != 0) return printf_err(status2,
@@ -155,8 +154,9 @@ namespace editor {
             inflatedData.setScopeDealloc(true);
             int status = inflateListing(gameDataPath, deflatedData, inflatedData);
             if (status != 0) {
-                return printf_err(status, "failed to compress fileListing");
+                return printf_err(status, "failed to compress fileListing\n");
             }
+            theSettings.setOutFilePath(gameDataPath);
 
 
             // METADATA

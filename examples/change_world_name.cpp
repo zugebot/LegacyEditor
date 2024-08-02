@@ -25,7 +25,8 @@ int main() {
 
     fileListing.printDetails();
 
-    const int statusOut = fileListing.write({consoleOut, snd});
+    editor::ConvSettings settings(consoleOut, snd);
+    const int statusOut = fileListing.write(settings);
     if (statusOut != 0) {
         return printf_err(-1, "converting to %s failed...\n", consoleToCStr(consoleOut));
     }

@@ -38,8 +38,7 @@ namespace editor {
 
             status = readFileInfo(theListing);
             if (status != 0) {
-                printf("failed to extract listing\n");
-                return status;
+                printf("failed to read file info\n");
             }
 
             return SUCCESS;
@@ -95,26 +94,33 @@ namespace editor {
         }
 
 
-        ND int write(editor::FileListing* theListing, MU const editor::ConvSettings& theSettings) const override {
-            fs::path gameDataPath = theSettings.getFilePath();
+        ND int write(editor::FileListing* theListing, MU editor::ConvSettings& theSettings) const override {
+            fs::path rootPath = theSettings.getInFolderPath();
+
+            auto productCode = theSettings.myProductCodes.getVITA();
+            std::string strProductCode = ProductCodes::toString(productCode);
+            std::string strCurrentTime = getCurrentDateTimeString();
+            std::string folderName = strProductCode + "--" + strCurrentTime;
+            rootPath /= folderName;
+            fs::create_directories(rootPath);
 
             // GAMEDATA
+            fs::path gameDataPath = rootPath / "GAMEDATA.bin";
             Data deflatedData = ConsoleParser::writeListing(theListing, myConsole);
             deflatedData.setScopeDealloc(true);
             Data inflatedData;
             inflatedData.setScopeDealloc(true);
             int status = inflateListing(gameDataPath, deflatedData, inflatedData);
             if (status != 0) {
-                return printf_err(status, "failed to compress fileListing");
+                return printf_err(status, "failed to compress fileListing\n");
             }
+            theSettings.setOutFilePath(gameDataPath);
 
 
             // fileInfo
-            fs::path fileInfoPath = gameDataPath.parent_path();
-            fileInfoPath /= "/THUMBDATA.BIN";
+            fs::path fileInfoPath = rootPath / "THUMBDATA.bin";
             Data outData2 = theListing->fileInfo.writeFile(fileInfoPath, myConsole);
             outData2.setScopeDealloc(true);
-            printf("fileInfo final size: %u\n", outData2.size);
             // file operations
             int status2 = DataManager(outData2).writeToFile(fileInfoPath);
             if (status2 != 0) return printf_err(status2,

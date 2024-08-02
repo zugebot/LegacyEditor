@@ -90,18 +90,29 @@ int main(int argc, char *argv[]) {
         settings.myProductCodes.setPS3(pCode);
     }
 
+    if (consoleOut == lce::CONSOLE::VITA) {
+        std::cout << "\n[*] Please select a PSVita region (type the index number):" << std::endl;
+        std::cout << "[1] PCSE00491 | Europe\n"
+                  << "[2] PCSB00560 | USA\n"
+                  << "[3] PCSG00302 | Japan \n";
+        std::string prompt = "[>] Region:";
+        int selection = getNumberFromUser(prompt, 1, 3);
+        auto pCode = editor::PSVITAProductCodeArray[selection];
+        settings.myProductCodes.setVITA(pCode);
+    }
+
 
     // iterate over all the files they gave
     for (int i = 1; i < argc; ++i) {
         fs::path filePath(argv[i]);
         if (!fs::exists(filePath)) {
-            std::cerr << "File does not exist: " << filePath << "\n";
+            std::cerr << "File does not exist: " << filePath.make_preferred() << "\n";
             continue;
         }
 
         editor::FileListing fileListing;
         if (fileListing.read(filePath.string()) != 0) {
-            std::cerr << "Failed to load file: " << filePath << "\n";
+            std::cerr << "Failed to load file: " << filePath.make_preferred() << "\n";
             continue;
         }
 
@@ -113,10 +124,11 @@ int main(int argc, char *argv[]) {
         }
 
 
-        std::cout << "Converted file: " << filePath << "\n";
+        std::cout << "[>]: " << filePath.make_preferred() << "\n";
+        std::cout << "[<]: " << settings.getOutFilePath().make_preferred() << "\n";
     }
 
-    std::cout << "click ENTER to exit.\n";
+    std::cout << "\n\nclick ENTER to exit.\n";
     waitForEnter();
     return 0;
 }

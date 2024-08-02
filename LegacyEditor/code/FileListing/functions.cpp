@@ -202,7 +202,8 @@ namespace editor {
 
         convertRegions(consoleOut);
 
-        status = write({consoleOut, outFilePath});
+        ConvSettings settings(consoleOut, outFilePath);
+        status = write(settings);
         return status;
     }
 
@@ -231,7 +232,8 @@ namespace editor {
 
         replace.deallocate();
 
-        status = write({consoleOut, outFilePath});
+        ConvSettings settings(consoleOut, outFilePath);
+        status = write(settings);
         return status;
     }
 

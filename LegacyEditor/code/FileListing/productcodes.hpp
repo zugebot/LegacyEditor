@@ -40,6 +40,13 @@ namespace editor {
         PCSG00302,
     };
 
+    MU static eVITAProductCode PSVITAProductCodeArray[6] = {
+            eVITAProductCode::NONE,
+            eVITAProductCode::PCSE00491,
+            eVITAProductCode::PCSB00560,
+            eVITAProductCode::PCSG00302,
+    };
+
     /// An enum of PS4 product codes.
     enum class ePS4ProductCode : u8 {
         NONE,

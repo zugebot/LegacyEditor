@@ -100,7 +100,7 @@ namespace editor {
 
 
 
-        ND int write(MU editor::FileListing* theListing, MU const editor::ConvSettings& theSettings) const override {
+        ND int write(MU editor::FileListing* theListing, MU editor::ConvSettings& theSettings) const override {
             printf("Xbox360DAT.write(): not implemented!\n");
             return NOT_IMPLEMENTED;
         }

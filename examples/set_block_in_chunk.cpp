@@ -44,7 +44,8 @@ int main() {
 
     fileListing.replaceRegionOW(2, region, consoleOut);
 
-    const int statusOut = fileListing.write({consoleOut, TEST_OUT});
+    editor::ConvSettings settings(consoleOut, TEST_OUT);
+    const int statusOut = fileListing.write(settings);
     if (statusOut != 0) {
         return printf_err(statusOut, "converting to %s failed...\n", consoleToCStr(consoleOut));
     }

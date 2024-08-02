@@ -58,19 +58,19 @@ namespace editor {
         auto it = consoleInstances.find(myConsole);
         if (it != consoleInstances.end()) {
             int status = it->second->read(this, myFilePath);
-            printf("detected save as %s\n", lce::consoleToStr(myConsole).c_str());
+            // printf("detected save as %s\n", lce::consoleToStr(myConsole).c_str());
             return status;
         }
         return INVALID_CONSOLE;
     }
 
 
-    int FileListing::writeSave(const ConvSettings& theSettings) {
+    int FileListing::writeSave(ConvSettings& theSettings) {
         auto it = consoleInstances.find(theSettings.getConsole());
         if (it != consoleInstances.end()) {
             int status = it->second->write(this, theSettings);
             if (status != 0) {
-                printf("failed to write save %s.\n", theSettings.getFilePath().string().c_str());
+                printf("failed to write save %s.\n", theSettings.getInFolderPath().string().c_str());
             }
             return status;
         }
@@ -78,7 +78,7 @@ namespace editor {
     }
 
 
-    int FileListing::write(const ConvSettings& theSettings) {
+    int FileListing::write(ConvSettings& theSettings) {
         if (!theSettings.areSettingsValid()) {
             printf("Write Settings are not valid, exiting\n");
             return STATUS::INVALID_ARGUMENT;
@@ -93,14 +93,14 @@ namespace editor {
             if (AUTO_REMOVE_DATA_MAPPING) {
                 removeFileTypes({lce::FILETYPE::DATA_MAPPING});
             }
-            removeFileTypes({lce::FILETYPE::GRF});
         }
+        removeFileTypes({lce::FILETYPE::GRF});
 
         convertRegions(theSettings.getConsole());
 
         int status = writeSave(theSettings);
         if (status != 0) {
-            printf("failed to write gamedata to %s", theSettings.getFilePath().string().c_str());
+            printf("failed to write gamedata to %s", theSettings.getInFolderPath().string().c_str());
         }
         return status;
     }
