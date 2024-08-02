@@ -7,8 +7,6 @@ for editing blocks / nbt.
 
 IF YOU FIND ANY ISSUES, PLEASE REPORT THEM! It helps me develop faster :)
 
-Known issues: PS3 / RPCS3 -> WiiU does not work
-
 ## Supported Consoles and Formats
 
 ### Reading From:

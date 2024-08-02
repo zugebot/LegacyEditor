@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
     // Make sure user provides files
     if (argc < 2) {
         std::cerr << "\nMust supply at least one save file to convert.\n";
-        std::cerr << "You can do this by dragging and dropping file[s] onto the executable, or passing them as command line arguments.\n";
+        std::cerr << "You can do this by dragging and dropping the GAMEDATA/SAVEGAME/.dat/.bin file[s] onto the executable, or passing them as command line arguments.\n";
         std::cerr << "click ENTER to exit.\n";
         waitForEnter();
         return -1;
