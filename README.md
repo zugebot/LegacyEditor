@@ -40,7 +40,6 @@ This project makes use of several external libraries, including:
 - [gulrak/filesystem](https://github.com/gulrak/filesystem) for filesystem operations
 - [stb](http://nothings.org/stb) by Sean Barrett
 - [jibsen/tinf](https://github.com/jibsen/tinf) for data compression
-- [unicode](https://github.com/unicode-org/icu/tree/main) for up to date unicode stuff
 - LZX - Jed Wing <jedwin@ugcs.caltech.edu>
 - TINF - Joergen Ibsen
 - SFO - [hippie68 @github](https://github.com/hippie68/sfo)
