@@ -15,9 +15,9 @@ IF YOU FIND ANY ISSUES, PLEASE REPORT THEM! It helps me develop faster :)
 - **RPCS3 Emulator**
 - **PSVita**
 - **Xbox 360 (.dat format)**
-- **Xbox 360 (.bin format)**
 
 ### Partially Reading From:
+- **Xbox 360 (.bin format)** (needs testing)
 - **PS4** (entity conversion missing)
 - **Switch** (region/entity conversion missing)
 
