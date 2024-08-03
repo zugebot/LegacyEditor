@@ -296,6 +296,7 @@ namespace editor {
     }
 
 
+    // TODO: should not return an objects whose memory will leak
     Data FileInfo::writeFile(MU const fs::path& outFilePath,
                              const lce::CONSOLE outConsole) const {
         DataManager header;

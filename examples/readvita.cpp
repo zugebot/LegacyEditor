@@ -28,7 +28,7 @@ int main() {
 
 
     fileListing.fileInfo.basesavename = L"lolza admireU skibidi toilet";
-    editor::ConvSettings settings(consoleOut, snd);
+    editor::WriteSettings settings(consoleOut, snd);
     const int statusOut = fileListing.write(settings);
 
     if (statusOut != 0) {

@@ -101,44 +101,16 @@ u16 DataManager::readInt16() {
 
 
 i32 DataManager::readInt24() {
-    u32 value = readInt32();
-    if (isBig) {
-        value = value & 0xFFFFFF00 >> 8;
-    } else {
-        value = value & 0x00FFFFFF;
-    }
-    decrementPointer(1);
-    return static_cast<i32>(value);
-
-}
-
-
-// TODO: remove this function its bad
-i32 DataManager::readInt24(c_bool isLittleIn) {
     int val;
-    if (isLittleIn) {
-        val = ((ptr[2] << 16) | (ptr[1] << 8) | ptr[0]);
-    } else {
+    if (isBig) {
         val = ((ptr[0] << 16) | (ptr[1] << 8) | ptr[2]);
+    } else {
+        val = ((ptr[2] << 16) | (ptr[1] << 8) | ptr[0]);
     }
     incrementPointer(3);
     return val;
+
 }
-/*
-i32 DataManager::readInt24(bool isLittleIn) {
-    c_bool originalEndianType = isBig;
-    isBig = isLittleIn;
-    u32 val = readInt32();
-    if (isLittleIn) {
-        val = val & 0x00FFFFFF;
-    } else {
-        val = (val & 0xFFFFFF00) >> 8;
-    }
-    decrementPointer(1);
-    isBig = originalEndianType;
-    return static_cast<int>(val);
-}
-*/
 
 
 u32 DataManager::readInt32() {

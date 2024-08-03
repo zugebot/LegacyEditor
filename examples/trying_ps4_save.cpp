@@ -115,7 +115,7 @@ int main() {
     // fileListing.currentVersion = 11;
 
     // convert to fileListing
-    editor::ConvSettings settings(consoleOut, snd);
+    editor::WriteSettings settings(consoleOut, snd);
     const int statusOut = fileListing.write(settings);
     if (statusOut != 0) {
         return printf_err(statusOut, "converting to %s failed...\n", consoleToCStr(consoleOut));

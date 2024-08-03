@@ -48,7 +48,7 @@ public:
         }
     }
 
-    void steal(Data other) {
+    void steal(Data& other) {
         deallocate();
         data = other.data;
         size = other.size;

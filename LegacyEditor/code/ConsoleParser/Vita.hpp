@@ -27,25 +27,23 @@ namespace editor {
         ~Vita() override = default;
 
 
-        int read(editor::FileListing* theListing, const fs::path& inFilePath) override {
-            myFilePath = inFilePath;
+        int read(editor::FileListing* theListing, const fs::path& theFilePath) override {
+            myListingPtr = theListing;
+            myFilePath = theFilePath;
 
-            int status = deflateListing(theListing);
+            int status = inflateListing();
             if (status != 0) {
                 printf("failed to extract listing\n");
                 return status;
             }
 
-            status = readFileInfo(theListing);
-            if (status != 0) {
-                printf("failed to read file info\n");
-            }
+            readFileInfo();
 
             return SUCCESS;
         }
 
 
-        int deflateListing(editor::FileListing* theListing) override {
+        int inflateListing() override {
             Data data;
             data.setScopeDealloc(true);
 
@@ -85,7 +83,7 @@ namespace editor {
 
             RLEVITA_DECOMPRESS(src.data, src.size, data.data, data.size);
 
-            int status = ConsoleParser::readListing(theListing, data);
+            int status = ConsoleParser::readListing(data);
             if (status != 0) {
                 return -1;
             }
@@ -94,9 +92,13 @@ namespace editor {
         }
 
 
-        ND int write(editor::FileListing* theListing, MU editor::ConvSettings& theSettings) const override {
+        ND int write(editor::FileListing* theListing, MU editor::WriteSettings& theSettings) const override {
+            myListingPtr = theListing;
+            int status;
             fs::path rootPath = theSettings.getInFolderPath();
 
+
+            // FIND PRODUCT CODE
             auto productCode = theSettings.myProductCodes.getVITA();
             std::string strProductCode = ProductCodes::toString(productCode);
             std::string strCurrentTime = getCurrentDateTimeString();
@@ -104,26 +106,26 @@ namespace editor {
             rootPath /= folderName;
             fs::create_directories(rootPath);
 
+
             // GAMEDATA
             fs::path gameDataPath = rootPath / "GAMEDATA.bin";
-            Data deflatedData = ConsoleParser::writeListing(theListing, myConsole);
+            Data deflatedData = ConsoleParser::writeListing(myConsole);
             deflatedData.setScopeDealloc(true);
             Data inflatedData;
             inflatedData.setScopeDealloc(true);
-            int status = inflateListing(gameDataPath, deflatedData, inflatedData);
-            if (status != 0) {
-                return printf_err(status, "failed to compress fileListing\n");
-            }
+            status = deflateListing(gameDataPath, deflatedData, inflatedData);
+            if (status != 0) return printf_err(status,
+                "failed to compress fileListing\n");
             theSettings.setOutFilePath(gameDataPath);
+            printf("gamedata final size: %u\n", deflatedData.size);
 
 
-            // fileInfo
+            // FILE INFO
             fs::path fileInfoPath = rootPath / "THUMBDATA.bin";
-            Data outData2 = theListing->fileInfo.writeFile(fileInfoPath, myConsole);
-            outData2.setScopeDealloc(true);
-            // file operations
-            int status2 = DataManager(outData2).writeToFile(fileInfoPath);
-            if (status2 != 0) return printf_err(status2,
+            Data fileInfoData = myListingPtr->fileInfo.writeFile(fileInfoPath, myConsole);
+            fileInfoData.setScopeDealloc(true);
+            status = DataManager(fileInfoData).writeToFile(fileInfoPath);
+            if (status != 0) return printf_err(status,
                 "failed to write fileInfo to \"%s\"\n",
                 fileInfoPath.string().c_str());
 
@@ -132,34 +134,28 @@ namespace editor {
         }
 
 
-        ND int inflateListing(const fs::path& gameDataPath, const Data& deflatedData, MU Data& inflatedData) const override {
-            Data outData1;
-            outData1.setScopeDealloc(true);
+        ND int deflateListing(const fs::path& gameDataPath, Data& inflatedData, MU Data& deflatedData) const override {
+            deflatedData.allocate(inflatedData.size + 2);
 
-
-            outData1.allocate(deflatedData.size + 2);
-            outData1.size = RLEVITA_COMPRESS(
-                    deflatedData.data, deflatedData.size,
-                    outData1.data, outData1.size);
-            // file operations
+            deflatedData.size = RLEVITA_COMPRESS(
+                    inflatedData.data, inflatedData.size,
+                    deflatedData.data, deflatedData.size);
             FILE *f_out = fopen(gameDataPath.string().c_str(), "wb");
-            if (f_out == nullptr) {
-                return printf_err(FILE_ERROR,
-                                  "failed to write savefile to \"%s\"\n",
-                                  gameDataPath.string().c_str());
-            }
+            if (f_out == nullptr) return printf_err(FILE_ERROR,
+                "failed to write savefile to \"%s\"\n",
+                gameDataPath.string().c_str());
+
             // 4-bytes of '0'
             // 4-bytes of total decompressed fileListing size
             // N-bytes fileListing data
-            // TODO: figure out endianness
             constexpr int num = 0;
             fwrite(&num, sizeof(u32), 1, f_out);
-            u32 compSize = deflatedData.size;
+            u32 compSize = inflatedData.size;
             if (!isSystemLittleEndian()) {
                 compSize = swapEndian32(compSize);
             }
             fwrite(&compSize, sizeof(u32), 1, f_out);
-            fwrite(outData1.data, 1, outData1.size, f_out);
+            fwrite(deflatedData.data, 1, deflatedData.size, f_out);
             fclose(f_out);
 
             return SUCCESS;

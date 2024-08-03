@@ -22,7 +22,7 @@ int main() {
     fileListing.printDetails();
 
     // fileListing.fileInfo.basesavename = L"Fortnite";
-    editor::ConvSettings settings(consoleOut, snd);
+    editor::WriteSettings settings(consoleOut, snd);
     const int statusOut = fileListing.write(settings);
     if (statusOut != 0) {
         return printf_err(statusOut, "converting to %s failed...\n", consoleToCStr(consoleOut));

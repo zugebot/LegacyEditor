@@ -19,14 +19,15 @@ namespace editor {
 
 
     FileListing::FileListing() {
-        consoleInstances.emplace(lce::CONSOLE::XBOX360, std::make_unique<Xbox360DAT>());
-        consoleInstances.emplace(lce::CONSOLE::PS3, std::make_unique<PS3>());
-        consoleInstances.emplace(lce::CONSOLE::RPCS3, std::make_unique<RPCS3>());
-        consoleInstances.emplace(lce::CONSOLE::PS4, std::make_unique<PS4>());
-        consoleInstances.emplace(lce::CONSOLE::VITA, std::make_unique<Vita>());
-        consoleInstances.emplace(lce::CONSOLE::WIIU, std::make_unique<WiiU>());
-        consoleInstances.emplace(lce::CONSOLE::SWITCH, std::make_unique<Switch>());
-        consoleInstances.emplace(lce::CONSOLE::XBOX1, std::make_unique<Xbox1>());
+        typedef std::array<std::unique_ptr<ConsoleParser>, 2> consoleParserArrayUQPtr;
+        consoleInstances.emplace(lce::CONSOLE::XBOX360, consoleParserArrayUQPtr{std::make_unique<Xbox360DAT>(), std::make_unique<Xbox360BIN>()});
+        consoleInstances.emplace(lce::CONSOLE::PS3, consoleParserArrayUQPtr{std::make_unique<PS3>(), nullptr});
+        consoleInstances.emplace(lce::CONSOLE::RPCS3, consoleParserArrayUQPtr{std::make_unique<RPCS3>(), nullptr});
+        consoleInstances.emplace(lce::CONSOLE::PS4, consoleParserArrayUQPtr{std::make_unique<PS4>(), nullptr});
+        consoleInstances.emplace(lce::CONSOLE::VITA, consoleParserArrayUQPtr{std::make_unique<Vita>(), nullptr});
+        consoleInstances.emplace(lce::CONSOLE::WIIU, consoleParserArrayUQPtr{std::make_unique<WiiU>(), nullptr});
+        consoleInstances.emplace(lce::CONSOLE::SWITCH, consoleParserArrayUQPtr{std::make_unique<Switch>(), nullptr});
+        consoleInstances.emplace(lce::CONSOLE::XBOX1, consoleParserArrayUQPtr{std::make_unique<Xbox1>(), nullptr});
     }
 
 
@@ -35,18 +36,18 @@ namespace editor {
     }
 
 
-    int FileListing::read(const fs::path& inFilePath) {
-        myFilePath = inFilePath;
+    int FileListing::read(const fs::path& theFilePath) {
+        myReadSettings.setFilePath(theFilePath);
 
-        i32 status1 = findConsole(myFilePath);
+        i32 status1 = findConsole(theFilePath);
         if (status1 != SUCCESS) {
-            printf("Failed to find console from %s\n", inFilePath.string().c_str());
+            printf("Failed to find console from %s\n", theFilePath.string().c_str());
             return status1;
         }
 
         i32 status2 = readSave();
         if (status2 != SUCCESS) {
-            printf("Failed to read save from %s\n", inFilePath.string().c_str());
+            printf("Failed to read save from %s\n", theFilePath.string().c_str());
             return status2;
         }
 
@@ -55,9 +56,14 @@ namespace editor {
 
 
     int FileListing::readSave() {
+        int readerIndex = 0;
         auto it = consoleInstances.find(myConsole);
         if (it != consoleInstances.end()) {
-            int status = it->second->read(this, myFilePath);
+
+            if (myReadSettings.getIsXbox360BIN() && myConsole == lce::CONSOLE::XBOX360)
+                readerIndex = 1; // use the .bin reader instead
+
+            int status = it->second[readerIndex]->read(this, myReadSettings.getFilePath());
             // printf("detected save as %s\n", lce::consoleToStr(myConsole).c_str());
             return status;
         }
@@ -65,10 +71,10 @@ namespace editor {
     }
 
 
-    int FileListing::writeSave(ConvSettings& theSettings) {
+    int FileListing::writeSave(WriteSettings& theSettings) {
         auto it = consoleInstances.find(theSettings.getConsole());
         if (it != consoleInstances.end()) {
-            int status = it->second->write(this, theSettings);
+            int status = it->second[0]->write(this, theSettings);
             if (status != 0) {
                 printf("failed to write save %s.\n", theSettings.getInFolderPath().string().c_str());
             }
@@ -78,7 +84,7 @@ namespace editor {
     }
 
 
-    int FileListing::write(ConvSettings& theSettings) {
+    int FileListing::write(WriteSettings& theSettings) {
         if (!theSettings.areSettingsValid()) {
             printf("Write Settings are not valid, exiting\n");
             return STATUS::INVALID_ARGUMENT;
@@ -111,7 +117,7 @@ namespace editor {
         static constexpr uint32_t ZLIB_MAGIC = 0x789C;
 
 
-        FILE *f_in = fopen(inFilePath.string().c_str(), "rb");
+        FILE* f_in = fopen(inFilePath.string().c_str(), "rb");
         if (f_in == nullptr) {
             return printf_err(FILE_ERROR, ERROR_4, inFilePath.string().c_str());
         }
@@ -133,7 +139,7 @@ namespace editor {
                 if (headerUnion.getInt2Swap() >= headerUnion.getDestSize()) {
                     myConsole = lce::CONSOLE::WIIU;
                 } else {
-                    const std::string parentDir = myFilePath.parent_path().filename().string();
+                    const std::string parentDir = myReadSettings.getFilePath().parent_path().filename().string();
                     myConsole = lce::CONSOLE::SWITCH;
                     if (parentDir == "savedata0") {
                         myConsole = lce::CONSOLE::PS4;
@@ -153,6 +159,7 @@ namespace editor {
             /// if (int2 == 0) it is an xbox savefile unless it's a massive
             /// file, but there won't be 2 files in a savegame file for PS3
             myConsole = lce::CONSOLE::XBOX360;
+            myReadSettings.setIsXbox360BIN(false);
             // TODO: don't use arbitrary guess for a value
         } else if (headerUnion.getInt2() < 100) { // uncompressed PS3 / RPCS3
             /// otherwise if (int2) > 100 then it is a random file
@@ -160,6 +167,7 @@ namespace editor {
             myConsole = lce::CONSOLE::RPCS3;
         } else if (headerUnion.getInt1() == CON_MAGIC) {
             myConsole = lce::CONSOLE::XBOX360;
+            myReadSettings.setIsXbox360BIN(true);
         } else {
             return printf_err(INVALID_SAVE, ERROR_3);
         }

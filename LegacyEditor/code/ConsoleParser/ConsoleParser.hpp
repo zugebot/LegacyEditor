@@ -14,29 +14,31 @@ class ConsoleParser {
     static constexpr u32 WSTRING_SIZE = 64;
     static constexpr u32 FILELISTING_HEADER_SIZE = 12;
 
-public:
 
+public:
     lce::CONSOLE myConsole;
     fs::path myFilePath;
 
     virtual ~ConsoleParser() = default;
 
     ND virtual int read(editor::FileListing* theListing, const fs::path& inFilePath) = 0;
-    ND virtual int write(editor::FileListing* theListing, editor::ConvSettings& theSettings) const = 0;
+    ND virtual int write(editor::FileListing* theListing, editor::WriteSettings& theSettings) const = 0;
 
 protected:
+    mutable editor::FileListing* myListingPtr;
 
-    ND virtual int deflateListing(editor::FileListing* theListing) = 0;
-    ND virtual int inflateListing(const fs::path& gameDataPath, const Data& deflatedData, Data& inflatedData) const = 0;
+    ND virtual int inflateListing() = 0;
+    ND virtual int deflateListing(const fs::path& gameDataPath, Data& inflatedData, Data& deflatedData) const = 0;
 
 
-    ND int readListing(editor::FileListing* theListing, const Data &dataIn);
-    ND Data writeListing(editor::FileListing* theListing, const lce::CONSOLE consoleOut) const;
+    ND int readListing(const Data &dataIn);
+    ND Data writeListing(const lce::CONSOLE consoleOut) const;
 
-    ND virtual int readFileInfo(editor::FileListing* theListing) const;
-    // TODO: put writeFileInfo here
+    virtual void readFileInfo() const;
+    // writeFileInfo...
 
     /// This function is used by Switch and PS4.
-    static int readExternalFolder(editor::FileListing* theListing, const fs::path& inDirPath);
+    int readExternalFolder(const fs::path& inDirPath);
+    // writeExternalFolder...
 
 };

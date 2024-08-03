@@ -11,7 +11,8 @@
 #include "lce/processor.hpp"
 #include "lce/include/picture.hpp"
 
-#include "conversionSettings.hpp"
+#include "writeSettings.hpp"
+#include "readSettings.hpp"
 
 #include "LegacyEditor/code/ConsoleParser/ConsoleParser.hpp"
 #include "LegacyEditor/code/FileInfo/FileInfo.hpp"
@@ -38,7 +39,7 @@ namespace editor {
 
 
     class FileListing {
-        std::unordered_map<lce::CONSOLE, std::unique_ptr<ConsoleParser>> consoleInstances;
+        std::unordered_map<lce::CONSOLE, std::array<std::unique_ptr<ConsoleParser>, 2>> consoleInstances;
 
     public:
 
@@ -46,7 +47,7 @@ namespace editor {
         static bool AUTO_REMOVE_PLAYERS;
         static bool AUTO_REMOVE_DATA_MAPPING;
 
-        fs::path myFilePath;
+        ReadSettings myReadSettings;
         std::list<LCEFile> myAllFiles;
         i32 myOldestVersion{};
         i32 myCurrentVersion{};
@@ -100,8 +101,8 @@ namespace editor {
 
         /// Parse from console files
 
-        MU ND int read(const fs::path& inFilePath);
-        MU ND int write(ConvSettings& theSettings);
+        MU ND int read(const fs::path& theFilePath);
+        MU ND int write(WriteSettings& theSettings);
 
         /// Conversion
 
@@ -126,7 +127,7 @@ namespace editor {
 
         MU ND int findConsole(const fs::path& inFilePath);
         MU ND int readSave();
-        int writeSave(ConvSettings& theSettings);
+        int writeSave(WriteSettings& theSettings);
 
 
         /// For use in removeFileTypes

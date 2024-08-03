@@ -28,29 +28,26 @@ namespace editor {
         ~Xbox360DAT() override = default;
 
 
-        int read(editor::FileListing* theListing, const fs::path& inFilePath) override {
-            myFilePath = inFilePath;
+        int read(editor::FileListing* theListing, const fs::path& theFilePath) override {
+            myListingPtr = theListing;
+            myFilePath = theFilePath;
 
-            int status = deflateListing(theListing);
+            int status = inflateListing();
             if (status != 0) {
                 printf("failed to extract listing\n");
                 return status;
             }
 
-            status = readFileInfo(theListing);
-            if (status != 0) {
-                printf("failed to extract listing\n");
-                return status;
-            }
+            readFileInfo();
 
             return SUCCESS;
         }
 
 
         // TODO: allocating memory from file_size, but then updating that size from XDecompress?
-        int deflateListing(editor::FileListing* theListing) override {
-            Data data;
-            data.setScopeDealloc(true);
+        int inflateListing() override {
+            Data inflatedData;
+            inflatedData.setScopeDealloc(true);
 
             FILE *f_in = fopen(myFilePath.string().c_str(), "rb");
             if (f_in == nullptr) {
@@ -68,45 +65,47 @@ namespace editor {
             fread(&headerUnion, 1, 12, f_in);
 
             c_u32 file_size = headerUnion.getInt3();
-            if(!data.allocate(file_size)) {
+            if(!inflatedData.allocate(file_size)) {
                 fclose(f_in);
                 return printf_err(MALLOC_FAILED, ERROR_1, file_size);
             }
 
             c_u32 src_size = headerUnion.getInt1() - 8;
-            Data src;
-            src.setScopeDealloc(true);
-            if(!src.allocate(src_size)) {
+            Data deflatedData;
+            deflatedData.setScopeDealloc(true);
+            if(!deflatedData.allocate(src_size)) {
                 fclose(f_in);
                 return printf_err(MALLOC_FAILED, ERROR_1, input_size);
             }
 
             fseek(f_in, 12, SEEK_SET); // needs to be authenticated
-            fread(src.start(), 1, src.size, f_in);
+            fread(deflatedData.start(), 1, deflatedData.size, f_in);
             fclose(f_in);
 
-            data.size = XDecompress(data.start(), &data.size, src.start(), src.getSize());
-            if (data.size == 0) {
+            inflatedData.size = XDecompress(inflatedData.start(), &inflatedData.size,
+                                            deflatedData.start(), deflatedData.getSize());
+            if (inflatedData.size == 0) {
                 return printf_err(DECOMPRESS, "%s", ERROR_3);
             }
 
-            int status = ConsoleParser::readListing(theListing, data);
-            if (status != 0) {
-                return status;
-            }
+            int status = ConsoleParser::readListing(inflatedData);
 
-            return SUCCESS;
+            return status;
         }
 
+        void readFileInfo() const override {
 
+        }
 
-        ND int write(MU editor::FileListing* theListing, MU editor::ConvSettings& theSettings) const override {
+        ND int write(MU editor::FileListing* theListing, MU editor::WriteSettings& theSettings) const override {
+            myListingPtr = theListing;
+
             printf("Xbox360DAT.write(): not implemented!\n");
             return NOT_IMPLEMENTED;
         }
 
 
-        ND int inflateListing(MU const fs::path& gameDataPath, MU const Data& deflatedData, MU Data& inflatedData) const override {
+        ND int deflateListing(MU const fs::path& gameDataPath, MU Data& inflatedData, MU Data& deflatedData) const override {
             return NOT_IMPLEMENTED;
         }
 

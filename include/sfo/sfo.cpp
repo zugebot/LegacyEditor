@@ -71,41 +71,41 @@ T* cast_malloc(uint32_t size) {
 
 
 [[maybe_unused]] void SFOManager::addParam(const eSFO_FMT& theType, const std::string& theKey, const std::string& value) {
-    struct index_table_entry new_entry = {};
+    index_table_entry newEntry = {};
     uint32_t newIndex = 0;
 
     // Get new entry's .param_len and .param_max_len
     if (theType == eSFO_FMT::UTF8_NORMAL || theType == eSFO_FMT::UTF8_SPECIAL) {
-        new_entry.param_fmt = theType;
-        new_entry.param_max_len = getReservedStringLen(theKey);
-        new_entry.param_len = value.length() + (theType == eSFO_FMT::UTF8_NORMAL);
-        if (new_entry.param_max_len < new_entry.param_len) {
-            new_entry.param_max_len = new_entry.param_len;
+        newEntry.param_fmt = theType;
+        newEntry.param_max_len = getReservedStringLen(theKey);
+        newEntry.param_len = value.length() + (theType == eSFO_FMT::UTF8_NORMAL);
+        if (newEntry.param_max_len < newEntry.param_len) {
+            newEntry.param_max_len = newEntry.param_len;
             // 4-byte alignment
-            while (new_entry.param_max_len % 4) {
-                new_entry.param_max_len++;
+            while (newEntry.param_max_len % 4) {
+                newEntry.param_max_len++;
             }
         }
     } else {
-        new_entry.param_fmt = eSFO_FMT::INT;
-        new_entry.param_len = 4;
-        new_entry.param_max_len = 4;
+        newEntry.param_fmt = eSFO_FMT::INT;
+        newEntry.param_len = 4;
+        newEntry.param_max_len = 4;
     }
 
     // Get new entry's index and offsets
     for (uint32_t i = 0; i < myHeader.myEntriesCount; i++) {
-        int result = theKey.compare(&myKeyTable.content[myEntries[i].key_offset]);
+        int32_t result = theKey.compare(&myKeyTable.content[myEntries[i].key_offset]);
         if (result == 0) { // Parameter already exists
             throw std::runtime_error("Could not add \"" + theKey + "\": parameter already exists.");
         } else if (result < 0) {
             newIndex = i;
-            new_entry.key_offset = myEntries[i].key_offset;
-            new_entry.data_offset = myEntries[i].data_offset;
+            newEntry.key_offset = myEntries[i].key_offset;
+            newEntry.data_offset = myEntries[i].data_offset;
             break;
         } else if (i == myHeader.myEntriesCount - 1) {
             newIndex = i + 1;
-            new_entry.key_offset = myEntries[i].key_offset + strlen(&myKeyTable.content[myEntries[i].key_offset]) + 1;
-            new_entry.data_offset = myEntries[i].data_offset + myEntries[i].param_max_len;
+            newEntry.key_offset = myEntries[i].key_offset + strlen(&myKeyTable.content[myEntries[i].key_offset]) + 1;
+            newEntry.data_offset = myEntries[i].data_offset + myEntries[i].param_max_len;
             break;
         }
     }
@@ -117,34 +117,34 @@ T* cast_malloc(uint32_t size) {
     for (uint32_t i = myHeader.myEntriesCount - 1; i > newIndex; i--) {
         myEntries[i] = myEntries[i - 1];
         myEntries[i].key_offset += theKey.length() + 1;
-        myEntries[i].data_offset += new_entry.param_max_len;
+        myEntries[i].data_offset += newEntry.param_max_len;
     }
 
     // Insert new index table entry
-    std::memcpy(&myEntries[newIndex], &new_entry, sizeof(struct index_table_entry));
+    std::memcpy(&myEntries[newIndex], &newEntry, sizeof(index_table_entry));
 
     // Resize key table
     myKeyTable.size += theKey.length() + 1;
     myKeyTable.content = cast_realloc<char>(myKeyTable.content, myKeyTable.size);
     // Move higher indexed keys to make room for new key
-    for (uint32_t i = myKeyTable.size - 1; i > new_entry.key_offset + theKey.length(); i--) {
+    for (uint32_t i = myKeyTable.size - 1; i > newEntry.key_offset + theKey.length(); i--) {
         myKeyTable.content[i] = myKeyTable.content[i - theKey.length() - 1];
     }
     // Insert new key
-    std::memcpy(&myKeyTable.content[new_entry.key_offset], theKey.c_str(), theKey.length() + 1);
+    std::memcpy(&myKeyTable.content[newEntry.key_offset], theKey.c_str(), theKey.length() + 1);
     padTable(&myKeyTable);
 
     // Resize data table
-    expandDataTable(new_entry.data_offset, new_entry.param_max_len);
+    expandDataTable(newEntry.data_offset, newEntry.param_max_len);
 
     // Insert new data
     char* ptr = &myDataTable.content[myEntries[newIndex].data_offset];
     if (theType == eSFO_FMT::UTF8_NORMAL) {
-        memset(ptr, 0, new_entry.param_len); // Overwrite whole space with zeros first
+        memset(ptr, 0, newEntry.param_len); // Overwrite whole space with zeros first
         std::memcpy(ptr, value.c_str(), value.length() + 1); // Then copy new value
 
     } if (theType == eSFO_FMT::UTF8_SPECIAL) {
-        memset(ptr, 0, new_entry.param_len); // Overwrite whole space with zeros first
+        memset(ptr, 0, newEntry.param_len); // Overwrite whole space with zeros first
         std::memcpy(ptr, value.c_str(), value.length()); // Then copy new value
 
     } else if (theType == eSFO_FMT::INT) {
@@ -195,7 +195,7 @@ T* cast_malloc(uint32_t size) {
     // Resize index table
     myHeader.myEntriesCount--;
     if (myHeader.myEntriesCount) {
-        const uint32_t newSize = INDEX_TABLE_ENTRY_SIZE * myHeader.myEntriesCount;
+        const uint32_t newSize = getTableSize();
         myEntries = cast_realloc<index_table_entry>(myEntries, newSize);
     } else {
         free(myEntries);
@@ -275,6 +275,7 @@ void SFOManager::setMagic(eSFO_MAGIC magic) {
 }
 
 
+// TODO: make this return a fail code
 [[maybe_unused]] void SFOManager::saveToFile(const std::string& outputPath) {
     FILE* outFile = fopen(outputPath.c_str(), "wb");
     if (outFile == nullptr) {
@@ -282,20 +283,22 @@ void SFOManager::setMagic(eSFO_MAGIC magic) {
     }
 
     // Adjust header's table offsets before saving
-    myHeader.myKeyTableOffset = sizeof(struct header) + sizeof(struct index_table_entry) * myHeader.myEntriesCount;
+    uint32_t full_index_table_size = getTableSize();
+    myHeader.myKeyTableOffset = sizeof(header) + full_index_table_size;
     myHeader.myDataTableOffset = myHeader.myKeyTableOffset + myKeyTable.size;
 
-    if (fwrite(&myHeader, sizeof(struct header), 1, outFile) != 1) {
-        throw std::runtime_error("Could not write header to file \"" + outputPath + "\".");
+    std::string outPathF = "to file \"" + outputPath + "\".";
+    if (fwrite(&myHeader, sizeof(header), 1, outFile) != 1) {
+        throw std::runtime_error("Could not write header " + outPathF);
     }
-    if (myHeader.myEntriesCount && fwrite(myEntries, sizeof(struct index_table_entry) * myHeader.myEntriesCount, 1, outFile) != 1) {
-        throw std::runtime_error("Could not write index table to file \"" + outputPath + "\".");
+    if (myHeader.myEntriesCount && fwrite(myEntries, full_index_table_size, 1, outFile) != 1) {
+        throw std::runtime_error("Could not write index table " + outPathF);
     }
     if (myKeyTable.size && fwrite(myKeyTable.content, myKeyTable.size, 1, outFile) != 1) {
-        throw std::runtime_error("Could not write key table to file \"" + outputPath + "\".");
+        throw std::runtime_error("Could not write key table " + outPathF);
     }
     if (myDataTable.size && fwrite(myDataTable.content, myDataTable.size, 1, outFile) != 1) {
-        throw std::runtime_error("Could not write data table to file \"" + outputPath + "\".");
+        throw std::runtime_error("Could not write data table " + outPathF);
     }
 
     fclose(outFile);
@@ -364,14 +367,14 @@ long int SFOManager::getPS4PkgOffset() {
 
 
 void SFOManager::loadHeader() {
-    if (fread(&myHeader, sizeof(struct header), 1, myFile) != 1) {
+    if (fread(&myHeader, sizeof(header), 1, myFile) != 1) {
         throw std::runtime_error("Could not read header.");
     }
 }
 
 
 void SFOManager::loadEntries() {
-    unsigned int size = INDEX_TABLE_ENTRY_SIZE * myHeader.myEntriesCount;
+    uint32_t size = INDEX_TABLE_ENTRY_SIZE * myHeader.myEntriesCount;
     myEntries = cast_malloc<index_table_entry>(size);
     if (myEntries == nullptr) {
         throw std::runtime_error("Could not allocate memory for index table.");
@@ -421,7 +424,13 @@ int SFOManager::getIndex(const std::string& theKey) {
 }
 
 
-int SFOManager::getReservedStringLen(const std::string& theKey) {
+/// returns sizeof(index_table_entry) * myHeader.myEntriesCount
+uint32_t SFOManager::getTableSize() const {
+    return sizeof(index_table_entry) * myHeader.myEntriesCount;
+}
+
+
+uint32_t SFOManager::getReservedStringLen(const std::string& theKey) {
     int len = 0;
     if (theKey == "CATEGORY" || theKey == "FORMAT") {
         len = 4;
@@ -504,7 +513,7 @@ void SFOManager::expandDataTable(uint32_t theOffset, uint32_t theAdditionalSize)
 }
 
 
-void SFOManager::padTable(struct table* theTable) {
+void SFOManager::padTable(table* theTable) {
     // Remove all trailing zeros
     while (theTable->size > 0 && theTable->content[theTable->size - 1] == '\0') {
         theTable->size--;

@@ -27,26 +27,23 @@ namespace editor {
 
 
         int read(editor::FileListing* theListing, const fs::path& inFilePath) override {
+            myListingPtr = theListing;
             myFilePath = inFilePath;
-            int status = deflateListing(theListing);
+
+            int status = inflateListing();
             if (status != 0) {
                 printf("failed to extract listing\n");
                 return status;
             }
 
-            status = readFileInfo(theListing);
-            if (status != 0) {
-                printf("failed to extract listing\n");
-                return status;
-            }
-
-            readExternalFiles(theListing);
+            readFileInfo();
+            readExternalFiles();
 
             return SUCCESS;
         }
 
 
-        int deflateListing(editor::FileListing* theListing) override {
+        int inflateListing() override {
             Data data;
             data.setScopeDealloc(true);
 
@@ -88,7 +85,7 @@ namespace editor {
                 return DECOMPRESS;
             }
 
-            status = ConsoleParser::readListing(theListing, data);
+            status = readListing(data);
             if (status != 0) {
                 return -1;
             }
@@ -97,24 +94,37 @@ namespace editor {
         }
 
 
-        static int readExternalFiles(editor::FileListing* theListing) {
-            auto folders = PS4::findExternalFolder(theListing);
+        int readExternalFiles() {
+            auto folders = findExternalFolder();
             int status;
             for (c_auto& folder : folders) {
-                status = readExternalFolder(theListing, folder);
+                status = readExternalFolder(folder);
                 if (status != 0) {
                     printf("Failed to read associated external files.\n");
                     break;
                 }
             }
-            theListing->myHasSeparateRegions = true;
+            myListingPtr->myHasSeparateRegions = true;
             return status;
         }
 
 
-        static std::vector<fs::path> findExternalFolder(FileListing* theFileListing) {
+        ND int write(MU editor::FileListing* theListing, MU editor::WriteSettings& theSettings) const override {
+            myListingPtr = theListing;
+
+            printf("PS4.write(): not implemented!\n");
+            return NOT_IMPLEMENTED;
+        }
+
+
+        ND int deflateListing(MU const fs::path& gameDataPath, MU Data& inflatedData, MU Data& deflatedData) const override {
+            return NOT_IMPLEMENTED;
+        }
+
+
+        std::vector<fs::path> findExternalFolder() {
             // go from "root/00000001/savedata0/GAMEDATA" to "root/00000001/savedata0"
-            const fs::path mainDirPath = theFileListing->myFilePath.parent_path();
+            const fs::path mainDirPath = myListingPtr->myReadSettings.getFilePath().parent_path();
 
 
             // get sfo data from "root/00000001/savedata0/sce_sys/param.sfo"
@@ -127,7 +137,7 @@ namespace editor {
             // get the "CUSA00744-240620222358.0"-alike str from the main "param.sfo"
             SFOManager mainSFO(sfoFilePath.string());
             const std::wstring subtitle = stringToWstring(mainSFO.getAttribute("SUBTITLE"));
-            theFileListing->fileInfo.basesavename = subtitle;
+            myListingPtr->fileInfo.basesavename = subtitle;
 
 
             std::string mainAttr = mainSFO.getAttribute("SAVEDATA_DIRECTORY");
@@ -186,19 +196,7 @@ namespace editor {
         }
 
 
-        ND int write(MU editor::FileListing* theListing, MU editor::ConvSettings& theSettings) const override {
-            printf("PS4.write(): not implemented!\n");
-            return NOT_IMPLEMENTED;
-        }
-
-
-        ND int inflateListing(MU const fs::path& gameDataPath, MU const Data& deflatedData, MU Data& inflatedData) const override {
-            return NOT_IMPLEMENTED;
-        }
-
-
-
-        MU static int writeExternalFolder(MU FileListing* theFileListing, MU const fs::path& outDirPath) {
+        MU static int writeExternalFolder(MU const fs::path& outDirPath) {
             return NOT_IMPLEMENTED;
         }
 

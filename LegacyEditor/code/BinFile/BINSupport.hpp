@@ -1,5 +1,8 @@
 #pragma once
 
+#include <chrono>
+#include <optional>
+
 #include "LegacyEditor/utils/dataManager.hpp"
 
 
@@ -76,11 +79,15 @@ namespace editor {
     public:
         explicit StfsPackage(DataManager& input) : data(input) {}
 
+        ND StfsFileListing getFileListing() { return fileListing; }
+
+        /// Instead of taking a 'DataOutputManager', it now instead returns 'Data'.
         Data extractFile(StfsFileEntry* entry);
+
         ND u32 blockToAddress(u32 blockNum) const;
+
         ND u32 getHashAddressOfBlock(u32 blockNum);
 
-        ND StfsFileListing getFileListing() { return fileListing; }
         ND BINHeader getMetaData() { return metaData; }
 
         /// parse the file
@@ -119,5 +126,37 @@ namespace editor {
     // std::optional<std::chrono::system_clock::time_point> TimePointFromFatTimestamp(u32 fat);
 
     // FileInfo extractSaveGameDat(u8* inputData, i64 inputSize);
+
+
+    static std::optional<std::chrono::system_clock::time_point> TimePointFromFatTimestamp(uint32_t fat) {
+        uint32_t year = (fat >> 25) + 1980;
+        uint32_t month = 0xf & (fat >> 21);
+        uint32_t day = 0x1f & (fat >> 16);
+        uint32_t hour = 0x1f & (fat >> 11);
+        uint32_t minute = 0x3f & (fat >> 5);
+        uint32_t second = (0x1f & fat) * 2;
+
+#if defined(__GNUC__)
+        std::tm tm{};
+        tm.tm_year = (int) year - 1900;
+        tm.tm_mon = (int) month - 1;
+        tm.tm_mday = (int) day;
+        tm.tm_hour = (int) hour;
+        tm.tm_min = (int) minute;
+        tm.tm_sec = (int) second;
+        tm.tm_isdst = 0;
+
+        std::time_t t = _mkgmtime(&tm);
+
+        if (t == (std::time_t) -1) { return std::nullopt; }
+        return std::chrono::system_clock::from_time_t(t);
+#else
+        std::chrono::year_month_day ymd = std::chrono::year(year) / std::chrono::month(month) / std::chrono::day(day);
+        if (!ymd.ok()) { return std::nullopt; }
+        return std::chrono::sys_days(ymd) + std::chrono::hours(hour) + std::chrono::minutes(minute) +
+               std::chrono::seconds(second);
+#endif
+    }
+
 
 }

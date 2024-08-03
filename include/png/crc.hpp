@@ -9,10 +9,13 @@ constexpr uint32_t CRC_POLY = 0xedb88320L;
 
 
 /// generates the crc table at compile time for speed
-constexpr std::array<uint32_t, 256> generate_crc_table() {
-    std::array<uint32_t, 256> crc_table{};
-    for (int index = 0; index < 256; ++index) {
-        auto c = static_cast<uint32_t>(index);
+
+static constexpr uint32_t CRC_TABLE_SIZE = 256;
+
+constexpr std::array<uint32_t, CRC_TABLE_SIZE> generate_crc_table() {
+    std::array<uint32_t, CRC_TABLE_SIZE> crc_table{};
+    for (uint32_t index = 0; index < CRC_TABLE_SIZE; ++index) {
+        auto c = index;
         for (int k = 0; k < 8; ++k) {
             if (c & 1) {
                 c = CRC_POLY ^ (c >> 1);

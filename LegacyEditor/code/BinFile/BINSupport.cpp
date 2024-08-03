@@ -243,11 +243,13 @@ namespace editor {
                 }
 
                 // check for a mismatch in the total allocated blocks for the file
-                fe.blocksForFile = data.readInt24(true);
+                data.setLittleEndian();
+                fe.blocksForFile = data.readInt24();
                 data.incrementPointer(3);
 
                 // read more information
-                fe.startingBlockNum = data.readInt24(true);
+                fe.startingBlockNum = data.readInt24();
+                data.setBigEndian();
                 fe.pathIndicator = data.readInt16();
                 fe.fileSize = data.readInt32();
                 fe.createdTimeStamp = data.readInt32();

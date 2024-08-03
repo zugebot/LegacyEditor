@@ -41,7 +41,7 @@ namespace editor {
         }
 
         void deleteData();
-        MU void steal(const Data& other) { data.steal(other); }
+        MU void steal(Data& other) { data.steal(other); }
 
         ND std::string constructFileName(lce::CONSOLE console, bool separateRegions) const;
         MU ND bool isEmpty() const { return data.size != 0; }

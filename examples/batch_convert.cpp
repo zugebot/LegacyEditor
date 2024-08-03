@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 
 
     // gets ps3 product code, if ps3 / rpcs3 are chosen
-    editor::ConvSettings settings(consoleOut, outDir);
+    editor::WriteSettings writeSettings(consoleOut, outDir);
     if (consoleOut == lce::CONSOLE::RPCS3 ||
         consoleOut == lce::CONSOLE::PS3) {
         std::cout << "\n[*] Please select a PS3 region (type the index number):" << std::endl;
@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
         std::string prompt = "[>] Region:";
         int selection = getNumberFromUser(prompt, 1, 5);
         auto pCode = editor::PS3ProductCodeArray[selection];
-        settings.myProductCodes.setPS3(pCode);
+        writeSettings.myProductCodes.setPS3(pCode);
     }
 
     if (consoleOut == lce::CONSOLE::VITA) {
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
         std::string prompt = "[>] Region:";
         int selection = getNumberFromUser(prompt, 1, 3);
         auto pCode = editor::PSVITAProductCodeArray[selection];
-        settings.myProductCodes.setVITA(pCode);
+        writeSettings.myProductCodes.setVITA(pCode);
     }
 
 
@@ -116,7 +116,11 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
-        const int statusOut = fileListing.write(settings);
+
+        fileListing.printDetails();
+        MU int stat = fileListing.dumpToFolder("");
+
+        const int statusOut = fileListing.write(writeSettings);
         if (statusOut != 0) {
             std::cerr << "Converting to " << consoleToStr(consoleOut)
                       << " failed for file: " << filePath << "\n";
@@ -125,7 +129,7 @@ int main(int argc, char *argv[]) {
 
 
         std::cout << "[>]: " << filePath.make_preferred() << "\n";
-        std::cout << "[<]: " << settings.getOutFilePath().make_preferred() << "\n";
+        std::cout << "[<]: " << writeSettings.getOutFilePath().make_preferred() << "\n";
     }
 
     std::cout << "\n\nclick ENTER to exit.\n";

@@ -31,26 +31,23 @@ namespace editor {
         ~RPCS3() override = default;
 
 
-        int read(editor::FileListing* theListing, const fs::path& inFilePath) override {
-            myFilePath = inFilePath;
+        int read(editor::FileListing* theListing, const fs::path& theFilePath) override {
+            myListingPtr = theListing;
+            myFilePath = theFilePath;
 
-            int status = deflateListing(theListing);
+            int status = inflateListing();
             if (status != 0) {
                 printf("failed to extract listing\n");
                 return status;
             }
-
-            status = readFileInfo(theListing);
-
-            theListing->fileInfo.basesavename = L"hi";
-
-            readPARAM_SFO(theListing);
+            readFileInfo();
+            readPARAM_SFO();
 
             return SUCCESS;
         }
 
 
-        int deflateListing(editor::FileListing* theListing) override {
+        int inflateListing() override {
             Data data;
             data.setScopeDealloc(true);
 
@@ -78,7 +75,7 @@ namespace editor {
             fread(data.start(), 1, data.size, f_in);
             fclose(f_in);
 
-            int status = ConsoleParser::readListing(theListing, data);
+            int status = readListing(data);
             if (status != 0) {
                 return -1;
             }
@@ -89,33 +86,27 @@ namespace editor {
 
         // TODO: make it not case-specific!
         // TODO: make it return a status!
-        int readPARAM_SFO(editor::FileListing* theListing) {
+        int readPARAM_SFO() {
             fs::path sfoFilePath = myFilePath.parent_path();
             sfoFilePath += "/PARAM.SFO";
 
             // TODO: make it cache the ACCOUNT_ID for later converting
             SFOManager mainSFO(sfoFilePath.string());
-            auto attrs = mainSFO.getAttributes();
-            // for (const auto& attr : attrs) {
-            //     std::cout << attr.toString() << std::endl;
-            // }
-            // mainSFO.editParam("ACCOUNT_ID", "123456789ABCDEF0");
-            // mainSFO.editParam("TITLE", "Fortnite Gaming Edition");
-            // mainSFO.editParam("SUB_TITLE", "Extreme Golfing");
-            // fs::path path = getFolderDirectory() / "testing 1 2 3";
-            // mainSFO.saveToFile(path.string());
-
             const std::wstring subtitle = stringToWstring(mainSFO.getAttribute("SUB_TITLE"));
-            theListing->fileInfo.basesavename = subtitle;
+            myListingPtr->fileInfo.basesavename = subtitle;
 
             return SUCCESS;
         }
 
 
         // TODO: missing other files
-        ND int write(editor::FileListing* theListing, MU editor::ConvSettings& theSettings) const override {
+        ND int write(editor::FileListing* theListing, MU editor::WriteSettings& theSettings) const override {
+            myListingPtr = theListing;
+            int status;
             fs::path rootPath = theSettings.getInFolderPath();
 
+
+            // FIND PRODUCT CODE
             auto productCode = theSettings.myProductCodes.getPS3();
             std::string strProductCode = ProductCodes::toString(productCode);
             std::string strCurrentTime = getCurrentDateTimeString();
@@ -123,58 +114,53 @@ namespace editor {
             rootPath /= folderName;
             fs::create_directories(rootPath);
 
-            // fileInfo
+
+            // FILE INFO
             fs::path fileInfoPath = rootPath / "THUMB";
-            Data fileInfoData = theListing->fileInfo.writeFile(fileInfoPath, myConsole);
+            Data fileInfoData = myListingPtr->fileInfo.writeFile(fileInfoPath, myConsole);
             fileInfoData.setScopeDealloc(true);
-            // file operations
-            int status2 = DataManager(fileInfoData).writeToFile(fileInfoPath);
-            if (status2 != 0) return printf_err(status2,
-                                                "failed to write fileInfo to \"%s\"\n",
-                                                fileInfoPath.string().c_str());
+            status = DataManager(fileInfoData).writeToFile(fileInfoPath);
+            if (status != 0) return printf_err(status,
+                "failed to write fileInfo to \"%s\"\n",
+                fileInfoPath.string().c_str());
 
 
-            // write ICON0.PNG
-            if (theListing->icon0png.myData == nullptr) {
+            // ICON0.PNG
+            fs::path icon0pngPath = rootPath / "ICON0.PNG";
+            if (myListingPtr->icon0png.myData == nullptr) {
                 Picture fileInfoPng;
                 fileInfoPng.loadFromFile(fileInfoPath.string().c_str());
-                theListing->icon0png.allocate(320, 176, 4);
-                theListing->icon0png.fillColor(0, 0, 0);
-                theListing->icon0png.placeAndStretchSubImage(&fileInfoPng, 72, 0, 176, 176);
-                // theListing->icon0png.placeSubImage(&fileInfoPng, 128, 56);
+                myListingPtr->icon0png.allocate(320, 176, 4);
+                myListingPtr->icon0png.fillColor(0, 0, 0);
+                myListingPtr->icon0png.placeAndStretchSubImage(&fileInfoPng, 72, 0, 176, 176);
             }
-            fs::path icon0pngPath = rootPath / "ICON0.PNG";
-            theListing->icon0png.saveWithName(icon0pngPath.string());
+            myListingPtr->icon0png.saveWithName(icon0pngPath.string());
 
 
             // GAMEDATA
             fs::path gameDataPath = rootPath / "GAMEDATA";
-            Data deflatedData = ConsoleParser::writeListing(theListing, myConsole);
-            Data inflatedData;
+            Data inflatedData = writeListing(myConsole);
             inflatedData.setScopeDealloc(true);
-            int status = inflateListing(gameDataPath, deflatedData, inflatedData);
-            if (status != 0) {
-                return printf_err(status, "failed to compress fileListing\n");
-            }
+            Data deflatedData;
+            deflatedData.setScopeDealloc(true);
+            status = deflateListing(gameDataPath, inflatedData, deflatedData);
+            if (status != 0) return printf_err(status,
+                "failed to compress fileListing\n");
             theSettings.setOutFilePath(gameDataPath);
+            printf("gamedata final size: %u\n", deflatedData.size);
 
 
             // METADATA
             fs::path metadataPath = rootPath / "METADATA";
-            // TODO: replace with u8[256]
-            Data _;
-            _.setScopeDealloc(true);
-            _.allocate(256);
-            DataManager managerMETADATA(_);
-            std::memset(managerMETADATA.data, 0, 256);
+            c_u32 crc1 = crc(deflatedData.data, deflatedData.size);
+            c_u32 crc2 = crc(fileInfoData.data, fileInfoData.size);
+            u8 metadata[256] = {0};
+            DataManager managerMETADATA(metadata, 256);
             managerMETADATA.writeInt32(3);
             managerMETADATA.writeInt32(deflatedData.size);
             managerMETADATA.writeInt32(fileInfoData.size);
-            c_u32 crc1 = crc(deflatedData.data, deflatedData.size);
             managerMETADATA.writeInt32(crc1);
-            c_u32 crc2 = crc(fileInfoData.data, fileInfoData.size);
             managerMETADATA.writeInt32(crc2);
-            // file operations
             int status3 = managerMETADATA.writeToFile(metadataPath);
             if (status3 != 0) return printf_err(status3,
                 "failed to write metadata to \"%s\"\n",
@@ -198,7 +184,7 @@ namespace editor {
             sfo.addParam(eSFO_FMT::UTF8_NORMAL, "RPCS3_BLIST", "ICON0.PNG/METADATA/THUMB/GAMEDATA");
             sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SAVEDATA_DIRECTORY", folderName);
             sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SAVEDATA_LIST_PARAM", "0");
-            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SUB_TITLE", wStringToString(theListing->fileInfo.basesavename));
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SUB_TITLE", wStringToString(myListingPtr->fileInfo.basesavename));
             std::string title = "Minecraft: PlayStation®3 Edition";
             if (productCode == ePS3ProductCode::BLES01976 ||
                 productCode == ePS3ProductCode::BLUS31426) {
@@ -213,11 +199,12 @@ namespace editor {
         }
 
 
-        ND int inflateListing(const fs::path& gameDataPath, const Data& deflatedData, MU Data& inflatedData) const override {
-            printf("gamedata final size: %u\n", deflatedData.size);
+        ND int deflateListing(const fs::path& gameDataPath, Data& inflatedData, MU Data& deflatedData) const override {
+            deflatedData.steal(inflatedData);
+
             // file operations
-            int status1 = DataManager(deflatedData).writeToFile(gameDataPath);
-            if (status1 != 0) return printf_err(status1,
+            int status = DataManager(deflatedData).writeToFile(gameDataPath);
+            if (status != 0) return printf_err(status,
                 "failed to write savefile to \"%s\"\n",
                 gameDataPath.string().c_str());
             return SUCCESS;

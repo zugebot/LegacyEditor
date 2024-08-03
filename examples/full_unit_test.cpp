@@ -97,7 +97,7 @@ int main() {
      */
 
 
-    editor::ConvSettings settings(consoleOut, snd1);
+    editor::WriteSettings settings(consoleOut, snd1);
     if (int statusOut = fileListing.write(settings); statusOut != 0) {
         return printf_err(statusOut, WRITE_ERROR, consoleToCStr(consoleOut));
     }

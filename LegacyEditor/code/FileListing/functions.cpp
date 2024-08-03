@@ -18,7 +18,7 @@ namespace editor {
 
     void FileListing::printDetails() const {
         printf("\n** FileListing Details **\n");
-        printf("1. Filename: %s\n", myFilePath.string().c_str());
+        printf("1. Filename: %s\n", myReadSettings.getFilePath().string().c_str());
         printf("2. Oldest Version: %d\n", myOldestVersion);
         printf("3. Current Version: %d\n", myCurrentVersion);
         printf("4. Total File Count: %zu\n", myAllFiles.size());
@@ -181,7 +181,7 @@ namespace editor {
                 RegionManager region;
                 region.read(file);
                 region.convertChunks(consoleOut);
-                const Data data = region.write(consoleOut);
+                Data data = region.write(consoleOut);
                 file->data.steal(data);
             }
         }
@@ -202,7 +202,7 @@ namespace editor {
 
         convertRegions(consoleOut);
 
-        ConvSettings settings(consoleOut, outFilePath);
+        WriteSettings settings(consoleOut, outFilePath);
         status = write(settings);
         return status;
     }
@@ -232,7 +232,7 @@ namespace editor {
 
         replace.deallocate();
 
-        ConvSettings settings(consoleOut, outFilePath);
+        WriteSettings settings(consoleOut, outFilePath);
         status = write(settings);
         return status;
     }

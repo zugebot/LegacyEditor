@@ -31,9 +31,10 @@ namespace editor {
 
         ND Data writeFile(const fs::path& outFilePath, const lce::CONSOLE outConsole) const;
 
+        int readPNG(DataManager& theManager);
+
     private:
         int readHeader(DataManager& theManager, lce::CONSOLE theConsole);
-        int readPNG(DataManager& theManager);
     };
 
 }

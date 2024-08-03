@@ -25,28 +25,24 @@ namespace editor {
         ~Switch() override = default;
 
 
-        int read(editor::FileListing* theListing, const fs::path& inFilePath) override {
-            myFilePath = inFilePath;
+        int read(editor::FileListing* theListing, const fs::path& theFilePath) override {
+            myListingPtr = theListing;
+            myFilePath = theFilePath;
 
-            int status = deflateListing(theListing);
+            int status = inflateListing();
             if (status != 0) {
                 printf("failed to extract listing\n");
                 return status;
             }
 
-            status = readFileInfo(theListing);
-            if (status != 0) {
-                printf("failed to extract listing\n");
-                return status;
-            }
-
-            readExternalFiles(theListing);
+            readFileInfo();
+            readExternalFiles();
 
             return SUCCESS;
         }
 
 
-        int deflateListing(editor::FileListing* theListing) override {
+        int inflateListing() override {
             Data data;
             data.setScopeDealloc(true);
 
@@ -88,7 +84,7 @@ namespace editor {
                 return DECOMPRESS;
             }
 
-            status = ConsoleParser::readListing(theListing, data);
+            status = ConsoleParser::readListing(data);
             if (status != 0) {
                 return -1;
             }
@@ -97,38 +93,37 @@ namespace editor {
         }
 
 
-        int readExternalFiles(editor::FileListing* theListing) {
+        int readExternalFiles() {
             fs::path folder = myFilePath;
             folder.replace_extension(".sub");
 
             int status;
             if (!fs::is_directory(folder)) {
-                printf("Failed to read associated external files.\n");
-                return STATUS::FILE_ERROR;
+                return printf_err(FILE_ERROR, "Failed to read associated external files.\n");
             } else if (!folder.empty()) {
-                status = readExternalFolder(theListing, folder);
-                theListing->myHasSeparateRegions = true;
+                status = readExternalFolder(folder);
+                myListingPtr->myHasSeparateRegions = true;
             } else {
-                printf("Failed to find associated external files.\n");
-                status = STATUS::FILE_ERROR;
+                return printf_err(FILE_ERROR, "Failed to find associated external files.\n");
             }
             return status;
         }
 
 
-        ND int write(MU editor::FileListing* theListing, MU editor::ConvSettings& theSettings) const override {
+        ND int write(MU editor::FileListing* theListing, MU editor::WriteSettings& theSettings) const override {
+            myListingPtr = theListing;
+
             printf("Switch.write(): not implemented!\n");
             return NOT_IMPLEMENTED;
         }
 
 
-        ND int inflateListing(MU const fs::path& gameDataPath, MU const Data& deflatedData, MU Data& inflatedData) const override {
+        ND int deflateListing(MU const fs::path& gameDataPath, MU Data& inflatedData, MU Data& deflatedData) const override {
             return NOT_IMPLEMENTED;
         }
 
 
-        MU static int writeExternalFolder(MU FileListing* theListing,
-                                           MU const fs::path& outDirPath) {
+        MU static int writeExternalFolder(MU const fs::path& outDirPath) {
             printf("FileListing::writeExternalFolder: not implemented!");
             return NOT_IMPLEMENTED;
         }

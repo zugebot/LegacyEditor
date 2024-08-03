@@ -1,21 +1,21 @@
 #include "ConsoleParser.hpp"
 
 
-int ConsoleParser::readListing(editor::FileListing* theListing, const Data &dataIn) {
+int ConsoleParser::readListing(const Data &dataIn) {
     DataManager managerIn(dataIn, consoleIsBigEndian(myConsole));
 
     c_u32 indexOffset = managerIn.readInt32();
     u32 fileCount = managerIn.readInt32();
-    theListing->myOldestVersion = managerIn.readInt16();
-    theListing->myCurrentVersion = managerIn.readInt16();
+    myListingPtr->myOldestVersion = managerIn.readInt16();
+    myListingPtr->myCurrentVersion = managerIn.readInt16();
 
     u32 FOOTER_ENTRY_SIZE = 144;
-    if (theListing->myCurrentVersion <= 1) {
+    if (myListingPtr->myCurrentVersion <= 1) {
         FOOTER_ENTRY_SIZE = 136;
         fileCount /= 136;
     }
 
-    theListing->myAllFiles.clear();
+    myListingPtr->myAllFiles.clear();
 
     MU u32 totalSize = 0;
     for (u32 fileIndex = 0; fileIndex < fileCount; fileIndex++) {
@@ -26,7 +26,7 @@ int ConsoleParser::readListing(editor::FileListing* theListing, const Data &data
         u32 fileSize = managerIn.readInt32();
         c_u32 index = managerIn.readInt32();
         u64 timestamp = 0;
-        if (theListing->myCurrentVersion <= 1) {
+        if (myListingPtr->myCurrentVersion <= 1) {
             timestamp = managerIn.readInt64();
         }
         totalSize += fileSize;
@@ -40,8 +40,8 @@ int ConsoleParser::readListing(editor::FileListing* theListing, const Data &data
         u8* data = managerIn.readBytes(fileSize);
 
         // TODO: make sure all files are set with the correct console
-        theListing->myAllFiles.emplace_back(myConsole, data, fileSize, timestamp);
-        editor::LCEFile &file = theListing->myAllFiles.back();
+        myListingPtr->myAllFiles.emplace_back(myConsole, data, fileSize, timestamp);
+        editor::LCEFile &file = myListingPtr->myAllFiles.back();
 
         if (fileName.ends_with(".mcr")) {
             if (fileName.starts_with("DIM-1")) {
@@ -98,26 +98,26 @@ int ConsoleParser::readListing(editor::FileListing* theListing, const Data &data
 
     }
 
-    theListing->updatePointers();
+    myListingPtr->updatePointers();
     printf("\n");
 
     return SUCCESS;
 }
 
 
-Data ConsoleParser::writeListing(editor::FileListing* theListing, const lce::CONSOLE consoleOut) const {
+Data ConsoleParser::writeListing(const lce::CONSOLE consoleOut) const {
 
     // step 1: get the file count and size of all sub-files
-    c_u32 fileCount = theListing->myAllFiles.size();
+    c_u32 fileCount = myListingPtr->myAllFiles.size();
     u32 fileDataSize = 0;
-    for (const editor::LCEFile& file: theListing->myAllFiles) {
+    for (const editor::LCEFile& file: myListingPtr->myAllFiles) {
         fileDataSize += file.data.getSize();
     }
 
     c_u32 fileInfoOffset = fileDataSize + 12;
 
     u32 FOOTER_ENTRY_SIZE = 144;
-    if (theListing->myCurrentVersion <= 1) {
+    if (myListingPtr->myCurrentVersion <= 1) {
         FOOTER_ENTRY_SIZE = 136;
     }
 
@@ -133,31 +133,31 @@ Data ConsoleParser::writeListing(editor::FileListing* theListing, const lce::CON
     // step 3: write start
     managerOut.writeInt32(fileInfoOffset);
     u32 innocuousVariableName = fileCount;
-    if (theListing->myCurrentVersion <= 1) {
+    if (myListingPtr->myCurrentVersion <= 1) {
         innocuousVariableName *= 136;
     }
     managerOut.writeInt32(innocuousVariableName);
-    managerOut.writeInt16(theListing->myOldestVersion);
-    managerOut.writeInt16(theListing->myCurrentVersion);
+    managerOut.writeInt16(myListingPtr->myOldestVersion);
+    managerOut.writeInt16(myListingPtr->myCurrentVersion);
 
     // step 4: write each files data
     // I am using additionalData as the offset into the file its data is at
     u32 index = FILELISTING_HEADER_SIZE;
-    for (editor::LCEFile& fileIter : theListing->myAllFiles) {
+    for (editor::LCEFile& fileIter : myListingPtr->myAllFiles) {
         fileIter.additionalData = index;
         index += fileIter.data.getSize();
         managerOut.writeFile(fileIter);
     }
 
     // step 5: write file metadata
-    for (const editor::LCEFile& fileIter: theListing->myAllFiles) {
+    for (const editor::LCEFile& fileIter: myListingPtr->myAllFiles) {
         // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter
         // .additionalData, fileIter.size, fileIter.name.c_str());
-        std::string fileIterName = fileIter.constructFileName(consoleOut, theListing->myHasSeparateRegions);
+        std::string fileIterName = fileIter.constructFileName(consoleOut, myListingPtr->myHasSeparateRegions);
         managerOut.writeWStringFromString(fileIterName, WSTRING_SIZE);
         managerOut.writeInt32(fileIter.data.getSize());
         managerOut.writeInt32(fileIter.additionalData);
-        if (theListing->myCurrentVersion > 1) {
+        if (myListingPtr->myCurrentVersion > 1) {
             managerOut.writeInt64(fileIter.timestamp);
         }
     }
@@ -166,7 +166,7 @@ Data ConsoleParser::writeListing(editor::FileListing* theListing, const lce::CON
 }
 
 
-int ConsoleParser::readFileInfo(editor::FileListing* theListing) const {
+void ConsoleParser::readFileInfo() const {
     fs::path filePath = myFilePath.parent_path();
     fs::path cachePathVita = myFilePath.parent_path().parent_path();
     cachePathVita /= "CACHE.BIN";
@@ -190,37 +190,29 @@ int ConsoleParser::readFileInfo(editor::FileListing* theListing) const {
             goto XBOX360_SKIP_READING_FILEINFO;
         case lce::CONSOLE::NONE:
         default:
-            return INVALID_CONSOLE;
+            return;
     }
 
-    int status;
-
     if (fs::exists(filePath)) {
-        theListing->fileInfo.readFile(filePath, myConsole);
-        status = SUCCESS;
+        myListingPtr->fileInfo.readFile(filePath, myConsole);
 
     } else if (myConsole == lce::CONSOLE::VITA && fs::exists(cachePathVita)) {
         std::string folderName = myFilePath.parent_path().filename().string();
-        theListing->fileInfo.readCacheFile(cachePathVita, folderName);
-        status = SUCCESS;
+        myListingPtr->fileInfo.readCacheFile(cachePathVita, folderName);
 
     } else {
         printf("FileInfo file not found/corrupt, setting defaulted data.\n");
-        status = FILE_ERROR;
     }
 
 XBOX360_SKIP_READING_FILEINFO:
-    if (!theListing->fileInfo.isLoaded) {
-        theListing->fileInfo.defaultSettings();
-        theListing->fileInfo.loadFileAsThumbnail("assets/LegacyEditor/world-icon.png");
-        status = SUCCESS;
+    if (!myListingPtr->fileInfo.isLoaded) {
+        myListingPtr->fileInfo.defaultSettings();
+        myListingPtr->fileInfo.loadFileAsThumbnail("assets/LegacyEditor/world-icon.png");
     }
 
-    if (theListing->fileInfo.basesavename.empty()) {
-        theListing->fileInfo.basesavename = L"New World";
+    if (myListingPtr->fileInfo.basesavename.empty()) {
+        myListingPtr->fileInfo.basesavename = L"New World";
     }
-
-    return status;
 }
 
 
@@ -229,7 +221,7 @@ XBOX360_SKIP_READING_FILEINFO:
  * \param inDirPath the directory containing the GAMEDATA files.
  * \return
  */
-int ConsoleParser::readExternalFolder(editor::FileListing* theListing, const fs::path& inDirPath) {
+int ConsoleParser::readExternalFolder(const fs::path& inDirPath) {
     MU int fileIndex = -1;
     for (c_auto& file : fs::directory_iterator(inDirPath)) {
 
@@ -257,8 +249,8 @@ int ConsoleParser::readExternalFolder(editor::FileListing* theListing, const fs:
 
         // TODO: get timestamp from file itself / make one up
         u32 timestamp = 0;
-        theListing->myAllFiles.emplace_back(theListing->myConsole, dat_out.data, fileSize, timestamp);
-        editor::LCEFile &lFile = theListing->myAllFiles.back();
+        myListingPtr->myAllFiles.emplace_back(myListingPtr->myConsole, dat_out.data, fileSize, timestamp);
+        editor::LCEFile &lFile = myListingPtr->myAllFiles.back();
         if (c_auto dimChar = static_cast<char>(static_cast<int>(fileNameStr.at(12)) - 48);
             dimChar < 0 || dimChar > 2) {
             lFile.fileType = lce::FILETYPE::NONE;
@@ -278,7 +270,7 @@ int ConsoleParser::readExternalFolder(editor::FileListing* theListing, const fs:
         lFile.setRegionZ(rZ);
     }
 
-    theListing->updatePointers();
+    myListingPtr->updatePointers();
 
     return SUCCESS;
 }

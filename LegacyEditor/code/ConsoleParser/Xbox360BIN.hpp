@@ -31,10 +31,13 @@ namespace editor {
 
 
         // TODO: IDK if it should but it is for now, get fileInfo out of it, fix memory leaks
-        int read(editor::FileListing* theListing, const fs::path& inFilePath) override {
-            FILE *f_in = fopen(inFilePath.string().c_str(), "rb");
+        int read(editor::FileListing* theListing, const fs::path& theFilePath) override {
+            myListingPtr = theListing;
+            myFilePath = theFilePath;
+
+            FILE *f_in = fopen(myFilePath.string().c_str(), "rb");
             if (f_in == nullptr) {
-                return printf_err(FILE_ERROR, ERROR_4, inFilePath.string().c_str());
+                return printf_err(FILE_ERROR, ERROR_4, myFilePath.string().c_str());
             }
 
             fseek(f_in, 0, SEEK_END);
@@ -50,9 +53,9 @@ namespace editor {
             bin.allocate(input_size);
 
             fseek(f_in, 0, SEEK_SET);
-            fread(bin.start(), 1, input_size, f_in);
+            fread(bin.start(), 1, bin.size, f_in);
 
-            DataManager binFile(bin.data, input_size);
+            DataManager binFile(bin.data, bin.size);
             StfsPackage stfsInfo(binFile);
             stfsInfo.parse();
             StfsFileListing listing = stfsInfo.getFileListing();
@@ -63,39 +66,39 @@ namespace editor {
                 return {};
             }
 
-            /*
-            BINHeader meta = stfsInfo.getMetaData();
-            fileInfo.basesavename = meta.displayName;
-            fileInfo.thumbnail = meta.thumbnailImage;
-            fileInfo.exploredchunks;
-            fileInfo.extradata;
-            fileInfo.hostoptions;
-            fileInfo.loads;
-            fileInfo.seed;
-            fileInfo.settings;
-            fileInfo.texturepack;
-            */
+
 
             const Data _ = stfsInfo.extractFile(entry);
-            DataManager out(_);
+            DataManager deflatedData(_);
+
+            // stuff I need to figure out
+            MU auto createdTime = TimePointFromFatTimestamp(entry->createdTimeStamp);
+            BINHeader meta = stfsInfo.getMetaData();
+            if (meta.thumbnailImage.size) {
+                myListingPtr->fileInfo.readPNG(meta.thumbnailImage);
+            }
+            myListingPtr->fileInfo.basesavename = stfsInfo.getMetaData().displayName;
+
+
+
 
             bin.deallocate();
 
-            c_u32 srcSize = out.readInt32() - 8;
+            c_u32 srcSize = deflatedData.readInt32() - 8;
 
             Data data;
             data.setScopeDealloc(true);
-            data.size = out.readInt64();
+            c_u32 inflatedSize = deflatedData.readInt64();
 
-            if (!data.allocate(data.size)) {
+            if (!data.allocate(inflatedSize)) {
                 return MALLOC_FAILED;
             }
 
             data.size = XDecompress(
                     data.start(), &data.size,
-                    out.ptr, srcSize);
+                    deflatedData.ptr, srcSize);
 
-            int status = ConsoleParser::readListing(theListing, data);
+            int status = ConsoleParser::readListing(data);
             if (status != 0) {
                 return -1;
             }
@@ -104,23 +107,25 @@ namespace editor {
         }
 
 
-        int deflateListing(MU editor::FileListing* theListing) override {
+        int inflateListing() override {
             return NOT_IMPLEMENTED;
         }
 
 
-        int readFileInfo(MU editor::FileListing* theListing) const override {
-            return NOT_IMPLEMENTED;
+        void readFileInfo() const override {
+
         }
 
 
-        ND int write(MU editor::FileListing* theListing, MU editor::ConvSettings& theSettings) const override {
+        ND int write(MU editor::FileListing* theListing, MU editor::WriteSettings& theSettings) const override {
+            myListingPtr = theListing;
+
             printf("Xbox360BIN.write(): not implemented!\n");
             return NOT_IMPLEMENTED;
         }
 
 
-        ND int inflateListing(MU const fs::path& gameDataPath, MU const Data& deflatedData, MU Data& inflatedData) const override {
+        ND int deflateListing(MU const fs::path& gameDataPath, MU Data& inflatedData, MU Data& deflatedData) const override {
             return NOT_IMPLEMENTED;
         }
 

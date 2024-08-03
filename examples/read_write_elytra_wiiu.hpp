@@ -26,7 +26,7 @@ int main() {
     chunk->readChunk(fileListing.myConsole);
 
 
-    editor::ConvSettings settings(consoleOut, FILE_OUT);
+    editor::WriteSettings settings(consoleOut, FILE_OUT);
     const int statusOut = fileListing.write(settings);
     if (statusOut != 0) return printf_err(statusOut, error2, consoleToCStr(consoleOut));
 

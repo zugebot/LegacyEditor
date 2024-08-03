@@ -30,28 +30,33 @@ namespace editor {
 
 
         // TODO: IDK if it should but it is for now, get fileInfo out of it, fix memory leaks
-        int read(MU editor::FileListing* theListing, MU const fs::path& inFilePath) override {
+        int read(MU editor::FileListing* theListing, MU const fs::path& theFilePath) override {
+            myListingPtr = theListing;
+            myFilePath = theFilePath;
+
             return NOT_IMPLEMENTED;
         }
 
 
-        int deflateListing(MU editor::FileListing* theListing) override {
+        int inflateListing() override {
             return NOT_IMPLEMENTED;
         }
 
 
-        int readFileInfo(MU editor::FileListing* theListing) const override {
-            return NOT_IMPLEMENTED;
+        void readFileInfo() const override {
+
         }
 
 
-        ND int write(MU editor::FileListing* theListing, MU editor::ConvSettings& theSettings) const override {
+        ND int write(MU editor::FileListing* theListing, MU editor::WriteSettings& theSettings) const override {
+            myListingPtr = theListing;
+
             printf("Xbox1.write(): not implemented!\n");
             return NOT_IMPLEMENTED;
         }
 
 
-        ND int inflateListing(MU const fs::path& gameDataPath, MU const Data& deflatedData, MU Data& inflatedData) const override {
+        ND int deflateListing(MU const fs::path& gameDataPath, MU Data& inflatedData, MU Data& deflatedData) const override {
             return NOT_IMPLEMENTED;
         }
 

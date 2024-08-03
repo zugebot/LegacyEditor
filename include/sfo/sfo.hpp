@@ -40,7 +40,6 @@ enum eSFO_MAGIC {
 
 
 class SFOManager {
-    bool myIsLoadedFromFile = false;
 public:
     explicit SFOManager(std::string theFilePath);
 
@@ -123,7 +122,9 @@ private:
 
     int getIndex(const std::string& theKey);
 
-    static int getReservedStringLen(const std::string& theKey);
+    [[nodiscard]] uint32_t getTableSize() const;
+
+    static uint32_t getReservedStringLen(const std::string& theKey);
 
     void expandDataTable(uint32_t theOffset, uint32_t theAdditionalSize);
 

@@ -21,7 +21,7 @@ namespace editor {
      * 3. product codes for different playstation consoles,
      * etc.
      */
-    class MU ConvSettings {
+    class MU WriteSettings {
         lce::CONSOLE myConsole;
         fs::path myInFolderPath;
         fs::path myOutFilePath;
@@ -29,26 +29,26 @@ namespace editor {
         ProductCodes myProductCodes;
 
 
-        ConvSettings() : myConsole(lce::CONSOLE::NONE) {}
+        WriteSettings() : myConsole(lce::CONSOLE::NONE) {}
 
-        MU explicit ConvSettings(lce::CONSOLE theConsole)
+        MU explicit WriteSettings(lce::CONSOLE theConsole)
             : myConsole(theConsole) {}
 
-        MU ConvSettings(const lce::CONSOLE theConsole, fs::path theFilePath)
+        MU WriteSettings(const lce::CONSOLE theConsole, fs::path theFilePath)
             : myConsole(theConsole), myInFolderPath(std::move(theFilePath)) {}
         
         
-        MU ConvSettings(const lce::CONSOLE theConsole, const ePS3ProductCode thePCode, fs::path theFilePath)
+        MU WriteSettings(const lce::CONSOLE theConsole, const ePS3ProductCode thePCode, fs::path theFilePath)
             : myConsole(theConsole), myInFolderPath(std::move(theFilePath)) {
             myProductCodes.setPS3(thePCode);
         }
         
-        MU ConvSettings(const lce::CONSOLE theConsole, const eVITAProductCode thePCode, fs::path theFilePath)
+        MU WriteSettings(const lce::CONSOLE theConsole, const eVITAProductCode thePCode, fs::path theFilePath)
             : myConsole(theConsole), myInFolderPath(std::move(theFilePath)) {
             myProductCodes.setVITA(thePCode);
         }
         
-        MU ConvSettings(const lce::CONSOLE theConsole, const ePS4ProductCode thePCode, fs::path theFilePath)
+        MU WriteSettings(const lce::CONSOLE theConsole, const ePS4ProductCode thePCode, fs::path theFilePath)
             : myConsole(theConsole), myInFolderPath(std::move(theFilePath)) {
             myProductCodes.setPS4(thePCode);
         }
