@@ -41,15 +41,16 @@ public:
     void take(const Data* dataIn);
 
     void seekStart();
-    void seekEnd();
+    MU void seekEnd();
     void seek(i64 position);
     void seek(u32 position);
     bool isEndOfData() const;
     u32 getPosition() const;
-    u8 peekNextByte() const;
-    ND u8 peekPreviousByte() const;
+    MU u8 peekNextByte() const;
+    MU ND u8 peekPreviousByte() const;
     void incrementPointer(u32 amount);
     void decrementPointer(u32 amount);
+    MU bool canReadSize(u32 amount) const;
 
     void incrementPointer1() { ptr += 1; }
     void incrementPointer2() { ptr += 2; }
@@ -62,21 +63,20 @@ public:
     char readChar();
     u16 readInt16();
     i32 readInt24();
-    i32 readInt24(bool isLittleIn);
     u32 readInt32();
     u64 readInt64();
-    bool readBool();
+    MU bool readBool();
     float readFloat();
     double readDouble();
 
     /// reads at offset from .data, not .ptr! Does not increment .ptr.
-    u8 readInt8AtOffset(u32 offset) const;
+    MU u8 readInt8AtOffset(u32 offset) const;
     /// reads at offset from .data, not .ptr! Does not increment .ptr.
-    u16 readInt16AtOffset(u32 offset) const;
+    MU u16 readInt16AtOffset(u32 offset) const;
     /// reads at offset from .data, not .ptr! Does not increment .ptr.
-    u32 readInt32AtOffset(u32 offset) const;
+    MU u32 readInt32AtOffset(u32 offset) const;
     /// reads at offset from .data, not .ptr! Does not increment .ptr.
-    u64 readInt64AtOffset(u32 offset) const;
+    MU u64 readInt64AtOffset(u32 offset) const;
 
     std::string readUTF();
     std::string readString(i32 length);
@@ -92,7 +92,7 @@ public:
 
     u8* readWithOffset(i32 offset, i32 amount);
     u8* readBytes(u32 length);
-    void readOntoData(u32 length, u8* dataIn);
+    void readBytes(u32 length, u8* dataIn);
     int readFromFile(const std::string& fileStrIn);
 
 
@@ -107,16 +107,16 @@ public:
     void writeDouble(double doubleIn);
 
     /// writes at offset from .data, not .ptr! Does not increment .ptr.
-    void writeInt8AtOffset(u32 offset, u8 byteIn) const;
+    MU void writeInt8AtOffset(u32 offset, u8 byteIn) const;
     /// writes at offset from .data, not .ptr! Does not increment .ptr.
-    void writeInt16AtOffset(u32 offset, u16 shortIn) const;
+    MU void writeInt16AtOffset(u32 offset, u16 shortIn) const;
     /// writes at offset from .data, not .ptr! Does not increment .ptr.
-    void writeInt32AtOffset(u32 offset, u32 intIn) const;
+    MU void writeInt32AtOffset(u32 offset, u32 intIn) const;
     /// writes at offset from .data, not .ptr! Does not increment .ptr.
-    void writeInt64AtOffset(u32 offset, u64 longIn) const;
+    MU void writeInt64AtOffset(u32 offset, u64 longIn) const;
 
-    void writeData(const Data* dataIn);
-    void writeFile(const editor::LCEFile* fileIn);
+    MU void writeData(const Data* dataIn);
+    MU void writeFile(const editor::LCEFile* fileIn);
     void writeFile(const editor::LCEFile& fileIn);
     void writeBytes(c_u8* dataPtrIn, u32 length);
 
@@ -131,5 +131,5 @@ public:
     void writeWStringFromString(const std::string& str, u32 upperbounds);
 
     int writeToFile(const fs::path& inFilePath) const;
-    int writeToFile(c_u8* ptrIn, const uint32_t sizeIn, const fs::path& inFilePath) const;
+    MU int writeToFile(c_u8* ptrIn, uint32_t sizeIn, const fs::path& inFilePath) const;
 };

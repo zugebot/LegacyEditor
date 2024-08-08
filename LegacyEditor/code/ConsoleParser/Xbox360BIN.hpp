@@ -5,10 +5,10 @@
 #include "include/ghc/fs_std.hpp"
 #include "include/zlib-1.2.12/zlib.h"
 
-#include "LegacyEditor/code/FileListing/fileListing.hpp"
-#include "LegacyEditor/utils/utils.hpp"
 #include "LegacyEditor/code/BinFile/BINSupport.hpp"
-#include "LegacyEditor/utils/XBOX_LZX/XboxCompression.hpp"
+#include "LegacyEditor/code/FileListing/fileListing.hpp"
+#include "LegacyEditor/utils/XBOX_LZX/XDecompress.hpp"
+#include "LegacyEditor/utils/utils.hpp"
 
 #include "ConsoleParser.hpp"
 

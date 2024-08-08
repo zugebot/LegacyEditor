@@ -6,8 +6,8 @@
 #include "include/zlib-1.2.12/zlib.h"
 
 #include "LegacyEditor/code/FileListing/fileListing.hpp"
+#include "LegacyEditor/utils/XBOX_LZX/XDecompress.hpp"
 #include "LegacyEditor/utils/utils.hpp"
-#include "LegacyEditor/utils/XBOX_LZX/XboxCompression.hpp"
 
 #include "ConsoleParser.hpp"
 
@@ -82,8 +82,15 @@ namespace editor {
             fread(deflatedData.start(), 1, deflatedData.size, f_in);
             fclose(f_in);
 
-            inflatedData.size = XDecompress(inflatedData.start(), &inflatedData.size,
-                                            deflatedData.start(), deflatedData.getSize());
+            int error = XDecompress(inflatedData.start(), &inflatedData.size,
+                                    deflatedData.start(), deflatedData.getSize());
+            if (error != 0) {
+                return printf_err(DECOMPRESS, "%s", ERROR_3);
+            }
+
+            DataManager out(inflatedData);
+            out.writeToFile(R"(C:\Users\jerrin\Desktop\OUT\XBOX360_TU74.decompressed_dat)");
+
             if (inflatedData.size == 0) {
                 return printf_err(DECOMPRESS, "%s", ERROR_3);
             }

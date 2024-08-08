@@ -10,8 +10,7 @@
 
 int main() {
     PREPARE_UNIT_TESTS();
-    c_auto [fst, snd] = TESTS["XBOX_DAT"];
-    constexpr auto consoleOut = lce::CONSOLE::WIIU;
+    c_auto [fst, snd] = TESTS["X360_TU74"];
 
     editor::FileListing fileListing;
     int status = fileListing.read(fst);
@@ -21,13 +20,14 @@ int main() {
 
     fileListing.printDetails();
 
-    // fileListing.fileInfo.basesavename = L"Fortnite";
-    editor::WriteSettings settings(consoleOut, snd);
-    const int statusOut = fileListing.write(settings);
-    if (statusOut != 0) {
-        return printf_err(statusOut, "converting to %s failed...\n", consoleToCStr(consoleOut));
-    }
 
-    printf("Finished!\nFile Out: %s",snd.c_str());
-    return 0;
+
+    // fileListing.fileInfo.basesavename = L"Fortnite";
+    // editor::WriteSettings settings(consoleOut, snd);
+    // const int statusOut = fileListing.write(settings);
+    // if (statusOut != 0) {
+    //     return printf_err(statusOut, "converting to %s failed...\n", consoleToCStr(consoleOut));
+    // }
+    // printf("Finished!\nFile Out: %s",snd.c_str());
+    // return 0;
 }

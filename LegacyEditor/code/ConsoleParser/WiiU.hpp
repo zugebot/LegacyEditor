@@ -104,6 +104,7 @@ namespace editor {
             myListingPtr = theListing;
             const fs::path rootPath = theSettings.getInFolderPath();
 
+
             // GAMEDATA
             fs::path gameDataPath = rootPath / getCurrentDateTimeString();
             Data inflatedData = ConsoleParser::writeListing(myConsole);

@@ -54,7 +54,7 @@ u32 DataManager::getPosition() const {
 
 
 u8 DataManager::peekNextByte() const {
-    return ptr[1];
+    return ptr[0];
 }
 
 u8 DataManager::peekPreviousByte() const {
@@ -68,6 +68,12 @@ void DataManager::incrementPointer(u32 amount) {
 
 void DataManager::decrementPointer(u32 amount) {
     ptr -= amount;
+}
+
+
+/// returns true if it can read {amount} bytes without reading past it's buffer.
+bool DataManager::canReadSize(u32 amount) const {
+    return getPosition() + amount <= size;
 }
 
 
@@ -236,7 +242,7 @@ std::string DataManager::readString(c_i32 length) {
     char* str = strVec.data();
     str[length] = 0;
 
-    readOntoData(length, reinterpret_cast<u8*>(str));
+    readBytes(length, reinterpret_cast<u8*>(str));
     auto returnString = std::string(str);
     return returnString;
 }
@@ -349,7 +355,7 @@ u8* DataManager::readBytes(c_u32 length) {
 }
 
 
-void DataManager::readOntoData(c_u32 length, u8* dataIn) {
+void DataManager::readBytes(c_u32 length, u8* dataIn) {
     std::memcpy(dataIn, ptr, length);
     incrementPointer(static_cast<i32>(length));
 }

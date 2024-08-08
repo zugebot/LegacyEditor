@@ -35,6 +35,18 @@ int getNumberFromUser(const std::string& param, int lower, int upper) {
 
 
 int main(int argc, char *argv[]) {
+
+
+
+    // DataManager bin;
+    // bin.readFromFile(R"(C:\Users\jerrin\CLionProjects\LegacyEditor\tests\XBOX360\XBOX360_TU74.dat)");
+    // bin.writeToFile(bin.data + 12, bin.size - 12, "D:/PycharmProjects/testLZX/XBOX360_TU74_new.dat");
+
+
+
+
+
+
     std::cout << "\n";
     std::cout << "[-] Find the project here! https://github.com/zugebot/LegacyEditor" << std::endl;
     std::cout << "\n";

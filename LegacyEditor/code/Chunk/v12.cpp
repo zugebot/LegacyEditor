@@ -41,9 +41,9 @@ namespace editor::chunk {
         readDataBlock(dataArray[2], dataArray[3], chunkData->blockLight);
         }
 
-        dataManager->readOntoData(256, chunkData->heightMap.data());
+        dataManager->readBytes(256, chunkData->heightMap.data());
         chunkData->terrainPopulated = static_cast<i16>(dataManager->readInt16());
-        dataManager->readOntoData(256, chunkData->biomes.data());
+        dataManager->readBytes(256, chunkData->biomes.data());
 
         if (*dataManager->ptr == 0xA) {
             chunkData->NBTData = NBT::readTag(*dataManager);

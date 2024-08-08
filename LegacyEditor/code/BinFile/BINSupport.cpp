@@ -91,7 +91,7 @@ namespace editor {
 
             // pick up the change at the beginning, until we hit a hash table
             if ((u32) entry->blocksForFile <= blockCount) {
-                data.readOntoData(entry->fileSize, buffer);
+                data.readBytes(entry->fileSize, buffer);
                 write(out2, buffer, entry->fileSize);
                 // out.writeBytes(buffer, entry->fileSize);
 
@@ -100,7 +100,7 @@ namespace editor {
                 return {};
             } else {
                 c_u32 amount = blockCount << 0xC;
-                data.readOntoData(amount, buffer);
+                data.readBytes(amount, buffer);
                 write(out2, buffer, amount);
                 // out.writeBytes(buffer, amount);
             }
@@ -113,7 +113,7 @@ namespace editor {
                 data.seek(currentPos + GetHashTableSkipSize(currentPos));
 
                 // read in the 0xAA blocks between the tables
-                data.readOntoData(0xAA000, buffer);
+                data.readBytes(0xAA000, buffer);
                 write(out2, buffer, 0xAA000);
                 // out.writeBytes(buffer, 0xAA000);
 
@@ -128,7 +128,7 @@ namespace editor {
                 data.seek(currentPos + GetHashTableSkipSize(currentPos));
 
                 // read in the extra crap
-                data.readOntoData(tempSize, buffer);
+                data.readBytes(tempSize, buffer);
                 write(out2, buffer, tempSize);
                 // out.writeBytes(buffer, tempSize);
             }
@@ -149,7 +149,6 @@ namespace editor {
             // read all the full blocks the file allocates
             for (u32 i = 0; i < fullReadCounts; i++) {
                 extractBlock(block, buffer);
-                // out.writeBytes(buffer, 0x1000);
                 write(out2, buffer, 0x1000);
                 block = getBlockHashEntry(block).nextBlock;
             }
@@ -157,7 +156,6 @@ namespace editor {
             // read the remaining data
             if (fileSize != 0) {
                 extractBlock(block, buffer, fileSize);
-                // out.writeBytes(buffer, (int) fileSize);
                 write(out2, buffer, (int) fileSize);
             }
         }
@@ -223,18 +221,11 @@ namespace editor {
 
             for (u32 i = 0; i < 0x40; i++) {
                 StfsFileEntry fe;
+                fe.fileEntryAddress = currentAddr + (i * 0x40); // set the current position
+                fe.entryIndex = (x * 0x40) + i;  // calculateOffset the entry index (in the file listing)
+                fe.name = data.readString(0x28); // read the name, if the length is 0 then break
+                fe.nameLen = data.readInt8();    // read the name length
 
-                // set the current position
-                fe.fileEntryAddress = currentAddr + (i * 0x40);
-
-                // calculateOffset the entry index (in the file listing)
-                fe.entryIndex = (x * 0x40) + i;
-
-                // read the name, if the length is 0 then break
-                fe.name = data.readString(0x28);
-
-                // read the name length
-                fe.nameLen = data.readInt8();
                 if ((fe.nameLen & 0x3F) == 0) {
                     data.seek(currentAddr + ((i + 1) * 0x40));
                     continue;
@@ -285,7 +276,7 @@ namespace editor {
         data.seek(blockToAddress(blockNum));
 
         // read the data, and return
-        data.readOntoData(length, inputData);
+        data.readBytes(length, inputData);
     }
 
 
@@ -311,7 +302,7 @@ namespace editor {
 
         // read the hash entry
         HashEntry he{};
-        data.readOntoData(0x14, he.blockHash);
+        data.readBytes(0x14, he.blockHash);
         he.status = data.readInt8();
         he.nextBlock = data.readInt24();
 
@@ -461,7 +452,7 @@ namespace editor {
             topTable.entryCount++;
 
         for (u32 i = 0; i < topTable.entryCount; i++) {
-            data.readOntoData(0x14, topTable.entries[i].blockHash);
+            data.readBytes(0x14, topTable.entries[i].blockHash);
             topTable.entries[i].status = data.readInt8();
             topTable.entries[i].nextBlock = data.readInt24();
         }

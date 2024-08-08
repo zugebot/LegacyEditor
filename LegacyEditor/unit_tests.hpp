@@ -32,7 +32,7 @@ static void PREPARE_UNIT_TESTS() {
     TEST_PAIR("RPCS3_1.00"  , R"(RPCS3/BLES01976--240802043920)"       , wiiu);
     // XBOX360
     TEST_PAIR("X360_TU69", R"(XBOX360/XBOX360_TU69.bin)", wiiu + R"(saves\XBOX360_TU69.bin)" );
-    TEST_PAIR("X360_TU74", R"(XBOX360/XBOX360_TU74.dat)", wiiu + R"(saves\XBOX360_TU74.dat)" );
+    TEST_PAIR("X360_TU74", R"(XBOX360/XBOX360_TU74.dat)", R"(C:\Users\jerrin\Desktop\OUT\XBOX360_TU74_DECOMPRESSED)" );
     // PS4
     TEST_PAIR("PS4_khaloody", R"(PS4/folder/00000008/savedata0/GAMEDATA)"       , wiiu);
     TEST_PAIR("flatTestPS4" , R"(PS4/superflatTest/00000002/savedata0/GAMEDATA)", wiiu);

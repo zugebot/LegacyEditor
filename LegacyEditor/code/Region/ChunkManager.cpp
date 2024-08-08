@@ -7,9 +7,9 @@
 
 #include "lce/processor.hpp"
 
-#include "LegacyEditor/utils/XBOX_LZX/XboxCompression.hpp"
-#include "LegacyEditor/utils/RLE/rle.hpp"
 #include "LegacyEditor/utils/PS3_DEFLATE/deflateUsage.hpp"
+#include "LegacyEditor/utils/RLE/rle.hpp"
+#include "LegacyEditor/utils/XBOX_LZX/XDecompress.hpp"
 
 #include "LegacyEditor/code/Chunk/v10.hpp"
 #include "LegacyEditor/code/Chunk/v11.hpp"
