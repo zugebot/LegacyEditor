@@ -132,9 +132,8 @@ namespace editor {
         switch (consoleIn) {
             case lce::CONSOLE::XBOX360: {
                 u8 *ptr = data;
-                dec_size = XDecompress(
+                result = XDecompress(
                         decompData.start(), &decompData.size, ptr, size);
-                decompData.size = dec_size;
                 break;
             }
             case lce::CONSOLE::RPCS3:

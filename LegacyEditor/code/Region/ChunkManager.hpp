@@ -77,7 +77,7 @@ namespace editor {
         MU ND int checkVersion() const;
 
         int ensureDecompress(lce::CONSOLE consoleIn);
-        int ensureCompressed(const lce::CONSOLE console);
+        int ensureCompressed(lce::CONSOLE console);
 
         MU void readChunk(lce::CONSOLE inConsole) const;
         MU void writeChunk(lce::CONSOLE console);

@@ -100,9 +100,6 @@ namespace editor {
             return status;
         }
 
-        void readFileInfo() const override {
-
-        }
 
         ND int write(MU editor::FileListing* theListing, MU editor::WriteSettings& theSettings) const override {
             myListingPtr = theListing;
