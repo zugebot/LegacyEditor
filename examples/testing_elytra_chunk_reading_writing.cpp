@@ -23,7 +23,7 @@ int main() {
     if (status != 0)
         return printf_err(status, "failed to load file '%s'\n", FILE_IN.c_str());
 
-    fileListing.fileInfo.basesavename = L"Elytra -> Aquatic";
+    fileListing.fileInfo.baseSaveName = L"Elytra -> Aquatic";
     fileListing.printDetails();
 
     fileListing.removeFileTypes({lce::FILETYPE::REGION_NETHER, lce::FILETYPE::REGION_END});
@@ -79,18 +79,18 @@ int main() {
     fileListing.replaceRegionOW(2, region, consoleOut);
     */
 
-    for (size_t index = 0; index < fileListing.region_overworld.size(); index++) {
-        editor::updateChunksToAquatic(index, fileListing.region_overworld, fileListing.myConsole, consoleOut);
+    for (size_t index = 0; index < fileListing.ptrs.region_overworld.size(); index++) {
+        editor::updateChunksToAquatic(index, fileListing.ptrs.region_overworld, fileListing.myReadSettings.getConsole(), consoleOut);
     }
-    for (size_t index = 0; index < fileListing.region_nether.size(); index++) {
-        editor::updateChunksToAquatic(index, fileListing.region_nether, fileListing.myConsole, consoleOut);
+    for (size_t index = 0; index < fileListing.ptrs.region_nether.size(); index++) {
+        editor::updateChunksToAquatic(index, fileListing.ptrs.region_nether, fileListing.myReadSettings.getConsole(), consoleOut);
     }
-    for (size_t index = 0; index < fileListing.region_end.size(); index++) {
-        editor::updateChunksToAquatic(index, fileListing.region_end, fileListing.myConsole, consoleOut);
+    for (size_t index = 0; index < fileListing.ptrs.region_end.size(); index++) {
+        editor::updateChunksToAquatic(index, fileListing.ptrs.region_end, fileListing.myReadSettings.getConsole(), consoleOut);
     }
 
-    fileListing.myOldestVersion = 11;
-    fileListing.myCurrentVersion = 11;
+    fileListing.myReadSettings.setOldestVersion(11);
+    fileListing.myReadSettings.setCurrentVersion(11);
 
     editor::WriteSettings settings(consoleOut, FILE_OUT);
     const int statusOut = fileListing.write(settings);

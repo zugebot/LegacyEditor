@@ -19,20 +19,18 @@ int main() {
     const std::string TEST_OUT = wiiu + R"(230918230207)";
     constexpr auto consoleOut = lce::CONSOLE::WIIU;
 
-    editor::FileListing::AUTO_REMOVE_PLAYERS = false;
-
     editor::FileListing fileListing;
     int status = fileListing.read(TEST_IN);
     if (status != 0) {
         return printf_err(status, "failed to load file '%s'\n", TEST_IN.c_str());
     }
-    c_auto consoleIn = fileListing.myConsole;
+    c_auto consoleIn = fileListing.myReadSettings.getConsole();
 
 
     fileListing.printDetails();
 
     editor::RegionManager region;
-    region.read(fileListing.region_overworld[2]);
+    region.read(fileListing.ptrs.region_overworld[2]);
     editor::ChunkManager *chunk = region.getChunk(10, 10);
 
     chunk->ensureDecompress(consoleIn);
@@ -54,7 +52,7 @@ int main() {
 
         for (int xIter = 0; xIter < 16; xIter++) {
             for (int yIter = 0; yIter < CHUNK_HEIGHT; yIter++) {
-                u16 block_id = editor::chunk::getBlock(chunk->chunkData, xIter, yIter, zIter) >> 4;
+                u16 block_id = chunk->chunkData->getBlock(xIter, yIter, zIter) >> 4;
                 Picture const* block_texture = textures.getBlockFromID(block_id);
                 if (block_texture != nullptr) {
                     const int xPix = xIter * 16;
@@ -76,6 +74,7 @@ int main() {
 
     // fileListing.fileInfo.basesavename = L"Fortnite";
     editor::WriteSettings settings(consoleOut, TEST_OUT);
+    settings.shouldRemovePlayers = false;
     const int statusOut = fileListing.write(settings);
     if (statusOut != 0) {
         return printf_err(statusOut, "converting to %s failed...\n", consoleToCStr(consoleOut));

@@ -17,7 +17,7 @@ int main() {
         return printf_err(status, "failed to load file '%s'\n", fst.c_str());
     }
 
-    fileListing.fileInfo.basesavename = L"Fortnite";
+    fileListing.fileInfo.baseSaveName = L"Fortnite";
 
     fileListing.removeFileTypes({
         lce::FILETYPE::PLAYER,

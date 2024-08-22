@@ -57,6 +57,7 @@ namespace editor {
                 {lce::FILETYPE::ENTITY_NETHER, "DIM-1entities.dat"},
                 {lce::FILETYPE::ENTITY_OVERWORLD, "entities.dat"},
                 {lce::FILETYPE::ENTITY_END, "DIM1/entities.dat"}};
+
         std::string name = "NULL";
         switch (fileType) {
             using std::to_string;
@@ -136,6 +137,11 @@ namespace editor {
     MU ND std::string LCEFile::getFileName() const {
         if (nbt == nullptr) return "NULL";
         return nbt->getString("filename"); }
+
+    MU void LCEFile::SetFileNameAndType(const std::string& filename, lce::FILETYPE filetype) {
+        fileType = filetype;
+        setFileName(filename);
+    }
 
     MU void LCEFile::setTag(const std::string& key, i16 value) const {
         if (nbt == nullptr) return;

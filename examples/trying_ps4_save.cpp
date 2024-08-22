@@ -52,15 +52,15 @@ int main() {
     }
 
     // fileListing.pruneRegions();
-    fileListing.fileInfo.basesavename = L"Khalooody PS4 World";
+    fileListing.fileInfo.baseSaveName = L"Khalooody PS4 World";
     fileListing.fileInfo.seed = 0;
     fileListing.pruneRegions();
     fileListing.printDetails();
 
 
     // figure out the bounds of each of the regions
-    for (size_t i = 0; i < fileListing.region_overworld.size(); i++) {
-        c_auto& regionFile = fileListing.region_overworld[i];
+    for (size_t i = 0; i < fileListing.ptrs.region_overworld.size(); i++) {
+        c_auto& regionFile = fileListing.ptrs.region_overworld[i];
 
         auto region = editor::RegionManager();
         region.read(regionFile);
@@ -72,7 +72,7 @@ int main() {
             chunkIndex++;
             if (chunk.size == 0) { continue; }
 
-            chunk.ensureDecompress(fileListing.myConsole);
+            chunk.ensureDecompress(fileListing.myReadSettings.getConsole());
 
             /*
             if (chunksOut < 5) {
@@ -80,15 +80,15 @@ int main() {
                 chunkOut.writeToFile(dir_path + "chunk" + std::to_string(chunksOut++));
             }*/
 
-            chunk.readChunk(fileListing.myConsole);
+            chunk.readChunk(fileListing.myReadSettings.getConsole());
             c_auto* chunkData = chunk.chunkData;
             if (!chunkData->validChunk) { continue; }
 
             chunkCoords[chunkIndex] = std::make_pair(chunkData->chunkX, chunkData->chunkZ);
 
 
-            chunk.writeChunk(fileListing.myConsole);
-            chunk.ensureCompressed(fileListing.myConsole);
+            chunk.writeChunk(fileListing.myReadSettings.getConsole());
+            chunk.ensureCompressed(fileListing.myReadSettings.getConsole());
         }
 
         printf("done!");

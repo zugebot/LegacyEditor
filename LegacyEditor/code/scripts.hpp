@@ -4,7 +4,6 @@
 
 #include "lce/blocks/block_ids.hpp"
 
-#include "LegacyEditor/code/Chunk/modifiers.hpp"
 #include "LegacyEditor/code/FileListing/fileListing.hpp"
 #include "LegacyEditor/code/Region/RegionManager.hpp"
 
@@ -12,12 +11,12 @@
 namespace editor {
 
     void processRegion(size_t regionIndex, FileListing& fileListing) {
-        const lce::CONSOLE console = fileListing.myConsole;
-        if (regionIndex >= fileListing.region_overworld.size()) { return; }
+        const lce::CONSOLE console = fileListing.myReadSettings.getConsole();
+        if (regionIndex >= fileListing.ptrs.region_overworld.size()) { return; }
 
         // read a region file
         RegionManager region;
-        region.read(fileListing.region_overworld[regionIndex]);
+        region.read(fileListing.ptrs.region_overworld[regionIndex]);
         for (ChunkManager& chunkManager: region.chunks) {
             if (chunkManager.size == 0) {
                 continue;
@@ -35,7 +34,7 @@ namespace editor {
             for (u16 x = 0; x < 16; x++) {
                 for (u16 z = 0; z < 16; z++) {
                     for (u16 y = 0; y < 256; y++) {
-                        u16 block1 = getBlock(chunkManager.chunkData, x, y, z);
+                        u16 block1 = chunkManager.chunkData->getBlock(x, y, z);
                         u16 data_1 = 0;
                         c_int offset1 = y + 256 * z + 4096 * x;
 
@@ -115,8 +114,8 @@ namespace editor {
             chunkManager.ensureCompressed(console);
         }
 
-        fileListing.region_overworld[regionIndex]->data.deallocate();
-        fileListing.region_overworld[regionIndex]->data = region.write(console);
+        fileListing.ptrs.region_overworld[regionIndex]->data.deallocate();
+        fileListing.ptrs.region_overworld[regionIndex]->data = region.write(console);
     }
 
 
@@ -127,12 +126,12 @@ namespace editor {
      * @param fileListing
      */
     void removeNetherrack(size_t regionIndex, FileListing& fileListing) {
-        const lce::CONSOLE console = fileListing.myConsole;
-        if (regionIndex >= fileListing.region_nether.size()) { return; }
+        const lce::CONSOLE console = fileListing.myReadSettings.getConsole();
+        if (regionIndex >= fileListing.ptrs.region_nether.size()) { return; }
 
         // read a region file
         RegionManager region;
-        region.read(fileListing.region_nether[regionIndex]);
+        region.read(fileListing.ptrs.region_nether[regionIndex]);
 
         for (ChunkManager& chunkManager: region.chunks) {
             if (chunkManager.size == 0) {
@@ -151,7 +150,7 @@ namespace editor {
             for (u16 x = 0; x < 16; x++) {
                 for (u16 z = 0; z < 16; z++) {
                     for (u16 y = 0; y < 256; y++) {
-                        u16 block1 = getBlock(chunkManager.chunkData, x, y, z);
+                        u16 block1 = chunkManager.chunkData->getBlock(x, y, z);
                         c_int offset1 = y + 256 * z + 4096 * x;
 
                         if ((block1 & 0x1FF0) >> 4 != 7) {
@@ -173,8 +172,8 @@ namespace editor {
             chunkManager.ensureCompressed(console);
         }
 
-        fileListing.region_nether[regionIndex]->data.deallocate();
-        fileListing.region_nether[regionIndex]->data = region.write(console);
+        fileListing.ptrs.region_nether[regionIndex]->data.deallocate();
+        fileListing.ptrs.region_nether[regionIndex]->data = region.write(console);
     }
 
 
@@ -184,7 +183,7 @@ namespace editor {
      * @param regionIndex
      * @param fileListing
      */
-    void updateChunksToAquatic(size_t regionIndex, FileList& fileList,
+    void convertChunksToAquatic(size_t regionIndex, FileList& fileList,
                                       const lce::CONSOLE inConsole, const lce::CONSOLE outConsole) {
 
         if (regionIndex >= fileList.size()) { return; }
@@ -193,86 +192,31 @@ namespace editor {
         RegionManager region;
         region.read(fileList[regionIndex]);
 
-        for (int index = 0; index < 1024; index++) {
-            ChunkManager* chunkManager = &region.chunks[index];
+        for (auto & chunkManager : region.chunks) {
+            chunkManager.readChunk(inConsole);
+            if (!chunkManager.chunkData->validChunk) continue;
 
-            if (chunkManager->size == 0) {
-                continue;
+            // convert chunks to aquatic
+            if (chunkManager.chunkData->lastVersion == 8 ||
+                chunkManager.chunkData->lastVersion == 9 ||
+                chunkManager.chunkData->lastVersion == 11) {
+                chunkManager.chunkData->convertOldToAquatic();
+            } else if (chunkManager.chunkData->lastVersion == 10) {
+                chunkManager.chunkData->convertNBTToAquatic();
+            } else if (chunkManager.chunkData->lastVersion == 13) {
+                chunkManager.chunkData->convert114ToAquatic();
             }
 
-            chunkManager->ensureDecompress(inConsole);
-            chunkManager->readChunk(inConsole);
-            auto* chunkData = chunkManager->chunkData;
+            // there is probably a better way to go about this
+            memset(chunkManager.chunkData->heightMap.data(), 0, 256);
 
-            if (!chunkData->validChunk) {
-                continue;
-            }
-
-            if (chunkData->lastVersion == 8 ||
-                chunkData->lastVersion == 9 ||
-                chunkData->lastVersion == 11) {
-                convertOldToAquatic(chunkData);
-            } else if (chunkData->lastVersion == 10) {
-                convertNBTToAquatic(chunkData);
-            }
-
-
-            memset(chunkData->heightMap.data(), 0, 256);
-            chunkManager->writeChunk(outConsole);
-            chunkManager->ensureCompressed(outConsole);
+            chunkManager.writeChunk(outConsole);
+            chunkManager.ensureCompressed(outConsole);
         }
 
         fileList[regionIndex]->data.deallocate();
         fileList[regionIndex]->data = region.write(outConsole);
         fileList[regionIndex]->console = outConsole;
-    }
-
-
-    /**
-     * .
-     * @param regionIndex
-     * @param fileListing
-     */
-    void ConvertPillagerToAquaticChunks(size_t regionIndex, const FileListing& fileListing) {
-        // TODO: make this a passed variable
-        const lce::CONSOLE consoleOut = fileListing.myConsole;
-        if (regionIndex >= fileListing.region_overworld.size()) { return; }
-
-        // read a region file
-        RegionManager region;
-        region.read(fileListing.region_overworld[regionIndex]);
-
-        for (auto& chunk: region.chunks) {
-            if (chunk.size == 0) {
-                continue;
-            }
-
-            chunk.ensureDecompress(consoleOut);
-            chunk.readChunk(consoleOut);
-            auto* chunkData = chunk.chunkData;
-            if (!chunkData->validChunk) {
-                continue;
-            }
-
-            // remove 1.14 blocks and items here...
-            for (int i = 0; i < 65536; i++) {
-                chunkData->newBlocks[i] = 3;
-                c_u16 id = chunkData->newBlocks[i] >> 4 & 1023;
-                if (id > 318) {
-                    chunkData->newBlocks[i]
-                        = lce::blocks::ids::COBBLESTONE_ID;
-                }
-            }
-
-            chunkData->lastVersion = 12;
-            chunk.fileData.setRLEFlag(1);
-            chunkData->defaultNBT(); // This for now, until nbt can be cleaned up
-            chunk.writeChunk(consoleOut);
-            chunk.ensureCompressed(consoleOut);
-        }
-
-        fileListing.region_overworld[regionIndex]->data.deallocate();
-        fileListing.region_overworld[regionIndex]->data = region.write(consoleOut);
     }
 
 

@@ -102,7 +102,7 @@ namespace editor {
                 return printf_err(FILE_ERROR, "Failed to read associated external files.\n");
             } else if (!folder.empty()) {
                 status = readExternalFolder(folder);
-                myListingPtr->myHasSeparateRegions = true;
+                myListingPtr->myReadSettings.setHasSepRegions(true);
             } else {
                 return printf_err(FILE_ERROR, "Failed to find associated external files.\n");
             }

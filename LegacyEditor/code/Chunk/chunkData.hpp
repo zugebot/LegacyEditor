@@ -45,5 +45,21 @@ namespace editor::chunk {
         MU ND std::string getCoords() const;
 
         void defaultNBT();
+
+        // MODIFIERS
+
+        MU void convertNBTToAquatic();
+        MU void convertOldToAquatic();
+        MU void convert114ToAquatic();
+
+
+        MU void placeBlock(int xIn, int yIn, int zIn, u16 block, u16 data, bool waterlogged, bool submerged = false);
+        MU void placeBlock(int xIn, int yIn, int zIn, u16 block, bool submerged = false);
+
+
+        /// Returns (blockID << 4 | dataTag).
+        u16 getBlock(int xIn, int yIn, int zIn);
+
+
     };
 }

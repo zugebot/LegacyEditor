@@ -52,7 +52,7 @@ int main() {
     }
 
     // fileListing.pruneRegions();
-    fileListing.fileInfo.basesavename = L"superflatTestGG";
+    fileListing.fileInfo.baseSaveName = L"superflatTestGG";
     fileListing.fileInfo.seed = 0;
     fileListing.pruneRegions();
     fileListing.printDetails();
@@ -67,8 +67,8 @@ int main() {
 
 
     // figure out the bounds of each of the regions
-    for (size_t i = 0; i < fileListing.region_overworld.size(); i++) {
-        c_auto& regionFile = fileListing.region_overworld[i];
+    for (size_t i = 0; i < fileListing.ptrs.region_overworld.size(); i++) {
+        c_auto& regionFile = fileListing.ptrs.region_overworld[i];
 
         auto region = editor::RegionManager();
         region.read(regionFile);
@@ -81,13 +81,13 @@ int main() {
             chunkIndex++;
             if (chunk.size == 0) { continue; }
 
-            chunk.ensureDecompress(fileListing.myConsole);
+            chunk.ensureDecompress(fileListing.myReadSettings.getConsole());
             /*
             if (chunksOut < 5) {
                 DataManager chunkOut(chunk.data, chunk.size);
                 chunkOut.writeToFile(dir_path + "chunk" + std::to_string(chunksOut++));
             }*/
-            chunk.readChunk(fileListing.myConsole);
+            chunk.readChunk(fileListing.myReadSettings.getConsole());
             c_auto* chunkData = chunk.chunkData;
             if (!chunkData->validChunk) { continue; }
 
@@ -101,7 +101,7 @@ int main() {
 
             for (int xIter = 0; xIter < 16; xIter++) {
                 for (int yIter = 0; yIter < CHUNK_HEIGHT; yIter++) {
-                    u16 block_id = editor::chunk::getBlock(chunk.chunkData, xIter, yIter, zIter) >> 4;
+                    u16 block_id = chunk.chunkData->getBlock(xIter, yIter, zIter) >> 4;
                     Picture const* block_texture = textures.getBlockFromID(block_id);
                     if (block_texture != nullptr) {
                         const int xPix = xIter * 16;
@@ -111,15 +111,15 @@ int main() {
                 }
             }
 
-            chunkRender.saveWithName("chunk_render[" + std::to_string(chunkData->chunkX) + ", "
-                                             + std::to_string(chunkData->chunkZ) + "].png", "render/");
+            chunkRender.saveWithName("render/chunk_render[" + std::to_string(chunkData->chunkX) + ", "
+                                             + std::to_string(chunkData->chunkZ) + "].png");
 
 
 
 
 
-            chunk.writeChunk(fileListing.myConsole);
-            chunk.ensureCompressed(fileListing.myConsole);
+            chunk.writeChunk(fileListing.myReadSettings.getConsole());
+            chunk.ensureCompressed(fileListing.myReadSettings.getConsole());
         }
 
         printf("done!");
@@ -135,9 +135,11 @@ int main() {
     c_auto timer = Timer();
 
     // run_parallel<32>(editor::convertElytraToAquaticChunks, std::ref(fileListing));
-    for (int i = 0; i < 32; i++) {
-        ConvertPillagerToAquaticChunks(i, fileListing);
-    }
+    // TODO: bruh moment
+    // for (int i = 0; i < 32; i++) {
+    //
+    //     // Convert114ToAquaticChunks(i, fileListing);
+    // }
 
     // fileListing.convertRegions(consoleOut);
     printf("Total Time: %.3f\n", timer.getSeconds());

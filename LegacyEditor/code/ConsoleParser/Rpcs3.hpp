@@ -93,7 +93,7 @@ namespace editor {
             // TODO: make it cache the ACCOUNT_ID for later converting
             SFOManager mainSFO(sfoFilePath.string());
             const std::wstring subtitle = stringToWstring(mainSFO.getAttribute("SUB_TITLE"));
-            myListingPtr->fileInfo.basesavename = subtitle;
+            myListingPtr->fileInfo.baseSaveName = subtitle;
 
             return SUCCESS;
         }
@@ -184,7 +184,7 @@ namespace editor {
             sfo.addParam(eSFO_FMT::UTF8_NORMAL, "RPCS3_BLIST", "ICON0.PNG/METADATA/THUMB/GAMEDATA");
             sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SAVEDATA_DIRECTORY", folderName);
             sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SAVEDATA_LIST_PARAM", "0");
-            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SUB_TITLE", wStringToString(myListingPtr->fileInfo.basesavename));
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SUB_TITLE", wStringToString(myListingPtr->fileInfo.baseSaveName));
             std::string title = "Minecraft: PlayStation®3 Edition";
             if (productCode == ePS3ProductCode::BLES01976 ||
                 productCode == ePS3ProductCode::BLUS31426) {

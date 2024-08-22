@@ -44,7 +44,7 @@ namespace editor {
             }
 
             readFileInfo();
-            readPARAM_SFO();
+            readParamSfo();
 
             return SUCCESS;
         }
@@ -106,14 +106,14 @@ namespace editor {
 
         // TODO: make it return a status!
         // TODO: it should read more than just this probably!
-        int readPARAM_SFO() {
+        int readParamSfo() {
             fs::path sfoFilePath = myFilePath.parent_path();
             sfoFilePath /= "PARAM.SFO";
 
             // TODO: make it cache the ACCOUNT_ID for later converting
             SFOManager mainSFO(sfoFilePath.string());
             const std::wstring subtitle = stringToWstring(mainSFO.getAttribute("SUB_TITLE"));
-            myListingPtr->fileInfo.basesavename = subtitle;
+            myListingPtr->fileInfo.baseSaveName = subtitle;
 
             return SUCCESS;
         }
@@ -198,7 +198,7 @@ namespace editor {
             sfo.addParam(eSFO_FMT::INT, "PARENTAL_LEVEL", "0");
             sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SAVEDATA_DIRECTORY", folderName);
             sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SAVEDATA_LIST_PARAM", "0");
-            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SUB_TITLE", wStringToString(myListingPtr->fileInfo.basesavename));
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SUB_TITLE", wStringToString(myListingPtr->fileInfo.baseSaveName));
             std::string title = "Minecraft: PlayStation®3 Edition";
             if (productCode == ePS3ProductCode::BLES01976 ||
                 productCode == ePS3ProductCode::BLUS31426) {

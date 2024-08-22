@@ -42,8 +42,7 @@ int main() {
 
     std::string IN = TESTS["X360_TU74"].first;
     editor::FileListing theListing;
-    editor::ReadSettings readSettings(IN);
-    int status = theListing.read(readSettings);
+    int status = theListing.read(IN);
     if (status != 0) return printf_err(status, "failed to read listing\n");
 
     status = theListing.dumpToFolder(R"(C:\\Users\\jerrin\\Desktop\\OUT\\)");

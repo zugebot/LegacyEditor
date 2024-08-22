@@ -36,6 +36,7 @@ std::vector<SFOManager::Attribute> SFOManager::getAttributes() const {
 
         auto entry = myEntries[i];
         switch (entry.param_fmt) {
+            // TODO: this needs to be re-thought out for ps4 "FORMAT"
             case eSFO_FMT::UTF8_SPECIAL:
             case eSFO_FMT::UTF8_NORMAL: {
                 const char* ptr = &myDataTable.content[entry.data_offset];

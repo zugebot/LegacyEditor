@@ -23,20 +23,20 @@ int main() {
     if (status != 0) {
         return printf_err(status, "failed to load file '%s'\n", TEST_IN.c_str());
     }
-    c_auto consoleIn = fileListing.myConsole;
-    fileListing.fileInfo.basesavename = L"Fortnite";
+    c_auto consoleIn = fileListing.myReadSettings.getConsole();
+    fileListing.fileInfo.baseSaveName = L"Fortnite";
 
 
     fileListing.printDetails();
 
     editor::RegionManager region;
-    region.read(fileListing.region_overworld[2]);
+    region.read(fileListing.ptrs.region_overworld[2]);
     editor::ChunkManager *chunk = region.getChunk(0, 0);
 
     chunk->ensureDecompress(consoleIn);
     chunk->readChunk(consoleIn);
 
-    placeBlock(chunk->chunkData, 7, 64, 7, lce::blocks::ids::DRIED_KELP_BLOCK_ID, 0, false);
+    chunk->chunkData->placeBlock(7, 64, 7, lce::blocks::ids::DRIED_KELP_BLOCK_ID, 0, false);
 
     chunk->chunkData->defaultNBT();
     chunk->writeChunk(consoleOut);

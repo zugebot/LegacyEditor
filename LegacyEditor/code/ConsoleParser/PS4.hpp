@@ -104,7 +104,7 @@ namespace editor {
                     break;
                 }
             }
-            myListingPtr->myHasSeparateRegions = true;
+            myListingPtr->myReadSettings.setHasSepRegions(true);
             return status;
         }
 
@@ -137,7 +137,7 @@ namespace editor {
             // get the "CUSA00744-240620222358.0"-alike str from the main "param.sfo"
             SFOManager mainSFO(sfoFilePath.string());
             const std::wstring subtitle = stringToWstring(mainSFO.getAttribute("SUBTITLE"));
-            myListingPtr->fileInfo.basesavename = subtitle;
+            myListingPtr->fileInfo.baseSaveName = subtitle;
 
 
             std::string mainAttr = mainSFO.getAttribute("SAVEDATA_DIRECTORY");

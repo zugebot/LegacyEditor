@@ -25,8 +25,14 @@ namespace editor {
         lce::CONSOLE myConsole;
         fs::path myInFolderPath;
         fs::path myOutFilePath;
+
+
     public:
         ProductCodes myProductCodes;
+        /// im lazy, write getter + setter
+        bool shouldRemovePlayers = true;
+        /// im lazy, write getter + setter
+        bool shouldRemoveDataMapping = true;
 
 
         WriteSettings() : myConsole(lce::CONSOLE::NONE) {}

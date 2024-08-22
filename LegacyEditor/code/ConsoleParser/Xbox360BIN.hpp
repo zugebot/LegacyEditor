@@ -77,7 +77,7 @@ namespace editor {
             if (meta.thumbnailImage.size) {
                 myListingPtr->fileInfo.readPNG(meta.thumbnailImage);
             }
-            myListingPtr->fileInfo.basesavename = stfsInfo.getMetaData().displayName;
+            myListingPtr->fileInfo.baseSaveName = stfsInfo.getMetaData().displayName;
 
 
 
@@ -111,10 +111,6 @@ namespace editor {
             return NOT_IMPLEMENTED;
         }
 
-
-        void readFileInfo() const override {
-
-        }
 
 
         ND int write(MU editor::FileListing* theListing, MU editor::WriteSettings& theSettings) const override {

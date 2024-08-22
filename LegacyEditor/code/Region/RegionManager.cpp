@@ -123,11 +123,12 @@ namespace editor {
     void RegionManager::convertChunks(lce::CONSOLE consoleIn) {
         MU int index = 0;
         for (auto& chunk: chunks) {
-            if (chunk.size != 0) {
-                // printf("chunk %d\n", index);
-                chunk.ensureDecompress(myConsole);
-                chunk.ensureCompressed(consoleIn);
-            }
+            if (chunk.size == 0) continue;
+
+            MU c_bool shouldSkipRLE = chunk.fileData.getCompressedFlag();
+            chunk.ensureDecompress(myConsole, shouldSkipRLE);
+            chunk.ensureCompressed(consoleIn, shouldSkipRLE);
+
             index++;
         }
     }
@@ -208,8 +209,6 @@ namespace editor {
                         largestOffset = managerOut.getPosition();
                     }
                 }
-
-
 
             }
         }

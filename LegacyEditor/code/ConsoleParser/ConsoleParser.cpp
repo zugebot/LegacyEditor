@@ -6,11 +6,11 @@ int ConsoleParser::readListing(const Data &dataIn) {
 
     c_u32 indexOffset = managerIn.readInt32();
     u32 fileCount = managerIn.readInt32();
-    myListingPtr->myOldestVersion = managerIn.readInt16();
-    myListingPtr->myCurrentVersion = managerIn.readInt16();
+    myListingPtr->myReadSettings.setOldestVersion(managerIn.readInt16());
+    myListingPtr->myReadSettings.setCurrentVersion(managerIn.readInt16());
 
     u32 FOOTER_ENTRY_SIZE = 144;
-    if (myListingPtr->myCurrentVersion <= 1) {
+    if (myListingPtr->myReadSettings.getCurrentVersion() <= 1) {
         FOOTER_ENTRY_SIZE = 136;
         fileCount /= 136;
     }
@@ -26,15 +26,10 @@ int ConsoleParser::readListing(const Data &dataIn) {
         u32 fileSize = managerIn.readInt32();
         c_u32 index = managerIn.readInt32();
         u64 timestamp = 0;
-        if (myListingPtr->myCurrentVersion <= 1) {
+        if (myListingPtr->myReadSettings.getCurrentVersion() <= 1) {
             timestamp = managerIn.readInt64();
         }
         totalSize += fileSize;
-
-        // if (fileSize == 0U) {
-        //     printf("Skipping empty file \"%s\"\n", fileName.c_str());
-        //     continue;
-        // }
 
         managerIn.seek(index);
         u8* data = managerIn.readBytes(fileSize);
@@ -81,16 +76,14 @@ int ConsoleParser::readListing(const Data &dataIn) {
             file.fileType = lce::FILETYPE::DATA_MAPPING;
 
         } else if (fileName.starts_with("data/")) {
-            file.fileType = lce::FILETYPE::STRUCTURE;
-            file.setFileName(fileName);
+            file.SetFileNameAndType(fileName, lce::FILETYPE::STRUCTURE);
 
         } else if (fileName.ends_with(".grf")) {
-            file.fileType = lce::FILETYPE::GRF;
+            file.SetFileNameAndType(fileName, lce::FILETYPE::GRF);
 
         } else if (fileName.starts_with("players/") ||
                    fileName.find('/') == -1LLU) {
-            file.fileType = lce::FILETYPE::PLAYER;
-            file.setFileName(fileName);
+            file.SetFileNameAndType(fileName, lce::FILETYPE::PLAYER);
 
         } else {
             printf("Unknown File: %s\n", fileName.c_str());
@@ -109,6 +102,8 @@ Data ConsoleParser::writeListing(const lce::CONSOLE consoleOut) const {
 
     // step 1: get the file count and size of all sub-files
     c_u32 fileCount = myListingPtr->myAllFiles.size();
+    c_i32 currentVersion = myListingPtr->myReadSettings.getCurrentVersion();
+
     u32 fileDataSize = 0;
     for (const editor::LCEFile& file: myListingPtr->myAllFiles) {
         fileDataSize += file.data.getSize();
@@ -117,7 +112,7 @@ Data ConsoleParser::writeListing(const lce::CONSOLE consoleOut) const {
     c_u32 fileInfoOffset = fileDataSize + 12;
 
     u32 FOOTER_ENTRY_SIZE = 144;
-    if (myListingPtr->myCurrentVersion <= 1) {
+    if (currentVersion <= 1) {
         FOOTER_ENTRY_SIZE = 136;
     }
 
@@ -133,12 +128,12 @@ Data ConsoleParser::writeListing(const lce::CONSOLE consoleOut) const {
     // step 3: write start
     managerOut.writeInt32(fileInfoOffset);
     u32 innocuousVariableName = fileCount;
-    if (myListingPtr->myCurrentVersion <= 1) {
+    if (currentVersion <= 1) {
         innocuousVariableName *= 136;
     }
     managerOut.writeInt32(innocuousVariableName);
-    managerOut.writeInt16(myListingPtr->myOldestVersion);
-    managerOut.writeInt16(myListingPtr->myCurrentVersion);
+    managerOut.writeInt16(myListingPtr->myReadSettings.getOldestVersion());
+    managerOut.writeInt16(currentVersion);
 
     // step 4: write each files data
     // I am using additionalData as the offset into the file its data is at
@@ -153,11 +148,12 @@ Data ConsoleParser::writeListing(const lce::CONSOLE consoleOut) const {
     for (const editor::LCEFile& fileIter: myListingPtr->myAllFiles) {
         // printf("%2u. (@%7u)[%7u] - %s\n", count + 1, fileIter
         // .additionalData, fileIter.size, fileIter.name.c_str());
-        std::string fileIterName = fileIter.constructFileName(consoleOut, myListingPtr->myHasSeparateRegions);
+        std::string fileIterName = fileIter.constructFileName(consoleOut,
+                                                              myListingPtr->myReadSettings.getHasSepRegions());
         managerOut.writeWStringFromString(fileIterName, WSTRING_SIZE);
         managerOut.writeInt32(fileIter.data.getSize());
         managerOut.writeInt32(fileIter.additionalData);
-        if (myListingPtr->myCurrentVersion > 1) {
+        if (currentVersion > 1) {
             managerOut.writeInt64(fileIter.timestamp);
         }
     }
@@ -210,8 +206,8 @@ XBOX360_SKIP_READING_FILEINFO:
         myListingPtr->fileInfo.loadFileAsThumbnail("assets/LegacyEditor/world-icon.png");
     }
 
-    if (myListingPtr->fileInfo.basesavename.empty()) {
-        myListingPtr->fileInfo.basesavename = L"New World";
+    if (myListingPtr->fileInfo.baseSaveName.empty()) {
+        myListingPtr->fileInfo.baseSaveName = L"New World";
     }
 }
 
@@ -249,18 +245,18 @@ int ConsoleParser::readExternalFolder(const fs::path& inDirPath) {
 
         // TODO: get timestamp from file itself / make one up
         u32 timestamp = 0;
-        myListingPtr->myAllFiles.emplace_back(myListingPtr->myConsole, dat_out.data, fileSize, timestamp);
+        myListingPtr->myAllFiles.emplace_back(myListingPtr->myReadSettings.getConsole(), dat_out.data, fileSize, timestamp);
         editor::LCEFile &lFile = myListingPtr->myAllFiles.back();
+        static constexpr lce::FILETYPE REGION_DIMENSIONS[3] = {
+                lce::FILETYPE::REGION_OVERWORLD,
+                lce::FILETYPE::REGION_NETHER,
+                lce::FILETYPE::REGION_END
+        };
         if (c_auto dimChar = static_cast<char>(static_cast<int>(fileNameStr.at(12)) - 48);
             dimChar < 0 || dimChar > 2) {
             lFile.fileType = lce::FILETYPE::NONE;
         } else {
-            static constexpr lce::FILETYPE regDims[3] = {
-                    lce::FILETYPE::REGION_OVERWORLD,
-                    lce::FILETYPE::REGION_NETHER,
-                    lce::FILETYPE::REGION_END
-            };
-            lFile.fileType = regDims[static_cast<int>(static_cast<u8>(dimChar))];
+            lFile.fileType = REGION_DIMENSIONS[static_cast<int>(static_cast<u8>(dimChar))];
         }
         c_i16 rX = static_cast<i8>(strtol(
                 fileNameStr.substr(13, 2).c_str(), nullptr, 16));

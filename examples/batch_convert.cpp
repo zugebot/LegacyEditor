@@ -115,8 +115,8 @@ int main(int argc, char *argv[]) {
 
 
     // iterate over all the files they gave
-    for (int i = 1; i < argc; ++i) {
-        fs::path filePath(argv[i]);
+    for (int saveIndex = 1; saveIndex < argc; ++saveIndex) {
+        fs::path filePath(argv[saveIndex]);
         if (!fs::exists(filePath)) {
             std::cerr << "File does not exist: " << filePath.make_preferred() << "\n";
             continue;

@@ -7,7 +7,6 @@
 
 #include "lce/processor.hpp"
 
-#include "LegacyEditor/utils/PS3_DEFLATE/deflateUsage.hpp"
 #include "LegacyEditor/utils/RLE/rle.hpp"
 #include "LegacyEditor/utils/XBOX_LZX/XDecompress.hpp"
 
@@ -52,10 +51,17 @@ namespace editor {
     }
 
 
-    MU void ChunkManager::readChunk(MU const lce::CONSOLE inConsole) const {
-        auto managerIn = DataManager(data, size);
-        managerIn.seekStart();
-
+    MU void ChunkManager::readChunk(MU const lce::CONSOLE inConsole) {
+        // cannot read chunk if there is no data
+        if (size == 0) {
+            return;
+        }
+        // if the file is compressed, decompress it first
+        if (fileData.getCompressedFlag()) {
+            ensureDecompress(inConsole);
+        }
+        // read the chunk
+        DataManager managerIn(data, size);
         chunkData->lastVersion = managerIn.readInt16();
 
         switch(chunkData->lastVersion) {
@@ -77,23 +83,28 @@ namespace editor {
     }
 
 
-    MU void ChunkManager::writeChunk(MU lce::CONSOLE console) {
+    MU void ChunkManager::writeChunk(MU lce::CONSOLE outConsole) {
         Data outBuffer;
         outBuffer.allocate(CHUNK_BUFFER_SIZE);
         memset(outBuffer.data, 0, CHUNK_BUFFER_SIZE);
-        auto managerOut = DataManager(outBuffer);
+        DataManager managerOut(outBuffer);
 
-        managerOut.seekStart();
+
         switch (chunkData->lastVersion) {
             case V_NBT:
                 chunk::ChunkV10(chunkData, &managerOut).writeChunk();
-            break; case V_8: case V_9: case V_11:
+                break;
+            case V_8:
+            case V_9:
+            case V_11:
                 managerOut.writeInt16(chunkData->lastVersion);
                 chunk::ChunkV11(chunkData, &managerOut).writeChunk();
-            break; case V_12:
+                break;
+            case V_12:
                 managerOut.writeInt16(chunkData->lastVersion);
                 chunk::ChunkV12(chunkData, &managerOut).writeChunk();
-            break; case V_13:
+                break;
+            case V_13:
                 printf("ChunkManager::writeChunk v13 forbidden\n");
                 exit(-1);
             default:;
@@ -103,31 +114,28 @@ namespace editor {
         outData.allocate(managerOut.getPosition());
         std::memcpy(outData.data, outBuffer.data, outData.size);
         outBuffer.deallocate();
-        deallocate();
 
+        deallocate();
         data = outData.data;
         size = outData.size;
+
         fileData.setDecSize(size);
     }
 
 
     // TODO: rewrite to return status
-    int ChunkManager::ensureDecompress(lce::CONSOLE consoleIn) {
+    int ChunkManager::ensureDecompress(lce::CONSOLE consoleIn, bool skipRLE) {
         if (fileData.getCompressedFlag() == 0U
-            /*|| console == lce::CONSOLE::NONE*/
             || data == nullptr
             || size == 0) {
             return SUCCESS;
         }
 
-        fileData.setCompressedFlag(0U);
-
         u32 dec_size = fileData.getDecSize();
         Data decompData;
-        decompData.setScopeDealloc(true);
         decompData.allocate(fileData.getDecSize());
 
-        // TODO: XBOX1 case is not handled
+
         int result = SUCCESS;
         switch (consoleIn) {
             case lce::CONSOLE::XBOX360: {
@@ -153,19 +161,21 @@ namespace editor {
                 break;
         }
 
-        deallocate();
+        fileData.setCompressedFlag(0U);
 
-        if (fileData.getRLEFlag() != 0U) {
+
+        if (fileData.getRLEFlag() == 1U && !skipRLE) {
+            deallocate();
             allocate(fileData.getRLESize());
             RLE_decompress(decompData.start(),
                 decompData.size, start(), dec_size);
 
+            fileData.setRLEFlag(0U);
             decompData.deallocate();
 
         } else {
-            data = decompData.data;
-            size = dec_size;
-            decompData.reset();
+            steal(decompData);
+            if (!skipRLE) { size = dec_size; }
         }
 
         return result;
@@ -173,7 +183,7 @@ namespace editor {
 
 
     // TODO: rewrite to return status
-    int ChunkManager::ensureCompressed(const lce::CONSOLE console) {
+    int ChunkManager::ensureCompressed(const lce::CONSOLE console, bool skipRLE) {
         if (fileData.getCompressedFlag() != 0U
             || console == lce::CONSOLE::NONE
             || data == nullptr
@@ -183,25 +193,22 @@ namespace editor {
         fileData.setCompressedFlag(1U);
         fileData.setDecSize(size);
 
-        if (fileData.getRLEFlag() != 0U) {
+        if (fileData.getRLEFlag() == 0U && !skipRLE) {
             Data rleBuffer;
             rleBuffer.allocate(size);
             RLE_compress(data, size, rleBuffer.data, rleBuffer.size);
-            deallocate();
-            data = rleBuffer.data;
-            size = rleBuffer.size;
+            steal(rleBuffer);
+
             fileData.setRLESize(size);
-            rleBuffer.reset();
+            fileData.setRLEFlag(1);
         }
 
         // allocate memory and recompress
-
-
-        // TODO: Does it work for vita?
-        int status = 0;
+        int status = INVALID_CONSOLE;
         switch (console) {
             case lce::CONSOLE::XBOX360:
-                printf("trying to write xbox360 chunk with ChunkManager::ensureCompressed, not supported yet\n");
+                printf("trying to write xbox360 chunk with ChunkManager::ensureCompressed, "
+                       "not supported yet\n");
                 // TODO: leaks memory
                 // XCompress(comp_ptr, comp_size, data_ptr, data_size);
                 break;
@@ -210,21 +217,18 @@ namespace editor {
             case lce::CONSOLE::RPCS3: {
                 auto *comp_ptr = new u8[size];
                 uLongf comp_size = size;
-
                 status = compress(comp_ptr, &comp_size, data, size);
                 deallocate();
                 if (status != 0) {
                     printf("error has occurred compressing chunk\n");
                     return MALLOC_FAILED;
                 }
-
                 // copy it over, and remove ZLIB header
                 data = new u8[comp_size - 2];
                 size = comp_size - 2;
                 std::memcpy(data, comp_ptr + 2, size);
                 // zero out ending integrity check, as the console does
                 // std::memset(data + comp_size - 6, 0, 4);
-
                 delete[] comp_ptr;
                 comp_size = 0;
                 break;
@@ -252,7 +256,7 @@ namespace editor {
                 break;
         }
 
-        return SUCCESS;
+        return status;
     }
 
 

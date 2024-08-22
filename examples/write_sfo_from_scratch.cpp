@@ -9,15 +9,28 @@
 int main() {
     PREPARE_UNIT_TESTS();
 
-    fs::path sfo1Path = R"(C:\Users\jerrin\CLionProjects\LegacyEditor\tests\RPCS3\NPUB31419--240424132851\PARAM.SFO)";
+    // fs::path sfo1Path = R"(C:\Users\jerrin\CLionProjects\LegacyEditor\tests\RPCS3\NPUB31419--240424132851\PARAM.SFO)";
+    fs::path sfo1Path = R"(C:\Users\jerrin\CLionProjects\LegacyEditor\tests\PS4\folder\00000008\savedata0\sce_sys\param.sfo)";
+
     SFOManager sfo1(sfo1Path.string());
 
-    auto attrs = sfo1.getAttributes();
-    for (auto& attr : attrs) {
+    auto attrs1 = sfo1.getAttributes();
+    for (auto& attr : attrs1) {
         std::cout << attr.toString() << std::endl;
     }
 
+    std::cout << "\n\n";
 
+    fs::path sfo2Path = R"(C:\Users\jerrin\CLionProjects\LegacyEditor\tests\PS4\folder\00000007\savedata0\sce_sys\param.sfo)";
+
+    SFOManager sfo2(sfo2Path.string());
+
+    auto attrs2 = sfo2.getAttributes();
+    for (auto& attr : attrs2) {
+        std::cout << attr.toString() << std::endl;
+    }
+
+    /*
     fs::path outPath = R"(C:\Users\jerrin\CLionProjects\LegacyEditor\tests\RPCS3\NPUB31419--240424132851\param.sfo_out)";
 
 
@@ -40,6 +53,7 @@ int main() {
     newSFO.addParam(eSFO_FMT::UTF8_NORMAL, "TITLE", "Minecraft: PlayStation®3 Edition");
     newSFO.setMagic(eSFO_MAGIC::PS3_HDD);
     newSFO.saveToFile(outPath.string());
+     */
 
 
 

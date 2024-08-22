@@ -16,18 +16,18 @@ int main() {
     }
 
 
-    for (size_t index = 0; index < fileListing.region_overworld.size(); index++) {
-        editor::updateChunksToAquatic(index, fileListing.region_overworld, fileListing.myConsole, consoleOut);
+    for (size_t index = 0; index < fileListing.ptrs.region_overworld.size(); index++) {
+        editor::updateChunksToAquatic(index, fileListing.ptrs.region_overworld, fileListing.myReadSettings.getConsole(), consoleOut);
     }
-    for (size_t index = 0; index < fileListing.region_nether.size(); index++) {
-        editor::updateChunksToAquatic(index, fileListing.region_nether, fileListing.myConsole, consoleOut);
+    for (size_t index = 0; index < fileListing.ptrs.region_nether.size(); index++) {
+        editor::updateChunksToAquatic(index, fileListing.ptrs.region_nether, fileListing.myReadSettings.getConsole(), consoleOut);
     }
-    for (size_t index = 0; index < fileListing.region_end.size(); index++) {
-        editor::updateChunksToAquatic(index, fileListing.region_end, fileListing.myConsole, consoleOut);
+    for (size_t index = 0; index < fileListing.ptrs.region_end.size(); index++) {
+        editor::updateChunksToAquatic(index, fileListing.ptrs.region_end, fileListing.myReadSettings.getConsole(), consoleOut);
     }
 
 
-    fileListing.fileInfo.basesavename = L"lolza admireU skibidi toilet";
+    fileListing.fileInfo.baseSaveName = L"lolza admireU skibidi toilet";
     editor::WriteSettings settings(consoleOut, snd);
     const int statusOut = fileListing.write(settings);
 

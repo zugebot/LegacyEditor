@@ -20,10 +20,10 @@ int main() {
 
 
     editor::RegionManager region;
-    region.read(fileListing.region_overworld[0]);
+    region.read(fileListing.ptrs.region_overworld[0]);
     editor::ChunkManager *chunk = region.getNonEmptyChunk();
-    chunk->ensureDecompress(fileListing.myConsole);
-    chunk->readChunk(fileListing.myConsole);
+    chunk->ensureDecompress(fileListing.myReadSettings.getConsole());
+    chunk->readChunk(fileListing.myReadSettings.getConsole());
 
 
     editor::WriteSettings settings(consoleOut, FILE_OUT);

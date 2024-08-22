@@ -10,8 +10,7 @@ int main() {
 
     auto [fst, snd] = TESTS["VITA_1_00"];
     editor::FileListing theListing;
-    editor::ReadSettings readSettings(fst);
-    int status = theListing.read(readSettings);
+    int status = theListing.read(fst);
     if (status != 0) return printf_err(status, "failed to read listing\n");
 
     status = theListing.dumpToFolder(R"(C:\\Users\\jerrin\\Desktop\\OUT\\)");

@@ -19,6 +19,8 @@ namespace editor {
 
 
     FileListing::FileListing() {
+        initializeActions();
+
         typedef std::array<std::unique_ptr<ConsoleParser>, 2> consoleParserArrayUQPtr;
         consoleInstances.emplace(lce::CONSOLE::XBOX360, consoleParserArrayUQPtr{std::make_unique<Xbox360DAT>(), std::make_unique<Xbox360BIN>()});
         consoleInstances.emplace(lce::CONSOLE::PS3, consoleParserArrayUQPtr{std::make_unique<PS3>(), nullptr});
@@ -57,10 +59,10 @@ namespace editor {
 
     int FileListing::readSave() {
         int readerIndex = 0;
-        auto it = consoleInstances.find(myConsole);
+        auto it = consoleInstances.find(myReadSettings.getConsole());
         if (it != consoleInstances.end()) {
 
-            if (myReadSettings.getIsXbox360BIN() && myConsole == lce::CONSOLE::XBOX360)
+            if (myReadSettings.getIsXbox360BIN() && myReadSettings.getConsole() == lce::CONSOLE::XBOX360)
                 readerIndex = 1; // use the .bin reader instead
 
             int status = it->second[readerIndex]->read(this, myReadSettings.getFilePath());
@@ -84,29 +86,29 @@ namespace editor {
     }
 
 
-    int FileListing::write(WriteSettings& theSettings) {
-        if (!theSettings.areSettingsValid()) {
+    int FileListing::write(WriteSettings& theWriteSettings) {
+        if (!theWriteSettings.areSettingsValid()) {
             printf("Write Settings are not valid, exiting\n");
             return STATUS::INVALID_ARGUMENT;
         }
 
         // TODO: create default output file path if not set
 
-        if (myConsole != theSettings.getConsole()) {
-            if (AUTO_REMOVE_PLAYERS) {
+        if (myReadSettings.getConsole() != theWriteSettings.getConsole()) {
+            if (theWriteSettings.shouldRemovePlayers) {
                 removeFileTypes({lce::FILETYPE::PLAYER});
             }
-            if (AUTO_REMOVE_DATA_MAPPING) {
+            if (theWriteSettings.shouldRemoveDataMapping) {
                 removeFileTypes({lce::FILETYPE::DATA_MAPPING});
             }
         }
         removeFileTypes({lce::FILETYPE::GRF});
 
-        convertRegions(theSettings.getConsole());
+        convertRegions(theWriteSettings.getConsole());
 
-        int status = writeSave(theSettings);
+        int status = writeSave(theWriteSettings);
         if (status != 0) {
-            printf("failed to write gamedata to %s", theSettings.getInFolderPath().string().c_str());
+            printf("failed to write gamedata to %s", theWriteSettings.getInFolderPath().string().c_str());
         }
         return status;
     }
@@ -137,12 +139,12 @@ namespace editor {
         if (headerUnion.getInt1() <= 2) {
             if (headerUnion.getShort5() == ZLIB_MAGIC) {
                 if (headerUnion.getInt2Swap() >= headerUnion.getDestSize()) {
-                    myConsole = lce::CONSOLE::WIIU;
+                    myReadSettings.setConsole(lce::CONSOLE::WIIU);
                 } else {
                     const std::string parentDir = myReadSettings.getFilePath().parent_path().filename().string();
-                    myConsole = lce::CONSOLE::SWITCH;
+                    myReadSettings.setConsole(lce::CONSOLE::SWITCH);
                     if (parentDir == "savedata0") {
-                        myConsole = lce::CONSOLE::PS4;
+                        myReadSettings.setConsole(lce::CONSOLE::PS4);
                     }
                 }
             } else {
@@ -150,29 +152,80 @@ namespace editor {
                 // TODO: with custom vitaRLE decompress checker
                 c_u32 indexFromSF = headerUnion.getInt2Swap() - headerUnion.getInt3Swap();
                 if (indexFromSF > 0 && indexFromSF < 65536) {
-                    myConsole = lce::CONSOLE::VITA;
+                    myReadSettings.setConsole(lce::CONSOLE::VITA);
                 } else { // compressed ps3
-                    myConsole = lce::CONSOLE::PS3;
+                    myReadSettings.setConsole(lce::CONSOLE::PS3);
                 }
             }
         } else if (headerUnion.getInt2() <= 2) {
             /// if (int2 == 0) it is an xbox savefile unless it's a massive
             /// file, but there won't be 2 files in a savegame file for PS3
-            myConsole = lce::CONSOLE::XBOX360;
+            myReadSettings.setConsole(lce::CONSOLE::XBOX360);
             myReadSettings.setIsXbox360BIN(false);
             // TODO: don't use arbitrary guess for a value
         } else if (headerUnion.getInt2() < 100) { // uncompressed PS3 / RPCS3
             /// otherwise if (int2) > 100 then it is a random file
             /// because likely ps3 won't have more than 100 files
-            myConsole = lce::CONSOLE::RPCS3;
+            myReadSettings.setConsole(lce::CONSOLE::RPCS3);
         } else if (headerUnion.getInt1() == CON_MAGIC) {
-            myConsole = lce::CONSOLE::XBOX360;
+            myReadSettings.setConsole(lce::CONSOLE::XBOX360);
             myReadSettings.setIsXbox360BIN(true);
         } else {
             return printf_err(INVALID_SAVE, ERROR_3);
         }
 
         return SUCCESS;
+    }
+
+
+    void FileListing::initializeActions() {
+        ptrs.clearDelete = {
+                {lce::FILETYPE::STRUCTURE, [this] { ptrs.structures.removeAll(); }},
+                {lce::FILETYPE::MAP, [this] { ptrs.maps.removeAll(); }},
+                {lce::FILETYPE::PLAYER, [this] { ptrs.players.removeAll(); }},
+                {lce::FILETYPE::REGION_NETHER, [this] { ptrs.region_nether.removeAll(); }},
+                {lce::FILETYPE::REGION_OVERWORLD, [this] { ptrs.region_overworld.removeAll(); }},
+                {lce::FILETYPE::REGION_END, [this] { ptrs.region_end.removeAll(); }},
+                {lce::FILETYPE::ENTITY_NETHER, [this] { ptrs.entity_nether->deleteData(); ptrs.entity_nether = nullptr; }},
+                {lce::FILETYPE::ENTITY_OVERWORLD, [this] { ptrs.entity_overworld->deleteData(); ptrs.entity_overworld = nullptr; }},
+                {lce::FILETYPE::ENTITY_END, [this] { ptrs.entity_end->deleteData(); ptrs.entity_end = nullptr; }},
+                {lce::FILETYPE::VILLAGE, [this] { ptrs.village->deleteData(); ptrs.village = nullptr; }},
+                {lce::FILETYPE::DATA_MAPPING, [this] { ptrs.largeMapDataMappings->deleteData(); ptrs.largeMapDataMappings = nullptr; }},
+                {lce::FILETYPE::LEVEL, [this] { ptrs.level->deleteData(); ptrs.level = nullptr; }},
+                {lce::FILETYPE::GRF, [this] { ptrs.grf->deleteData(); ptrs.grf = nullptr; }},
+        };
+
+        ptrs.clearRemove = {
+                {lce::FILETYPE::STRUCTURE, [this] { ptrs.structures.clear(); }},
+                {lce::FILETYPE::MAP, [this] { ptrs.maps.clear(); }},
+                {lce::FILETYPE::PLAYER, [this] { ptrs.players.clear(); }},
+                {lce::FILETYPE::REGION_NETHER, [this] { ptrs.region_nether.clear(); }},
+                {lce::FILETYPE::REGION_OVERWORLD, [this] { ptrs.region_overworld.clear(); }},
+                {lce::FILETYPE::REGION_END, [this] { ptrs.region_end.clear(); }},
+                {lce::FILETYPE::ENTITY_NETHER, [this] { ptrs.entity_nether = nullptr; }},
+                {lce::FILETYPE::ENTITY_OVERWORLD, [this] { ptrs.entity_overworld = nullptr; }},
+                {lce::FILETYPE::ENTITY_END, [this] { ptrs.entity_end = nullptr; }},
+                {lce::FILETYPE::VILLAGE, [this] { ptrs.village = nullptr; }},
+                {lce::FILETYPE::DATA_MAPPING, [this] { ptrs.largeMapDataMappings = nullptr; }},
+                {lce::FILETYPE::LEVEL, [this] { ptrs.level = nullptr; }},
+                {lce::FILETYPE::GRF, [this] { ptrs.grf = nullptr; }},
+        };
+
+        ptrs.addUpdate = {
+                {lce::FILETYPE::STRUCTURE, [this](LCEFile& file) { ptrs.structures.push_back(&file); }},
+                {lce::FILETYPE::VILLAGE, [this](LCEFile& file) { ptrs.village = &file; }},
+                {lce::FILETYPE::DATA_MAPPING, [this](LCEFile& file) { ptrs.largeMapDataMappings = &file; }},
+                {lce::FILETYPE::MAP, [this](LCEFile& file) { ptrs.maps.push_back(&file); }},
+                {lce::FILETYPE::REGION_NETHER, [this](LCEFile& file) { ptrs.region_nether.push_back(&file); }},
+                {lce::FILETYPE::REGION_OVERWORLD, [this](LCEFile& file) { ptrs.region_overworld.push_back(&file); }},
+                {lce::FILETYPE::REGION_END, [this](LCEFile& file) { ptrs.region_end.push_back(&file); }},
+                {lce::FILETYPE::PLAYER, [this](LCEFile& file) { ptrs.players.push_back(&file); }},
+                {lce::FILETYPE::LEVEL, [this](LCEFile& file) { ptrs.level = &file; }},
+                {lce::FILETYPE::GRF, [this](LCEFile& file) { ptrs.grf = &file; }},
+                {lce::FILETYPE::ENTITY_NETHER, [this](LCEFile& file) { ptrs.entity_nether = &file; }},
+                {lce::FILETYPE::ENTITY_OVERWORLD, [this](LCEFile& file) { ptrs.entity_overworld = &file; }},
+                {lce::FILETYPE::ENTITY_END, [this](LCEFile& file) { ptrs.entity_end = &file; }},
+        };
     }
 
 

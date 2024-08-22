@@ -11,8 +11,8 @@
 #include "lce/processor.hpp"
 #include "lce/include/picture.hpp"
 
+#include "stateSettings.hpp"
 #include "writeSettings.hpp"
-#include "readSettings.hpp"
 
 #include "LegacyEditor/code/ConsoleParser/ConsoleParser.hpp"
 #include "LegacyEditor/code/FileInfo/FileInfo.hpp"
@@ -42,40 +42,12 @@ namespace editor {
         std::unordered_map<lce::CONSOLE, std::array<std::unique_ptr<ConsoleParser>, 2>> consoleInstances;
 
     public:
-
-        /// SETTINGS
-        static bool AUTO_REMOVE_PLAYERS;
-        static bool AUTO_REMOVE_DATA_MAPPING;
-
-        ReadSettings myReadSettings;
+        StateSettings myReadSettings;
+        // this can probably be renamed to "myInternalFiles"
         std::list<LCEFile> myAllFiles;
-        i32 myOldestVersion{};
-        i32 myCurrentVersion{};
-        lce::CONSOLE myConsole = lce::CONSOLE::NONE;
+
+        // these can probably be stored in a std::list called external files
         FileInfo fileInfo{};
-
-        bool myHasSeparateRegions = false;
-
-        /// Pointers
-
-        FileList* dimFileLists[3] = {&region_nether, &region_overworld, &region_end};
-
-        FileList region_nether;
-        FileList region_overworld;
-        FileList region_end;
-        FileList maps;
-        FileList structures;
-        FileList players;
-
-
-        LCEFile *entity_nether{};
-        LCEFile *entity_overworld{};
-        LCEFile *entity_end{};
-        LCEFile *largeMapDataMappings{};
-        LCEFile *level{};
-        LCEFile *grf{};
-        LCEFile *village{};
-
         Picture icon0png;
 
         /// Constructors
@@ -102,19 +74,19 @@ namespace editor {
         /// Parse from console files
 
         MU ND int read(const fs::path& theFilePath);
-        MU ND int write(WriteSettings& theSettings);
+        MU ND int write(WriteSettings& theWriteSettings);
 
         /// Conversion
 
         MU ND int convertTo(const fs::path& inFilePath, const fs::path& outFilePath, lce::CONSOLE consoleOut);
         MU ND int convertAndReplaceRegions(const fs::path& inFilePath, const fs::path& inFileRegionReplacementPath,
-                                           const fs::path& outFilePath, const lce::CONSOLE consoleOut);
+                                           const fs::path& outFilePath, lce::CONSOLE consoleOut);
 
         /// Region Helpers
 
         MU void convertRegions(lce::CONSOLE consoleOut);
         MU void pruneRegions();
-        MU void replaceRegionOW(size_t regionIndex, editor::RegionManager& region, const lce::CONSOLE consoleOut);
+        MU void replaceRegionOW(size_t regionIndex, editor::RegionManager& region, lce::CONSOLE consoleOut);
 
         /// File pointer stuff
 
@@ -129,60 +101,34 @@ namespace editor {
         MU ND int readSave();
         int writeSave(WriteSettings& theSettings);
 
+    public:
 
-        /// For use in removeFileTypes
+        /// Pointers
+        struct {
+            FileList* dimFileLists[3] = {&region_nether, &region_overworld, &region_end};
+            FileList region_nether;
+            FileList region_overworld;
+            FileList region_end;
+            FileList maps;
+            FileList structures;
+            FileList players;
+            LCEFile *entity_nether{};
+            LCEFile *entity_overworld{};
+            LCEFile *entity_end{};
+            LCEFile *largeMapDataMappings{};
+            LCEFile *level{};
+            LCEFile *grf{};
+            LCEFile *village{};
 
-        std::map<lce::FILETYPE, std::function<void()>> actionsClearDelete = {
-                {lce::FILETYPE::STRUCTURE, [this] { structures.removeAll(); }},
-                {lce::FILETYPE::MAP, [this] { maps.removeAll(); }},
-                {lce::FILETYPE::PLAYER, [this] { players.removeAll(); }},
-                {lce::FILETYPE::REGION_NETHER, [this] { region_nether.removeAll(); }},
-                {lce::FILETYPE::REGION_OVERWORLD, [this] { region_overworld.removeAll(); }},
-                {lce::FILETYPE::REGION_END, [this] { region_end.removeAll(); }},
-                {lce::FILETYPE::ENTITY_NETHER, [this] { entity_nether->deleteData(); entity_nether = nullptr; }},
-                {lce::FILETYPE::ENTITY_OVERWORLD, [this] { entity_overworld->deleteData(); entity_overworld = nullptr; }},
-                {lce::FILETYPE::ENTITY_END, [this] { entity_end->deleteData(); entity_end = nullptr; }},
-                {lce::FILETYPE::VILLAGE, [this] { village->deleteData(); village = nullptr; }},
-                {lce::FILETYPE::DATA_MAPPING, [this] { largeMapDataMappings->deleteData(); largeMapDataMappings = nullptr; }},
-                {lce::FILETYPE::LEVEL, [this] { level->deleteData(); level = nullptr; }},
-                {lce::FILETYPE::GRF, [this] { grf->deleteData(); grf = nullptr; }},
-        };
+            std::map<lce::FILETYPE, std::function<void()>> clearDelete;
+            std::map<lce::FILETYPE, std::function<void()>> clearRemove;
+            std::map<lce::FILETYPE, std::function<void(LCEFile&)>> addUpdate;
+        } ptrs;
 
-
-        std::map<lce::FILETYPE, std::function<void()>> actionsClearRemove = {
-                {lce::FILETYPE::STRUCTURE, [this] { structures.clear(); }},
-                {lce::FILETYPE::MAP, [this] { maps.clear(); }},
-                {lce::FILETYPE::PLAYER, [this] { players.clear(); }},
-                {lce::FILETYPE::REGION_NETHER, [this] { region_nether.clear(); }},
-                {lce::FILETYPE::REGION_OVERWORLD, [this] { region_overworld.clear(); }},
-                {lce::FILETYPE::REGION_END, [this] { region_end.clear(); }},
-                {lce::FILETYPE::ENTITY_NETHER, [this] { entity_nether = nullptr; }},
-                {lce::FILETYPE::ENTITY_OVERWORLD, [this] { entity_overworld = nullptr; }},
-                {lce::FILETYPE::ENTITY_END, [this] { entity_end = nullptr; }},
-                {lce::FILETYPE::VILLAGE, [this] { village = nullptr; }},
-                {lce::FILETYPE::DATA_MAPPING, [this] { largeMapDataMappings = nullptr; }},
-                {lce::FILETYPE::LEVEL, [this] { level = nullptr; }},
-                {lce::FILETYPE::GRF, [this] { grf = nullptr; }},
-        };
-
-
-        std::map<lce::FILETYPE, std::function<void(LCEFile&)>> actionsUpdate = {
-                {lce::FILETYPE::STRUCTURE, [this](LCEFile& file) { structures.push_back(&file); }},
-                {lce::FILETYPE::VILLAGE, [this](LCEFile& file) { village = &file; }},
-                {lce::FILETYPE::DATA_MAPPING, [this](LCEFile& file) { largeMapDataMappings = &file; }},
-                {lce::FILETYPE::MAP, [this](LCEFile& file) { maps.push_back(&file); }},
-                {lce::FILETYPE::REGION_NETHER, [this](LCEFile& file) { region_nether.push_back(&file); }},
-                {lce::FILETYPE::REGION_OVERWORLD, [this](LCEFile& file) { region_overworld.push_back(&file); }},
-                {lce::FILETYPE::REGION_END, [this](LCEFile& file) { region_end.push_back(&file); }},
-                {lce::FILETYPE::PLAYER, [this](LCEFile& file) { players.push_back(&file); }},
-                {lce::FILETYPE::LEVEL, [this](LCEFile& file) { level = &file; }},
-                {lce::FILETYPE::GRF, [this](LCEFile& file) { grf = &file; }},
-                {lce::FILETYPE::ENTITY_NETHER, [this](LCEFile& file) { entity_nether = &file; }},
-                {lce::FILETYPE::ENTITY_OVERWORLD, [this](LCEFile& file) { entity_overworld = &file; }},
-                {lce::FILETYPE::ENTITY_END, [this](LCEFile& file) { entity_end = &file; }},
-        };
-
+        void initializeActions();
 
     };
+
+
 }
 

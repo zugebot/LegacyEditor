@@ -12,17 +12,13 @@
 
 namespace editor {
 
-    bool FileListing::AUTO_REMOVE_PLAYERS = true;
-    bool FileListing::AUTO_REMOVE_DATA_MAPPING = true;
-
-
     void FileListing::printDetails() const {
         printf("\n** FileListing Details **\n");
         printf("1. Filename: %s\n", myReadSettings.getFilePath().string().c_str());
-        printf("2. Oldest Version: %d\n", myOldestVersion);
-        printf("3. Current Version: %d\n", myCurrentVersion);
-        printf("4. Total File Count: %zu\n", myAllFiles.size());
-        printf("5. Player File Count: %zu\n", players.size());
+        printf("2. Oldest  Version: %d\n", myReadSettings.getOldestVersion());
+        printf("3. Current Version: %d\n", myReadSettings.getCurrentVersion());
+        printf("4. Total  File Count: %zu\n", myAllFiles.size());
+        printf("5. Player File Count: %zu\n", ptrs.players.size());
         printFileList();
     }
 
@@ -32,7 +28,7 @@ namespace editor {
         int index = 0;
         for (c_auto& myAllFile : myAllFiles) {
             printf("%.2d [%7d]: %s\n", index, myAllFile.data.size,
-                   myAllFile.constructFileName(myConsole, myHasSeparateRegions).c_str());
+                   myAllFile.constructFileName(myReadSettings.getConsole(), myReadSettings.getHasSepRegions()).c_str());
             index++;
         }
         printf("\n");
@@ -45,7 +41,7 @@ namespace editor {
      * @return
      */
     int FileListing::dumpToFolder(const fs::path& inDirPath) const {
-        const fs::path consoleDirPath = inDirPath / ("dump/" + consoleToStr(myConsole));
+        const fs::path consoleDirPath = inDirPath / ("dump/" + consoleToStr(myReadSettings.getConsole()));
 
         // deletes all files in "DIR/dump/CONSOLE/".
         if (exists(consoleDirPath) && is_directory(consoleDirPath)) {
@@ -61,7 +57,7 @@ namespace editor {
         // puts each file in "DIR/dump/CONSOLE/".
         for (const LCEFile &file: myAllFiles) {
             const fs::path fullFilePath = consoleDirPath
-                / file.constructFileName(myConsole, myHasSeparateRegions);
+                / file.constructFileName(myReadSettings.getConsole(), myReadSettings.getHasSepRegions());
 
             // makes folders (such as "data") in "DIR/dump/CONSOLE/" if they do not exist
             if (!exists(fullFilePath.parent_path())) {
@@ -90,7 +86,7 @@ namespace editor {
             }
         }
 
-        actionsClearRemove[fileType]();
+        ptrs.clearRemove[fileType]();
         return collectedFiles;
     }
 
@@ -101,34 +97,32 @@ namespace editor {
         }
         clearPointers();
         myAllFiles.clear();
-        myOldestVersion = 0;
-        myCurrentVersion = 0;
-        myConsole = lce::CONSOLE::NONE;
+        myReadSettings.reset();
     }
 
 
     void FileListing::clearPointers() {
-        region_overworld.clear();
-        region_nether.clear();
-        region_end.clear();
-        entity_overworld = nullptr;
-        entity_nether = nullptr;
-        entity_end = nullptr;
-        maps.clear();
-        structures.clear();
-        players.clear();
-        largeMapDataMappings = nullptr;
-        level = nullptr;
-        grf = nullptr;
-        village = nullptr;
+        ptrs.region_overworld.clear();
+        ptrs.region_nether.clear();
+        ptrs.region_end.clear();
+        ptrs.entity_overworld = nullptr;
+        ptrs.entity_nether = nullptr;
+        ptrs.entity_end = nullptr;
+        ptrs.maps.clear();
+        ptrs.structures.clear();
+        ptrs.players.clear();
+        ptrs.largeMapDataMappings = nullptr;
+        ptrs.level = nullptr;
+        ptrs.grf = nullptr;
+        ptrs.village = nullptr;
     }
 
 
     void FileListing::updatePointers() {
         clearPointers();
         for (LCEFile& file : myAllFiles) {
-            auto it = actionsUpdate.find(file.fileType);
-            if (it != actionsUpdate.end()) {
+            auto it = ptrs.addUpdate.find(file.fileType);
+            if (it != ptrs.addUpdate.end()) {
                 it->second(file);
             }
         }
@@ -148,7 +142,7 @@ namespace editor {
             }
         }
         for (c_auto& fileType : typesToRemove) {
-            actionsClearRemove[fileType]();
+            ptrs.clearRemove[fileType]();
         }
 
         updatePointers();
@@ -164,7 +158,7 @@ namespace editor {
     MU void FileListing::convertRegions(const lce::CONSOLE consoleOut) {
         // int index = 0;
         // int index2 = 0;
-        for (const FileList* fileList : dimFileLists) {
+        for (const FileList* fileList : ptrs.dimFileLists) {
             // printf("list %d\n", index);
             // index++;
             // index2 = 0;
@@ -196,7 +190,7 @@ namespace editor {
             return status;
         }
 
-        status = dumpToFolder("");
+        (void) dumpToFolder("");
 
         removeFileTypes({lce::FILETYPE::PLAYER, lce::FILETYPE::DATA_MAPPING});
 
@@ -257,12 +251,12 @@ namespace editor {
 
 
     MU void FileListing::replaceRegionOW(size_t regionIndex, editor::RegionManager& region, const lce::CONSOLE consoleOut) {
-        if (regionIndex >= region_overworld.size()) {
+        if (regionIndex >= ptrs.region_overworld.size()) {
             throw std::runtime_error(
                 "attempted to call FileListing::replaceRegionOW with an index that is out of bounds.");
         }
-        region_overworld[regionIndex]->data.deallocate();
-        region_overworld[regionIndex]->data = region.write(consoleOut);
+        ptrs.region_overworld[regionIndex]->data.deallocate();
+        ptrs.region_overworld[regionIndex]->data = region.write(consoleOut);
     }
 
 

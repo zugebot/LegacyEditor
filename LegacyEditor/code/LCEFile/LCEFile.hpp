@@ -59,6 +59,8 @@ namespace editor {
         MU void setFileName(const std::string& filename) const;
         MU ND std::string getFileName() const;
 
+        MU void SetFileNameAndType(const std::string& filename, lce::FILETYPE filetype);
+
     private:
         MU void setTag(const std::string& key, i16 value) const;
         MU ND i16 getTag(const std::string& key) const;

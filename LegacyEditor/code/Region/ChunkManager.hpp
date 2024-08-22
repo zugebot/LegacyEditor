@@ -5,11 +5,13 @@
 #include "LegacyEditor/utils/data.hpp"
 #include "LegacyEditor/utils/error_status.hpp"
 
+#include "LegacyEditor/code/Chunk/chunkData.hpp"
+
 
 namespace editor {
-    namespace chunk {
-        class ChunkData;
-    }
+    // namespace chunk {
+    //     class ChunkData;
+    // }
 
     class ChunkManager : public Data {
         static constexpr u32 CHUNK_BUFFER_SIZE = 0xFFFFFF; // 4,194,303
@@ -76,11 +78,11 @@ namespace editor {
 
         MU ND int checkVersion() const;
 
-        int ensureDecompress(lce::CONSOLE consoleIn);
-        int ensureCompressed(lce::CONSOLE console);
+        int ensureDecompress(lce::CONSOLE consoleIn, bool skipRLE = false);
+        int ensureCompressed(lce::CONSOLE console, bool skipRLE = false);
 
-        MU void readChunk(lce::CONSOLE inConsole) const;
-        MU void writeChunk(lce::CONSOLE console);
+        MU void readChunk(lce::CONSOLE inConsole);
+        MU void writeChunk(lce::CONSOLE outConsole);
 
         void setSizeFromReading(u32 sizeIn);
         ND u32 getSizeForWriting() const;

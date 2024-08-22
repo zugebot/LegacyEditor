@@ -32,9 +32,9 @@ protected:
 
 
     ND int readListing(const Data &dataIn);
-    ND Data writeListing(const lce::CONSOLE consoleOut) const;
+    ND Data writeListing(lce::CONSOLE consoleOut) const;
 
-    virtual void readFileInfo() const;
+    void readFileInfo() const;
     // writeFileInfo...
 
     /// This function is used by Switch and PS4.

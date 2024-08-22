@@ -13,23 +13,23 @@ namespace editor {
 
     class FileInfo {
     public:
-        Data ingameThumbnail;
+        Data thumbnail;
         i64 seed{};
         i64 loads{};
-        i64 hostoptions{};
-        i64 texturepack{};
-        i64 extradata{};
-        i64 exploredchunks{};
-        std::wstring basesavename;
+        i64 hostOptions{};
+        i64 texturePack{};
+        i64 extraData{};
+        i64 exploredChunks{};
+        std::wstring baseSaveName;
         bool isLoaded;
 
         void defaultSettings();
         MU void loadFileAsThumbnail(const std::string& inFilePath);
 
-        int readFile(const fs::path& inFilePath, const lce::CONSOLE inConsole);
+        int readFile(const fs::path& inFilePath, lce::CONSOLE inConsole);
         int readCacheFile(const fs::path& inFilePath, const std::string& folderName);
 
-        ND Data writeFile(const fs::path& outFilePath, const lce::CONSOLE outConsole) const;
+        ND Data writeFile(const fs::path& outFilePath, lce::CONSOLE outConsole) const;
 
         int readPNG(DataManager& theManager);
 

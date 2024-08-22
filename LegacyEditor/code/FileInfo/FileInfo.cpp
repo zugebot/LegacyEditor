@@ -110,11 +110,11 @@ namespace editor {
     void FileInfo::defaultSettings() {
         seed = 0;
         loads = 0;
-        hostoptions = 0;
-        texturepack = 0;
-        extradata = 0;
-        exploredchunks = 0;
-        basesavename = L"converted by LCEditor";
+        hostOptions = 0;
+        texturePack = 0;
+        extraData = 0;
+        exploredChunks = 0;
+        baseSaveName = L"converted by LCEditor";
         isLoaded = true;
     }
 
@@ -126,8 +126,8 @@ namespace editor {
     void FileInfo::loadFileAsThumbnail(const std::string& inFilePath) {
         DataManager defaultPhoto;
         defaultPhoto.readFromFile(inFilePath);
-        ingameThumbnail.data = defaultPhoto.data;
-        ingameThumbnail.size = defaultPhoto.size;
+        thumbnail.data = defaultPhoto.data;
+        thumbnail.size = defaultPhoto.size;
     }
 
 
@@ -199,13 +199,13 @@ namespace editor {
 
         switch (theConsole) {
             case lce::CONSOLE::WIIU: {
-                basesavename = theManager.readNullTerminatedWString();
+                baseSaveName = theManager.readNullTerminatedWString();
                 u32 diff = 256 - (u32)(theManager.ptr - theManager.data);
                 theManager.incrementPointer(diff);
                 break;
             }
             case lce::CONSOLE::SWITCH: {
-                basesavename = theManager.readNullTerminatedWWWString();
+                baseSaveName = theManager.readNullTerminatedWWWString();
                 u32 diff = 512 - (u32)(theManager.ptr - theManager.data);
                 theManager.incrementPointer(diff);
                 // there is a random u32, then a null u32
@@ -238,8 +238,8 @@ namespace editor {
                     theManager.incrementPointer4();
                     PNG_END = theManager.ptr - 8;
                     c_u32 PNG_SIZE = PNG_END - PNG_START;
-                    ingameThumbnail.allocate(PNG_SIZE + 8);
-                    std::memcpy(ingameThumbnail.data, PNG_START, PNG_SIZE);
+                    thumbnail.allocate(PNG_SIZE + 8);
+                    std::memcpy(thumbnail.data, PNG_START, PNG_SIZE);
                     return SUCCESS;
                 }
                 theManager.incrementPointer(chunkLength + 4);
@@ -248,9 +248,9 @@ namespace editor {
 
             PNG_END = theManager.ptr - 8;
             c_u32 PNG_SIZE = PNG_END - PNG_START;
-            ingameThumbnail.allocate(PNG_SIZE + 12);
-            std::memcpy(ingameThumbnail.data, PNG_START, PNG_SIZE);
-            std::memcpy(ingameThumbnail.data + PNG_SIZE, &IEND_DAT[0], 12);
+            thumbnail.allocate(PNG_SIZE + 12);
+            std::memcpy(thumbnail.data, PNG_START, PNG_SIZE);
+            std::memcpy(thumbnail.data + PNG_SIZE, &IEND_DAT[0], 12);
 
             u32 endOfChunk = theManager.getPosition() + chunkLength;
 
@@ -273,17 +273,17 @@ namespace editor {
                 if (key == "4J_SEED") {
                     seed = stringToInt64(text);
                 } else if (key == "4J_HOSTOPTIONS") {
-                    hostoptions = stringToHex(text);
+                    hostOptions = stringToHex(text);
                 } else if (key == "4J_TEXTUREPACK") {
-                    texturepack = stringToHex(text);
+                    texturePack = stringToHex(text);
                 } else if (key == "4J_EXTRADATA") {
-                    extradata = stringToHex(text);
+                    extraData = stringToHex(text);
                 } else if (key == "4J_#LOADS") {
                     loads = stringToInt64(text);
                 } else if (key == "4J_EXPLOREDCHUNKS") {
-                    exploredchunks = stringToInt64(text);
+                    exploredChunks = stringToInt64(text);
                 } else if (key == "4J_BASESAVENAME") {
-                    appendWStringToString(text, basesavename);
+                    appendWStringToString(text, baseSaveName);
 
                     theManager.incrementPointer1();
                 }
@@ -307,7 +307,7 @@ namespace editor {
                 Data fileHeader;
                 fileHeader.allocate(528 + 8);
                 header.take(fileHeader);
-                header.writeWWWString(basesavename, 128);
+                header.writeWWWString(baseSaveName, 128);
                 // TODO: figure out what this number is
                 c_u32 value = 0;
                 header.writeInt32(value);
@@ -318,7 +318,7 @@ namespace editor {
                 Data fileHeader;
                 fileHeader.allocate(256);
                 header.take(fileHeader);
-                header.writeWString(basesavename, 128);
+                header.writeWString(baseSaveName, 128);
                 break;
             }
             default:
@@ -345,19 +345,19 @@ namespace editor {
 
             appendString("4J_HOSTOPTIONS");
             addNull();
-            appendString(hexToString(hostoptions));
+            appendString(hexToString(hostOptions));
 
             addNull();
 
             appendString("4J_TEXTUREPACK");
             addNull();
-            appendString(hexToString(texturepack));
+            appendString(hexToString(texturePack));
 
             addNull();
 
             appendString("4J_EXTRADATA");
             addNull();
-            appendString(hexToString(extradata));
+            appendString(hexToString(extraData));
 
             addNull();
 
@@ -366,11 +366,11 @@ namespace editor {
             appendString(int64ToString(loads));
 
 
-            if (exploredchunks != 0) {
+            if (exploredChunks != 0) {
                 addNull();
                 appendString("4J_EXPLOREDCHUNKS");
                 addNull();
-                appendString(int64ToString(exploredchunks));
+                appendString(int64ToString(exploredChunks));
             }
 
             // TODO: find the full list, i think it's only used by xbox but idk
@@ -380,12 +380,12 @@ namespace editor {
                 addNull();
                 appendString("4J_BASESAVENAME");
                 addNull();
-                appendString(wStringToString(basesavename));
+                appendString(wStringToString(baseSaveName));
             }
 
         }
 
-        c_u32 out_size = header.size + (ingameThumbnail.size - 12) + 4 + tEXt_chunk.size() + 4 + 12;
+        c_u32 out_size = header.size + (thumbnail.size - 12) + 4 + tEXt_chunk.size() + 4 + 12;
         Data out;
         out.allocate(out_size);
         DataManager manager(out);
@@ -397,8 +397,8 @@ namespace editor {
         }
 
         // write png data (excluding IEND)
-        std::memcpy(manager.ptr, ingameThumbnail.data, ingameThumbnail.size - 12);
-        manager.incrementPointer(ingameThumbnail.size - 12);
+        std::memcpy(manager.ptr, thumbnail.data, thumbnail.size - 12);
+        manager.incrementPointer(thumbnail.size - 12);
 
         // write tEXt chunk size
         manager.writeInt32(tEXt_chunk.size() - 4);

@@ -9,7 +9,6 @@ namespace editor {
     class LCEFile;
 
     class RegionManager {
-        // TODO: maybe PS4 / SWITCH have this value as 27?
         static constexpr u32 REGION_WIDTH = 32;
         static constexpr u32 SECTOR_INTS = REGION_WIDTH * REGION_WIDTH; // SECTOR_BYTES / 4
         static constexpr u32 SECTOR_BYTES = 4 * SECTOR_INTS;
@@ -27,7 +26,7 @@ namespace editor {
         /// FUNCTIONS
 
         MU ChunkManager* getChunk(int xIn, int zIn);
-        MU ChunkManager* getChunk(const uint32_t index);
+        MU ChunkManager* getChunk(u32 index);
         MU ChunkManager* getNonEmptyChunk();
 
         /// READ AND WRITE
