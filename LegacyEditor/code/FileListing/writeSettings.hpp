@@ -33,6 +33,8 @@ namespace editor {
         bool shouldRemovePlayers = true;
         /// im lazy, write getter + setter
         bool shouldRemoveDataMapping = true;
+        /// im lazy, write getter + setter
+        bool shouldRemoveMaps = true;
 
 
         WriteSettings() : myConsole(lce::CONSOLE::NONE) {}

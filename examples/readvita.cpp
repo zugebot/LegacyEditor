@@ -17,13 +17,13 @@ int main() {
 
 
     for (size_t index = 0; index < fileListing.ptrs.region_overworld.size(); index++) {
-        editor::updateChunksToAquatic(index, fileListing.ptrs.region_overworld, fileListing.myReadSettings.getConsole(), consoleOut);
+        editor::convertChunksToAquatic(index, fileListing.ptrs.region_overworld, fileListing.myReadSettings.getConsole(), consoleOut);
     }
     for (size_t index = 0; index < fileListing.ptrs.region_nether.size(); index++) {
-        editor::updateChunksToAquatic(index, fileListing.ptrs.region_nether, fileListing.myReadSettings.getConsole(), consoleOut);
+        editor::convertChunksToAquatic(index, fileListing.ptrs.region_nether, fileListing.myReadSettings.getConsole(), consoleOut);
     }
     for (size_t index = 0; index < fileListing.ptrs.region_end.size(); index++) {
-        editor::updateChunksToAquatic(index, fileListing.ptrs.region_end, fileListing.myReadSettings.getConsole(), consoleOut);
+        editor::convertChunksToAquatic(index, fileListing.ptrs.region_end, fileListing.myReadSettings.getConsole(), consoleOut);
     }
 
 

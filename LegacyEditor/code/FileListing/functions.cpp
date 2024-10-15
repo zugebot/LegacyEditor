@@ -177,6 +177,7 @@ namespace editor {
                 region.convertChunks(consoleOut);
                 Data data = region.write(consoleOut);
                 file->data.steal(data);
+                file->console = consoleOut;
             }
         }
     }

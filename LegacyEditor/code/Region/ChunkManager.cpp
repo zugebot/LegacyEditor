@@ -239,7 +239,7 @@ namespace editor {
             case lce::CONSOLE::WIIU:
             case lce::CONSOLE::VITA: {
                 auto* comp_ptr = new u8[size];
-                uLongf comp_size = size;
+                auto comp_size = (uLongf)(float(size) * 1.25F);
 
                 status = compress(comp_ptr, &comp_size, data, size);
                 deallocate();

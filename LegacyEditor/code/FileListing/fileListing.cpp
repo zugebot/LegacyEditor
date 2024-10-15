@@ -11,8 +11,7 @@
 
 #include "LegacyEditor/code/ConsoleParser/headerUnion.hpp"
 #include "LegacyEditor/code/ConsoleParser/include.hpp"
-
-
+#include "LegacyEditor/code/scripts.hpp"
 
 
 namespace editor {
@@ -101,10 +100,31 @@ namespace editor {
             if (theWriteSettings.shouldRemoveDataMapping) {
                 removeFileTypes({lce::FILETYPE::DATA_MAPPING});
             }
+            if (theWriteSettings.shouldRemoveMaps) {
+                removeFileTypes({lce::FILETYPE::MAP});
+            }
         }
-        removeFileTypes({lce::FILETYPE::GRF});
 
-        convertRegions(theWriteSettings.getConsole());
+        const auto consoleOut = theWriteSettings.getConsole();
+        if (lce::consoleIsBigEndian(myReadSettings.getConsole()) != lce::consoleIsBigEndian(consoleOut)) {
+            std::cout << "[-] reading and writing all chunks to change their endian, this will take a minute." << std::endl;
+            for (size_t index = 0; index < ptrs.region_overworld.size(); index++) {
+                editor::convertChunksToAquatic(index, ptrs.region_overworld, myReadSettings.getConsole(), consoleOut);
+            }
+            for (size_t index = 0; index < ptrs.region_nether.size(); index++) {
+                editor::convertChunksToAquatic(index, ptrs.region_nether, myReadSettings.getConsole(), consoleOut);
+            }
+            for (size_t index = 0; index < ptrs.region_end.size(); index++) {
+                editor::convertChunksToAquatic(index, ptrs.region_end, myReadSettings.getConsole(), consoleOut);
+            }
+            removeFileTypes({lce::FILETYPE::STRUCTURE});
+            removeFileTypes({lce::FILETYPE::GRF});
+        } else {
+            
+            convertRegions(theWriteSettings.getConsole());
+        }
+
+
 
         int status = writeSave(theWriteSettings);
         if (status != 0) {
