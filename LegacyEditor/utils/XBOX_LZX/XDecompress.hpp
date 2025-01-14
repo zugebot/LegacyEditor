@@ -10,7 +10,7 @@
 
 // https://github.com/matchaxnb/wimlib/blob/master/src/lzx-compress.c
 
-enum XMEM_ERROR { OVERFLOW = -1, MALLOC = -2, LZX = -3, BAD_DATA = -4 };
+enum XMEM_ERROR { OVERFLOW_ = -1, MALLOC = -2, LZX = -3, BAD_DATA = -4 };
 
 #define ERROR(_error, _message) \
     {                           \
@@ -23,7 +23,7 @@ enum XMEM_ERROR { OVERFLOW = -1, MALLOC = -2, LZX = -3, BAD_DATA = -4 };
 /// the max "amount" here is 0xffff which is only 2^16 - 1, so it won't overflow (0xff < 8) | 0xff
 #define CHECK_CAN_READ(manager_in, amount)                                             \
     if (!manager_in.canReadSize(amount)) {                                             \
-        ERROR(XMEM_ERROR::OVERFLOW,                                                    \
+        ERROR(XMEM_ERROR::OVERFLOW_,                                                    \
               "Tried to readBytes past buffer when decompressing buffer with xmem\n"); \
     }
 

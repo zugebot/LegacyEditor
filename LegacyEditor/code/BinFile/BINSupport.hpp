@@ -146,7 +146,7 @@ namespace editor {
         tm.tm_sec = (int) second;
         tm.tm_isdst = 0;
 
-        std::time_t t = _mkgmtime(&tm);
+        std::time_t t = timegm(&tm);
 
         if (t == (std::time_t) -1) { return std::nullopt; }
         return std::chrono::system_clock::from_time_t(t);
