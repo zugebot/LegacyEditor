@@ -128,6 +128,15 @@ namespace editor {
     // FileInfo extractSaveGameDat(u8* inputData, i64 inputSize);
 
 
+    inline std::time_t to_utc_time(std::tm& tm) {
+#ifdef _WIN32
+        return _mkgmtime(&tm);
+#else
+        return timegm(&tm);
+#endif
+    }
+
+
     static std::optional<std::chrono::system_clock::time_point> TimePointFromFatTimestamp(uint32_t fat) {
         uint32_t year = (fat >> 25) + 1980;
         uint32_t month = 0xf & (fat >> 21);
@@ -146,9 +155,10 @@ namespace editor {
         tm.tm_sec = (int) second;
         tm.tm_isdst = 0;
 
-        std::time_t t = timegm(&tm);
+        std::time_t t = to_utc_time(tm);
 
         if (t == (std::time_t) -1) { return std::nullopt; }
+
         return std::chrono::system_clock::from_time_t(t);
 #else
         std::chrono::year_month_day ymd = std::chrono::year(year) / std::chrono::month(month) / std::chrono::day(day);
