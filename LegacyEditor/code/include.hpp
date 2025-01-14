@@ -4,4 +4,4 @@
 #include "LegacyEditor/code/FileListing/fileListing.hpp"
 
 #include "LegacyEditor/code/Map/map.hpp"
-#include "LegacyEditor/code/scripts.hpp"
+// #include "LegacyEditor/code/scripts.hpp"
