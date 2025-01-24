@@ -5,16 +5,13 @@ set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build")
 
-
+# directories to include
 include_directories(${CMAKE_SOURCE_DIR}/)
+include_directories(${CMAKE_SOURCE_DIR}/include/)
 
+# compiler screaming
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
-
-
-
-
-
 
 # compiler flags
 if (WIN32 AND NOT MSVC)
@@ -41,6 +38,7 @@ add_custom_target(copy_assets ALL
         COMMENT "Copying all asset folders to the build directory"
 )
 
+# glob all header files
 file(GLOB_RECURSE LCEDIT_SOURCES
         "${CMAKE_SOURCE_DIR}/code/*.cpp"
         "${CMAKE_SOURCE_DIR}/code/*.hpp"
@@ -53,8 +51,6 @@ file(GLOB_RECURSE LCEDIT_SOURCES
         "${CMAKE_SOURCE_DIR}/include/*.c"
         "${CMAKE_SOURCE_DIR}/include/*.h"
 )
-
-
 
 # define executable
 add_executable(LegacyEditor
