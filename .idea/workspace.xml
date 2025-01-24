@@ -23,93 +23,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6d513e13-e843-48dd-9d0a-13c64f7f4e4d" name="Changes" comment="Made FileListing automatically not write Player or LargeDataMapping files if the output savefile is for a different console than the input.&#10;added static FileListing::AUTO_REMOVE_PLAYERS and FileListing::AUTO_REMOVE_DATA_MAPPING values, which are defaulted to true.">
-      <change afterPath="$PROJECT_DIR$/include/lce" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitmodules" beforeDir="false" afterPath="$PROJECT_DIR$/.gitmodules" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_11_8_2023_7_48_AM__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_11_8_2023_7_48_AM__Changes_.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/assets/world-icon.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/world-icon.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/BinFile/BINSupport.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/BinFile/BINSupport.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/BinFile/BINSupport.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/BinFile/BINSupport.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Chunk/chunkData.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Chunk/chunkData.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Chunk/chunkData.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Chunk/chunkData.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Chunk/helpers.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Chunk/helpers.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Chunk/v10.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Chunk/v10.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Chunk/v10.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Chunk/v10.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Chunk/v11.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Chunk/v11.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Chunk/v11.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Chunk/v11.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Chunk/v12.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Chunk/v12.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Chunk/v12.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Chunk/v12.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Chunk/v13.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Chunk/v13.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Chunk/v13.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Chunk/v13.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/ConsoleParser/ConsoleParser.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/ConsoleParser/ConsoleParser.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/ConsoleParser/ConsoleParser.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/ConsoleParser/ConsoleParser.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/ConsoleParser/PS3.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/ConsoleParser/PS3.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/ConsoleParser/PS4.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/ConsoleParser/PS4.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/ConsoleParser/Rpcs3.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/ConsoleParser/Rpcs3.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/ConsoleParser/Switch.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/ConsoleParser/Switch.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/ConsoleParser/Vita.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/ConsoleParser/Vita.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/ConsoleParser/WiiU.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/ConsoleParser/WiiU.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/ConsoleParser/Xbox1.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/ConsoleParser/Xbox1.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/ConsoleParser/Xbox360BIN.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/ConsoleParser/Xbox360BIN.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/ConsoleParser/Xbox360DAT.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/ConsoleParser/Xbox360DAT.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/ConsoleParser/headerUnion.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/ConsoleParser/headerUnion.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/ConsoleParser/include.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/ConsoleParser/include.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/FileInfo/FileInfo.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/FileInfo/FileInfo.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/FileInfo/FileInfo.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/FileInfo/FileInfo.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/FileListing/fileListing.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/FileListing/fileListing.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/FileListing/fileListing.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/FileListing/fileListing.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/FileListing/functions.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/FileListing/functions.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/FileListing/productcodes.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/FileListing/productcodes.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/FileListing/stateSettings.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/FileListing/stateSettings.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/FileListing/writeSettings.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/FileListing/writeSettings.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/LCEFile/LCEFile.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/LCEFile/LCEFile.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/LCEFile/LCEFile.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/LCEFile/LCEFile.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Map/map.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Map/map.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Map/map.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Map/map.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Map/mapcolors.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Map/mapcolors.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Region/ChunkManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Region/ChunkManager.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Region/ChunkManager.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Region/ChunkManager.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Region/RegionManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Region/RegionManager.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Region/RegionManager.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Region/RegionManager.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Region/WorldManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Region/WorldManager.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/Region/WorldManager.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/Region/WorldManager.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/include.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/include.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/scripts.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/scripts.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/threaded.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/threaded.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/code/threaded.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/threaded.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/unit_tests.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/code/unit_tests.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/utils/NBT.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/common/NBT.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/utils/NBT.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/common/NBT.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/utils/NBT.zip" beforeDir="false" afterPath="$PROJECT_DIR$/common/NBT.zip" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/utils/RLE/rle.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/common/RLE/rle.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/utils/RLE/rle_nsxps4.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/common/RLE/rle_nsxps4.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/utils/RLE/rle_vita.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/common/RLE/rle_vita.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/utils/XBOX_LZX/XDecompress.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/common/XBOX_LZX/XDecompress.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/utils/data.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/common/data.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/utils/dataManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/common/dataManager.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/utils/dataManager.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/common/dataManager.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/utils/error_status.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/common/error_status.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/utils/timer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/common/timer.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/utils/timer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/common/timer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/utils/utils.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/common/utils.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LegacyEditor/utils/utils.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/common/utils.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/batch_convert.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/batch_convert.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/change_world_name.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/change_world_name.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/figure_out_ps3_to_wiiu.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/figure_out_ps3_to_wiiu.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/figure_out_rpcs3_1_00.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/figure_out_rpcs3_1_00.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/figure_out_vita_1_00.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/figure_out_vita_1_00.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/full_unit_test.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/full_unit_test.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/load_xbox360_bin.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/load_xbox360_bin.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/load_xbox360_dat.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/load_xbox360_dat.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/read_write_elytra_wiiu.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/read_write_elytra_wiiu.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/readvita.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/readvita.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/render_slice_of_chunk.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/render_slice_of_chunk.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/set_block_in_chunk.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/set_block_in_chunk.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/superflatTestPS4.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/superflatTestPS4.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/testing_elytra_chunk_reading_writing.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testing_elytra_chunk_reading_writing.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/trying_ps4_save.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/trying_ps4_save.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/trying_ps4_save_render.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/trying_ps4_save_render.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/write_sfo_from_scratch.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/write_sfo_from_scratch.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.bat" beforeDir="false" afterPath="$PROJECT_DIR$/build.bat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/lce" beforeDir="false" afterPath="$PROJECT_DIR$/include/lce" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/lce/__include.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/lce/__include.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/lce/blocks/__include.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/lce/blocks/__include.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/lce/blocks/block.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/lce/blocks/block.hpp" afterDir="false" />
@@ -125,136 +45,6 @@
       <change beforePath="$PROJECT_DIR$/include/lce/registry/blockRegistry.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/lce/registry/blockRegistry.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/lce/registry/textureRegistry.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/lce/registry/textureRegistry.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/lce/registry/textureRegistry.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/lce/registry/textureRegistry.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lce" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS3/NPUB31419--240715040616/GAMEDATA" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS3/NPUB31419--240715040616/GAMEDATA" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS3/NPUB31419--240715040616/ICON0.PNG" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS3/NPUB31419--240715040616/ICON0.PNG" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS3/NPUB31419--240715040616/METADATA" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS3/NPUB31419--240715040616/METADATA" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS3/NPUB31419--240715040616/PARAM.PFD" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS3/NPUB31419--240715040616/PARAM.PFD" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS3/NPUB31419--240715040616/PARAM.SFO" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS3/NPUB31419--240715040616/PARAM.SFO" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS3/NPUB31419--240715040616/THUMB" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS3/NPUB31419--240715040616/THUMB" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/CODY_UUAS_2017010800565100288444/GAMEDATA" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/CODY_UUAS_2017010800565100288444/GAMEDATA" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/CODY_UUAS_2017010800565100288444/ICON0.PNG" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/CODY_UUAS_2017010800565100288444/ICON0.PNG" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/CODY_UUAS_2017010800565100288444/METADATA" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/CODY_UUAS_2017010800565100288444/METADATA" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/CODY_UUAS_2017010800565100288444/PARAM.PFD" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/CODY_UUAS_2017010800565100288444/PARAM.PFD" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/CODY_UUAS_2017010800565100288444/PARAM.SFO" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/CODY_UUAS_2017010800565100288444/PARAM.SFO" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/CODY_UUAS_2017010800565100288444/THUMB" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/CODY_UUAS_2017010800565100288444/THUMB" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_00000000" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_00000000" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_00000001" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_00000001" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_00000002" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_00000002" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_00000003" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_00000003" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_00000004" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_00000004" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_00000005" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_00000005" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_00000006" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_00000006" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_00000007" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_00000007" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_00000008" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_00000008" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_00000009" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_00000009" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_00000100" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_00000100" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_00000101" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_00000101" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_00000108" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_00000108" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_00000109" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_00000109" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_0000ff00" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_0000ff00" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_0000ff01" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_0000ff01" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_0000ff02" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_0000ff02" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_0000ff03" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_0000ff03" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_0000ff04" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_0000ff04" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_0000ff05" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_0000ff05" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_0000ff06" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_0000ff06" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_0000ff07" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_0000ff07" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_0000ff08" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_0000ff08" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_0000ff09" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_0000ff09" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_00010000" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_00010000" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_00010001" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_00010001" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_0001ff00" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_0001ff00" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_0001ff01" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_0001ff01" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_00020000" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_00020000" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/GAMEDATA_0002ff00" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/GAMEDATA_0002ff00" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000000" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000000" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000001" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000001" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000002" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000002" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000003" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000003" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000004" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000004" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000005" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000005" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000006" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000006" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000007" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000007" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000008" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000008" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000009" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000009" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000100" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000100" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000101" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000101" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000108" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000108" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000109" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_00000109" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff00" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff00" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff01" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff01" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff02" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff02" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff03" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff03" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff04" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff04" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff05" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff05" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff06" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff06" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff07" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff07" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff08" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff08" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff09" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_0000ff09" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_00010000" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_00010000" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_00010001" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_00010001" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_0001ff00" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_0001ff00" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_0001ff01" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_0001ff01" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_00020000" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_00020000" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/dec/GAMEDATA_0002ff00" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/dec/GAMEDATA_0002ff00" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/sce_sys/icon0.png" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/sce_sys/icon0.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/sce_sys/keystone" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/sce_sys/keystone" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/sce_sys/param.sfo" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/sce_sys/param.sfo" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000007/savedata0/sce_sys/sce_icon0png1" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000007/savedata0/sce_sys/sce_icon0png1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000008/savedata0/GAMEDATA" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000008/savedata0/GAMEDATA" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000008/savedata0/THUMB" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000008/savedata0/THUMB" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000008/savedata0/sce_sys/icon0.png" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000008/savedata0/sce_sys/icon0.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000008/savedata0/sce_sys/keystone" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000008/savedata0/sce_sys/keystone" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000008/savedata0/sce_sys/param.sfo" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000008/savedata0/sce_sys/param.sfo" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/folder/00000008/savedata0/sce_sys/sce_icon0png1" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/folder/00000008/savedata0/sce_sys/sce_icon0png1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000001/savedata0/GAMEDATA_000000fe" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000001/savedata0/GAMEDATA_000000fe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000001/savedata0/GAMEDATA_000000ff" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000001/savedata0/GAMEDATA_000000ff" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000001/savedata0/GAMEDATA_000001fe" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000001/savedata0/GAMEDATA_000001fe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000001/savedata0/GAMEDATA_000001ff" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000001/savedata0/GAMEDATA_000001ff" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000001/savedata0/GAMEDATA_0000fffe" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000001/savedata0/GAMEDATA_0000fffe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000001/savedata0/GAMEDATA_0000ffff" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000001/savedata0/GAMEDATA_0000ffff" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000001/savedata0/GAMEDATA_000100ff" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000001/savedata0/GAMEDATA_000100ff" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000001/savedata0/GAMEDATA_0001ffff" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000001/savedata0/GAMEDATA_0001ffff" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000001/savedata0/GAMEDATA_000200ff" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000001/savedata0/GAMEDATA_000200ff" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000001/savedata0/GAMEDATA_0002ffff" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000001/savedata0/GAMEDATA_0002ffff" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000001/savedata0/sce_sys/icon0.png" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000001/savedata0/sce_sys/icon0.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000001/savedata0/sce_sys/keystone" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000001/savedata0/sce_sys/keystone" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000001/savedata0/sce_sys/param.sfo" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000001/savedata0/sce_sys/param.sfo" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000001/savedata0/sce_sys/sce_icon0png1" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000001/savedata0/sce_sys/sce_icon0png1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000002/savedata0/GAMEDATA" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000002/savedata0/GAMEDATA" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000002/savedata0/THUMB" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000002/savedata0/THUMB" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000002/savedata0/sce_sys/icon0.png" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000002/savedata0/sce_sys/icon0.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000002/savedata0/sce_sys/keystone" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000002/savedata0/sce_sys/keystone" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000002/savedata0/sce_sys/param.sfo" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000002/savedata0/sce_sys/param.sfo" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/PS4/superflatTest/00000002/savedata0/sce_sys/sce_icon0png1" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/PS4/superflatTest/00000002/savedata0/sce_sys/sce_icon0png1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/RPCS3/NPUB31419--240424132851/GAMEDATA" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/RPCS3/NPUB31419--240424132851/GAMEDATA" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/RPCS3/NPUB31419--240424132851/ICON0.PNG" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/RPCS3/NPUB31419--240424132851/ICON0.PNG" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/RPCS3/NPUB31419--240424132851/METADATA" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/RPCS3/NPUB31419--240424132851/METADATA" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/RPCS3/NPUB31419--240424132851/METADATA2" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/RPCS3/NPUB31419--240424132851/METADATA2" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/RPCS3/NPUB31419--240424132851/PARAM.PFD" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/RPCS3/NPUB31419--240424132851/PARAM.PFD" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/RPCS3/NPUB31419--240424132851/PARAM.SFO" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/RPCS3/NPUB31419--240424132851/PARAM.SFO" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/RPCS3/NPUB31419--240424132851/THUMB" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/RPCS3/NPUB31419--240424132851/THUMB" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/RPCS3/v1.0.0/BLUS31426--240731172234/GAMEDATA" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/RPCS3/v1.0.0/BLUS31426--240731172234/GAMEDATA" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/RPCS3/v1.0.0/BLUS31426--240731172234/ICON0.PNG" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/RPCS3/v1.0.0/BLUS31426--240731172234/ICON0.PNG" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/RPCS3/v1.0.0/BLUS31426--240731172234/METADATA" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/RPCS3/v1.0.0/BLUS31426--240731172234/METADATA" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/RPCS3/v1.0.0/BLUS31426--240731172234/PARAM.SFO" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/RPCS3/v1.0.0/BLUS31426--240731172234/PARAM.SFO" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/RPCS3/v1.0.0/BLUS31426--240731172234/THUMB" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/RPCS3/v1.0.0/BLUS31426--240731172234/THUMB" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/TUTORIAL/aquatic_tutorial" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/TUTORIAL/aquatic_tutorial" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/TUTORIAL/elytra_tutorial" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/TUTORIAL/elytra_tutorial" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/VITA/CavernLarge_MG01.mcs" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/VITA/CavernLarge_MG01.mcs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/VITA/PCSE00491/CACHE.bin" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/VITA/PCSE00491/CACHE.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/VITA/PCSE00491/PCSE00491-240725153321/GAMEDATA.bin" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/VITA/PCSE00491/PCSE00491-240725153321/GAMEDATA.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/VITA/save/Enc-PCSB00560-231005063840/GAMEDATA.bin" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/VITA/save/Enc-PCSB00560-231005063840/GAMEDATA.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/VITA/save/Enc-PCSB00560-231005063840/THUMBDATA.bin" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/VITA/save/Enc-PCSB00560-231005063840/THUMBDATA.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/VITA/save/PCSB00560-231005063840/GAMEDATA.bin" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/VITA/save/PCSB00560-231005063840/GAMEDATA.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/VITA/save/PCSB00560-231005063840/THUMBDATA.bin" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/VITA/save/PCSB00560-231005063840/THUMBDATA.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/WIIU/231008144148" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/WIIU/231008144148" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/WIIU/231008144148.ext" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/WIIU/231008144148.ext" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/WIIU/Pirates.wii" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/WIIU/Pirates.wii" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/WIIU/savegame.wii" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/WIIU/savegame.wii" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/XBOX360/XBOX360_TU69.bin" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/XBOX360/XBOX360_TU69.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/XBOX360/XBOX360_TU74.dat" beforeDir="false" afterPath="$PROJECT_DIR$/savefiles/XBOX360/XBOX360_TU74.dat" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -271,8 +61,19 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
     <option name="ROOT_SYNC" value="DONT_SYNC" />
   </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "zugebot"
+  }
+}]]></component>
   <component name="GitLabMergeRequestsSettings">{}</component>
-  <component name="GithubPullRequestsUISettings">{}</component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/zugebot/LegacyEditor.git",
+    "accountId": "0e5f279b-a26e-4793-8d4a-ec32acb58107"
+  }
+}]]></component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$APPLICATION_HOME_DIR$/bin/mingw/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/alloc_traits.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_HOME_DIR$/bin/mingw/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/allocator.h" root0="FORCE_HIGHLIGHTING" />
@@ -297,7 +98,9 @@
   &quot;associatedIndex&quot;: 2
 }</component>
   <component name="ProjectId" id="2XGB0JkftP0DUlRtWCXY82O5CTt" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <OptionsSetting value="false" id="Update" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -307,6 +110,7 @@
     "ASKED_ADD_EXTERNAL_FILES": "true",
     "ASKED_MARK_IGNORED_FILES_AS_EXCLUDED": "true",
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Batch.build.executor": "Run",
     "CMake Application.LegacyEditor.executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.RadMigrateCodeStyle": "true",
@@ -317,6 +121,7 @@
     "cf.advertisement.text.overridden": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "refactoring",
     "ignore.virus.scanning.warn.message": "true",
     "last_opened_file_path": "C:/Users/Jerrin/CLionProjects/LegacyEditor/LegacyEditor/LCE/BinFile",
     "node.js.detected.package.eslint": "true",
@@ -328,6 +133,11 @@
     "nodejs_package_manager_path": "npm",
     "settings.editor.selected.configurable": "project.propVCSSupport.DirectoryMappings",
     "vue.rearranger.settings.migration": "true"
+  },
+  "keyToStringList": {
+    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
+      "PLAIN_TEXT"
+    ]
   }
 }]]></component>
   <component name="RecentsManager">
@@ -339,14 +149,19 @@
       <recent name="C:\Users\Jerrin\CLionProjects\LegacyEditor\LegacyEditor\LCE" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\jerrin\CLionProjects\LegacyEditor\savefiles" />
+      <recent name="C:\Users\jerrin\CLionProjects\LegacyEditor\_nonsense" />
       <recent name="C:\Users\Jerrin\CLionProjects\LegacyEditor" />
       <recent name="C:\Users\Jerrin\CLionProjects\LegacyEditor\LegacyEditor\code" />
       <recent name="C:\Users\Jerrin\CLionProjects\LegacyEditor\build" />
-      <recent name="C:\Users\Jerrin\CLionProjects\LegacyEditor\docs" />
-      <recent name="C:\Users\Jerrin\CLionProjects\LegacyEditor\LegacyEditor\utils\XBOX_LZX" />
     </key>
   </component>
   <component name="RunManager" selected="CMake Application.LegacyEditor">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="LegacyEditor" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="C:\Users\Jerrin\CLionProjects\LegacyEditor\LegacyEditor\saves\Pirates.wii" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="LegacyEditor" TARGET_NAME="LegacyEditor" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="LegacyEditor" RUN_TARGET_NAME="LegacyEditor">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />

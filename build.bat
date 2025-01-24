@@ -1,7 +1,6 @@
-:: The purpose of this file is for stinky Windows people that use VS code.
-
 @echo off
 setlocal
+:: The purpose of this file is for stinky Windows people that use VS code.
 
 :: Set the project directory and build directory
 set PROJECT_DIR=%~dp0

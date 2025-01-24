@@ -1,5 +1,6 @@
-cmake-build-debug/*
-cmake-build-release/*
-build/*
-_nonsense/*
+cmake-build-debug
+cmake-build-release
+build
+_nonsense
+.idea
 .DS_Store
