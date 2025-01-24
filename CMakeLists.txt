@@ -44,13 +44,9 @@ add_custom_target(copy_assets ALL
 file(GLOB_RECURSE LCEDIT_SOURCES
         "${CMAKE_SOURCE_DIR}/code/*.cpp"
         "${CMAKE_SOURCE_DIR}/code/*.hpp"
-        "${CMAKE_SOURCE_DIR}/code/*.c"
-        "${CMAKE_SOURCE_DIR}/code/*.h"
 
         "${CMAKE_SOURCE_DIR}/common/*.*pp"
         "${CMAKE_SOURCE_DIR}/common/*.hpp"
-        "${CMAKE_SOURCE_DIR}/common/*.c"
-        "${CMAKE_SOURCE_DIR}/common/*.h"
 
         "${CMAKE_SOURCE_DIR}/include/*.*pp"
         "${CMAKE_SOURCE_DIR}/include/*.hpp"
