@@ -1,0 +1,37 @@
+Index: examples/change_world_name.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>#include \"../LegacyEditor/unit_tests.hpp\"\r\n#include \"LegacyEditor/LCE/include.hpp\"\r\n#include \"LegacyEditor/utils/RLE/rle_nsxps4.hpp\"\r\n\r\nint main() {\r\n    PREPARE_UNIT_TESTS();\r\n\r\n\r\n\r\n    const std::string TEST_NAME = \"vita\";\r\n    const std::string TEST_IN = TESTS[TEST_NAME].first;   // file to read from\r\n    const std::string TEST_OUT = TESTS[TEST_NAME].second; // file to write to\r\n    constexpr auto consoleOut = CONSOLE::VITA;\r\n\r\n    editor::FileListing fileListing;\r\n    if (fileListing.read(TEST_IN) != 0) {\r\n        return printf_err(\"failed to load file\\n\");\r\n    }\r\n\r\n    fileListing.fileInfo.basesavename = L\"Fortnite\";\r\n\r\n    fileListing.removeFileTypes({\r\n        editor::LCEFileType::PLAYER,\r\n        editor::LCEFileType::DATA_MAPPING});\r\n\r\n    fileListing.printDetails();\r\n    fileListing.printFileList();\r\n\r\n    const int statusOut = fileListing.write(TEST_OUT, consoleOut);\r\n    if (statusOut != 0) {\r\n        return printf_err({\"converting to \"\r\n            + consoleToStr(consoleOut) + \" failed...\\n\"});\r\n    }\r\n    printf(\"Finished!\\nFile Out: %s\", TEST_OUT.c_str());\r\n\r\n    return 0;\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/examples/change_world_name.cpp b/examples/change_world_name.cpp
+--- a/examples/change_world_name.cpp	
++++ b/examples/change_world_name.cpp	
+@@ -1,12 +1,11 @@
+-#include "../LegacyEditor/unit_tests.hpp"
++#include "/LegacyEditor/unit_tests.hpp"
+ #include "LegacyEditor/LCE/include.hpp"
+-#include "LegacyEditor/utils/RLE/rle_nsxps4.hpp"
+ 
++
++/* This one does not work properly */
+ int main() {
+     PREPARE_UNIT_TESTS();
+ 
+-
+-
+     const std::string TEST_NAME = "vita";
+     const std::string TEST_IN = TESTS[TEST_NAME].first;   // file to read from
+     const std::string TEST_OUT = TESTS[TEST_NAME].second; // file to write to
+@@ -19,10 +18,6 @@
+ 
+     fileListing.fileInfo.basesavename = L"Fortnite";
+ 
+-    fileListing.removeFileTypes({
+-        editor::LCEFileType::PLAYER,
+-        editor::LCEFileType::DATA_MAPPING});
+-
+     fileListing.printDetails();
+     fileListing.printFileList();
+ 

@@ -1,5 +1,5 @@
-/cmake-build-debug/
-/cmake-build-release/
-/dump/*
+cmake-build-debug/*
+cmake-build-release/*
+build/*
+_nonsense/*
 .DS_Store
-/_nonsense/

@@ -3,6 +3,7 @@ project(LegacyEditor)
 
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build")
 
 # include source directory for imports
 include_directories(${CMAKE_SOURCE_DIR}/)
@@ -18,7 +19,7 @@ endif()
 
 # /LegacyEditor/ folder
 set(LCEDIT_ASSETS_SOURCE_DIR ${CMAKE_SOURCE_DIR}/LegacyEditor/assets)
-set(LCEDIT_ASSETS_DEST_DIR ${CMAKE_BINARY_DIR}/assets/LegacyEditor)
+set(LCEDIT_ASSETS_DEST_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/assets/LegacyEditor)
 file(GLOB_RECURSE LCEDIT_ASSETS_FILES "${LCEDIT_ASSETS_SOURCE_DIR}/*")
 add_custom_command(
         OUTPUT ${LCEDIT_ASSETS_DEST_DIR}
@@ -30,7 +31,7 @@ add_custom_command(
 
 # /lce/ folder
 set(LCE_ASSETS_SOURCE_DIR ${CMAKE_SOURCE_DIR}/lce/assets)
-set(LCE_ASSETS_DEST_DIR ${CMAKE_BINARY_DIR}/assets/lce)
+set(LCE_ASSETS_DEST_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/assets/lce)
 file(GLOB_RECURSE LCE_ASSETS_FILES "${LCE_ASSETS_SOURCE_DIR}/*")
 add_custom_command(
         OUTPUT ${LCE_ASSETS_DEST_DIR}
@@ -70,7 +71,7 @@ add_executable(LegacyEditor
         ${INCLUDE_SOURCES}
         # examples/figure_out_rpcs3_1_00.cpp
         # examples/readvita.cpp
-        examples/batch_convert.cpp
+        tests/batch_convert.cpp
         # examples/write_sfo_from_scratch.cpp
         # examples/figure_out_ps3_to_wiiu.cpp
 )
