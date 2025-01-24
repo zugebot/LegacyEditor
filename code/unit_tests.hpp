@@ -1,7 +1,10 @@
 #pragma once
 
+#include <iostream>
 #include <map>
 #include <string>
+
+#include "include/ghc/fs_std.hpp"
 
 
 #ifdef UNIT_TESTS
@@ -9,16 +12,23 @@ extern std::string dir_path;
 extern std::string wiiu;
 #endif
 
-std::string dir_path, wiiu;
+fs::path dir_path, wiiu;
 std::map<std::string, std::pair<std::string, std::string>> TESTS;
-void TEST_PAIR(const std::string &key, const std::string &path_in, const std::string &out) {
-    std::string pathIn = dir_path + R"(tests/)" + path_in;
-    std::pair<std::string, std::string> pair = std::make_pair(pathIn, out);
+void TEST_PAIR(const std::string &key, const std::string &path_in, fs::path& out) {
+    fs::path pathIn = dir_path / "savefiles" / path_in;
+    std::pair<std::string, std::string> pair = std::make_pair(pathIn.string(), out.string());
     TESTS.insert(std::make_pair(key, pair));
 }
 
 static void PREPARE_UNIT_TESTS() {
-    dir_path = R"(C:\Users\Jerrin\CLionProjects\LegacyEditor\)";
+    const char* userProfile = std::getenv("USERPROFILE");
+    if (!userProfile) {
+        std::cerr << "USERPROFILE environment variable not set!\n";
+        return;
+    }
+    fs::path dirPath = fs::path(userProfile) / "CLionProjects" / "LegacyEditor";
+
+
     wiiu = R"(D:\wiiu\mlc\usr\save\00050000\101d9d00\user\80000001\)";
 
     // PS3
@@ -31,8 +41,10 @@ static void PREPARE_UNIT_TESTS() {
     TEST_PAIR("RPCS3_1"     , R"(RPCS3/NPUB31419--240424132851)"       , wiiu);
     TEST_PAIR("RPCS3_1.00"  , R"(RPCS3/BLES01976--240802043920)"       , wiiu);
     // XBOX360
-    TEST_PAIR("X360_TU69", R"(XBOX360/XBOX360_TU69.bin)", wiiu + R"(saves\XBOX360_TU69.bin)" );
-    TEST_PAIR("X360_TU74", R"(XBOX360/XBOX360_TU74.dat)", R"(C:\Users\jerrin\Desktop\OUT\XBOX360_TU74_DECOMPRESSED)" );
+    fs::path temp1 = wiiu / R"(saves\XBOX360_TU69.bin)";
+    fs::path temp2 = wiiu / R"(saves\XBOX360_TU74.bin)";
+    TEST_PAIR("X360_TU69", R"(XBOX360/XBOX360_TU69.bin)", temp1);
+    TEST_PAIR("X360_TU74", R"(XBOX360/XBOX360_TU74.dat)", temp2);
     // PS4
     TEST_PAIR("PS4_khaloody", R"(PS4/folder/00000008/savedata0/GAMEDATA)"       , wiiu);
     TEST_PAIR("flatTestPS4" , R"(PS4/superflatTest/00000002/savedata0/GAMEDATA)", wiiu);

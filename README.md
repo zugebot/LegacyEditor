@@ -29,10 +29,18 @@ IF YOU FIND ANY ISSUES, PLEASE REPORT THEM! It helps me develop faster :)
 ### Partially Writing To:
 - **PS3** (PARAM.PFD not yet resignable)
 
+## Setup
+
+To properly set up this project, you must run:
+``
+git submodule add https://github.com/lce-resources/lceLIB.git include/lce
+git submodule update --init
+``
+
 ## Usage
 
-Refer to the `examples/` directory to see different ways the code can be used.
-For unit testing, edit the folder locations in `LegacyEditor/unit_tests.cpp` to the directory that contains your saves (e.g., `tests/`).
+Refer to the `tests/` directory to see different ways the code can be used.
+For unit testing, edit the folder locations in `code/unit_tests.cpp` to the directory that contains your saves (e.g., `tests/`).
 
 ## Dependencies
 
@@ -49,11 +57,6 @@ This project makes use of several external libraries, including:
 - ``CLion`` - Have the IDE auto-detect the ``CMakeLists.txt``.
 - ``Windows`` - Run ``build.bat``.
 - ``Linux`` - Run ``build.sh``. I have not tested this one.
-
-## Submodules
-
-This project uses a [separate project](https://github.com/zugebot/lce.git).
-
 
 ## Outside Help
 
