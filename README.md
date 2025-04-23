@@ -33,13 +33,11 @@ IF YOU FIND ANY ISSUES, PLEASE REPORT THEM! It helps me develop faster :)
 
 To properly set up this project, you must run:
 
-``
+```bash
+git init
 git submodule add https://github.com/lce-resources/lceLIB.git include/lce
-``
-
-``
 git submodule update --init
-``
+```
 
 ## Usage
 
