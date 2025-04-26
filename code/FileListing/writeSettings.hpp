@@ -35,6 +35,10 @@ namespace editor {
         bool shouldRemoveDataMapping = true;
         /// im lazy, write getter + setter
         bool shouldRemoveMaps = true;
+        /// im lazy, write getter + setter
+        bool shouldRemoveStructures = true;
+        /// im lazy, write getter + setter
+        bool shouldRemoveEntities = true;
 
 
         WriteSettings() : myConsole(lce::CONSOLE::NONE) {}

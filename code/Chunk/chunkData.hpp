@@ -4,8 +4,7 @@
 
 #include "common/error_status.hpp"
 
-
-class NBTBase;
+#include "common/nbt.hpp"
 
 namespace editor::chunk {
 
@@ -26,16 +25,20 @@ namespace editor::chunk {
         u8_vec skyLight;            //
         u8_vec heightMap;           //
         u8_vec biomes;              //
-        NBTBase* NBTData = nullptr; //
+        NBTBase oldNBTData = makeCompound({}); //
         i16 terrainPopulated = 0;   //
         i64 lastUpdate = 0;         //
         i64 inhabitedTime = 0;      //
+        NBTBase entities;
+        NBTBase tileEntities;
+        NBTBase tileTicks;
 
         /// Used to skip the lights in the chunk
         size_t DataGroupCount = 0;
 
         i32 chunkX = 0;
         i32 chunkZ = 0;
+        i32 chunkHeight = 256;
 
         i32 lastVersion = 0;
         bool validChunk = false;
@@ -48,7 +51,8 @@ namespace editor::chunk {
 
         // MODIFIERS
 
-        MU void convertNBTToAquatic();
+        MU void convertNBT128ToAquatic();
+        MU void convertNBT256ToAquatic();
         MU void convertOldToAquatic();
         MU void convert114ToAquatic();
 

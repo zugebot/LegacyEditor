@@ -4,7 +4,7 @@
 
 #include "code/LCEFile/LCEFile.hpp"
 #include "code/Map/mapcolors.hpp"
-#include "common/NBT.hpp"
+#include "common/nbt.hpp"
 
 
 namespace editor::map {
@@ -19,16 +19,19 @@ namespace editor::map {
         }
 
         DataManager mapManager(map->data);
-        c_auto *const data = NBT::readTag(mapManager);
-        c_auto* byteArray = NBTBase
-                ::toType<NBTTagCompound>(data)
-                ->getCompoundTag("data")
-                ->getByteArray("colors");
+        NBTBase data;
+        data.read(mapManager);
+        auto byteArray = data
+                .tryGet<NBTCompound>("data")
+                .value_or(NBTCompound{})
+                .tryGet<NBTByteArray>("colors")
+                .value_or(NBTByteArray(16384))
+                ;
 
         const Picture picture(128, 128);
         int count = 0;
         for (int i = 0; i < MAP_BYTE_SIZE; i++) {
-            const RGB rgb = getRGB(byteArray->array[i]);
+            const RGB rgb = getRGB(byteArray[i]);
             picture.myData[count++] = rgb.r;
             picture.myData[count++] = rgb.g;
             picture.myData[count++] = rgb.b;

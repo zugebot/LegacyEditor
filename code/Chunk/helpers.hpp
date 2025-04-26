@@ -42,10 +42,11 @@ namespace editor::chunk {
     }
 
 
-
-    static void readDataBlock(const u8_vec& dataIn, u8_vec& dataOut, int& offset) {
+    static void readDataBlock(c_u8* dataIn, u8* dataOut) {
         static constexpr int DATA_SECTION_SIZE = 128;
+        int offset = 0;
 
+        // first section
         for (int k = 0; k < DATA_SECTION_SIZE; k++) {
             if (dataIn[k] == DATA_SECTION_SIZE) {
                 memset(&dataOut[offset], 0, DATA_SECTION_SIZE);
@@ -58,50 +59,20 @@ namespace editor::chunk {
         }
     }
 
-
-    static void readDataBlock(c_u8* dataIn1, u8* dataIn2, u8_vec& dataOut) {
-        static constexpr int DATA_SECTION_SIZE = 128;
-        int offset = 0;
-
-        // first section
-        for (int k = 0; k < DATA_SECTION_SIZE; k++) {
-            if (dataIn1[k] == DATA_SECTION_SIZE) {
-                memset(&dataOut[offset], 0, DATA_SECTION_SIZE);
-            } else if (dataIn1[k] == DATA_SECTION_SIZE + 1) {
-                memset(&dataOut[offset], 255, DATA_SECTION_SIZE);
-            } else {
-                std::memcpy(&dataOut[offset], &dataIn1[toIndex(dataIn1[k])], DATA_SECTION_SIZE);
-            }
-            offset += DATA_SECTION_SIZE;
-        }
-
-        // second section
-        for (int k = 0; k < DATA_SECTION_SIZE; k++) {
-            if (dataIn2[k] == DATA_SECTION_SIZE) {
-                memset(&dataOut[offset], 0, DATA_SECTION_SIZE);
-            } else if (dataIn2[k] == DATA_SECTION_SIZE + 1) {
-                memset(&dataOut[offset], 255, DATA_SECTION_SIZE);
-            } else {
-                std::memcpy(&dataOut[offset], &dataIn2[toIndex(dataIn2[k])], DATA_SECTION_SIZE);
-            }
-            offset += DATA_SECTION_SIZE;
-        }
-    }
-
     template<int SIZE>
     static std::vector<u8*> readGetDataBlockVector(ChunkData* chunkData, DataManager* managerIn) {
         std::vector<u8*> dataArray(SIZE);
         for (int i = 0; i < SIZE; i++) {
-            dataArray[i] = managerIn->ptr;
-            c_u32 index = toIndex(managerIn->readInt32());
-            managerIn->incrementPointer(index);
+            c_u32 index = toIndex(managerIn->read<u32>());
+            dataArray[i] = managerIn->ptr();
+            managerIn->skip(index);
             chunkData->DataGroupCount += index;
         }
         return dataArray;
     }
 
 
-    static void writeDataBlock(DataManager* managerIn, const u8_vec& dataIn)  {
+    static void writeDataBlock(DataManager* managerIn, const u8* dataIn)  {
         static constexpr int GRID_COUNT = 64;
         static constexpr int DATA_SECTION_SIZE = 128;
 
@@ -111,40 +82,37 @@ namespace editor::chunk {
         u32 readOffset = 0;
 
         // it does it twice, after the first interval, readOffset should be 32767
-        for (int index = 0; index < 2; index++) {
+        // for (int index = 0; index < countIn; index++) {
 
-            c_u32 start = managerIn->getPosition();
-            managerIn->writeInt32(0);
-            sectionOffsets.clear();
+        c_u32 start = managerIn->tell();
+        managerIn->write<u32>(0);
+        sectionOffsets.clear();
 
-            // Write headers
-            u32 sectionOffsetSize = 0;
-            c_u8* ptr = dataIn.data() + readOffset;
-            for (int i = 0; i < DATA_SECTION_SIZE; i++) {
-                if (is0_128_slow(ptr)) {
-                    managerIn->writeInt8(DATA_SECTION_SIZE);
-                } else if (is255_128_slow(ptr)) {
-                    managerIn->writeInt8(DATA_SECTION_SIZE + 1);
-                } else {
-                    sectionOffsets.push_back(readOffset);
-                    managerIn->writeInt8(sectionOffsetSize++);
-                }
-                ptr += DATA_SECTION_SIZE;
-                readOffset += DATA_SECTION_SIZE;
+        // Write headers
+        u32 sectionOffsetSize = 0;
+        c_u8* ptr = dataIn + readOffset;
+        for (int i = 0; i < DATA_SECTION_SIZE; i++) {
+            if (is0_128_slow(ptr)) {
+                managerIn->write<u8>(DATA_SECTION_SIZE);
+            } else if (is255_128_slow(ptr)) {
+                managerIn->write<u8>(DATA_SECTION_SIZE + 1);
+            } else {
+                sectionOffsets.push_back(readOffset);
+                managerIn->write<u8>(sectionOffsetSize++);
             }
+            ptr += DATA_SECTION_SIZE;
+            readOffset += DATA_SECTION_SIZE;
+        }
 
-            // Write light data sections
-            for (c_u32 offset : sectionOffsets) {
-                managerIn->writeBytes(&dataIn[offset], DATA_SECTION_SIZE);
-            }
+        // Write light data sections
+        for (c_u32 offset : sectionOffsets) {
+            managerIn->writeBytes(&dataIn[offset], DATA_SECTION_SIZE);
+        }
 
-            // Calculate and write the size
-            c_u32 end = managerIn->getPosition();
-            c_u32 size = (end - start - 4 - 128) / 128; // -4 to exclude size header
-            managerIn->writeInt32AtOffset(start, size);
-        } // end of for loop
-
-
+        // Calculate and write the size
+        c_u32 end = managerIn->tell();
+        c_u32 size = (end - start - 4 - 128) / 128; // -4 to exclude size header
+        managerIn->writeAtOffset<u32>(start, size);
     }
 
 

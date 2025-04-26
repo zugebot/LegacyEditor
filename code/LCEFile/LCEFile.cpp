@@ -1,18 +1,18 @@
 #include "LCEFile.hpp"
 
-#include "common/NBT.hpp"
+#include "common/nbt.hpp"
 
 
 namespace editor {
 
 
     LCEFile::LCEFile(const lce::CONSOLE consoleIn) : console(consoleIn) {
-        nbt = new NBTTagCompound();
+
     }
 
     LCEFile::LCEFile(const lce::CONSOLE consoleIn, c_u32 sizeIn) :
         console(consoleIn) {
-        nbt = new NBTTagCompound();
+
         data = Data();
         data.allocate(sizeIn);
     }
@@ -26,17 +26,12 @@ namespace editor {
 
     LCEFile::LCEFile(const lce::CONSOLE consoleIn, u8* dataIn, c_u32 sizeIn, c_u64 timestampIn) :
         data(dataIn, sizeIn), timestamp(timestampIn), console(consoleIn) {
-        nbt = new NBTTagCompound();
+
     }
 
 
     LCEFile::~LCEFile() {
-        if (nbt == nullptr) {
-            return;
-        }
-        nbt->deleteAll();
-        delete nbt;
-        nbt = nullptr;
+
     }
 
 
@@ -130,24 +125,24 @@ namespace editor {
 
     MU ND i16 LCEFile::getMapNumber() const { return getTag("#"); }
 
-    MU void LCEFile::setFileName(const std::string& filename) const {
-        if (nbt == nullptr) return;
-        nbt->setString("filename", filename); }
+    MU void LCEFile::setFileName(const std::string& filename) {
+        nbt.insert("filename", makeString(filename));
+    }
 
     MU ND std::string LCEFile::getFileName() const {
-        if (nbt == nullptr) return "NULL";
-        return nbt->getString("filename"); }
+        return nbt.tryGet<std::string>("filename").value_or("");
+    }
 
     MU void LCEFile::SetFileNameAndType(const std::string& filename, lce::FILETYPE filetype) {
         fileType = filetype;
         setFileName(filename);
     }
 
-    MU void LCEFile::setTag(const std::string& key, i16 value) const {
-        if (nbt == nullptr) return;
-        nbt->setTag(key, createNBT_INT16(value)); }
+    MU void LCEFile::setTag(const std::string& key, i16 value) {
+        nbt.insert(key, makeShort(value));
+    }
 
     MU i16 LCEFile::getTag(const std::string& key) const {
-        if (nbt == nullptr) return -1;
-        return nbt->getTag(key).toPrim<i16>(); }
+        return nbt.tryGet<i16>(key).value_or(-1);
+    }
 }

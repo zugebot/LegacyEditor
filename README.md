@@ -24,10 +24,10 @@ IF YOU FIND ANY ISSUES, PLEASE REPORT THEM! It helps me develop faster :)
 ### Writing To:
 - **WiiU**
 - **PSVita**
-- **RPCS3 Emulator** (broken, I will look into it eventually)
+- **RPCS3 Emulator**
 
 ### Partially Writing To:
-- **PS3** (PARAM.PFD not yet resignable) (broken, I will look into it eventually)
+- **PS3** (PARAM.PFD not yet resignable)
 
 ## Setup
 

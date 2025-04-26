@@ -8,32 +8,32 @@ namespace editor {
 
 
     void StfsVD::readStfsVD(DataManager& input) {
-        size = input.readInt8();
-        input.readInt8(); // reserved
-        blockSeparation = input.readInt8();
-        input.setLittleEndian();
-        fileTableBlockCount = input.readInt16();
+        size = input.read<u8>();
+        input.read<u8>(); // reserved
+        blockSeparation = input.read<u8>();
+        input.setEndian(false);
+        fileTableBlockCount = input.read<u16>();
         fileTableBlockNum = input.readInt24();
-        input.incrementPointer(0x14); // skip the hash
-        input.setBigEndian();
-        allocBlockCount = input.readInt32();
-        unallocatedBlockCount = input.readInt32();
+        input.skip<0x14>(); // skip the hash
+        input.setEndian(true);
+        allocBlockCount = input.read<u32>();
+        unallocatedBlockCount = input.read<u32>();
     }
 
 
     int BINHeader::readHeader(DataManager& binFile) {
         binFile.seek(0x340U);
-        headerSize = binFile.readInt32();
+        headerSize = binFile.read<u32>();
 
         //content type, 1 is savegame
-        if (binFile.readInt32() != 1) {
+        if (binFile.read<u32>() != 1) {
             printf(".bin file is not a savegame, exiting\n");
             return 0;
         }
 
         //file system
         binFile.seek(0x3A9U);
-        if (binFile.readInt32()) {
+        if (binFile.read<u32>()) {
             printf(".bin file is not in STFS format, exiting\n");
             return 0;
         }
@@ -48,12 +48,12 @@ namespace editor {
         // skip all the irrelevant data to extract the savegame
         binFile.seek(0x1712U);
         // get thumbnail image, if not present, use the title one if present
-        if (c_u32 thumbnailImageSize = binFile.readInt32()) {
-            binFile.incrementPointer(4); //read the other size but it will not be used
+        if (c_u32 thumbnailImageSize = binFile.read<u32>()) {
+            binFile.skip<4>(); //read the other size but it will not be used
             u8* thumbnailImageData = binFile.readBytes(thumbnailImageSize);
             thumbnailImage = DataManager(thumbnailImageData, thumbnailImageSize);
         } else {
-            if (c_u32 titleThumbImageSize = binFile.readInt32()) {
+            if (c_u32 titleThumbImageSize = binFile.read<u32>()) {
                 binFile.seek(0x571AU);
                 u8* titleThumbnailImageData = binFile.readBytes(thumbnailImageSize);
                 thumbnailImage = DataManager(titleThumbnailImageData, titleThumbImageSize);
@@ -109,7 +109,7 @@ namespace editor {
             u32 tempSize = (entry->fileSize - (blockCount << 0xC));
             while (tempSize >= 0xAA000) {
                 // skip past the hash table(s)
-                u32 currentPos = data.getPosition();
+                u32 currentPos = data.tell();
                 data.seek(currentPos + GetHashTableSkipSize(currentPos));
 
                 // read in the 0xAA blocks between the tables
@@ -124,7 +124,7 @@ namespace editor {
             // pick up the change at the end
             if (tempSize != 0) {
                 // skip past the hash table(s)
-                c_u32 currentPos = data.getPosition();
+                c_u32 currentPos = data.tell();
                 data.seek(currentPos + GetHashTableSkipSize(currentPos));
 
                 // read in the extra crap
@@ -194,7 +194,7 @@ namespace editor {
                         ((computeLevel1BackingHashBlockNumber(blockNum) << 0xC) + firstHashTableAddress + level1Off) +
                         ((blockNum % 0xAA) * 0x18);
                 data.seek(pos + 0x14);
-                hashAddr += (data.readInt8() & 0x40) << 6;
+                hashAddr += (data.read<u8>() & 0x40) << 6;
                 break;
         }
         return hashAddr;
@@ -224,7 +224,7 @@ namespace editor {
                 fe.fileEntryAddress = currentAddr + (i * 0x40); // set the current position
                 fe.entryIndex = (x * 0x40) + i;  // calculateOffset the entry index (in the file listing)
                 fe.name = data.readString(0x28); // read the name, if the length is 0 then break
-                fe.nameLen = data.readInt8();    // read the name length
+                fe.nameLen = data.read<u8>();    // read the name length
 
                 if ((fe.nameLen & 0x3F) == 0) {
                     data.seek(currentAddr + ((i + 1) * 0x40));
@@ -234,17 +234,17 @@ namespace editor {
                 }
 
                 // check for a mismatch in the total allocated blocks for the file
-                data.setLittleEndian();
+                data.setEndian(false);
                 fe.blocksForFile = data.readInt24();
-                data.incrementPointer(3);
+                data.skip<3>();
 
                 // read more information
                 fe.startingBlockNum = data.readInt24();
-                data.setBigEndian();
-                fe.pathIndicator = data.readInt16();
-                fe.fileSize = data.readInt32();
-                fe.createdTimeStamp = data.readInt32();
-                fe.accessTimeStamp = data.readInt32();
+                data.setEndian(true);
+                fe.pathIndicator = data.read<u16>();
+                fe.fileSize = data.read<u32>();
+                fe.createdTimeStamp = data.read<u32>();
+                fe.accessTimeStamp = data.read<u32>();
 
                 // get the flags
                 fe.flags = fe.nameLen >> 6;
@@ -303,7 +303,7 @@ namespace editor {
         // read the hash entry
         HashEntry he{};
         data.readBytes(0x14, he.blockHash);
-        he.status = data.readInt8();
+        he.status = data.read<u8>();
         he.nextBlock = data.readInt24();
 
         return he;
@@ -453,7 +453,7 @@ namespace editor {
 
         for (u32 i = 0; i < topTable.entryCount; i++) {
             data.readBytes(0x14, topTable.entries[i].blockHash);
-            topTable.entries[i].status = data.readInt8();
+            topTable.entries[i].status = data.read<u8>();
             topTable.entries[i].nextBlock = data.readInt24();
         }
 
@@ -533,7 +533,7 @@ namespace editor {
 
         while (!image.isEndOfData()) {
             // Read chunk length
-            c_u32 chunkLength = image.readInt32();
+            c_u32 chunkLength = image.read<u32>();
             std::string chunkType = image.readString(4);
 
             // check if end
@@ -560,11 +560,11 @@ namespace editor {
                 length -= text.size() + 1;
 
                 chunks.push_back({keyword, text});
-                if (image.isEndOfData()) { break; }
+                if (image.eof()) { break; }
             }
 
             // Read chunk CRC
-            image.readInt32();
+            image.read<u32>();
         }
 
         // get keys and store them

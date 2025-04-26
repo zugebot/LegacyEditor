@@ -1,6 +1,6 @@
 #include "chunkData.hpp"
 
-#include "common/NBT.hpp"
+#include "common/nbt.hpp"
 #include "include/lce/blocks/blockID.hpp"
 
 
@@ -8,28 +8,21 @@ namespace editor::chunk {
 
 
     ChunkData::~ChunkData() {
-        if (NBTData != nullptr) {
-            NBTData->NbtFree();
-            delete NBTData;
-            NBTData = nullptr;
-        }
+
     }
 
 
     void ChunkData::defaultNBT() {
-        if (NBTData != nullptr) {
-            NBTData->toType<NBTTagCompound>()->deleteAll();
-            delete NBTData;
-        }
+        // oldNBTData.get<NBTCompound>().clear();
+        // oldNBTData = makeCompound({
+        //         {"Entities", makeList(eNBT::COMPOUND, {})},
+        //         {"TileEntities", makeList(eNBT::COMPOUND, {})},
+        //         {"TileTicks", makeList(eNBT::COMPOUND, {})}
+        // });
 
-        NBTData = new NBTBase(new NBTTagCompound(), TAG_COMPOUND);
-        auto* chunkRootNbtData = static_cast<NBTTagCompound*>(NBTData->data);
-        auto* entities = new NBTTagList();
-        auto* tileEntities = new NBTTagList();
-        auto* tileTicks = new NBTTagList();
-        chunkRootNbtData->setListTag("Entities", entities);
-        chunkRootNbtData->setListTag("TileEntities", tileEntities);
-        chunkRootNbtData->setListTag("TileTicks", tileTicks);
+        entities = makeList(eNBT::COMPOUND, {});
+        tileEntities = makeList(eNBT::COMPOUND, {});
+        tileTicks = makeList(eNBT::COMPOUND, {});
     }
 
 
@@ -38,22 +31,71 @@ namespace editor::chunk {
     }
 
 
-    MU void ChunkData::convertNBTToAquatic() {
+    enum eBlockOrder {
+        // XYZ,
+        XZY,
+        YXZ,
+        YZX,
+        // ZXY,
+        // ZYX,
+        // XyZ,
+        // XZy,
+        yXZ,
+        // yZX,
+        // ZXy,
+        // ZyX,
+        yXZy
+    };
+
+    template<eBlockOrder ORDER>
+    int toIndex(int x, int y, int z) {
+        switch (ORDER) {
+            // case eBlockOrder::XYZ: return x      + y* 16 + z*4096;
+            case eBlockOrder::XZY: return x      + y*256 + z*  16;
+            case eBlockOrder::YXZ: return x* 256 + y     + z*4096;
+            case eBlockOrder::YZX: return x*4096 + y     +z * 256;
+            // case eBlockOrder::ZXY: return x*  16 + y*256 + z;
+            // case eBlockOrder::ZYX: return x*4096 + y*16  + z;
+            // case eBlockOrder::XyZ: return x      + y* 16 + z*2048;
+            // case eBlockOrder::XZy: return x      + y*256 + z*  16;
+            case eBlockOrder::yXZ: return x* 128 + y     + z*2048;
+            // case eBlockOrder::yZX: return x*2048 + y     + z* 128;
+            // case eBlockOrder::ZXy: return x*  16 + y*256 + z;
+            // case eBlockOrder::ZyX: return x*2048 + y*16  + z;
+            case eBlockOrder::yXZy: return x * 128 + (y % 128) + 32768 * (y > 127) + z * 128 * 16;
+        }
+    }
+
+
+
+    MU void ChunkData::convertNBT128ToAquatic() {
+        newBlocks = u16_vec(65536);
+        for (int xIter = 0; xIter < 16; xIter++) {
+            for (int zIter = 0; zIter < 16; zIter++) {
+                for (int yIter = 0; yIter < 128; yIter++) {
+                    c_int offset = toIndex<yXZ>(xIter, yIter, zIter);
+                    c_u16 block = oldBlocks[offset] << 4 |
+                                  ((blockData[offset >> 1] >> ((offset & 1) * 4)) & 0x0F);
+                    c_int AquaticOffset = toIndex<YXZ>(xIter, yIter, zIter);
+                    newBlocks[AquaticOffset] = block;
+                }
+            }
+        }
+        u8_vec().swap(oldBlocks);
+        lastVersion = 12;
+    }
+
+
+    MU void ChunkData::convertNBT256ToAquatic() {
         newBlocks = u16_vec(65536);
         for (int xIter = 0; xIter < 16; xIter++) {
             for (int zIter = 0; zIter < 16; zIter++) {
                 for (int yIter = 0; yIter < 256; yIter++) {
-                    c_int offset = (yIter % 128) + xIter * 128 + zIter * 128 * 16 + 32768 * (yIter > 127);
-                    c_u16 blockID = oldBlocks[offset];
-                    u16 dataTag;
-                    if (offset % 2 == 0) {
-                        dataTag = blockData[offset / 2] & 0x0F;
-                    } else {
-                        dataTag = (blockData[offset / 2] & 0xF0) >> 4;
-                    }
-                    u16 elytraBlock = blockID << 4 | dataTag;
-                    c_int AquaticOffset = yIter + 4096 * zIter + 256 * xIter;
-                    newBlocks[AquaticOffset] = elytraBlock;
+                    c_int offset = toIndex<yXZy>(xIter, yIter, zIter);
+                    c_u16 block = oldBlocks[offset] << 4 |
+                                  ((blockData[offset >> 1] >> ((offset & 1) * 4)) & 0x0F);
+                    c_int AquaticOffset = toIndex<YXZ>(xIter, yIter, zIter);
+                    newBlocks[AquaticOffset] = block;
                 }
             }
         }
@@ -67,16 +109,10 @@ namespace editor::chunk {
         for (int xIter = 0; xIter < 16; xIter++) {
             for (int zIter = 0; zIter < 16; zIter++) {
                 for (int yIter = 0; yIter < 256; yIter++) {
-                    c_int offset = yIter * 256 + zIter * 16 + xIter;
-                    c_u16 blockID = oldBlocks[offset];
-                    u16 dataTag;
-                    if (offset % 2 == 0) {
-                        dataTag = blockData[offset / 2] & 0x0F;
-                    } else {
-                        dataTag = (blockData[offset] & 0xF0) >> 8;
-                    }
-                    u16 elytraBlock = blockID << 4 | dataTag;
-                    c_int AquaticOffset = yIter + 4096 * zIter + 256 * xIter;
+                    c_int oldOffset = toIndex<XZY>(xIter, yIter, zIter);
+                    c_u16 elytraBlock = oldBlocks[oldOffset] << 4 |
+                                      ((blockData[oldOffset >> 1] >> ((oldOffset & 1) * 4)) & 0x0F);
+                    c_int AquaticOffset = toIndex<YXZ>(xIter, yIter, zIter);
                     newBlocks[AquaticOffset] = elytraBlock;
                 }
             }
@@ -112,8 +148,7 @@ namespace editor::chunk {
                        c_u16 block, c_u16 data, c_bool waterlogged, c_bool isSubmerged) {
         switch (lastVersion) {
             case 10: {
-                int offset = (yIn % 128) + xIn * 128 + zIn * 128 * 16;
-                offset += 32768 * (yIn > 127);
+                c_int offset = toIndex<yXZy>(xIn, yIn, zIn);
                 oldBlocks[offset] = block;
                 if (offset % 2 == 0) {
                     blockData[offset] = (blockData[offset] & 0x0F) | data << 4;
@@ -125,7 +160,8 @@ namespace editor::chunk {
             case 8:
             case 9:
             case 11: {
-                c_int offset = yIn * 256 + zIn * 16 + xIn;
+
+                c_int offset = toIndex<XZY>(xIn, yIn, zIn);
                 oldBlocks[offset] = block;
                 if (offset % 2 == 0) {
                     blockData[offset] = (blockData[offset] & 0x0F) | data << 4;
@@ -136,7 +172,7 @@ namespace editor::chunk {
             break;
             case 12:
             case 13: {
-                c_int offset = yIn + 256 * zIn + 4096 * xIn;
+                c_int offset = toIndex<YZX>(xIn, yIn, zIn);
                 u16 value = block << 4 | data;
                 if (waterlogged) {
                     value |= 0x8000;
@@ -166,33 +202,20 @@ namespace editor::chunk {
     u16 ChunkData::getBlock(c_int xIn, c_int yIn, c_int zIn) {
         switch (lastVersion) {
             case 10: {
-                int offset = (yIn % 128) + xIn * 128 + zIn * 128 * 16;
-                offset += 32768 * (yIn > 127);
-                c_u16 blockID = oldBlocks[offset];
-                u16 dataTag;
-                if (offset % 2 == 0) {
-                    dataTag = blockData[offset] & 0x0F;
-                } else {
-                    dataTag = (blockData[offset] & 0xF0) >> 4;
-                }
-                return blockID << 4 | dataTag;
+                c_int offset = toIndex<yXZy>(xIn, yIn, zIn);
+                return oldBlocks[offset] << 4 |
+                       ((blockData[offset >> 1] >> ((offset & 1) * 4)) & 0x0F);
             }
             case 8:
             case 9:
             case 11: {
-                c_int offset = yIn * 256 + zIn * 16 + xIn;
-                c_u16 blockID = oldBlocks[offset];
-                u16 dataTag;
-                if (offset % 2 == 0) {
-                    dataTag = blockData[offset] & 0x0F;
-                } else {
-                    dataTag = (blockData[offset] & 0xF0) >> 4;
-                }
-                return blockID << 4 | dataTag;
+                c_int offset = toIndex<XZY>(xIn, yIn, zIn);
+                return oldBlocks[offset] << 4 |
+                       ((blockData[offset >> 1] >> ((offset & 1) * 4)) & 0x0F);
             }
             case 12:
             case 13: {
-                c_int offset = yIn + 256 * zIn + 4096 * xIn;
+                c_int offset = toIndex<YZX>(xIn, yIn, zIn);
                 return newBlocks[offset];
             }
             default:

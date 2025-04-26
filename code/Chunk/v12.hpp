@@ -2,6 +2,7 @@
 
 #include "code/Chunk/chunkData.hpp"
 #include "common/error_status.hpp"
+#include "common/fixedVector.hpp"
 
 
 class DataManager;
@@ -29,22 +30,22 @@ namespace editor::chunk {
      * return: size of memory that is being written to for that grid\n
      */
     static constexpr u32 V12_GRID_SIZES[16] = {
-        0,  // V12_0_UNO
-        0,
-        12, // V12_1_BIT
-        20, // V12_1_BIT_SUBMERGED
-        24, // V12_2_BIT
-        40, // V12_2_BIT_SUBMERGED
-        40, // V12_3_BIT
-        64, // V12_3_BIT_SUBMERGED
-        64, // V12_4_BIT
-        96, // V12_4_BIT_SUBMERGED
-        0,
-        0,
-        0,
-        0,
-        128,
-        256
+            0,  // V12_0_UNO
+            0,
+            12, // V12_1_BIT
+            20, // V12_1_BIT_SUBMERGED
+            24, // V12_2_BIT
+            40, // V12_2_BIT_SUBMERGED
+            40, // V12_3_BIT
+            64, // V12_3_BIT_SUBMERGED
+            64, // V12_4_BIT
+            96, // V12_4_BIT_SUBMERGED
+            0,
+            0,
+            0,
+            0,
+            128,
+            256
     };
 
 
@@ -65,15 +66,17 @@ namespace editor::chunk {
 
         // Write Section
 
+        using u16FixVec_t = FixedVector<u16, GRID_COUNT>;
+
         void writeBlockData() const;
 
         template<size_t BitsPerBlock, size_t BlockCount, size_t EmptyCount>
-        void writeGrid(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[MAP_SIZE]) const;
-        void writeWithMaxBlocks(const u16_vec& blockVector, const u16_vec& blockLocations, u8 blockMap[MAP_SIZE]) const;
+        void writeGrid(u16FixVec_t& blockVector, u16FixVec_t& blockLocations, u8 blockMap[MAP_SIZE]) const;
+        void writeWithMaxBlocks(const u16FixVec_t& blockVector, const u16FixVec_t& blockLocations, u8 blockMap[MAP_SIZE]) const;
 
         template<size_t BitsPerBlock, size_t BlockCount, size_t EmptyCount>
-        void writeGridSubmerged(u16_vec& blockVector, u16_vec& blockLocations,
-                                const u16_vec& sbmrgLocations, u8 blockMap[MAP_SIZE]) const;
+        void writeGridSubmerged(u16FixVec_t& blockVector, u16FixVec_t& blockLocations,
+                                const u16FixVec_t& sbmrgLocations, u8 blockMap[MAP_SIZE]) const;
 
     public:
         ChunkData* chunkData = nullptr;

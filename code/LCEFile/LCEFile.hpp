@@ -5,6 +5,7 @@
 
 #include "common/data.hpp"
 #include "common/error_status.hpp"
+#include "common/nbt.hpp"
 
 
 class NBTTagCompound;
@@ -13,7 +14,7 @@ namespace editor {
 
 
     class LCEFile {
-        NBTTagCompound* nbt = nullptr;
+        NBTCompound nbt;
     public:
         Data data;
         u64 timestamp = 0;
@@ -56,13 +57,13 @@ namespace editor {
         MU void setMapNumber(i16 mapNumber);
         MU ND i16 getMapNumber() const;
 
-        MU void setFileName(const std::string& filename) const;
+        MU void setFileName(const std::string& filename);
         MU ND std::string getFileName() const;
 
         MU void SetFileNameAndType(const std::string& filename, lce::FILETYPE filetype);
 
     private:
-        MU void setTag(const std::string& key, i16 value) const;
+        MU void setTag(const std::string& key, i16 value);
         MU ND i16 getTag(const std::string& key) const;
 
     };

@@ -100,7 +100,7 @@ static std::string int64ToString(i64 num) {
 bool isPngHeader(DataManager& manager) {
     static u8_vec PNG_HEADER{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
     const u8_vec fileHeader = manager.readIntoVector(8);
-    manager.decrementPointer(8);
+    manager.skip(-8);
     return fileHeader == PNG_HEADER;
 }
 
@@ -126,8 +126,8 @@ namespace editor {
     void FileInfo::loadFileAsThumbnail(const std::string& inFilePath) {
         DataManager defaultPhoto;
         defaultPhoto.readFromFile(inFilePath);
-        thumbnail.data = defaultPhoto.data;
-        thumbnail.size = defaultPhoto.size;
+        thumbnail.data = defaultPhoto.start();
+        thumbnail.size = defaultPhoto.size();
     }
 
 
@@ -160,17 +160,17 @@ namespace editor {
     int FileInfo::readCacheFile(const fs::path& inFilePath, MU const std::string& folderName) {
         isLoaded = false;
         DataManager manager;
-        manager.setLittleEndian();
+        manager.setEndian(false);
 
         manager.readFromFile(inFilePath.string());
 
         bool foundInfo = false;
         u32 pngOffset = 0;
-        u16 filesFound = manager.readInt16();
+        u16 filesFound = manager.read<u16>();
         for (u16 _ = 0; _ < filesFound; _++) {
-            MU u16 var0 = manager.readInt16(); // lies in the range ``0+x`` to ``fileFound+x``
-            MU u32 var1 = manager.readInt32(); // probably a CRC
-            MU u32 iterImageSize = manager.readInt32();
+            MU u16 var0 = manager.read<u16>(); // lies in the range ``0+x`` to ``fileFound+x``
+            MU u32 var1 = manager.read<u32>(); // probably a CRC
+            MU u32 iterImageSize = manager.read<u32>();
             std::string iterFolderName = manager.readString(64);
             std::string iterWorldName = manager.readString(128);
 
@@ -183,9 +183,9 @@ namespace editor {
             }
         }
 
-        manager.incrementPointer(pngOffset);
+        manager.skip(pngOffset);
 
-        manager.setBigEndian();
+        manager.setEndian(true);
         int status = readPNG(manager);
         if (status == 0) {
             isLoaded = true;
@@ -200,16 +200,16 @@ namespace editor {
         switch (theConsole) {
             case lce::CONSOLE::WIIU: {
                 baseSaveName = theManager.readNullTerminatedWString();
-                u32 diff = 256 - (u32)(theManager.ptr - theManager.data);
-                theManager.incrementPointer(diff);
+                u32 diff = 256 - (u32)(theManager.ptr() - theManager.start());
+                theManager.skip(diff);
                 break;
             }
             case lce::CONSOLE::SWITCH: {
                 baseSaveName = theManager.readNullTerminatedWWWString();
-                u32 diff = 512 - (u32)(theManager.ptr - theManager.data);
-                theManager.incrementPointer(diff);
+                u32 diff = 512 - (u32)(theManager.ptr() - theManager.start());
+                theManager.skip(diff);
                 // there is a random u32, then a null u32
-                theManager.incrementPointer(8);
+                theManager.skip(8);
                 break;
             }
             default:
@@ -224,48 +224,48 @@ namespace editor {
             return FILE_ERROR;
         }
 
-        c_u8* PNG_START = theManager.ptr;
+        c_u8* PNG_START = theManager.ptr();
         c_u8* PNG_END;
 
-        theManager.incrementPointer(8);
+        theManager.skip(8);
 
-        while (!theManager.isEndOfData()) {
-            c_u32 chunkLength = theManager.readInt32();
+        while (!theManager.eof()) {
+            c_u32 chunkLength = theManager.read<u32>();
             std::string chunkType = theManager.readString(4);
 
             if (chunkType != "tEXt") {
                 if (chunkType == "IEND") {
-                    theManager.incrementPointer4();
-                    PNG_END = theManager.ptr - 8;
+                    theManager.skip<4>();
+                    PNG_END = theManager.ptr() - 8;
                     c_u32 PNG_SIZE = PNG_END - PNG_START;
                     thumbnail.allocate(PNG_SIZE + 8);
                     std::memcpy(thumbnail.data, PNG_START, PNG_SIZE);
                     return SUCCESS;
                 }
-                theManager.incrementPointer(chunkLength + 4);
+                theManager.skip(chunkLength + 4);
                 continue;
             }
 
-            PNG_END = theManager.ptr - 8;
+            PNG_END = theManager.ptr() - 8;
             c_u32 PNG_SIZE = PNG_END - PNG_START;
             thumbnail.allocate(PNG_SIZE + 12);
             std::memcpy(thumbnail.data, PNG_START, PNG_SIZE);
             std::memcpy(thumbnail.data + PNG_SIZE, &IEND_DAT[0], 12);
 
-            u32 endOfChunk = theManager.getPosition() + chunkLength;
+            u32 endOfChunk = theManager.tell() + chunkLength;
 
-            while (theManager.getPosition() < endOfChunk) {
+            while (theManager.tell() < endOfChunk) {
                 std::string key;
                 std::string text;
 
                 char nextChar;
-                while ((nextChar = theManager.readChar()) != 0) {
+                while ((nextChar = theManager.read<char>()) != 0) {
                     key += nextChar;
                 }
 
-                while ((nextChar = theManager.readChar()) != 0) {
+                while ((nextChar = theManager.read<char>()) != 0) {
                     text += nextChar;
-                    if (theManager.getPosition() >= endOfChunk) {
+                    if (theManager.tell() >= endOfChunk) {
                         break;
                     }
                 }
@@ -285,7 +285,7 @@ namespace editor {
                 } else if (key == "4J_BASESAVENAME") {
                     appendWStringToString(text, baseSaveName);
 
-                    theManager.incrementPointer1();
+                    theManager.skip<1>();
                 }
             }
 
@@ -310,8 +310,8 @@ namespace editor {
                 header.writeWWWString(baseSaveName, 128);
                 // TODO: figure out what this number is
                 c_u32 value = 0;
-                header.writeInt32(value);
-                header.writeInt32(0);
+                header.write<u32>(value);
+                header.write<u32>(0);
                 break;
             }
             case lce::CONSOLE::WIIU: {
@@ -326,8 +326,7 @@ namespace editor {
         }
 
 
-        std::vector<u8> tEXt_chunk;
-        {
+        std::vector<u8> tEXt_chunk; {
             auto appendString = [&](const std::string& str) {
                 tEXt_chunk.insert(tEXt_chunk.end(), str.begin(), str.end());
             };
@@ -385,39 +384,38 @@ namespace editor {
 
         }
 
-        c_u32 out_size = header.size + (thumbnail.size - 12) + 4 + tEXt_chunk.size() + 4 + 12;
+        c_u32 out_size = header.size() + (thumbnail.size - 12) + 4 + tEXt_chunk.size() + 4 + 12;
         Data out;
         out.allocate(out_size);
         DataManager manager(out);
 
         // write header
-        if (header.size != 0) {
-            std::memcpy(manager.ptr, header.data, header.size);
-            manager.incrementPointer(header.size);
+        if (header.size() != 0) {
+            std::memcpy(manager.ptr(), header.start(), header.size());
+            manager.skip(header.size());
         }
 
         // write png data (excluding IEND)
-        std::memcpy(manager.ptr, thumbnail.data, thumbnail.size - 12);
-        manager.incrementPointer(thumbnail.size - 12);
+        std::memcpy(manager.ptr(), thumbnail.data, thumbnail.size - 12);
+        manager.skip(thumbnail.size - 12);
 
         // write tEXt chunk size
-        manager.writeInt32(tEXt_chunk.size() - 4);
+        manager.write<u32>(tEXt_chunk.size() - 4);
 
         // write tEXt chunk data
-        std::memcpy(manager.ptr, tEXt_chunk.data(), tEXt_chunk.size());
-        manager.incrementPointer(tEXt_chunk.size());
+        std::memcpy(manager.ptr(), tEXt_chunk.data(), tEXt_chunk.size());
+        manager.skip(tEXt_chunk.size());
 
         // write tEXt chunk crc
         c_u32 crc_val = crc(tEXt_chunk.data(), tEXt_chunk.size());
-        manager.writeInt32(crc_val);
+        manager.write<u32>(crc_val);
 
         // write IEND png chunk
-        std::memcpy(manager.ptr, &IEND_DAT[0], 12);
+        std::memcpy(manager.ptr(), &IEND_DAT[0], 12);
 
         Data outData;
-        outData.data = manager.data;
-        outData.size = manager.size;
+        outData.data = manager.start();
+        outData.size = manager.size();
         return outData;
-
     }
 }

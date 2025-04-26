@@ -115,7 +115,7 @@ namespace editor {
             if (status != 0)
                 return printf_err(status, "failed to compress fileListing\n");
             theSettings.setOutFilePath(gameDataPath);
-            printf("gamedata final size: %u\n", deflatedData.size);
+            printf("[*] gamedata final size: %u\n", deflatedData.size);
 
 
             // FILE INFO

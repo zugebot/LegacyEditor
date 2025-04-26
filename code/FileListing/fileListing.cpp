@@ -85,28 +85,43 @@ namespace editor {
     }
 
 
-    int FileListing::write(WriteSettings& theWriteSettings) {
+    MU ND int FileListing::preprocess(WriteSettings& theWriteSettings) {
         if (!theWriteSettings.areSettingsValid()) {
             printf("Write Settings are not valid, exiting\n");
             return STATUS::INVALID_ARGUMENT;
         }
 
         // TODO: create default output file path if not set
-
-        if (myReadSettings.getConsole() != theWriteSettings.getConsole()) {
-            if (theWriteSettings.shouldRemovePlayers) {
-                removeFileTypes({lce::FILETYPE::PLAYER});
-            }
-            if (theWriteSettings.shouldRemoveDataMapping) {
-                removeFileTypes({lce::FILETYPE::DATA_MAPPING});
-            }
-            if (theWriteSettings.shouldRemoveMaps) {
-                removeFileTypes({lce::FILETYPE::MAP});
-            }
+        if (theWriteSettings.shouldRemovePlayers || myReadSettings.getConsole() != theWriteSettings.getConsole()) {
+            removeFileTypes({lce::FILETYPE::PLAYER});
+        }
+        if (theWriteSettings.shouldRemoveDataMapping || myReadSettings.getConsole() != theWriteSettings.getConsole()) {
+            removeFileTypes({lce::FILETYPE::DATA_MAPPING});
+        }
+        if (theWriteSettings.shouldRemoveMaps || myReadSettings.getConsole() != theWriteSettings.getConsole()) {
+            removeFileTypes({lce::FILETYPE::MAP});
+        }
+        if (theWriteSettings.shouldRemoveStructures || myReadSettings.getConsole() != theWriteSettings.getConsole()) {
+            removeFileTypes({lce::FILETYPE::STRUCTURE});
+            removeFileTypes({lce::FILETYPE::VILLAGE});
+        }
+        if (lce::consoleIsBigEndian(myReadSettings.getConsole()) != lce::consoleIsBigEndian(theWriteSettings.getConsole())) {
+            removeFileTypes({lce::FILETYPE::GRF});
         }
 
+        return 0;
+    }
+
+
+    int FileListing::write(WriteSettings& theWriteSettings) {
+        if (!theWriteSettings.areSettingsValid()) {
+            printf("Write Settings are not valid, exiting\n");
+            return STATUS::INVALID_ARGUMENT;
+        }
+
+
         const auto consoleOut = theWriteSettings.getConsole();
-        if (lce::consoleIsBigEndian(myReadSettings.getConsole()) != lce::consoleIsBigEndian(consoleOut)) {
+        if (true || lce::consoleIsBigEndian(myReadSettings.getConsole()) != lce::consoleIsBigEndian(consoleOut)) {
             std::cout << "[-] reading and writing all chunks to change their endian, this will take a minute." << std::endl;
             for (size_t index = 0; index < ptrs.region_overworld.size(); index++) {
                 editor::convertChunksToAquatic(index, ptrs.region_overworld, myReadSettings.getConsole(), consoleOut);
@@ -117,14 +132,9 @@ namespace editor {
             for (size_t index = 0; index < ptrs.region_end.size(); index++) {
                 editor::convertChunksToAquatic(index, ptrs.region_end, myReadSettings.getConsole(), consoleOut);
             }
-            removeFileTypes({lce::FILETYPE::STRUCTURE});
-            removeFileTypes({lce::FILETYPE::GRF});
         } else {
-            
             convertRegions(theWriteSettings.getConsole());
         }
-
-
 
         int status = writeSave(theWriteSettings);
         if (status != 0) {

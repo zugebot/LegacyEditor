@@ -89,7 +89,7 @@ namespace editor {
             }
 
             DataManager out(inflatedData);
-            out.writeToFile(R"(C:\Users\jerrin\Desktop\OUT\XBOX360_TU74.decompressed_dat)");
+            // out.writeToFile(R"(C:\Users\jerrin\Desktop\OUT\XBOX360_TU74.decompressed_dat)");
 
             if (inflatedData.size == 0) {
                 return printf_err(DECOMPRESS, "%s", ERROR_3);

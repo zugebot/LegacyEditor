@@ -11,17 +11,17 @@ static u32 RLEVITA_DECOMPRESS(u8* dataIn, c_u32 sizeIn, u8* dataOut, c_u32 sizeO
     DataManager managerIn(dataIn, sizeIn);
     DataManager managerOut(dataOut, sizeOut);
 
-    while (managerIn.getPosition() < sizeIn) {
+    while (managerIn.tell() < sizeIn) {
 
-        if (c_u8 value = managerIn.readInt8(); value != 0x00) {
-            managerOut.writeInt8(value);
+        if (c_u8 value = managerIn.read<u8>(); value != 0x00) {
+            managerOut.write<u8>(value);
         } else {
-            c_int numZeros = managerIn.readInt8();
-            memset(managerOut.ptr, 0, numZeros);
-            managerOut.incrementPointer(numZeros);
+            c_int numZeros = managerIn.read<u8>();
+            memset(managerOut.ptr(), 0, numZeros);
+            managerOut.skip(numZeros);
         }
     }
-    return managerOut.getPosition();
+    return managerOut.tell();
 }
 
 
@@ -45,27 +45,27 @@ static u32 RLEVITA_COMPRESS(u8* dataIn, c_u32 sizeIn, u8* dataOut, c_u32 sizeOut
 
     for (u32 i = 0; i < sizeIn; ++i) {
 
-        if (c_u8 value = managerIn.readInt8(); value != 0) {
+        if (c_u8 value = managerIn.read<u8>(); value != 0) {
             if (zeroCount > 0) {
-                managerOut.writeInt8(0);
-                managerOut.writeInt8(zeroCount);
+                managerOut.write<u8>(0);
+                managerOut.write<u8>(zeroCount);
                 zeroCount = 0;
             }
-            managerOut.writeInt8(value);
+            managerOut.write<u8>(value);
         } else {
             zeroCount++;
             if (zeroCount == 255 || i == sizeIn - 1) {
-                managerOut.writeInt8(0);
-                managerOut.writeInt8(zeroCount);
+                managerOut.write<u8>(0);
+                managerOut.write<u8>(zeroCount);
                 zeroCount = 0;
             }
         }
     }
 
     if (zeroCount > 0) {
-        managerOut.writeInt8(0);
-        managerOut.writeInt8(zeroCount);
+        managerOut.write<u8>(0);
+        managerOut.write<u8>(zeroCount);
     }
 
-    return managerOut.getPosition();
+    return managerOut.tell();
 }

@@ -147,7 +147,7 @@ namespace editor {
             if (status != 0) return printf_err(status,
                 "failed to compress fileListing\n");
             theSettings.setOutFilePath(gameDataPath);
-            printf("gamedata final size: %u\n", deflatedData.size);
+            printf("[*] gamedata final size: %u\n", deflatedData.size);
 
 
             // METADATA
@@ -156,11 +156,11 @@ namespace editor {
             c_u32 crc2 = crc(fileInfoData.data, fileInfoData.size);
             u8 metadata[256] = {0};
             DataManager managerMETADATA(metadata, 256);
-            managerMETADATA.writeInt32(3);
-            managerMETADATA.writeInt32(deflatedData.size);
-            managerMETADATA.writeInt32(fileInfoData.size);
-            managerMETADATA.writeInt32(crc1);
-            managerMETADATA.writeInt32(crc2);
+            managerMETADATA.write<u32>(3);
+            managerMETADATA.write<u32>(deflatedData.size);
+            managerMETADATA.write<u32>(fileInfoData.size);
+            managerMETADATA.write<u32>(crc1);
+            managerMETADATA.write<u32>(crc2);
             int status3 = managerMETADATA.writeToFile(metadataPath);
             if (status3 != 0) return printf_err(status3,
                 "failed to write metadata to \"%s\"\n",

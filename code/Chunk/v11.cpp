@@ -4,7 +4,7 @@
 
 #include "code/Chunk/chunkData.hpp"
 #include "code/Chunk/helpers.hpp"
-#include "common/NBT.hpp"
+#include "common/nbt.hpp"
 
 
 // TODO: I think I need to rewrite this all to place blocks as only u8's,
@@ -31,28 +31,32 @@ namespace editor::chunk {
     void ChunkV11::readChunk() const {
         allocChunk();
 
-        chunkData->chunkX = static_cast<i32>(dataManager->readInt32());
-        chunkData->chunkZ = static_cast<i32>(dataManager->readInt32());
-        chunkData->lastUpdate = static_cast<i64>(dataManager->readInt64());
+        chunkData->chunkX = static_cast<i32>(dataManager->read<u32>());
+        chunkData->chunkZ = static_cast<i32>(dataManager->read<u32>());
+        chunkData->lastUpdate = static_cast<i64>(dataManager->read<u64>());
 
         chunkData->DataGroupCount = 0;
         if (chunkData->lastVersion > 8) {
-            chunkData->inhabitedTime = static_cast<i64>(dataManager->readInt64());
+            chunkData->inhabitedTime = static_cast<i64>(dataManager->read<u64>());
         }
 
         readBlockData();
 
         c_auto dataArray = readGetDataBlockVector<6>(chunkData, dataManager);
-        readDataBlock(dataArray[0], dataArray[1], chunkData->blockData);
-        readDataBlock(dataArray[2], dataArray[3], chunkData->skyLight);
-        readDataBlock(dataArray[4], dataArray[5], chunkData->blockLight);
+
+        readDataBlock(dataArray[0], &chunkData->blockData[0]);
+        readDataBlock(dataArray[1], &chunkData->blockData[16384]);
+        readDataBlock(dataArray[2], &chunkData->skyLight[0]);
+        readDataBlock(dataArray[3], &chunkData->skyLight[16384]);
+        readDataBlock(dataArray[4], &chunkData->blockLight[0]);
+        readDataBlock(dataArray[5], &chunkData->blockLight[16384]);
 
         dataManager->readBytes(256, chunkData->heightMap.data());
-        chunkData->terrainPopulated = static_cast<i16>(dataManager->readInt16());
+        chunkData->terrainPopulated = static_cast<i16>(dataManager->read<u16>());
         dataManager->readBytes(256, chunkData->biomes.data());
 
-        if (*dataManager->ptr == 0x0A) {
-            chunkData->NBTData = NBT::readTag(*dataManager);
+        if (*dataManager->ptr() == 0x0A) {
+            chunkData->oldNBTData.read(*dataManager);
         }
 
         chunkData->validChunk = true;
@@ -89,7 +93,7 @@ namespace editor::chunk {
 
 
     /**
-     * the data is stored in the order of
+     * the data is stored in the m_order of
      * [ byte2 | byte1 ]
      * but for readability we will swap it.
      *
@@ -107,7 +111,7 @@ namespace editor::chunk {
      * format: [ -------- | ------XX ]
      * offset: [ -------X | XXXXXX-- ]
      *
-     * This does not increment dataManager->data.
+     * This does not skip dataManager->data.
      *
      * c_u32 dataOffset = (byte1 << 7U) + ((byte2 & 0b11111100U) >> 1);
      */
@@ -126,20 +130,20 @@ namespace editor::chunk {
     void ChunkV11::readBlockData() const {
 
         for (int putBlockOffset = 0; putBlockOffset < 65536; putBlockOffset += 32768) {
-            c_i32 blockLength = static_cast<i32>(dataManager->readInt32()) - GRID_HEADER_SIZE;
+            c_i32 blockLength = static_cast<i32>(dataManager->read<u32>()) - GRID_HEADER_SIZE;
 
             if (blockLength < 0) { continue; }
 
             // access: 0 <-> 1023
-            c_u8* gridHeader = dataManager->ptr;
-            dataManager->incrementPointer(GRID_HEADER_SIZE);
+            c_u8* gridHeader = dataManager->ptr();
+            dataManager->skip(GRID_HEADER_SIZE);
 
             // access: 0 <-> blockLength
-            c_u8 *const blockDataPtr = dataManager->ptr;
-            dataManager->incrementPointer(blockLength);
+            c_u8 *const blockDataPtr = dataManager->ptr();
+            dataManager->skip(blockLength);
 
             /**
-             * the data is stored in the order of
+             * the data is stored in the m_order of
              * [ byte2 | byte1 ]
              * but for readability we will swap it.
              *
@@ -157,7 +161,7 @@ namespace editor::chunk {
              * format: [ -------- | ------XX ]
              * offset: [ -------X | XXXXXX-- ]
              *
-             * This does not increment dataManager->data.
+             * This does not skip dataManager->data.
              */
             for (int gridIndex = 0; gridIndex < GRID_HEADER_SIZE; gridIndex += 2) {
                 // read the grid header bytes
@@ -226,28 +230,33 @@ namespace editor::chunk {
 
 
     void ChunkV11::writeChunk() {
-        dataManager->writeInt32(chunkData->chunkX);
-        dataManager->writeInt32(chunkData->chunkZ);
-        dataManager->writeInt64(chunkData->lastUpdate);
+        dataManager->write<u32>(chunkData->chunkX);
+        dataManager->write<u32>(chunkData->chunkZ);
+        dataManager->write<u64>(chunkData->lastUpdate);
 
         if (chunkData->lastVersion > 8) {
-            dataManager->writeInt64(chunkData->inhabitedTime);
+            dataManager->write<u64>(chunkData->inhabitedTime);
         }
 
         writeBlockData();
 
-        writeDataBlock(dataManager, chunkData->blockData);
-        writeDataBlock(dataManager, chunkData->skyLight);
-        writeDataBlock(dataManager, chunkData->blockLight);
+        writeDataBlock(dataManager, &chunkData->blockData[0]);
+        writeDataBlock(dataManager, &chunkData->blockData[16384]);
+        writeDataBlock(dataManager, &chunkData->skyLight[0]);
+        writeDataBlock(dataManager, &chunkData->skyLight[16384]);
+        writeDataBlock(dataManager, &chunkData->blockLight[0]);
+        writeDataBlock(dataManager, &chunkData->blockLight[16384]);
 
         dataManager->writeBytes(chunkData->heightMap.data(), 256);
-        dataManager->writeInt16(chunkData->terrainPopulated);
+        dataManager->write<u16>(chunkData->terrainPopulated);
         dataManager->writeBytes(chunkData->biomes.data(), 256);
 
-
-        if (chunkData->NBTData != nullptr) {
-            NBT::writeTag(chunkData->NBTData, *dataManager);
-        }
+        NBTBase nbt = makeCompound({
+                {"Entities", chunkData->entities },
+                {"TileEntities", chunkData->tileEntities },
+                {"TileTicks", chunkData->tileTicks },
+        });
+        nbt.write(*dataManager);
     }
 
 

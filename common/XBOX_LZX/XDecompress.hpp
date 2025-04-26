@@ -14,7 +14,7 @@ enum XMEM_ERROR { OVERFLOW_ = -1, MALLOC = -2, LZX = -3, BAD_DATA = -4 };
 
 #define ERROR(_error, _message) \
     {                           \
-        managerOut.seekStart(); \
+        managerOut.rewind(); \
         error = _error;         \
         printf(_message);       \
         break;                  \
@@ -22,7 +22,7 @@ enum XMEM_ERROR { OVERFLOW_ = -1, MALLOC = -2, LZX = -3, BAD_DATA = -4 };
 
 /// the max "amount" here is 0xffff which is only 2^16 - 1, so it won't overflow (0xff < 8) | 0xff
 #define CHECK_CAN_READ(manager_in, amount)                                             \
-    if (!manager_in.canReadSize(amount)) {                                             \
+    if (!manager_in.canRead(amount)) {                                             \
         ERROR(XMEM_ERROR::OVERFLOW_,                                                    \
               "Tried to readBytes past buffer when decompressing buffer with xmem\n"); \
     }
@@ -64,14 +64,14 @@ static int XDecompress(u8* the_data_out, u32* the_size_out, u8* the_data_in, u32
     while (!reached_end_of_data) {
         int dst_size = CHUNK_SIZE;
 
-        if EXPECT_FALSE(managerIn.peekNextByte() == 0xFF) {
+        if EXPECT_FALSE(managerIn.peek() == 0xFF) {
             CHECK_CAN_READ(managerIn, 3)
-            managerIn.readInt8(); // consume the 0xFF byte
-            dst_size = managerIn.readInt16();
+            managerIn.read<u8>(); // consume the 0xFF byte
+            dst_size = managerIn.read<u16>();
             reached_end_of_data = true;
         }
         CHECK_CAN_READ(managerIn, 2)
-        int src_size = managerIn.readInt16();
+        int src_size = managerIn.read<u16>();
 
         // validate dst_size and src_size
         if (src_size == 0 || dst_size == 0)
@@ -95,6 +95,6 @@ static int XDecompress(u8* the_data_out, u32* the_size_out, u8* the_data_in, u32
     }
 FUNC_END:
     lzx_teardown(strm);
-    *the_size_out = managerOut.getPosition();
+    *the_size_out = managerOut.tell();
     return error;
 }

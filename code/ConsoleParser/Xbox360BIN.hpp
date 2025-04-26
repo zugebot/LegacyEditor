@@ -74,21 +74,18 @@ namespace editor {
             // stuff I need to figure out
             MU auto createdTime = TimePointFromFatTimestamp(entry->createdTimeStamp);
             BINHeader meta = stfsInfo.getMetaData();
-            if (meta.thumbnailImage.size) {
+            if (meta.thumbnailImage.size()) {
                 myListingPtr->fileInfo.readPNG(meta.thumbnailImage);
             }
             myListingPtr->fileInfo.baseSaveName = stfsInfo.getMetaData().displayName;
 
-
-
-
             bin.deallocate();
 
-            c_u32 srcSize = deflatedData.readInt32() - 8;
+            c_u32 srcSize = deflatedData.read<u32>() - 8;
 
             Data data;
             data.setScopeDealloc(true);
-            c_u32 inflatedSize = deflatedData.readInt64();
+            c_u32 inflatedSize = deflatedData.read<u64>();
 
             if (!data.allocate(inflatedSize)) {
                 return MALLOC_FAILED;
@@ -96,7 +93,7 @@ namespace editor {
 
             data.size = XDecompress(
                     data.start(), &data.size,
-                    deflatedData.ptr, srcSize);
+                    deflatedData.ptr(), srcSize);
 
             int status = ConsoleParser::readListing(data);
             if (status != 0) {

@@ -4,10 +4,10 @@
 int ConsoleParser::readListing(const Data &dataIn) {
     DataManager managerIn(dataIn, consoleIsBigEndian(myConsole));
 
-    c_u32 indexOffset = managerIn.readInt32();
-    u32 fileCount = managerIn.readInt32();
-    myListingPtr->myReadSettings.setOldestVersion(managerIn.readInt16());
-    myListingPtr->myReadSettings.setCurrentVersion(managerIn.readInt16());
+    c_u32 indexOffset = managerIn.read<u32>();
+    u32 fileCount = managerIn.read<u32>();
+    myListingPtr->myReadSettings.setOldestVersion(managerIn.read<u16>());
+    myListingPtr->myReadSettings.setCurrentVersion(managerIn.read<u16>());
 
     u32 FOOTER_ENTRY_SIZE = 144;
     if (myListingPtr->myReadSettings.getCurrentVersion() <= 1) {
@@ -23,11 +23,11 @@ int ConsoleParser::readListing(const Data &dataIn) {
 
         std::string fileName = managerIn.readWAsString(WSTRING_SIZE);
 
-        u32 fileSize = managerIn.readInt32();
-        c_u32 index = managerIn.readInt32();
+        u32 fileSize = managerIn.read<u32>();
+        c_u32 index = managerIn.read<u32>();
         u64 timestamp = 0;
         if (myListingPtr->myReadSettings.getCurrentVersion() <= 1) {
-            timestamp = managerIn.readInt64();
+            timestamp = managerIn.read<u64>();
         }
         totalSize += fileSize;
 
@@ -126,14 +126,14 @@ Data ConsoleParser::writeListing(const lce::CONSOLE consoleOut) const {
     DataManager managerOut(dataOut, consoleIsBigEndian(consoleOut));
 
     // step 3: write start
-    managerOut.writeInt32(fileInfoOffset);
+    managerOut.write<u32>(fileInfoOffset);
     u32 innocuousVariableName = fileCount;
     if (currentVersion <= 1) {
         innocuousVariableName *= 136;
     }
-    managerOut.writeInt32(innocuousVariableName);
-    managerOut.writeInt16(myListingPtr->myReadSettings.getOldestVersion());
-    managerOut.writeInt16(currentVersion);
+    managerOut.write<u32>(innocuousVariableName);
+    managerOut.write<u16>(myListingPtr->myReadSettings.getOldestVersion());
+    managerOut.write<u16>(currentVersion);
 
     // step 4: write each files data
     // I am using additionalData as the offset into the file its data is at
@@ -141,7 +141,7 @@ Data ConsoleParser::writeListing(const lce::CONSOLE consoleOut) const {
     for (editor::LCEFile& fileIter : myListingPtr->myAllFiles) {
         fileIter.additionalData = index;
         index += fileIter.data.getSize();
-        managerOut.writeFile(fileIter);
+        managerOut.writeBytes(fileIter.data.start(), fileIter.data.size);
     }
 
     // step 5: write file metadata
@@ -151,10 +151,10 @@ Data ConsoleParser::writeListing(const lce::CONSOLE consoleOut) const {
         std::string fileIterName = fileIter.constructFileName(consoleOut,
                                                               myListingPtr->myReadSettings.getHasSepRegions());
         managerOut.writeWStringFromString(fileIterName, WSTRING_SIZE);
-        managerOut.writeInt32(fileIter.data.getSize());
-        managerOut.writeInt32(fileIter.additionalData);
+        managerOut.write<u32>(fileIter.data.getSize());
+        managerOut.write<u32>(fileIter.additionalData);
         if (currentVersion > 1) {
-            managerOut.writeInt64(fileIter.timestamp);
+            managerOut.write<u64>(fileIter.timestamp);
         }
     }
 
@@ -231,15 +231,15 @@ int ConsoleParser::readExternalFolder(const fs::path& inDirPath) {
 
         // open the file
         DataManager manager_in;
-        manager_in.setLittleEndian(); // all of newgen is little endian
+        manager_in.setEndian(false); // all of newgen is little endian
         manager_in.readFromFile(filePathStr);
-        c_u32 fileSize = manager_in.readInt32();
+        c_u32 fileSize = manager_in.read<u32>();
 
         Data dat_out;
         dat_out.allocate(fileSize);
         const DataManager manager_out(dat_out);
-        RLE_NSX_OR_PS4_DECOMPRESS(manager_in.ptr, manager_in.size - 4,
-                                  manager_out.ptr, manager_out.size);
+        RLE_NSX_OR_PS4_DECOMPRESS(manager_in.ptr(), manager_in.size() - 4,
+                                  manager_out.ptr(), manager_out.size());
 
         // manager_out.writeToFile("C:\\Users\\Jerrin\\CLionProjects\\LegacyEditor\\out\\" + a_filename);
 

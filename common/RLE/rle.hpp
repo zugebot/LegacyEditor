@@ -9,21 +9,21 @@ static void RLE_decompress(u8* dataIn, c_u32 sizeIn, u8* dataOut, u32& sizeOut) 
     DataManager managerIn(dataIn, sizeIn);
     DataManager managerOut(dataOut, sizeOut);
 
-    while (managerIn.getPosition() < sizeIn) {
-        if (c_u8 byte1 = managerIn.readInt8(); byte1 != 255) {
-            managerOut.writeInt8(byte1);
+    while (managerIn.tell() < sizeIn) {
+        if (c_u8 byte1 = managerIn.read<u8>(); byte1 != 255) {
+            managerOut.write<u8>(byte1);
         } else {
-            c_u8 byte2 = managerIn.readInt8();
+            c_u8 byte2 = managerIn.read<u8>();
             u8 value = 255;
             if (byte2 >= 3) {
-                value = managerIn.readInt8();
+                value = managerIn.read<u8>();
             }
             for (int j = 0; j <= static_cast<int>(byte2); j++) {
-                managerOut.writeInt8(value);
+                managerOut.write<u8>(value);
             }
         }
     }
-    sizeOut = managerOut.getPosition();
+    sizeOut = managerOut.tell();
 }
 
 

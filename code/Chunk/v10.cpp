@@ -1,8 +1,6 @@
 #include "v10.hpp"
 
-#include <cstring>
-
-#include "common/NBT.hpp"
+#include "common/nbt.hpp"
 
 
 namespace editor::chunk {
@@ -24,38 +22,47 @@ namespace editor::chunk {
     void ChunkV10::readChunk() {
         allocChunk();
 
-        dataManager->readInt8();
-        c_auto* nbt = NBT::readTag(*dataManager);
-        auto* chunkNBT = nbt->toType<NBTTagCompound>();
+        dataManager->read<u8>();
+        chunkData->oldNBTData.read(*dataManager);
+        auto& level = chunkData->oldNBTData.get<NBTCompound>();
+        auto compound = level.tryGet<NBTCompound>("Level").value_or(NBTCompound{});
 
-        chunkData->lastVersion = 10;
-        chunkData->chunkX = chunkNBT->getPrimitive<i32>("xPos");
-        chunkData->chunkZ = chunkNBT->getPrimitive<i32>("zPos");
-        chunkData->lastUpdate = chunkNBT->getPrimitive<i64>("LastUpdate");
+        chunkData->chunkX = compound.extract("xPos")->get<i32>();
+        chunkData->chunkZ = compound.extract("zPos")->get<i32>();
+        chunkData->lastUpdate = compound.extract("LastUpdate")->get<i64>();
+        chunkData->terrainPopulated = compound.extract("TerrainPopulated")->get<u8>();
 
-        auto createAndCopy = [](c_auto* byteArray, const size_t size) {
-            u8_vec result(size);
-            std::memcpy(result.data(), byteArray->array, size);
-            return result;
-        };
+        if (auto blocks = compound.extract("Blocks")) {
+            chunkData->oldBlocks = std::move(blocks->get<NBTByteArray>());
+            if (chunkData->oldBlocks.size() == 32768) {
+                chunkData->chunkHeight = 128;
+            }
+        }
+        if (auto data = compound.extract("Data")) {
+            chunkData->blockData = std::move(data->get<NBTByteArray>());
+        }
+        if (auto heightMap = compound.extract("HeightMap")) {
+            chunkData->heightMap = std::move(heightMap->get<NBTByteArray>());
+        }
+        if (auto biomes = compound.extract("Biomes")) {
+            chunkData->biomes = std::move(biomes->get<NBTByteArray>());
+        }
+        if (auto skylight = compound.extract("SkyLight")) {
+            memcpy(chunkData->skyLight.data(),
+                   skylight->get<NBTByteArray>().data(),
+                   skylight->get<NBTByteArray>().size());
+        }
+        if (auto blockLight = compound.extract("BlockLight")) {
+            memcpy(chunkData->blockLight.data(),
+                   blockLight->get<NBTByteArray>().data(),
+                   blockLight->get<NBTByteArray>().size());
+        }
 
-        chunkData->oldBlocks = createAndCopy(chunkNBT->getByteArray("Blocks"), 65536);
-        chunkData->blockData = createAndCopy(chunkNBT->getByteArray("Data"), 32768);
-        chunkData->heightMap = createAndCopy(chunkNBT->getByteArray("HeightMap"), 256);
-        chunkData->biomes = createAndCopy(chunkNBT->getByteArray("Biomes"), 256);
-        chunkData->skyLight = createAndCopy(chunkNBT->getByteArray("SkyLight"), 32768);
-        chunkData->blockLight = createAndCopy(chunkNBT->getByteArray("BlockLight"), 32768);
+        chunkData->entities = compound.extract("Entities").value_or(makeList(eNBT::COMPOUND, {}));
+        chunkData->tileEntities = compound.extract("TileEntities").value_or(makeList(eNBT::COMPOUND, {}));
+        chunkData->tileTicks = compound.extract("TileTicks").value_or(makeList(eNBT::COMPOUND, {}));
 
-
-        chunkData->NBTData = new NBTBase(new NBTTagCompound(), TAG_COMPOUND);
-        chunkData->NBTData->toType<NBTTagCompound>()->setTag("Entities", chunkNBT->getTag("Entities").copy());
-        chunkData->NBTData->toType<NBTTagCompound>()->setTag("TileEntities", chunkNBT->getTag("TileEntities").copy());
-        chunkData->NBTData->toType<NBTTagCompound>()->setTag("TileTicks", chunkNBT->getTag("TileTicks").copy());
-
-        // IDK if this is enough nbt is cringe
-        chunkNBT->deleteAll();
-        delete chunkNBT;
-        delete nbt;
+        chunkData->oldNBTData = NBTBase();
 
         chunkData->validChunk = true;
 

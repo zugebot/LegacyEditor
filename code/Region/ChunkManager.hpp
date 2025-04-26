@@ -27,14 +27,14 @@ namespace editor {
                 u64 decSize : 29;
                 u64 isCompressed : 1;
                 u64 rleFlag : 1;
-                u64 unknownFlag : 1;
+                u64 newSaveFlag : 1;
             } anon{};
             FileData() {
                 anon.decSize = 0;
                 rleSize = 0;
                 anon.isCompressed = 1;
                 anon.rleFlag = 1;
-                anon.unknownFlag = 1;
+                anon.newSaveFlag = 1;
                 anon.timestamp = 0;
             }
 
@@ -43,14 +43,14 @@ namespace editor {
             MU void setRLESize(c_u64 val) { rleSize = val; }
 
             MU void setRLEFlag(c_u64 val) { anon.rleFlag = val; }
-            MU void setUnknownFlag(c_u64 val) { anon.unknownFlag = val; }
+            MU void setNewSaveFlag(c_u64 val) { anon.newSaveFlag = val; }
             MU void setCompressedFlag(c_u64 val) { anon.isCompressed = val; }
 
             MU ND u32 getTimestamp() const { return anon.timestamp; }
             MU ND u64 getDecSize() const { return anon.decSize; }
             MU ND u32 getRLESize() const { return rleSize; }
             MU ND u64 getRLEFlag() const { return anon.rleFlag; }
-            MU ND u64 getUnknownFlag() const { return anon.unknownFlag; }
+            MU ND u64 getNewSaveFlag() const { return anon.newSaveFlag; }
             MU ND u64 getCompressedFlag() const { return anon.isCompressed; }
         };
 
@@ -63,7 +63,7 @@ namespace editor {
             result += "decSize_" + std::to_string(fileData.anon.decSize) + "___";
             result += "isComp_" + std::to_string(fileData.anon.isCompressed) + "___";
             result += "rleFlag_" + std::to_string(fileData.anon.rleFlag) + "___";
-            result += "unknown_" + std::to_string(fileData.anon.unknownFlag);
+            result += "unknown_" + std::to_string(fileData.anon.newSaveFlag);
             return result;
         }
 

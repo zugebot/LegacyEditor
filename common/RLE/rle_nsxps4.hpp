@@ -19,26 +19,26 @@ static u32 RLE_NSX_OR_PS4_DECOMPRESS(u8* dataIn, c_u32 sizeIn, u8* dataOut, c_u3
     DataManager managerIn(dataIn, sizeIn);
     DataManager managerOut(dataOut, sizeOut);
 
-    while (managerIn.getPosition() < sizeIn) {
+    while (managerIn.tell() < sizeIn) {
 
-        if (c_u8 value = managerIn.readInt8(); value != 0x00) {
-            managerOut.writeInt8(value);
+        if (c_u8 value = managerIn.read<u8>(); value != 0x00) {
+            managerOut.write<u8>(value);
 
         } else {
-            int numZeros = managerIn.readInt8();
+            int numZeros = managerIn.read<u8>();
 
             if (numZeros == 0) {
-                c_int numZeros1 = managerIn.readInt8();
-                c_int numZeros2 = managerIn.readInt8();
+                c_int numZeros1 = managerIn.read<u8>();
+                c_int numZeros2 = managerIn.read<u8>();
                 numZeros = numZeros1 << 8 | numZeros2;
                 numZeros += 256;
             }
 
-            memset(managerOut.ptr, 0, numZeros);
-            managerOut.incrementPointer(numZeros);
+            memset(managerOut.ptr(), 0, numZeros);
+            managerOut.skip(numZeros);
         }
     }
-    return managerOut.getPosition();
+    return managerOut.tell();
 }
 
 

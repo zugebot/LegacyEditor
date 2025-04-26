@@ -21,12 +21,13 @@ namespace editor {
 
 
     enum CHUNK_HEADER : i16 {
-        V_8 = 0x0008,
-        V_9 = 0x0009,
         V_NBT = 0x0A00,
-        V_11 = 0x000B,
-        V_12 = 0x000C,
-        V_13 = 0x000D,
+        V_8   = 0x0008,
+        V_9   = 0x0009,
+        V_10  = 0x000A,
+        V_11  = 0x000B,
+        V_12  = 0x000C,
+        V_13  = 0x000D,
     };
 
 
@@ -45,7 +46,7 @@ namespace editor {
             return -1;
         }
         DataManager checker(data, size);
-        int version = checker.readInt16AtOffset(0);
+        int version = checker.readAtOffset<u16>(0);
         return version;
 
     }
@@ -62,11 +63,12 @@ namespace editor {
         }
         // read the chunk
         DataManager managerIn(data, size);
-        chunkData->lastVersion = managerIn.readInt16();
+
+        chunkData->lastVersion = managerIn.read<u16>();
 
         switch(chunkData->lastVersion) {
             case V_NBT:
-                chunkData->lastVersion = V_11;
+                chunkData->lastVersion = V_10;
                 chunk::ChunkV10(chunkData, &managerIn).readChunk();
                 break;
             case V_8: case V_9: case V_11:
@@ -80,28 +82,40 @@ namespace editor {
                 break;
             default:;
         }
+
+
+        u32 length = managerIn.ptr() - data;
+        managerIn.update(managerIn.start(), length);
+        // managerIn.update();
+        // managerIn.size
+        // managerIn.m_ptr = data;
+        if (chunkData->chunkX == 0 && chunkData->chunkZ == -10) {
+            managerIn.writeToFile(R"(C:\Users\jerrin\CLionProjects\LegacyEditor\chunks\0_-10.read)");
+        }
     }
 
 
     MU void ChunkManager::writeChunk(MU lce::CONSOLE outConsole) {
         Data outBuffer;
         outBuffer.allocate(CHUNK_BUFFER_SIZE);
+#ifndef DONT_MEMSET0
         memset(outBuffer.data, 0, CHUNK_BUFFER_SIZE);
+#endif
         DataManager managerOut(outBuffer);
 
 
         switch (chunkData->lastVersion) {
-            case V_NBT:
+            case V_10:
                 chunk::ChunkV10(chunkData, &managerOut).writeChunk();
                 break;
             case V_8:
             case V_9:
             case V_11:
-                managerOut.writeInt16(chunkData->lastVersion);
+                managerOut.write<u16>(chunkData->lastVersion);
                 chunk::ChunkV11(chunkData, &managerOut).writeChunk();
                 break;
             case V_12:
-                managerOut.writeInt16(chunkData->lastVersion);
+                managerOut.write<u16>(chunkData->lastVersion);
                 chunk::ChunkV12(chunkData, &managerOut).writeChunk();
                 break;
             case V_13:
@@ -110,8 +124,12 @@ namespace editor {
             default:;
         }
 
+        // if (chunkData->chunkX == 0 && chunkData->chunkZ == -10) {
+        //     managerOut.writeToFile(R"(C:\Users\jerrin\CLionProjects\LegacyEditor\chunks\0_-10.write)");
+        // }
+
         Data outData;
-        outData.allocate(managerOut.getPosition());
+        outData.allocate(managerOut.tell());
         std::memcpy(outData.data, outBuffer.data, outData.size);
         outBuffer.deallocate();
 
@@ -262,7 +280,7 @@ namespace editor {
 
     void ChunkManager::setSizeFromReading(c_u32 sizeIn) {
         fileData.setRLEFlag(sizeIn >> 31);
-        fileData.setUnknownFlag(sizeIn >> 30 & 1);
+        fileData.setNewSaveFlag(sizeIn >> 30 & 1);
         size = sizeIn & 0x00FFFFFF;
     }
 
@@ -270,7 +288,7 @@ namespace editor {
     u32 ChunkManager::getSizeForWriting() const {
         u32 sizeOut = size;
         if (fileData.getRLEFlag() != 0U) { sizeOut |= 0x80000000; }
-        if (fileData.getUnknownFlag() != 0U) { sizeOut |= 0x40000000; }
+        if (fileData.getNewSaveFlag() != 0U) { sizeOut |= 0x40000000; }
         return sizeOut;
     }
 

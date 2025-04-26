@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.23.1)
 project(LegacyEditor)
 
 set(CMAKE_C_STANDARD 17)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build")
 
 # directories to include
@@ -62,4 +62,7 @@ add_executable(LegacyEditor
         # examples/figure_out_ps3_to_wiiu.cpp
 )
 
+target_compile_options(LegacyEditor PUBLIC -march=native -DNDEBUG)
 add_dependencies(LegacyEditor copy_assets)
+
+add_compile_definitions(DONT_MEMSET0)

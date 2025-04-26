@@ -74,6 +74,7 @@ namespace editor {
         /// Parse from console files
 
         MU ND int read(const fs::path& theFilePath);
+        MU ND int preprocess(WriteSettings& theWriteSettings);
         MU ND int write(WriteSettings& theWriteSettings);
 
         /// Conversion

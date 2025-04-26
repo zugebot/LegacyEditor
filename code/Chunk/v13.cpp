@@ -4,7 +4,7 @@
 #include <algorithm>
 
 #include "code/Chunk/helpers.hpp"
-#include "common/NBT.hpp"
+#include "common/nbt.hpp"
 #include "common/dataManager.hpp"
 
 
@@ -28,28 +28,36 @@ namespace editor::chunk {
     void ChunkV13::readChunk() {
         allocChunk();
 
-        maxGridAmount = dataManager->readInt16();
-        chunkData->chunkX = static_cast<i32>(dataManager->readInt32());
-        chunkData->chunkZ = static_cast<i32>(dataManager->readInt32());
-        chunkData->lastUpdate = static_cast<i64>(dataManager->readInt64());
-        chunkData->inhabitedTime = static_cast<i64>(dataManager->readInt64());
+        maxGridAmount = dataManager->read<u16>();
+        chunkData->chunkX = static_cast<i32>(dataManager->read<u32>());
+        chunkData->chunkZ = static_cast<i32>(dataManager->read<u32>());
+        chunkData->lastUpdate = static_cast<i64>(dataManager->read<u64>());
+        chunkData->inhabitedTime = static_cast<i64>(dataManager->read<u64>());
 
         readBlockData();
 
         {
         c_auto dataArray = readGetDataBlockVector<4>(chunkData, dataManager);
-        readDataBlock(dataArray[0], dataArray[1], chunkData->skyLight);
-        readDataBlock(dataArray[2], dataArray[3], chunkData->blockLight);
+        readDataBlock(dataArray[0], &chunkData->skyLight[0]);
+        readDataBlock(dataArray[1], &chunkData->skyLight[16348]);
+        readDataBlock(dataArray[2], &chunkData->blockLight[0]);
+        readDataBlock(dataArray[3], &chunkData->blockLight[16348]);
         }
 
         dataManager->readBytes(256, chunkData->heightMap.data());
-        chunkData->terrainPopulated = static_cast<i16>(dataManager->readInt16());
+        chunkData->terrainPopulated = static_cast<i16>(dataManager->read<u16>());
         dataManager->readBytes(256, chunkData->biomes.data());
 
-        if (*dataManager->ptr == 0x0A) {
-            chunkData->NBTData = NBT::readTag(*dataManager);
+        if (*dataManager->ptr() == 0x0A) {
+            chunkData->oldNBTData.read(*dataManager);
+            auto& nbt = chunkData->oldNBTData;
+            chunkData->entities = nbt.extractTag("Entities").value_or(makeList(eNBT::COMPOUND, {}));
+            chunkData->tileEntities = nbt.extractTag("TileEntities").value_or(makeList(eNBT::COMPOUND, {}));
+            chunkData->tileTicks = nbt.extractTag("TileTicks").value_or(makeList(eNBT::COMPOUND, {}));
+            chunkData->oldNBTData = NBTBase();
         }
 
+        chunkData->lastVersion = 13;
         chunkData->validChunk = true;
     }
 
@@ -79,16 +87,16 @@ namespace editor::chunk {
 
 
     void ChunkV13::readBlockData() const {
-        c_u32 maxSectionAddress = dataManager->readInt16() << 8;
+        c_u32 maxSectionAddress = dataManager->read<u16>() << 8;
 
         u16_vec sectionJumpTable(16);
         for (u32 i = 0; i < 16; i++) {
-            sectionJumpTable[i] = dataManager->readInt16();
+            sectionJumpTable[i] = dataManager->read<u16>();
         }
 
         // size: 16
-        c_u8* sizeOfSubChunks = dataManager->ptr;
-        dataManager->incrementPointer(16);
+        c_u8* sizeOfSubChunks = dataManager->ptr();
+        dataManager->skip<16>();
 
         if (maxSectionAddress == 0) {
             return;
@@ -104,8 +112,8 @@ namespace editor::chunk {
                 continue;
             }
             // TODO: replace with telling cpu to cache that address, and use a ptr?
-            c_u8* sectionHeader = dataManager->ptr; // size: 128 bytes
-            dataManager->incrementPointer(128);
+            c_u8* sectionHeader = dataManager->ptr(); // size: 128 bytes
+            dataManager->skip<128>();
 #ifdef DEBUG
             u16 gridFormats[64] = {0};
             u16 gridOffsets[64] = {0};
@@ -131,10 +139,10 @@ namespace editor::chunk {
                 gridOffsets[gridOffsetIndex++] = gridPosition - DATA_HEADER_SIZE;
 #endif
                 // ensure not reading past the memory buffer
-                if EXPECT_FALSE (gridPosition + V13_GRID_SIZES[format] >= dataManager->size && format != 0) return;
+                if EXPECT_FALSE (gridPosition + V13_GRID_SIZES[format] >= dataManager->size() && format != 0) return;
 
-                u8* bufferPtr = dataManager->data + gridPosition;
-                dataManager->ptr = bufferPtr + V13_GRID_SIZES[format] + 128;
+                u8* bufferPtr = dataManager->start() + gridPosition;
+                dataManager->seek(gridPosition + V13_GRID_SIZES[format] + 128);
                 bool success = true;
                 switch(format) {
                     case V13_0_UNO:
@@ -277,25 +285,33 @@ namespace editor::chunk {
 
 
     void ChunkV13::writeChunk() const {
-        dataManager->writeInt32(chunkData->chunkX);
-        dataManager->writeInt32(chunkData->chunkZ);
-        dataManager->writeInt64(chunkData->lastUpdate);
-        dataManager->writeInt64(chunkData->inhabitedTime);
-        dataManager->writeInt16(this->maxGridAmount);
+        dataManager->write<u32>(chunkData->chunkX);
+        dataManager->write<u32>(chunkData->chunkZ);
+        dataManager->write<u64>(chunkData->lastUpdate);
+        dataManager->write<u64>(chunkData->inhabitedTime);
+        dataManager->write<u16>(this->maxGridAmount);
 
         writeBlockData();
 
-        writeDataBlock(dataManager, chunkData->skyLight);
-        writeDataBlock(dataManager, chunkData->blockLight);
+        writeDataBlock(dataManager, &chunkData->skyLight[0]);
+        writeDataBlock(dataManager, &chunkData->skyLight[16348]);
+        writeDataBlock(dataManager, &chunkData->blockLight[0]);
+        writeDataBlock(dataManager, &chunkData->blockLight[16348]);
 
         dataManager->writeBytes(chunkData->heightMap.data(), 256);
-        dataManager->writeInt16(chunkData->terrainPopulated);
+        dataManager->write<u16>(chunkData->terrainPopulated);
         dataManager->writeBytes(chunkData->biomes.data(), 256);
 
-        if (chunkData->NBTData != nullptr) {
-            NBT::writeTag(chunkData->NBTData, *dataManager);
-        }
-
+        NBTBase nbt = makeCompound({
+                {"", makeCompound(
+                             {
+                                     {"Entities", chunkData->entities },
+                                     {"TileEntities", chunkData->tileEntities },
+                                     {"TileTicks", chunkData->tileTicks },
+                             }
+                             )}
+        });
+        nbt.write(*dataManager);
     }
 
     void ChunkV13::writeBlockData() const {
@@ -317,7 +333,7 @@ namespace editor::chunk {
         constexpr u32 H_SECT_SIZE_TABLE = H_BEGIN + 34; // step 3:  i8 * 16 section size table / 256
         constexpr u32 H_SECT_START      = H_BEGIN + 50;
 
-        /// increment 50 for block header
+        /// skip 50 for block header
         dataManager->seek(H_SECT_START);
 
         u32 last_section_jump = 0;
@@ -331,7 +347,7 @@ namespace editor::chunk {
 
             sectJumpTable[sectionIndex] = CURRENT_INC_SECT_JUMP;
 
-            dataManager->ptr = dataManager->data + H_SECT_START + CURRENT_INC_SECT_JUMP + GRID_SIZE;
+            dataManager->seek(H_SECT_START + CURRENT_INC_SECT_JUMP + GRID_SIZE);
 
             u32 blockX, blockY, blockZ;
 
@@ -397,16 +413,16 @@ namespace editor::chunk {
             }
 
             // write grid header in subsection
-            dataManager->setLittleEndian();
+            dataManager->setEndian(false);
             for (size_t index = 0; index < GRID_COUNT; index++) {
-                dataManager->writeInt16AtOffset(CURRENT_SECTION_START + 2 * index, gridHeader[index]);
+                dataManager->writeAtOffset<u16>(CURRENT_SECTION_START + 2 * index, gridHeader[index]);
             }
-            dataManager->setBigEndian();
+            dataManager->setEndian(true);
 
             // write section size to section size table
-            if (is0_128_slow(dataManager->data + CURRENT_SECTION_START)) {
+            if (is0_128_slow(dataManager->start() + CURRENT_SECTION_START)) {
                 last_section_size = 0;
-                dataManager->ptr -= GRID_SIZE;
+                dataManager->skip(-GRID_SIZE);
             } else {
                 last_section_size = (GRID_SIZE + sectionSize + 255) / 256;
                 last_section_jump += last_section_size;
@@ -416,14 +432,14 @@ namespace editor::chunk {
 
         // at root header, write section jump and size tables
         for (size_t sectionIndex = 0; sectionIndex < SECTION_COUNT; sectionIndex++) {
-            dataManager->writeInt16AtOffset(H_SECT_JUMP_TABLE + 2 * sectionIndex, sectJumpTable[sectionIndex]);
-            dataManager->writeInt8AtOffset(H_SECT_SIZE_TABLE + sectionIndex, sectSizeTable[sectionIndex]);
+            dataManager->writeAtOffset<u16>(H_SECT_JUMP_TABLE + 2 * sectionIndex, sectJumpTable[sectionIndex]);
+            dataManager->writeAtOffset<u8>(H_SECT_SIZE_TABLE + sectionIndex, sectSizeTable[sectionIndex]);
         }
 
         c_u32 final_val = last_section_jump * 256;
 
         // at root header, write total file size
-        dataManager->writeInt16AtOffset(H_BEGIN, final_val >> 8);
+        dataManager->writeAtOffset<u16>(H_BEGIN, final_val >> 8);
         dataManager->seek(H_SECT_START + final_val);
     }
 
@@ -441,16 +457,16 @@ namespace editor::chunk {
     void ChunkV13::writeGrid(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[MAP_SIZE]) const {
 
         // write the block data
-        dataManager->setLittleEndian();
+        dataManager->setEndian(false);
         for (size_t blockIndex = 0; blockIndex < BlockCount; blockIndex++) {
-            dataManager->writeInt16(blockVector[blockIndex]);
+            dataManager->write<u16>(blockVector[blockIndex]);
         }
-        dataManager->setBigEndian();
+        dataManager->setEndian(true);
 
         // fill rest of empty palette with 0xFF's
         // TODO: IDK if this is actually necessary
         for (size_t rest = 0; rest < EmptyCount; rest++) {
-            dataManager->writeInt16(0xFFFF);
+            dataManager->write<u16>(0xFFFF);
         }
 
         //  write the position data
@@ -462,7 +478,7 @@ namespace editor::chunk {
                 c_u64 pos = blockLocations[locIndex];
                 position |= (pos >> bitIndex & 1) << (GRID_COUNT - locIndex - 1);
             }
-            dataManager->writeInt64(position);
+            dataManager->write<u64>(position);
         }
 
         // clear the table
@@ -476,12 +492,12 @@ namespace editor::chunk {
     /// make this copy all u16 blocks from the grid location or whatnot
     /// used to writeGameData full block data, instead of using palette.
     void ChunkV13::writeWithMaxBlocks(const u16_vec& blockVector, const u16_vec& blockLocations, u8 blockMap[MAP_SIZE]) const {
-        dataManager->setLittleEndian();
+        dataManager->setEndian(false);
         for (size_t i = 0; i < GRID_COUNT; i++) {
             c_u16 blockPos = blockLocations[i];
-            dataManager->writeInt16(blockVector[blockPos]);
+            dataManager->write<u16>(blockVector[blockPos]);
         }
-        dataManager->setBigEndian();
+        dataManager->setEndian(true);
 
         for (c_u16 block : blockVector) {
             blockMap[block] = 0;
