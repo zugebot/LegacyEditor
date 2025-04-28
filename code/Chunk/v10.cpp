@@ -27,10 +27,15 @@ namespace editor::chunk {
         auto& level = chunkData->oldNBTData.get<NBTCompound>();
         auto compound = level.tryGet<NBTCompound>("Level").value_or(NBTCompound{});
 
-        chunkData->chunkX = compound.extract("xPos")->get<i32>();
-        chunkData->chunkZ = compound.extract("zPos")->get<i32>();
-        chunkData->lastUpdate = compound.extract("LastUpdate")->get<i64>();
-        chunkData->terrainPopulated = compound.extract("TerrainPopulated")->get<u8>();
+        chunkData->chunkX = compound.tryGet<i32>("xPos").value_or(0);
+        chunkData->chunkZ = compound.tryGet<i32>("zPos").value_or(0);
+        chunkData->lastUpdate = compound.tryGet<i64>("LastUpdate").value_or(0);
+        chunkData->terrainPopulated = compound.tryGet<u8>("TerrainPopulated").value_or(
+                compound.tryGet<u8>("TerrainPopulatedFlags").value_or(
+                        0
+                        )
+        );
+
 
         if (auto blocks = compound.extract("Blocks")) {
             chunkData->oldBlocks = std::move(blocks->get<NBTByteArray>());

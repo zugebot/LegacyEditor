@@ -1,15 +1,14 @@
 #include "chunkData.hpp"
 
 #include "common/nbt.hpp"
+#include "helpers.hpp"
 #include "include/lce/blocks/blockID.hpp"
 
 
 namespace editor::chunk {
 
 
-    ChunkData::~ChunkData() {
-
-    }
+    ChunkData::~ChunkData() = default;
 
 
     void ChunkData::defaultNBT() {
@@ -69,19 +68,49 @@ namespace editor::chunk {
 
 
     MU void ChunkData::convertNBT128ToAquatic() {
+
+        // BLOCKS
         newBlocks = u16_vec(65536);
         for (int xIter = 0; xIter < 16; xIter++) {
             for (int zIter = 0; zIter < 16; zIter++) {
                 for (int yIter = 0; yIter < 128; yIter++) {
-                    c_int offset = toIndex<yXZ>(xIter, yIter, zIter);
-                    c_u16 block = oldBlocks[offset] << 4 |
-                                  ((blockData[offset >> 1] >> ((offset & 1) * 4)) & 0x0F);
-                    c_int AquaticOffset = toIndex<YXZ>(xIter, yIter, zIter);
-                    newBlocks[AquaticOffset] = block;
+                    c_int oldOffset = toIndex<yXZ>(xIter, yIter, zIter);
+                    c_int newOffset = toIndex<YXZ>(xIter, yIter, zIter);
+                    c_u16 block = oldBlocks[oldOffset] << 4 | getNibble(blockData, oldOffset);
+                    newBlocks[newOffset] = block;
                 }
             }
         }
         u8_vec().swap(oldBlocks);
+
+        // BLOCK LIGHT
+        u8_vec tempLight(32'768);
+        for (int xIter = 0; xIter < 16; ++xIter) {
+            for (int zIter = 0; zIter < 16; ++zIter) {
+                for (int yIter = 0; yIter < 128; ++yIter) {
+                    c_int oldOffset = toIndex<yXZ>(xIter, yIter, zIter);
+                    c_int newOffset = toIndex<XZY>(xIter, yIter, zIter);
+                    c_u8 nib = getNibble(blockLight, oldOffset);
+                    setNibble(tempLight, newOffset, nib);
+                }
+            }
+        }
+        blockLight.swap(tempLight);
+
+        // SKYLIGHT
+        for (int xIter = 0; xIter < 16; ++xIter) {
+            for (int zIter = 0; zIter < 16; ++zIter) {
+                for (int yIter = 0; yIter < 128; ++yIter) {
+                    c_int oldOffset = toIndex<yXZ>(xIter, yIter, zIter);
+                    c_int newOffset = toIndex<XZY>(xIter, yIter, zIter);
+                    c_u8 nib = getNibble(skyLight, oldOffset);
+                    setNibble(tempLight, newOffset, nib);
+                }
+            }
+        }
+        skyLight.swap(tempLight);
+        memset(skyLight.data() + 16384, 0xFF, 16384);
+
         lastVersion = 12;
     }
 
@@ -91,16 +120,44 @@ namespace editor::chunk {
         for (int xIter = 0; xIter < 16; xIter++) {
             for (int zIter = 0; zIter < 16; zIter++) {
                 for (int yIter = 0; yIter < 256; yIter++) {
-                    c_int offset = toIndex<yXZy>(xIter, yIter, zIter);
-                    c_u16 block = oldBlocks[offset] << 4 |
-                                  ((blockData[offset >> 1] >> ((offset & 1) * 4)) & 0x0F);
-                    c_int AquaticOffset = toIndex<YXZ>(xIter, yIter, zIter);
-                    newBlocks[AquaticOffset] = block;
+                    c_int oldOffset = toIndex<yXZy>(xIter, yIter, zIter);
+                    c_int newOffset = toIndex<YXZ>(xIter, yIter, zIter);
+                    c_u16 block = oldBlocks[oldOffset] << 4 | getNibble(blockData, oldOffset);
+                    newBlocks[newOffset] = block;
                 }
             }
         }
-        lastVersion = 12;
         u8_vec().swap(oldBlocks);
+
+        // BLOCK LIGHT
+        u8_vec tempLight(32'768);
+        for (int xIter = 0; xIter < 16; ++xIter) {
+            for (int zIter = 0; zIter < 16; ++zIter) {
+                for (int yIter = 0; yIter < 256; ++yIter) {
+                    c_int oldOffset = toIndex<yXZy>(xIter, yIter, zIter);
+                    c_int newOffset = toIndex<XZY>(xIter, yIter, zIter);
+                    c_u8 nib = getNibble(blockLight, oldOffset);
+                    setNibble(tempLight, newOffset, nib);
+                }
+            }
+        }
+        blockLight.swap(tempLight);
+
+        // SKYLIGHT
+        for (int xIter = 0; xIter < 16; ++xIter) {
+            for (int zIter = 0; zIter < 16; ++zIter) {
+                for (int yIter = 0; yIter < 256; ++yIter) {
+                    c_int oldOffset = toIndex<yXZy>(xIter, yIter, zIter);
+                    c_int newOffset = toIndex<XZY>(xIter, yIter, zIter);
+                    c_u8 nib = getNibble(skyLight, oldOffset);
+                    setNibble(tempLight, newOffset, nib);
+                }
+            }
+        }
+        skyLight.swap(tempLight);
+        u8_vec().swap(tempLight);
+
+        lastVersion = 12;
     }
 
 
@@ -110,10 +167,9 @@ namespace editor::chunk {
             for (int zIter = 0; zIter < 16; zIter++) {
                 for (int yIter = 0; yIter < 256; yIter++) {
                     c_int oldOffset = toIndex<XZY>(xIter, yIter, zIter);
-                    c_u16 elytraBlock = oldBlocks[oldOffset] << 4 |
-                                      ((blockData[oldOffset >> 1] >> ((oldOffset & 1) * 4)) & 0x0F);
-                    c_int AquaticOffset = toIndex<YXZ>(xIter, yIter, zIter);
-                    newBlocks[AquaticOffset] = elytraBlock;
+                    c_int newOffset = toIndex<YXZ>(xIter, yIter, zIter);
+                    c_u16 block = oldBlocks[oldOffset] << 4 | getNibble(blockData, oldOffset);
+                    newBlocks[newOffset] = block;
                 }
             }
         }
@@ -147,6 +203,7 @@ namespace editor::chunk {
                        c_int xIn, c_int yIn, c_int zIn,
                        c_u16 block, c_u16 data, c_bool waterlogged, c_bool isSubmerged) {
         switch (lastVersion) {
+                // TODO: this looks incorrect
             case 10: {
                 c_int offset = toIndex<yXZy>(xIn, yIn, zIn);
                 oldBlocks[offset] = block;
@@ -160,7 +217,7 @@ namespace editor::chunk {
             case 8:
             case 9:
             case 11: {
-
+                // TODO: this looks incorrect
                 c_int offset = toIndex<XZY>(xIn, yIn, zIn);
                 oldBlocks[offset] = block;
                 if (offset % 2 == 0) {
@@ -203,15 +260,13 @@ namespace editor::chunk {
         switch (lastVersion) {
             case 10: {
                 c_int offset = toIndex<yXZy>(xIn, yIn, zIn);
-                return oldBlocks[offset] << 4 |
-                       ((blockData[offset >> 1] >> ((offset & 1) * 4)) & 0x0F);
+                return oldBlocks[offset] << 4 | getNibble(blockData, offset);
             }
             case 8:
             case 9:
             case 11: {
                 c_int offset = toIndex<XZY>(xIn, yIn, zIn);
-                return oldBlocks[offset] << 4 |
-                       ((blockData[offset >> 1] >> ((offset & 1) * 4)) & 0x0F);
+                return oldBlocks[offset] << 4 | getNibble(blockData, offset);
             }
             case 12:
             case 13: {

@@ -25,28 +25,16 @@ public:
 
     DataManager() = default;
 
-    explicit DataManager(const Data& dataIn, c_bool isBigIn = true)
-        : m_data(dataIn.start()), m_ptr(m_data), m_size(dataIn.size) {
-        setEndian(isBigIn);
-    }
+    explicit DataManager(const Data& dataIn, Endian order = Endian::Big)
+        : m_order(order), m_data(dataIn.start()), m_ptr(m_data), m_size(dataIn.size) {}
 
-    explicit DataManager(const Data* dataIn, c_bool isBigIn = true)
-        : m_data(dataIn->start()), m_ptr(m_data), m_size(dataIn->size) {
-        setEndian(isBigIn);
-    }
+    explicit DataManager(const Data* dataIn, Endian order = Endian::Big)
+        : m_order(order), m_data(dataIn->start()), m_ptr(m_data), m_size(dataIn->size) {}
 
-    explicit DataManager(u8* dataIn, c_u32 sizeIn, c_bool isBigIn = true)
-        : m_data(dataIn), m_ptr(dataIn), m_size(sizeIn) {
-        setEndian(isBigIn);
-    }
+    explicit DataManager(u8* dataIn, c_u32 sizeIn, Endian order = Endian::Big)
+        : m_order(order), m_data(dataIn), m_ptr(dataIn), m_size(sizeIn) {}
 
-    void setEndian(bool isBigIn) {
-        if (isBigIn) {
-            m_order = Endian::Big;
-        } else {
-            m_order = Endian::Little;
-        }
-    }
+    void setEndian(Endian order) { m_order = order; }
 
     void take(const Data& dataIn);
     void take(const Data* dataIn);

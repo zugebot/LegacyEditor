@@ -2,43 +2,31 @@
 
 #include <cstring>
 
-#include "include/lce/processor.hpp"
-
+#include "bitChecking.hpp"
 #include "common/dataManager.hpp"
+#include "include/lce/processor.hpp"
 
 
 namespace editor::chunk {
 
 
-    static u32 toIndex(c_u32 num) {
-        u32 val = (num + 1) * 128;
-        return val;
+    inline static u32 toIndex(c_u32 num) {
+        return (num + 1) * 128;
     }
 
 
-    /**
-     * This checks if the next 1024 bits are all zeros.\n
-     * this is u8[128]
-     * @param ptr
-     * @return true if all bits are zero, else 0.
-     */
-    static bool is0_128_slow(c_u8* ptr) {
-        for (int i = 0; i < 128; ++i) {
-            if (ptr[i] != 0x00) {
-                return false;
-            }
-        }
-        return true;
+    __forceinline static u8 getNibble(const u8_vec& buf, int nibIdx) {
+        const int byteIdx = nibIdx >> 1;
+        const int shift   = (nibIdx & 1) * 4;
+        return (buf[byteIdx] >> shift) & 0xF;
     }
 
 
-    static bool is255_128_slow(c_u8* ptr) {
-        for (int i = 0; i < 128; ++i) {
-            if (ptr[i] != 0xFF) {
-                return false;
-            }
-        }
-        return true;
+    __forceinline static void setNibble(u8_vec& buf, int nibIdx, u8 value) {
+        int byteIdx = nibIdx >> 1;
+        int shift   = (nibIdx & 1) * 4;
+        buf[byteIdx] &= ~(0xF << shift);
+        buf[byteIdx] |=  (value & 0xF) << shift;
     }
 
 
@@ -92,9 +80,9 @@ namespace editor::chunk {
         u32 sectionOffsetSize = 0;
         c_u8* ptr = dataIn + readOffset;
         for (int i = 0; i < DATA_SECTION_SIZE; i++) {
-            if (is0_128_slow(ptr)) {
+            if (is_zero_128(ptr)) {
                 managerIn->write<u8>(DATA_SECTION_SIZE);
-            } else if (is255_128_slow(ptr)) {
+            } else if (is_ff_128(ptr)) {
                 managerIn->write<u8>(DATA_SECTION_SIZE + 1);
             } else {
                 sectionOffsets.push_back(readOffset);

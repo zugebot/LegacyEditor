@@ -31,13 +31,13 @@ namespace editor::chunk {
     void ChunkV11::readChunk() const {
         allocChunk();
 
-        chunkData->chunkX = static_cast<i32>(dataManager->read<u32>());
-        chunkData->chunkZ = static_cast<i32>(dataManager->read<u32>());
-        chunkData->lastUpdate = static_cast<i64>(dataManager->read<u64>());
+        chunkData->chunkX = dataManager->read<i32>();
+        chunkData->chunkZ = dataManager->read<i32>();
+        chunkData->lastUpdate = dataManager->read<i64>();
 
         chunkData->DataGroupCount = 0;
         if (chunkData->lastVersion > 8) {
-            chunkData->inhabitedTime = static_cast<i64>(dataManager->read<u64>());
+            chunkData->inhabitedTime = dataManager->read<i64>();
         }
 
         readBlockData();
@@ -52,7 +52,7 @@ namespace editor::chunk {
         readDataBlock(dataArray[5], &chunkData->blockLight[16384]);
 
         dataManager->readBytes(256, chunkData->heightMap.data());
-        chunkData->terrainPopulated = static_cast<i16>(dataManager->read<u16>());
+        chunkData->terrainPopulated = dataManager->read<i16>();
         dataManager->readBytes(256, chunkData->biomes.data());
 
         if (*dataManager->ptr() == 0x0A) {
@@ -230,12 +230,12 @@ namespace editor::chunk {
 
 
     void ChunkV11::writeChunk() {
-        dataManager->write<u32>(chunkData->chunkX);
-        dataManager->write<u32>(chunkData->chunkZ);
-        dataManager->write<u64>(chunkData->lastUpdate);
+        dataManager->write<i32>(chunkData->chunkX);
+        dataManager->write<i32>(chunkData->chunkZ);
+        dataManager->write<i64>(chunkData->lastUpdate);
 
         if (chunkData->lastVersion > 8) {
-            dataManager->write<u64>(chunkData->inhabitedTime);
+            dataManager->write<i64>(chunkData->inhabitedTime);
         }
 
         writeBlockData();
@@ -248,13 +248,17 @@ namespace editor::chunk {
         writeDataBlock(dataManager, &chunkData->blockLight[16384]);
 
         dataManager->writeBytes(chunkData->heightMap.data(), 256);
-        dataManager->write<u16>(chunkData->terrainPopulated);
+        dataManager->write<i16>(chunkData->terrainPopulated);
         dataManager->writeBytes(chunkData->biomes.data(), 256);
 
         NBTBase nbt = makeCompound({
-                {"Entities", chunkData->entities },
-                {"TileEntities", chunkData->tileEntities },
-                {"TileTicks", chunkData->tileTicks },
+                {"", makeCompound(
+                             {
+                                     {"Entities", chunkData->entities },
+                                     {"TileEntities", chunkData->tileEntities },
+                                     {"TileTicks", chunkData->tileTicks },
+                             }
+                             )}
         });
         nbt.write(*dataManager);
     }

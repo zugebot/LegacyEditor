@@ -2,7 +2,7 @@
 
 
 int ConsoleParser::readListing(const Data &dataIn) {
-    DataManager managerIn(dataIn, consoleIsBigEndian(myConsole));
+    DataManager managerIn(dataIn, getConsoleEndian(myConsole));
 
     c_u32 indexOffset = managerIn.read<u32>();
     u32 fileCount = managerIn.read<u32>();
@@ -123,7 +123,7 @@ Data ConsoleParser::writeListing(const lce::CONSOLE consoleOut) const {
     dataOut.allocate(totalFileSize);
     memset(dataOut.data, 0, dataOut.size);
 
-    DataManager managerOut(dataOut, consoleIsBigEndian(consoleOut));
+    DataManager managerOut(dataOut, getConsoleEndian(consoleOut));
 
     // step 3: write start
     managerOut.write<u32>(fileInfoOffset);
@@ -231,7 +231,7 @@ int ConsoleParser::readExternalFolder(const fs::path& inDirPath) {
 
         // open the file
         DataManager manager_in;
-        manager_in.setEndian(false); // all of newgen is little endian
+        manager_in.setEndian(Endian::Little); // all of newgen is little endian
         manager_in.readFromFile(filePathStr);
         c_u32 fileSize = manager_in.read<u32>();
 

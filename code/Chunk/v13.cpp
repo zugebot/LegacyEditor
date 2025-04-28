@@ -413,14 +413,14 @@ namespace editor::chunk {
             }
 
             // write grid header in subsection
-            dataManager->setEndian(false);
+            dataManager->setEndian(Endian::Little);
             for (size_t index = 0; index < GRID_COUNT; index++) {
                 dataManager->writeAtOffset<u16>(CURRENT_SECTION_START + 2 * index, gridHeader[index]);
             }
-            dataManager->setEndian(true);
+            dataManager->setEndian(Endian::Big);
 
             // write section size to section size table
-            if (is0_128_slow(dataManager->start() + CURRENT_SECTION_START)) {
+            if (is_zero_128(dataManager->start() + CURRENT_SECTION_START)) {
                 last_section_size = 0;
                 dataManager->skip(-GRID_SIZE);
             } else {
@@ -457,11 +457,11 @@ namespace editor::chunk {
     void ChunkV13::writeGrid(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[MAP_SIZE]) const {
 
         // write the block data
-        dataManager->setEndian(false);
+        dataManager->setEndian(Endian::Little);
         for (size_t blockIndex = 0; blockIndex < BlockCount; blockIndex++) {
             dataManager->write<u16>(blockVector[blockIndex]);
         }
-        dataManager->setEndian(true);
+        dataManager->setEndian(Endian::Big);
 
         // fill rest of empty palette with 0xFF's
         // TODO: IDK if this is actually necessary
@@ -492,12 +492,12 @@ namespace editor::chunk {
     /// make this copy all u16 blocks from the grid location or whatnot
     /// used to writeGameData full block data, instead of using palette.
     void ChunkV13::writeWithMaxBlocks(const u16_vec& blockVector, const u16_vec& blockLocations, u8 blockMap[MAP_SIZE]) const {
-        dataManager->setEndian(false);
+        dataManager->setEndian(Endian::Little);
         for (size_t i = 0; i < GRID_COUNT; i++) {
             c_u16 blockPos = blockLocations[i];
             dataManager->write<u16>(blockVector[blockPos]);
         }
-        dataManager->setEndian(true);
+        dataManager->setEndian(Endian::Big);
 
         for (c_u16 block : blockVector) {
             blockMap[block] = 0;

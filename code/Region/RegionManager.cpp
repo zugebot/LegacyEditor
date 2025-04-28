@@ -58,7 +58,7 @@ namespace editor {
         u8 sectors[SECTOR_INTS];
         u32 locations[SECTOR_INTS];
 
-        DataManager managerIn(dataIn, consoleIsBigEndian(myConsole));
+        DataManager managerIn(dataIn, getConsoleEndian(myConsole));
 
 
         managerIn.skip<0x2000>();
@@ -167,9 +167,10 @@ namespace editor {
         c_u32 data_size = total_sectors * SECTOR_BYTES;
         Data dataOut;
         dataOut.allocate(data_size);
-        DataManager managerOut(dataOut, consoleIsBigEndian(consoleIn));
+        DataManager managerOut(dataOut, getConsoleEndian(consoleIn));
+#ifndef DONT_MEMSET0
         std::memset(dataOut.data, 0, dataOut.size);
-
+#endif
         u32 largestOffset = 0;
         managerOut.skip<0x2000>();
         for (u32 x = 0; x < 32; x++) {

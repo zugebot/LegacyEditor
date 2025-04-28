@@ -64,7 +64,11 @@ MU void DataManager::writeInt24(c_u32 intIn) {
 
 
 std::string DataManager::readString(c_u32 length) {
-    std::string str{reinterpret_cast<char*>(m_ptr), length};
+    const char* start = reinterpret_cast<const char*>(m_ptr);
+    // Look for a NUL in the next `length` bytes (nullptr if none found).
+    const char* nul = static_cast<const char*>(std::memchr(start, 0, length));
+    const char* end = nul ? nul : start + length;
+    std::string str{start, end};
     skip(length);
     return str;
 }

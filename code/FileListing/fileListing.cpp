@@ -7,7 +7,7 @@
 
 #include "include/lce/processor.hpp"
 
-#include "common/NBT.hpp"
+#include "common/nbt.hpp"
 
 #include "code/ConsoleParser/headerUnion.hpp"
 #include "code/ConsoleParser/include.hpp"
@@ -105,7 +105,7 @@ namespace editor {
             removeFileTypes({lce::FILETYPE::STRUCTURE});
             removeFileTypes({lce::FILETYPE::VILLAGE});
         }
-        if (lce::consoleIsBigEndian(myReadSettings.getConsole()) != lce::consoleIsBigEndian(theWriteSettings.getConsole())) {
+        if (lce::getConsoleEndian(myReadSettings.getConsole()) != lce::getConsoleEndian(theWriteSettings.getConsole())) {
             removeFileTypes({lce::FILETYPE::GRF});
         }
 
@@ -121,7 +121,7 @@ namespace editor {
 
 
         const auto consoleOut = theWriteSettings.getConsole();
-        if (true || lce::consoleIsBigEndian(myReadSettings.getConsole()) != lce::consoleIsBigEndian(consoleOut)) {
+        if (true || lce::getConsoleEndian(myReadSettings.getConsole()) != lce::getConsoleEndian(consoleOut)) {
             std::cout << "[-] reading and writing all chunks to change their endian, this will take a minute." << std::endl;
             for (size_t index = 0; index < ptrs.region_overworld.size(); index++) {
                 editor::convertChunksToAquatic(index, ptrs.region_overworld, myReadSettings.getConsole(), consoleOut);

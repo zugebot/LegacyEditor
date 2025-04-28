@@ -62,11 +62,11 @@ namespace editor {
 
             StfsFileEntry* entry = findSavegameFileEntry(listing);
             if (entry == nullptr) {
+                std::cout << "Something really bad happened trying to parse xbox360.bin file?\n";
                 bin.deallocate();
                 return {};
+            } else {
             }
-
-
 
             const Data _ = stfsInfo.extractFile(entry);
             DataManager deflatedData(_);

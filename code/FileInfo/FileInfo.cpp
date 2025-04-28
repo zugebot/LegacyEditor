@@ -160,7 +160,7 @@ namespace editor {
     int FileInfo::readCacheFile(const fs::path& inFilePath, MU const std::string& folderName) {
         isLoaded = false;
         DataManager manager;
-        manager.setEndian(false);
+        manager.setEndian(Endian::Little);
 
         manager.readFromFile(inFilePath.string());
 
@@ -185,7 +185,7 @@ namespace editor {
 
         manager.skip(pngOffset);
 
-        manager.setEndian(true);
+        manager.setEndian(Endian::Big);
         int status = readPNG(manager);
         if (status == 0) {
             isLoaded = true;
@@ -300,6 +300,12 @@ namespace editor {
     Data FileInfo::writeFile(MU const fs::path& outFilePath,
                              const lce::CONSOLE outConsole) const {
         DataManager header;
+
+        if (thumbnail.size == 0 || thumbnail.start() == nullptr) {
+            printf("[!] FileInfo::writeFile: attempted to write with null data, skipping\n");
+            return {};
+        }
+
 
         switch(outConsole) {
             // TODO: test switch edition writing

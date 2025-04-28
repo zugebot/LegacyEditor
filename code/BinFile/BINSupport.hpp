@@ -68,7 +68,7 @@ namespace editor {
         u32 headerSize{};
         StfsVD stfsVD{};
         std::wstring displayName;
-        DataManager thumbnailImage = DataManager(nullptr, 0, true); // TODO: lol
+        DataManager thumbnailImage = DataManager(nullptr, 0, Endian::Big); // TODO: lol
 
         int readHeader(DataManager& binFile);
     };

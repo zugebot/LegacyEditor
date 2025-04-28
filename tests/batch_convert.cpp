@@ -64,6 +64,7 @@ int main(int argc, char *argv[]) {
 
     bool takeInput = true;
     std::string autoConsole = "wiiu";
+    // outDir = R"(D:\emulators\Cemu\cemu_1.27.1\mlc01\usr\save\00050000\101d9d00\user\80000001)";
 
 
     std::cout << "\n";

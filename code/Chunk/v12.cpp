@@ -29,10 +29,10 @@ namespace editor::chunk {
     void ChunkV12::readChunk() const {
         allocChunk();
 
-        chunkData->chunkX = static_cast<i32>(dataManager->read<u32>());
-        chunkData->chunkZ = static_cast<i32>(dataManager->read<u32>());
-        chunkData->lastUpdate = static_cast<i64>(dataManager->read<u64>());
-        chunkData->inhabitedTime = static_cast<i64>(dataManager->read<u64>());
+        chunkData->chunkX = dataManager->read<i32>();
+        chunkData->chunkZ = dataManager->read<i32>();
+        chunkData->lastUpdate = dataManager->read<i64>();
+        chunkData->inhabitedTime = dataManager->read<i64>();
 
         readBlockData();
 
@@ -45,7 +45,7 @@ namespace editor::chunk {
         }
 
         dataManager->readBytes(256, chunkData->heightMap.data());
-        chunkData->terrainPopulated = static_cast<i16>(dataManager->read<u16>());
+        chunkData->terrainPopulated = dataManager->read<i16>();
         dataManager->readBytes(256, chunkData->biomes.data());
 
         if (*dataManager->ptr() == 0x0A) {
@@ -315,10 +315,10 @@ namespace editor::chunk {
 
 
     void ChunkV12::writeChunk() const {
-        dataManager->write<u32>(chunkData->chunkX);
-        dataManager->write<u32>(chunkData->chunkZ);
-        dataManager->write<u64>(chunkData->lastUpdate);
-        dataManager->write<u64>(chunkData->inhabitedTime);
+        dataManager->write<i32>(chunkData->chunkX);
+        dataManager->write<i32>(chunkData->chunkZ);
+        dataManager->write<i64>(chunkData->lastUpdate);
+        dataManager->write<i64>(chunkData->inhabitedTime);
 
         writeBlockData();
 
@@ -352,25 +352,15 @@ namespace editor::chunk {
             chunkData->submerged = u16_vec(65536);
         }
 
-
-        // u16_vec blockVector;
-        // u16_vec blockLocations;
-        // u16_vec sbmgdLocations; // new
+        u16FixVec_t blockVector;
+        u16FixVec_t blockLocations;
+        u16FixVec_t sbmgdLocations;
         u8 blockMap[MAP_SIZE] = {};
 
         u16 gridHeader[GRID_COUNT];
         u16 sectJumpTable[SECTION_COUNT] = {};
         u8 sectSizeTable[SECTION_COUNT] = {};
 
-
-        u16FixVec_t blockVector;
-        u16FixVec_t blockLocations;
-        u16FixVec_t sbmgdLocations2;
-
-
-        // blockVector.reserve(GRID_COUNT);
-        // blockLocations.reserve(GRID_COUNT);
-        // sbmgdLocations.reserve(GRID_COUNT); // new
 
         // header ptr offsets from start
         constexpr u32 H_BEGIN           =           26;
@@ -398,7 +388,7 @@ namespace editor::chunk {
                     for (u32 gridY = 0; gridY < 16; gridY += 4) {
                         blockVector.set_size(0);
                         blockLocations.set_size(0);
-                        sbmgdLocations2.set_size(0);
+                        sbmgdLocations.set_size(0);
 
                         // iterate over the blocks in the 4x4x4 subsection of the chunk, called a grid
                         MU bool noSubmerged = true;
@@ -423,15 +413,15 @@ namespace editor::chunk {
                                     if EXPECT_FALSE(subBlock != 0) {
                                         noSubmerged = false;
                                         if (blockMap[subBlock] != 0) {
-                                            sbmgdLocations2.push_back(blockMap[subBlock] - 1);
+                                            sbmgdLocations.push_back(blockMap[subBlock] - 1);
                                         } else {
                                             blockMap[subBlock] = blockVector.current_size() + 1;
                                             u16 location = blockVector.current_size();
                                             blockVector.push_back(subBlock);
-                                            sbmgdLocations2.push_back(location);
+                                            sbmgdLocations.push_back(location);
                                         }
                                     } else {
-                                        sbmgdLocations2.push_back(0);
+                                        sbmgdLocations.push_back(0);
                                     }
 
 
@@ -470,23 +460,23 @@ namespace editor::chunk {
                             }
                         } else {
                             switch (blockVector.current_size()) {
-                                case  2: gridFormat = V12_1_BIT_SUBMERGED; writeGridSubmerged<1,  2, 0>(blockVector, blockLocations, sbmgdLocations2, blockMap); break;
-                                case  3: gridFormat = V12_2_BIT_SUBMERGED; writeGridSubmerged<2,  3, 1>(blockVector, blockLocations, sbmgdLocations2, blockMap); break;
-                                case  4: gridFormat = V12_2_BIT_SUBMERGED; writeGridSubmerged<2,  4, 0>(blockVector, blockLocations, sbmgdLocations2, blockMap); break;
-                                case  5: gridFormat = V12_3_BIT_SUBMERGED; writeGridSubmerged<3,  5, 3>(blockVector, blockLocations, sbmgdLocations2, blockMap); break;
-                                case  6: gridFormat = V12_3_BIT_SUBMERGED; writeGridSubmerged<3,  6, 2>(blockVector, blockLocations, sbmgdLocations2, blockMap); break;
-                                case  7: gridFormat = V12_3_BIT_SUBMERGED; writeGridSubmerged<3,  7, 1>(blockVector, blockLocations, sbmgdLocations2, blockMap); break;
-                                case  8: gridFormat = V12_3_BIT_SUBMERGED; writeGridSubmerged<3,  8, 0>(blockVector, blockLocations, sbmgdLocations2, blockMap); break;
-                                case  9: gridFormat = V12_4_BIT_SUBMERGED; writeGridSubmerged<4,  9, 7>(blockVector, blockLocations, sbmgdLocations2, blockMap); break;
-                                case 10: gridFormat = V12_4_BIT_SUBMERGED; writeGridSubmerged<4, 10, 6>(blockVector, blockLocations, sbmgdLocations2, blockMap); break;
-                                case 11: gridFormat = V12_4_BIT_SUBMERGED; writeGridSubmerged<4, 11, 5>(blockVector, blockLocations, sbmgdLocations2, blockMap); break;
-                                case 12: gridFormat = V12_4_BIT_SUBMERGED; writeGridSubmerged<4, 12, 4>(blockVector, blockLocations, sbmgdLocations2, blockMap); break;
-                                case 13: gridFormat = V12_4_BIT_SUBMERGED; writeGridSubmerged<4, 13, 3>(blockVector, blockLocations, sbmgdLocations2, blockMap); break;
-                                case 14: gridFormat = V12_4_BIT_SUBMERGED; writeGridSubmerged<4, 14, 2>(blockVector, blockLocations, sbmgdLocations2, blockMap); break;
-                                case 15: gridFormat = V12_4_BIT_SUBMERGED; writeGridSubmerged<4, 15, 1>(blockVector, blockLocations, sbmgdLocations2, blockMap); break;
-                                case 16: gridFormat = V12_4_BIT_SUBMERGED; writeGridSubmerged<4, 16, 0>(blockVector, blockLocations, sbmgdLocations2, blockMap); break;
+                                case  2: gridFormat = V12_1_BIT_SUBMERGED; writeGridSubmerged<1,  2, 0>(blockVector, blockLocations, sbmgdLocations, blockMap); break;
+                                case  3: gridFormat = V12_2_BIT_SUBMERGED; writeGridSubmerged<2,  3, 1>(blockVector, blockLocations, sbmgdLocations, blockMap); break;
+                                case  4: gridFormat = V12_2_BIT_SUBMERGED; writeGridSubmerged<2,  4, 0>(blockVector, blockLocations, sbmgdLocations, blockMap); break;
+                                case  5: gridFormat = V12_3_BIT_SUBMERGED; writeGridSubmerged<3,  5, 3>(blockVector, blockLocations, sbmgdLocations, blockMap); break;
+                                case  6: gridFormat = V12_3_BIT_SUBMERGED; writeGridSubmerged<3,  6, 2>(blockVector, blockLocations, sbmgdLocations, blockMap); break;
+                                case  7: gridFormat = V12_3_BIT_SUBMERGED; writeGridSubmerged<3,  7, 1>(blockVector, blockLocations, sbmgdLocations, blockMap); break;
+                                case  8: gridFormat = V12_3_BIT_SUBMERGED; writeGridSubmerged<3,  8, 0>(blockVector, blockLocations, sbmgdLocations, blockMap); break;
+                                case  9: gridFormat = V12_4_BIT_SUBMERGED; writeGridSubmerged<4,  9, 7>(blockVector, blockLocations, sbmgdLocations, blockMap); break;
+                                case 10: gridFormat = V12_4_BIT_SUBMERGED; writeGridSubmerged<4, 10, 6>(blockVector, blockLocations, sbmgdLocations, blockMap); break;
+                                case 11: gridFormat = V12_4_BIT_SUBMERGED; writeGridSubmerged<4, 11, 5>(blockVector, blockLocations, sbmgdLocations, blockMap); break;
+                                case 12: gridFormat = V12_4_BIT_SUBMERGED; writeGridSubmerged<4, 12, 4>(blockVector, blockLocations, sbmgdLocations, blockMap); break;
+                                case 13: gridFormat = V12_4_BIT_SUBMERGED; writeGridSubmerged<4, 13, 3>(blockVector, blockLocations, sbmgdLocations, blockMap); break;
+                                case 14: gridFormat = V12_4_BIT_SUBMERGED; writeGridSubmerged<4, 14, 2>(blockVector, blockLocations, sbmgdLocations, blockMap); break;
+                                case 15: gridFormat = V12_4_BIT_SUBMERGED; writeGridSubmerged<4, 15, 1>(blockVector, blockLocations, sbmgdLocations, blockMap); break;
+                                case 16: gridFormat = V12_4_BIT_SUBMERGED; writeGridSubmerged<4, 16, 0>(blockVector, blockLocations, sbmgdLocations, blockMap); break;
                                 default: gridFormat = V12_8_FULL_SUBMERGED; writeWithMaxBlocks(blockVector, blockLocations, blockMap);
-                                    writeWithMaxBlocks(blockVector, sbmgdLocations2, blockMap); break;
+                                    writeWithMaxBlocks(blockVector, sbmgdLocations, blockMap); break;
                             }
                         }
                         gridID = sectionSize / 4 | gridFormat << 12U;
@@ -500,14 +490,14 @@ namespace editor::chunk {
             }
 
             // write grid header in subsection
-            dataManager->setEndian(false);
+            dataManager->setEndian(Endian::Little);
             for (size_t index = 0; index < GRID_COUNT; index++) {
                 dataManager->writeAtOffset<u16>(CURRENT_SECTION_START + 2 * index, gridHeader[index]);
             }
-            dataManager->setEndian(true);
+            dataManager->setEndian(Endian::Big);
 
             // write section size to section size table
-            if (is0_128_slow(dataManager->start() + CURRENT_SECTION_START)) {
+            if (is_zero_128(dataManager->start() + CURRENT_SECTION_START)) {
                 last_section_size = 0;
                 dataManager->skip(-GRID_SIZE);
             } else {
@@ -545,12 +535,12 @@ namespace editor::chunk {
                              u16FixVec_t& blockLocations, u8 blockMap[MAP_SIZE]) const {
 
         // write the palette data
-        dataManager->setEndian(false);
+        dataManager->setEndian(Endian::Little);
         // #pragma unroll
         for (size_t blockIndex = 0; blockIndex < BlockCount; blockIndex++) {
             dataManager->write<u16>(blockVector[blockIndex]);
         }
-        dataManager->setEndian(true);
+        dataManager->setEndian(Endian::Big);
 
         // fill rest of empty palette with 0xFF's
         // TODO: IDK if this is actually necessary
@@ -585,12 +575,12 @@ namespace editor::chunk {
     /// used to writeGameData full block data, instead of using palette.
     void ChunkV12::writeWithMaxBlocks(const u16FixVec_t& blockVector,
                                       const u16FixVec_t& blockLocations, u8 blockMap[MAP_SIZE]) const {
-        dataManager->setEndian(false);
+        dataManager->setEndian(Endian::Little);
         for (size_t i = 0; i < GRID_COUNT; i++) {
             c_u16 blockPos = blockLocations[i];
             dataManager->write<u16>(blockVector[blockPos]);
         }
-        dataManager->setEndian(true);
+        dataManager->setEndian(Endian::Big);
 
         for (c_u16 block : blockVector) {
             blockMap[block] = 0;
@@ -606,15 +596,15 @@ namespace editor::chunk {
      * @tparam BitsPerBlock
      */
     template<size_t BitsPerBlock, size_t BlockCount, size_t EmptyCount>
-    void ChunkV12::writeGridSubmerged(FixedVector<u16, GRID_COUNT>& blockVector, FixedVector<u16, GRID_COUNT>& blockLocations,
-                                      const FixedVector<u16, GRID_COUNT>& sbmrgLocations, u8 blockMap[MAP_SIZE]) const {
+    void ChunkV12::writeGridSubmerged(u16FixVec_t& blockVector, u16FixVec_t& blockLocations,
+                                      const u16FixVec_t& sbmrgLocations, u8 blockMap[MAP_SIZE]) const {
 
         // write the palette data
-        dataManager->setEndian(false);
+        dataManager->setEndian(Endian::Little);
         for (size_t blockIndex = 0; blockIndex < BlockCount; blockIndex++) {
             dataManager->write<u16>(blockVector[blockIndex]);
         }
-        dataManager->setEndian(true);
+        dataManager->setEndian(Endian::Big);
         // fill rest of empty palette with 0xFF's
         // TODO: IDK if this is actually necessary
         for (size_t rest = 0; rest < EmptyCount; rest++) {

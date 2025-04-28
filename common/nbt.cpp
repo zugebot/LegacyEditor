@@ -238,7 +238,7 @@ NBTBase NBTBase::readFromFile(const std::string &path) {
 void NBTBase::writeToFile(const std::string &path) const {
     std::vector<uint8_t> raw;
     raw.resize(131072);
-    DataManager dm(raw.data(), 0, true);
+    DataManager dm(raw.data(), 0, Endian::Big);
 
     dm.write<u8>(static_cast<u8>(type));
     dm.writeString("");

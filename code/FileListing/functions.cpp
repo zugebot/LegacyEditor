@@ -7,7 +7,7 @@
 
 
 #include "code/Region/RegionManager.hpp"
-#include "common/NBT.hpp"
+#include "common/nbt.hpp"
 
 
 namespace editor {

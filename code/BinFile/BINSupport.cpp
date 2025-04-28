@@ -11,11 +11,11 @@ namespace editor {
         size = input.read<u8>();
         input.read<u8>(); // reserved
         blockSeparation = input.read<u8>();
-        input.setEndian(false);
+        input.setEndian(Endian::Little);
         fileTableBlockCount = input.read<u16>();
         fileTableBlockNum = input.readInt24();
         input.skip<0x14>(); // skip the hash
-        input.setEndian(true);
+        input.setEndian(Endian::Big);
         allocBlockCount = input.read<u32>();
         unallocatedBlockCount = input.read<u32>();
     }
@@ -234,13 +234,13 @@ namespace editor {
                 }
 
                 // check for a mismatch in the total allocated blocks for the file
-                data.setEndian(false);
+                data.setEndian(Endian::Little);
                 fe.blocksForFile = data.readInt24();
                 data.skip<3>();
 
                 // read more information
                 fe.startingBlockNum = data.readInt24();
-                data.setEndian(true);
+                data.setEndian(Endian::Big);
                 fe.pathIndicator = data.read<u16>();
                 fe.fileSize = data.read<u32>();
                 fe.createdTimeStamp = data.read<u32>();
@@ -358,7 +358,7 @@ namespace editor {
                 // add it if it's a file
                 if (!isDirectory) out->fileEntries.push_back(fileEntry);
                 // if it's a directory and not the current directory, then add it
-                else if (isDirectory && fileEntry.entryIndex != out->folder.entryIndex) {
+                else if (fileEntry.entryIndex != out->folder.entryIndex) {
                     StfsFileListing fl;
                     fl.folder = fileEntry;
                     out->folderEntries.push_back(fl);
@@ -479,185 +479,5 @@ namespace editor {
         }
         return nullptr;
     }
-
-
-    /*
-    static u32 c2n(const char character) {
-        if (character >= '0' && character <= '9') { return character - '0'; }
-        if (character >= 'a' && character <= 'f') { return character - 'a' + 10; }
-        if (character >= 'A' && character <= 'F') { return character - 'A' + 10; }
-        return 0;
-    }
-
-
-    static i64 stringToHex(const std::string& str) {
-        i64 result = 0;
-        size_t i = 0;
-        int stringSize = static_cast<int>(str.size()) - 1; // terminating value doesn't count
-        for (; i < stringSize; i++) { result = result * 16 + c2n(str[i]); }
-        return result;
-    }
-
-
-    static i64 stringToInt64(const std::string& str) {
-        i64 result = 0;
-        int sign = 1;
-        size_t i = 0;
-
-        if (str[0] == '-') {
-            sign = -1;
-            i++;
-        }
-        c_int stringSize = static_cast<int>(str.size()) - 1; // terminating value doesn't count
-        for (; i < stringSize; i++) { result = result * 10 + (str[i] - '0'); }
-
-        return result * sign;
-    }
-
-
-    struct TextChunk {
-        std::string keyword;
-        std::string text;
-    };
-
-    WorldOptions getTagsInImage(DataManager& image) {
-        WorldOptions options;
-        c_u8_vec PNGHeader = image.readIntoVector(8);
-        if (PNGHeader != u8_vec{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}) {
-            printf("File in thumbnail block is not PNG header, the first 8 bytes are:\n");
-            // for (c_u8& byte: PNGHeader) { std::cout << std::hex << byte << " "; }
-            // std::cout << std::endl;
-        }
-
-        std::vector<TextChunk> chunks;
-
-        while (!image.isEndOfData()) {
-            // Read chunk length
-            c_u32 chunkLength = image.read<u32>();
-            std::string chunkType = image.readString(4);
-
-            // check if end
-            if (chunkType == "IEND") { break; }
-
-            if (chunkType != "tEXt") {
-                // the extra 4 is the crc
-                image.incrementPointer(chunkLength + 4);
-                continue;
-            }
-
-
-            // Read keyword
-            size_t length = chunkLength;
-            u8_vec chunkData = image.readIntoVector(length);
-            chunkData.push_back(0); // add a null byte for the last text
-
-            while (length > 0) {
-                std::string keyword(reinterpret_cast<char*>(chunkData.data() + chunkLength - length));
-                length -= keyword.size() + 1;
-                if (keyword.empty()) { continue; }
-
-                std::string text(reinterpret_cast<char*>(chunkData.data() + chunkLength - length));
-                length -= text.size() + 1;
-
-                chunks.push_back({keyword, text});
-                if (image.eof()) { break; }
-            }
-
-            // Read chunk CRC
-            image.read<u32>();
-        }
-
-        // get keys and store them
-        for (c_auto& [keyword, text]: chunks) {
-            if (keyword == "4J_SEED") {
-                options.displaySeed = stringToInt64(text);
-            } else if (keyword == "4J_#LOADS") {
-                options.numLoads = stringToHex(text);
-            } else if (keyword == "4J_HOSTOPTIONS") {
-                options.hostOptions = stringToHex(text);
-            } else if (keyword == "4J_TEXTUREPACK") {
-                options.texturePack = stringToHex(text);
-            } else if (keyword == "4J_EXTRADATA") {
-                options.extraData = stringToHex(text);
-            } else if (keyword == "4J_EXPLOREDCHUNKS") {
-                options.numExploredChunks = stringToHex(text);
-            } else if (keyword == "4J_BASESAVENAME") {
-                options.baseSaveName = text;
-            }
-        }
-
-        return options;
-    }
-
-
-    std::optional<std::chrono::system_clock::time_point> TimePointFromFatTimestamp(u32 fat) {
-        u32 year = (fat >> 25) + 1980;
-        u32 month = 0xf & (fat >> 21);
-        u32 day = 0x1f & (fat >> 16);
-        u32 hour = 0x1f & (fat >> 11);
-        u32 minute = 0x3f & (fat >> 5);
-        u32 second = (0x1f & fat) * 2;
-
-    #if defined(__GNUC__)
-        std::tm tm{};
-        tm.tm_year = (int) year - 1900;
-        tm.tm_mon = (int) month - 1;
-        tm.tm_mday = (int) day;
-        tm.tm_hour = (int) hour;
-        tm.tm_min = (int) minute;
-        tm.tm_sec = (int) second;
-        tm.tm_isdst = 0;
-
-        std::time_t t = _mkgmtime(&tm);
-
-        if (t == (std::time_t) -1) { return std::nullopt; }
-        return std::chrono::system_clock::from_time_t(t);
-    #else
-        std::chrono::year_month_day ymd = std::chrono::year(year) / std::chrono::month(month) / std::chrono::day(day);
-        if (!ymd.ok()) { return std::nullopt; }
-        return std::chrono::sys_days(ymd) + std::chrono::hours(hour) + std::chrono::minutes(minute) +
-               std::chrono::seconds(second);
-    #endif
-    }
-     */
-
-    /*
-    FileInfo extractSaveGameDat(u8* inputData, i64 inputSize) {
-        DataManager binFile(inputData, inputSize);
-        StfsPackage stfsInfo(binFile);
-        stfsInfo.parse();
-        StfsFileListing listing = stfsInfo.getFileListing();
-
-        StfsFileEntry* entry = findSavegameFileEntry(listing);
-        if (entry == nullptr) {
-            free(inputData);
-            return {};
-        }
-
-        DataManager out;
-        stfsInfo.extractFile(entry, out);
-
-        FileInfo saveGame;
-        // saveGame.createdTime = TimePointFromFatTimestamp(entry->createdTimeStamp);
-
-        BINHeader meta = stfsInfo.getMetaData();
-
-        saveGame.saveName = meta.displayName;
-        saveGame.options = getTagsInImage(saveGame.thumbnailImage);
-
-        if (meta.thumbnailImage.size) {
-            saveGame.thumbnailImage = meta.thumbnailImage;
-        }
-
-        if (out.size) {
-            auto saveFile = new u8[out.size];
-            std::memcpy(saveFile, out.data, out.size);
-            saveGame.saveFileData = DataManager(saveFile, out.size);
-        }
-
-        free(inputData);
-        return saveGame;
-    }
-    */
 
 }
