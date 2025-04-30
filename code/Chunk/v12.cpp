@@ -62,16 +62,19 @@ namespace editor::chunk {
     }
 
 
-    static void placeBlocks(u16_vec& writeVec, c_u8* grid, c_int writeOffset) {
+    static void setBlocks(u16_vec& writeVec, c_u8* grid, MU int gridOffset) {
         int readOffset = 0;
-        for (int xIter = 0; xIter < 4; xIter++) {
-            for (int zIter = 0; zIter < 4; zIter++) {
+
+        for (int zIter = 0; zIter < 4; zIter++) {
+            for (int xIter = 0; xIter < 4; xIter++) {
                 for (int yIter = 0; yIter < 4; yIter++) {
-                    c_int currentOffset = yIter + zIter * 256 + xIter * 4096;
+                    c_int blockOffset = toIndex<eBlockOrder::yXZy>(xIter,
+                                                                   yIter,
+                                                                   zIter);
                     c_u8 num1 = grid[readOffset++];
                     c_u8 num2 = grid[readOffset++];
-                    writeVec[currentOffset + writeOffset] = static_cast<u16>(num1)
-                                                            | static_cast<u16>(num2) << 8U;
+                    writeVec[gridOffset + blockOffset] = static_cast<u16>(num1)
+                                                       | static_cast<u16>(num2) << 8U;
                 }
             }
         }
@@ -96,14 +99,14 @@ namespace editor::chunk {
             return;
         }
 
-        for (int section = 0; section < 16; section++) {
-            c_u32 address = sectionJumpTable[section];
-            // 26 chunk header + 50 section header
+        for (int sectionY = 0; sectionY < 16; sectionY++) {
+            c_u32 address = sectionJumpTable[sectionY];
+            // 26 chunk header + 50 sectionY header
             dataManager->seek(76U + address);
             if (address == maxSectionAddress) {
                 break;
             }
-            if (sizeOfSubChunks[section] == 0U) {
+            if (sizeOfSubChunks[sectionY] == 0U) {
                 continue;
             }
             // TODO: replace with telling cpu to cache that address, and use a ptr?
@@ -119,7 +122,7 @@ namespace editor::chunk {
             for (int gridX = 0; gridX < 4; gridX++) {
                 for (int gridZ = 0; gridZ < 4; gridZ++) {
                     for (int gridY = 0; gridY < 4; gridY++) {
-                        c_int gridIndex = gridX * 16 + gridZ * 4 + gridY;
+                        c_int gridIndex = gridY + gridX * 4 + gridZ * 16;
                         u8 blockGrid[GRID_SIZE] = {};
                         u8 sbmrgGrid[GRID_SIZE] = {};
 
@@ -129,10 +132,13 @@ namespace editor::chunk {
                         c_u16 format = num2 >> 4U;
                         c_u16 offset = ((0x0fU & num2) << 8U | num1) * 4;
 
-                        // 0x4c for start and 0x80 for header (26 chunk header, 50 section header, 128 grid header)
+                        // 0x4c for start and 0x80 for header (26 chunk header, 50 sectionY header, 128 grid header)
                         c_u16 gridPosition = 0xcc + address + offset;
 
-                        c_int offsetInBlockWrite = (section * 16 + gridY * 4) + gridZ * 1024 + gridX * 16384;
+                        // MU c_int offsetInBlockWrite = (sectionY * 16 + gridY * 4) + gridZ * 1024 + gridX * 16384;
+                        int gridOffset = toIndex<eBlockOrder::yXZy>(4 * gridX,
+                                                                    4 * gridY + 16 * sectionY,
+                                                                    4 * gridZ);
 #ifdef DEBUG
                         gridFormats[gridFormatIndex++] = format;
                         gridOffsets[gridOffsetIndex++] = gridPosition - 26;
@@ -192,10 +198,10 @@ namespace editor::chunk {
                             return;
                         }
 
-                        placeBlocks(chunkData->newBlocks, blockGrid, offsetInBlockWrite);
+                        setBlocks(chunkData->newBlocks, blockGrid, gridOffset);
                         if ((format & 1U) != 0) {
                             chunkData->hasSubmerged = true;
-                            placeBlocks(chunkData->submerged, sbmrgGrid, offsetInBlockWrite);
+                            setBlocks(chunkData->submerged, sbmrgGrid, gridOffset);
                         }
                     }
                 }
@@ -374,30 +380,33 @@ namespace editor::chunk {
         u32 last_section_jump = 0;
         u32 last_section_size;
 
-        for (u32 sectionIndex = 0; sectionIndex < SECTION_COUNT; sectionIndex++) {
+        for (i32 sectionY = 0; sectionY < SECTION_COUNT; sectionY++) {
             c_u32 CURRENT_INC_SECT_JUMP = last_section_jump * 256;
             c_u32 CURRENT_SECTION_START = H_SECT_START + CURRENT_INC_SECT_JUMP;
             u32 sectionSize = 0;
             u32 gridIndex = 0;
 
-            sectJumpTable[sectionIndex] = CURRENT_INC_SECT_JUMP;
+            sectJumpTable[sectionY] = CURRENT_INC_SECT_JUMP;
             dataManager->seek(H_SECT_START + CURRENT_INC_SECT_JUMP + GRID_SIZE);
 
-            for (u32 gridX = 0; gridX < 65536; gridX += 16384) {
-                for (u32 gridZ = 0; gridZ < 4096; gridZ += 1024) {
-                    for (u32 gridY = 0; gridY < 16; gridY += 4) {
+            for (i32 gridZ = 0; gridZ < 4; gridZ++) {
+                for (i32 gridX = 0; gridX < 4; gridX++) {
+                    for (i32 gridY = 0; gridY < 4; gridY++) {
+
                         blockVector.set_size(0);
                         blockLocations.set_size(0);
                         sbmgdLocations.set_size(0);
 
                         // iterate over the blocks in the 4x4x4 subsection of the chunk, called a grid
-                        MU bool noSubmerged = true;
-                        c_u32 offsetInBlock = sectionIndex * 16 + gridY + gridZ + gridX;
-                        for (u32 blockX = 0; blockX < 16384; blockX += 4096) {
-                            for (u32 blockZ = 0; blockZ < 1024; blockZ += 256) {
-                                for (u32 blockY = 0; blockY < 4; blockY++) {
+                        MU bool noSubmerged;
 
-                                    c_u32 blockIndex = offsetInBlock + blockY + blockZ + blockX;
+                        int gridOffset = toIndex<eBlockOrder::yXZy>(4 * gridX, 4 * gridY + 16 * sectionY, 4 * gridZ);
+
+                        for (i32 blockZ = 0; blockZ < 4; blockZ++) {
+                            for (i32 blockX = 0; blockX < 4; blockX++) {
+                                for (i32 blockY = 0; blockY < 4; blockY++) {
+
+                                    c_u32 blockIndex = toIndex<eBlockOrder::yXZy>(blockX, blockY, blockZ) + gridOffset;
 
                                     u16 block = chunkData->newBlocks[blockIndex];
                                     if (blockMap[block]) {
@@ -504,7 +513,7 @@ namespace editor::chunk {
                 last_section_size = (GRID_SIZE + sectionSize + 255) / 256;
                 last_section_jump += last_section_size;
             }
-            sectSizeTable[sectionIndex] = last_section_size;
+            sectSizeTable[sectionY] = last_section_size;
         }
 
         // at root header, write section jump and size tables

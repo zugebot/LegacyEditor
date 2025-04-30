@@ -1,6 +1,7 @@
 #include "ChunkManager.hpp"
 
 #include <cstring>
+#include <format>
 
 #include "include/tinf/tinf.h"
 #include "include/zlib-1.2.12/zlib.h"
@@ -20,15 +21,7 @@
 namespace editor {
 
 
-    enum CHUNK_HEADER : i16 {
-        V_NBT = 0x0A00,
-        V_8   = 0x0008,
-        V_9   = 0x0009,
-        V_10  = 0x000A,
-        V_11  = 0x000B,
-        V_12  = 0x000C,
-        V_13  = 0x000D,
-    };
+
 
 
     ChunkManager::ChunkManager() {
@@ -65,19 +58,24 @@ namespace editor {
         DataManager managerIn(data, size);
 
         chunkData->lastVersion = managerIn.read<u16>();
+        if (chunkData->lastVersion == 0x0A00) { // start of NBT
+            chunkData->lastVersion = chunk::eChunkVersion::V_UNVERSIONED;
+        }
 
         switch(chunkData->lastVersion) {
-            case V_NBT:
-                chunkData->lastVersion = V_10;
-                chunk::ChunkV10(chunkData, &managerIn).readChunk();
+            case chunk::eChunkVersion::V_UNVERSIONED:
+            case chunk::eChunkVersion::V_NBT:
+                chunk::ChunkVNBT(chunkData, &managerIn).readChunk();
                 break;
-            case V_8: case V_9: case V_11:
+            case chunk::eChunkVersion::V_8: 
+            case chunk::eChunkVersion::V_9: 
+            case chunk::eChunkVersion::V_11:
                 chunk::ChunkV11(chunkData, &managerIn).readChunk();
                 break;
-            case V_12:
+            case chunk::eChunkVersion::V_12:
                 chunk::ChunkV12(chunkData, &managerIn).readChunk();
                 break;
-            case V_13:
+            case chunk::eChunkVersion::V_13:
                 chunk::ChunkV13(chunkData, &managerIn).readChunk();
                 break;
             default:;
@@ -86,9 +84,7 @@ namespace editor {
 
         u32 length = managerIn.ptr() - data;
         managerIn.update(managerIn.start(), length);
-        // managerIn.update();
-        // managerIn.size
-        // managerIn.m_ptr = data;
+
         if (chunkData->chunkX == 0 && chunkData->chunkZ == -10) {
             managerIn.writeToFile(R"(C:\Users\jerrin\CLionProjects\LegacyEditor\chunks\0_-10.read)");
         }
@@ -105,20 +101,21 @@ namespace editor {
 
 
         switch (chunkData->lastVersion) {
-            case V_10:
-                chunk::ChunkV10(chunkData, &managerOut).writeChunk();
+            case chunk::eChunkVersion::V_UNVERSIONED:
+            case chunk::eChunkVersion::V_NBT:
+                chunk::ChunkVNBT(chunkData, &managerOut).writeChunk();
                 break;
-            case V_8:
-            case V_9:
-            case V_11:
+            case chunk::eChunkVersion::V_8:
+            case chunk::eChunkVersion::V_9:
+            case chunk::eChunkVersion::V_11:
                 managerOut.write<u16>(chunkData->lastVersion);
                 chunk::ChunkV11(chunkData, &managerOut).writeChunk();
                 break;
-            case V_12:
+            case chunk::eChunkVersion::V_12:
                 managerOut.write<u16>(chunkData->lastVersion);
                 chunk::ChunkV12(chunkData, &managerOut).writeChunk();
                 break;
-            case V_13:
+            case chunk::eChunkVersion::V_13:
                 printf("ChunkManager::writeChunk v13 forbidden\n");
                 exit(-1);
             default:;
@@ -278,10 +275,12 @@ namespace editor {
     }
 
 
-    void ChunkManager::setSizeFromReading(c_u32 sizeIn) {
+    void ChunkManager::setVariableFlags(c_u32 sizeIn) {
+        // std::cout << std::format("0x{:08X}\n", sizeIn);
+
         fileData.setRLEFlag(sizeIn >> 31);
-        fileData.setNewSaveFlag(sizeIn >> 30 & 1);
-        size = sizeIn & 0x00FFFFFF;
+        fileData.setNewSaveFlag((sizeIn >> 30) & 1);
+        size = sizeIn & 0x3FFFFFFF;
     }
 
 

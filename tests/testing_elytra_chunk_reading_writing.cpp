@@ -50,7 +50,7 @@ int main() {
             Picture chunkRender(16 * 16, CHUNK_HEIGHT * 16, 4);
 
             for (int xIter = 0; xIter < 16; xIter++) {
-                placeBlock(chunk->chunkData, xIter, 64, zIter, lce::blocks::GOLD_BLOCK_ID, 0, false);
+                setBlock(chunk->chunkData, xIter, 64, zIter, lce::blocks::GOLD_BLOCK_ID, 0, false);
 
                 for (int yIter = 0; yIter < CHUNK_HEIGHT; yIter++) {
                     u16 block_id = editor::chunk::getBlock(chunk->chunkData, xIter, yIter, zIter) >> 4;
@@ -69,7 +69,7 @@ int main() {
 
 
 
-    placeBlock(chunk->chunkData, 7, 64, 7, lce::blocks::DRIED_KELP_BLOCK_ID, 0, false);
+    setBlock(chunk->chunkData, 7, 64, 7, lce::blocks::DRIED_KELP_BLOCK_ID, 0, false);
 
 
     chunk->chunkData->defaultNBT();

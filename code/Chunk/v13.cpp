@@ -62,7 +62,7 @@ namespace editor::chunk {
     }
 
 
-    static void placeBlocks(u16_vec& writeVec, c_u8* grid, int writeOffset) {
+    static void setBlocks(u16_vec& writeVec, c_u8* grid, int writeOffset) {
         int readOffset = 0;
 #ifdef DEBUG
         u16 blockIndex = 0;
@@ -172,10 +172,10 @@ namespace editor::chunk {
                     return;
                 }
 
-                placeBlocks(chunkData->newBlocks, blockGrid, offsetInBlockWrite);
+                setBlocks(chunkData->newBlocks, blockGrid, offsetInBlockWrite);
                 if ((format & 1) != 0) {
                     chunkData->hasSubmerged = true;
-                    placeBlocks(chunkData->submerged, sbmrgGrid, offsetInBlockWrite);
+                    setBlocks(chunkData->submerged, sbmrgGrid, offsetInBlockWrite);
                 }
             }
             }

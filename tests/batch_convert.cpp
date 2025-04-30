@@ -62,9 +62,9 @@ int main(int argc, char *argv[]) {
     // bin.writeToFile(bin.data + 12, bin.size - 12, "D:/PycharmProjects/testLZX/XBOX360_TU74_new.dat");
 
 
-    bool takeInput = true;
+    bool takeInput = false;
     std::string autoConsole = "wiiu";
-    // outDir = R"(D:\emulators\Cemu\cemu_1.27.1\mlc01\usr\save\00050000\101d9d00\user\80000001)";
+    fs::path outDir;
 
 
     std::cout << "\n";
@@ -86,7 +86,8 @@ int main(int argc, char *argv[]) {
 
     // Ensure the "out" directory exists
     fs::path dirMain(argv[0]);
-    fs::path outDir = dirMain.parent_path() / "out";
+    outDir = dirMain.parent_path() / "out";
+    outDir = R"(E:\Emulators\cemu_1.27.1\mlc01\usr\save\00050000\101d9d00\user\80000001)";
     if (!fs::exists(outDir)) {
         fs::create_directory(outDir);
     }

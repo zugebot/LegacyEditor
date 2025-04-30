@@ -68,7 +68,7 @@ int main() {
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
                     for (int y = 0; y < 4; y++) {
-                        placeBlock(chunkData, x, y, z,
+                        setBlock(chunkData, x, y, z,
                                    lce::blocks::GOLD_BLOCK_ID, 0, false);
                     }
                 }

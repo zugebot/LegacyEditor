@@ -36,7 +36,7 @@ int main() {
     chunk->ensureDecompress(consoleIn);
     chunk->readChunk(consoleIn);
 
-    chunk->chunkData->placeBlock(7, 64, 7, lce::blocks::DRIED_KELP_BLOCK_ID, 0, false);
+    chunk->chunkData->setBlock(7, 64, 7, lce::blocks::DRIED_KELP_BLOCK_ID, 0, false);
 
     chunk->chunkData->defaultNBT();
     chunk->writeChunk(consoleOut);

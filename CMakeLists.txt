@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.23.1)
-project(LegacyEditor)
+project(LIB_LegacyEditor)
 
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD 23)
@@ -42,27 +42,38 @@ add_custom_target(copy_assets ALL
 file(GLOB_RECURSE LCEDIT_SOURCES
         "${CMAKE_SOURCE_DIR}/code/*.cpp"
         "${CMAKE_SOURCE_DIR}/code/*.hpp"
-
-        "${CMAKE_SOURCE_DIR}/common/*.*pp"
+        "${CMAKE_SOURCE_DIR}/common/*.cpp"
         "${CMAKE_SOURCE_DIR}/common/*.hpp"
-
-        "${CMAKE_SOURCE_DIR}/include/*.*pp"
+        "${CMAKE_SOURCE_DIR}/include/*.cpp"
         "${CMAKE_SOURCE_DIR}/include/*.hpp"
         "${CMAKE_SOURCE_DIR}/include/*.c"
         "${CMAKE_SOURCE_DIR}/include/*.h"
 )
 
-# define executable
-add_executable(LegacyEditor
-        ${LCEDIT_SOURCES}
-        # examples/figure_out_rpcs3_1_00.cpp
-        # examples/readvita.cpp
-        tests/batch_convert.cpp
-        # examples/write_sfo_from_scratch.cpp
-        # examples/figure_out_ps3_to_wiiu.cpp
+add_library(LIB_LegacyEditor STATIC ${LCEDIT_SOURCES})
+target_compile_options(LIB_LegacyEditor PRIVATE -march=native -DNDEBUG)
+
+target_include_directories(LIB_LegacyEditor
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
 )
 
-target_compile_options(LegacyEditor PUBLIC -march=native -DNDEBUG)
-add_dependencies(LegacyEditor copy_assets)
-
+add_dependencies(LIB_LegacyEditor copy_assets)
 add_compile_definitions(DONT_MEMSET0)
+
+
+
+unset(LC_BUILD_EXECUTABLE CACHE)
+option(LC_BUILD_EXECUTABLE "Build LegacyCubiomes standalone executable" ON)
+if(LC_BUILD_EXECUTABLE)
+
+    add_executable(BatchConverter "tests/batch_convert.cpp")
+    target_link_libraries(BatchConverter PRIVATE LIB_LegacyEditor)
+
+    add_executable(BatchVersioner "tests/batch_versioner.cpp")
+    target_link_libraries(BatchVersioner PRIVATE LIB_LegacyEditor)
+
+endif()
+
+
+

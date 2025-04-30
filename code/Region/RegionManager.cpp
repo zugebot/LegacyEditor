@@ -90,7 +90,7 @@ namespace editor {
             }
 
             managerIn.seek(SECTOR_BYTES * locations[chunkIndex]);
-            chunk.setSizeFromReading(managerIn.read<u32>());
+            chunk.setVariableFlags(managerIn.read<u32>());
 
 
             bool status = chunk.allocate(chunk.size);
@@ -98,6 +98,7 @@ namespace editor {
                 printf("Failed to allocate %d bytes for chunk", chunk.size);
                 return STATUS::MALLOC_FAILED;
             }
+            // TODO: is this needed
             std::memset(chunk.data, 0, chunk.size);
 
             switch (myConsole) {

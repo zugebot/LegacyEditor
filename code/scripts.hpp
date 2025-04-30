@@ -197,22 +197,18 @@ namespace editor {
             if (!chunkManager.chunkData->validChunk) continue;
 
             // convert chunks to aquatic
-            if (chunkManager.chunkData->lastVersion == 8 ||
-                chunkManager.chunkData->lastVersion == 9 ||
-                chunkManager.chunkData->lastVersion == 11) {
-                chunkManager.chunkData->convertOldToAquatic();
-            } else if (chunkManager.chunkData->lastVersion == 10) {
+
+            if (chunkManager.chunkData->lastVersion == 7) {
                 // fix shit old xbox NBT
-                if (chunkManager.chunkData->entities.get<NBTList>().subType() != eNBT::COMPOUND) {
+                if (chunkManager.chunkData->entities.get<NBTList>().subType() != eNBT::COMPOUND)
                     chunkManager.chunkData->entities = makeList(eNBT::COMPOUND, {});
-                }
-                if (chunkManager.chunkData->tileEntities.get<NBTList>().subType() != eNBT::COMPOUND) {
+
+                if (chunkManager.chunkData->tileEntities.get<NBTList>().subType() != eNBT::COMPOUND)
                     chunkManager.chunkData->tileEntities = makeList(eNBT::COMPOUND, {});
-                }
-                if (chunkManager.chunkData->tileTicks.get<NBTList>().subType() != eNBT::COMPOUND) {
+
+                if (chunkManager.chunkData->tileTicks.get<NBTList>().subType() != eNBT::COMPOUND)
                     chunkManager.chunkData->tileTicks = makeList(eNBT::COMPOUND, {});
-                }
-                // toggle for either old xbox or newer
+
                 if (chunkManager.chunkData->chunkHeight == 128) {
                     chunkManager.chunkData->convertNBT128ToAquatic();
                 } else {
@@ -222,21 +218,25 @@ namespace editor {
                 if (chunkManager.chunkData->terrainPopulated == 1) {
                     chunkManager.chunkData->terrainPopulated = 2046;
                 }
-                // if (chunkManager.chunkData->chunkX != 0 || chunkManager.chunkData->chunkZ != 12) {
-                //     chunkManager.reset();
-                //     continue;
-                // }
+
+            } else if (chunkManager.chunkData->lastVersion == 10) {
+                chunkManager.chunkData->convertNBT256ToAquatic();
+                chunkManager.fileData.setNewSaveFlag(1);
+                if (chunkManager.chunkData->terrainPopulated == 1) {
+                    chunkManager.chunkData->terrainPopulated = 2046;
+                }
+
+            } else if (chunkManager.chunkData->lastVersion == 8 ||
+                chunkManager.chunkData->lastVersion == 9 ||
+                chunkManager.chunkData->lastVersion == 11) {
+                chunkManager.chunkData->convertOldToAquatic();
+
             } else if (chunkManager.chunkData->lastVersion == 13) {
                 chunkManager.chunkData->convert114ToAquatic();
-            }
 
-            // there is probably a better way to go about this
-            // memset(chunkManager.chunkData->heightMap.data(), 0, 256);
-
-            // memset(chunkManager.chunkData->blockLight.data(), 0xFF, 32768);
-            // memset(chunkManager.chunkData->skyLight.data(), 0xFF, 32768);
-
-            // if ()
+            }/* else if (chunkManager.chunkData->lastVersion != 12) {
+                std::cout << "[?] Chunk with version " << chunkManager.chunkData->lastVersion << "\n";
+            }*/
 
             chunkManager.writeChunk(outConsole);
             chunkManager.ensureCompressed(outConsole);

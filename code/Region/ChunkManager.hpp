@@ -84,7 +84,7 @@ namespace editor {
         MU void readChunk(lce::CONSOLE inConsole);
         MU void writeChunk(lce::CONSOLE outConsole);
 
-        void setSizeFromReading(u32 sizeIn);
+        void setVariableFlags(u32 sizeIn);
         ND u32 getSizeForWriting() const;
 
     };

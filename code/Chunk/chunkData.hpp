@@ -9,6 +9,94 @@
 namespace editor::chunk {
 
 
+    enum eChunkVersion : i16 {
+        V_UNVERSIONED = 0x0007,
+        V_8   = 0x0008,
+        V_9   = 0x0009,
+        V_NBT = 0x000A,
+        V_11  = 0x000B,
+        V_12  = 0x000C,
+        V_13  = 0x000D,
+    };
+
+
+    enum eBlockOrder {
+        // XYZ,
+        XZY,
+        YXZ,
+        YZX,
+        // ZXY,
+        // ZYX,
+        // XyZ,
+        // XZy,
+        yXZ,
+        // yZX,
+        // ZXy,
+        // ZyX,
+        yXZy,
+        Yqq
+    };
+
+    MU static std::string toString(MU eBlockOrder order) {
+        switch (order) {
+            // case eBlockOrder::XYZ: return x      + y* 16 + z*4096;
+            case eBlockOrder::XZY: return "XZY";
+            case eBlockOrder::YXZ: return "YXZ";
+            case eBlockOrder::YZX: return "YZX";
+            // case eBlockOrder::ZXY: return x*  16 + y*256 + z;
+            // case eBlockOrder::ZYX: return x*4096 + y*16  + z;
+            // case eBlockOrder::XyZ: return x      + y* 16 + z*2048;
+            // case eBlockOrder::XZy: return x      + y*256 + z*  16;
+            case eBlockOrder::yXZ: return "yXZ";
+            // case eBlockOrder::yZX: return x*2048 + y     + z* 128;
+            // case eBlockOrder::ZXy: return x*  16 + y*256 + z;
+            // case eBlockOrder::ZyX: return x*2048 + y*16  + z;
+            case eBlockOrder::yXZy: return "yXZy";
+            case eBlockOrder::Yqq: return "???";
+        }
+        return "oops";
+    }
+
+    template<eBlockOrder ORDER>
+    static i32 toIndex(i32 x, i32 y, i32 z) {
+        switch (ORDER) {
+            // case eBlockOrder::XYZ: return x      + y* 16 + z*4096;
+            case eBlockOrder::XZY: return x      + y*256 + z*  16;
+            case eBlockOrder::YXZ: return x* 256 + y     + z*4096;
+            case eBlockOrder::YZX: return x*4096 + y     + z* 256;
+            // case eBlockOrder::ZXY: return x*  16 + y*256 + z;
+            // case eBlockOrder::ZYX: return x*4096 + y*16  + z;
+            // case eBlockOrder::XyZ: return x      + y* 16 + z*2048;
+            // case eBlockOrder::XZy: return x      + y*256 + z*  16;
+            case eBlockOrder::yXZ: return x * 128 + y     + z*2048;
+            // case eBlockOrder::yZX: return x*2048 + y     + z* 128;
+            // case eBlockOrder::ZXy: return x*  16 + y*256 + z;
+            // case eBlockOrder::ZyX: return x*2048 + y*16  + z;
+            case eBlockOrder::yXZy: return x * 128 + (y % 128) + 32768 * (y > 127) + z * 128 * 16;
+        }
+    }
+
+    static i32 toIndex(eBlockOrder order, i32 x, i32 y, i32 z) {
+        switch (order) {
+            // case eBlockOrder::XYZ: return x      + y* 16 + z*4096;
+            case eBlockOrder::XZY: return x      + y*256 + z*  16;
+            case eBlockOrder::YXZ: return x* 256 + y     + z*4096;
+            case eBlockOrder::YZX: return x*4096 + y     +z * 256;
+            // case eBlockOrder::ZXY: return x*  16 + y*256 + z;
+            // case eBlockOrder::ZYX: return x*4096 + y*16  + z;
+            // case eBlockOrder::XyZ: return x      + y* 16 + z*2048;
+            // case eBlockOrder::XZy: return x      + y*256 + z*  16;
+            case eBlockOrder::yXZ: return x* 128 + y     + z*2048;
+            // case eBlockOrder::yZX: return x*2048 + y     + z* 128;
+            // case eBlockOrder::ZXy: return x*  16 + y*256 + z;
+            // case eBlockOrder::ZyX: return x*2048 + y*16  + z;
+            case eBlockOrder::yXZy: return x * 128 + (y % 128) + 32768 * (y > 127) + z * 128 * 16;
+            default:
+                return 0;
+        }
+    }
+
+
     class ChunkData {
     public:
         // old version
@@ -57,12 +145,43 @@ namespace editor::chunk {
         MU void convert114ToAquatic();
 
 
-        MU void placeBlock(int xIn, int yIn, int zIn, u16 block, u16 data, bool waterlogged, bool submerged = false);
-        MU void placeBlock(int xIn, int yIn, int zIn, u16 block, bool submerged = false);
+        /// places a block
+        template<eChunkVersion chunkVersion>
+        MU void setSubmerged(i32 xIn, i32 yIn, i32 zIn, u16 block);
+        MU void setSubmerged(i32 xIn, i32 yIn, i32 zIn, u16 block);
+
+        /// places a block
+        template<eChunkVersion chunkVersion>
+        MU void setBlock(i32 xIn, i32 yIn, i32 zIn, u16 block);
+        MU void setBlock(i32 xIn, i32 yIn, i32 zIn, u16 block);
+
+        /// Returns (blockID << 4 | dataTag)
+        template<eChunkVersion chunkVersion>
+        u16 getBlock(i32 xIn, i32 yIn, i32 zIn);
+        u16 getBlock(i32 xIn, i32 yIn, i32 zIn);
 
 
-        /// Returns (blockID << 4 | dataTag).
-        u16 getBlock(int xIn, int yIn, int zIn);
+        /*
+        /// sets blocklight
+        template<eChunkVersion chunkVersion>
+        MU void setBlockLight(i32 xIn, i32 yIn, i32 zIn, u8 light);
+        MU void setBlockLight(i32 xIn, i32 yIn, i32 zIn, u8 light);
+
+        /// Returns blocklight
+        template<eChunkVersion chunkVersion>
+        u8 getBlockLight(i32 xIn, i32 yIn, i32 zIn);
+        u8 getBlockLight(i32 xIn, i32 yIn, i32 zIn);
+
+        /// sets skylight
+        template<eChunkVersion chunkVersion>
+        MU void setSkyLight(i32 xIn, i32 yIn, i32 zIn, u8 light);
+        MU void setSkyLight(i32 xIn, i32 yIn, i32 zIn, u8 light);
+
+        /// Returns skylight
+        template<eChunkVersion chunkVersion>
+        u8 setSkyLight(i32 xIn, i32 yIn, i32 zIn);
+        u8 setSkyLight(i32 xIn, i32 yIn, i32 zIn);
+         */
 
 
     };
