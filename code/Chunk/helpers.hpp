@@ -30,6 +30,7 @@ namespace editor::chunk {
     }
 
 
+    // TODO: rename to readSection
     static void readDataBlock(c_u8* dataIn, u8* dataOut) {
         static constexpr int DATA_SECTION_SIZE = 128;
         int offset = 0;

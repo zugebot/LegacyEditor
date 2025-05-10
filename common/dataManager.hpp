@@ -55,6 +55,18 @@ public:
     void skip() { m_ptr += amount; }
     template<std::integral T>
     void skip(T amount) { m_ptr += amount; }
+    template<std::integral T>
+    u8* fetch(T amount) {
+        u8* retPtr = m_ptr;
+        skip(amount);
+        return retPtr;
+    }
+    template<std::size_t N>
+    u8* fetch() {
+        u8* retPtr = m_ptr;
+        skip<N>();
+        return retPtr;
+    }
     u32 tell() const { return m_ptr - m_data; }
     bool eof() const { return m_ptr >= m_data + m_size - 1; }
     template<std::integral T>

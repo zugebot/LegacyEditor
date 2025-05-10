@@ -130,6 +130,16 @@ eBlockOrder guessOrder(const std::vector<T>& data, const std::vector<u8>& height
 
 int main(MU int argc, char* argv[]) {
 
+    for (int x = 0; x <= 16; x++) {
+        int logSize =
+            (x == 1) ? 0
+            : /* n>=2 */ 32 - __builtin_clz(unsigned(x - 1));
+        std::cout << x << ": " << logSize << "\n";
+    }
+
+
+    return 0;
+
 
     // Ensure the "out" directory exists
     fs::path dirMain(argv[0]);
