@@ -272,7 +272,7 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
-        fileListing.removeFileTypes({lce::FILETYPE::REGION_END, lce::FILETYPE::REGION_NETHER});
+        // fileListing.removeFileTypes({lce::FILETYPE::REGION_END, lce::FILETYPE::REGION_NETHER});
 
         // print save details, dump to folder
         fileListing.printDetails();
