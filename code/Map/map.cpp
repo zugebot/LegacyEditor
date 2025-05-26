@@ -14,17 +14,17 @@ namespace editor::map {
                          const fs::path& filename) {
         static constexpr int MAP_BYTE_SIZE = 16384;
 
-        if (map->data.data == nullptr) {
+        if (map->m_data.empty()) {
             return;
         }
 
-        DataManager mapManager(map->data);
+        DataReader mapManager(map->m_data.data(), map->m_data.size());
         NBTBase data;
         data.read(mapManager);
         auto byteArray = data
-                .tryGet<NBTCompound>("data")
+                .value<NBTCompound>("data")
                 .value_or(NBTCompound{})
-                .tryGet<NBTByteArray>("colors")
+                .value<NBTByteArray>("colors")
                 .value_or(NBTByteArray(16384))
                 ;
 
@@ -32,9 +32,9 @@ namespace editor::map {
         int count = 0;
         for (int i = 0; i < MAP_BYTE_SIZE; i++) {
             const RGB rgb = getRGB(byteArray[i]);
-            picture.myData[count++] = rgb.r;
-            picture.myData[count++] = rgb.g;
-            picture.myData[count++] = rgb.b;
+            picture.m_data[count++] = rgb.r;
+            picture.m_data[count++] = rgb.g;
+            picture.m_data[count++] = rgb.b;
         }
 
         picture.saveWithName(filename.string());

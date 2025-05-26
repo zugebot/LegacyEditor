@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstring>
+#include "include/lce/processor.hpp"
 
 #include "include/lce/blocks/blockID.hpp"
 
@@ -10,13 +10,14 @@
 
 namespace editor {
 
+    /*
     void processRegion(size_t regionIndex, FileListing& fileListing) {
-        const lce::CONSOLE console = fileListing.myReadSettings.getConsole();
-        if (regionIndex >= fileListing.ptrs.region_overworld.size()) { return; }
+        const lce::CONSOLE console = fileListing.myReadSettings.console();
+        if (regionIndex >= fileListing.ptrs.old_reg_overworld.size()) { return; }
 
         // read a region file
         RegionManager region;
-        region.read(fileListing.ptrs.region_overworld[regionIndex]);
+        region.read(fileListing.ptrs.old_reg_overworld[regionIndex]);
         for (ChunkManager& chunkManager: region.chunks) {
             if (chunkManager.size == 0) {
                 continue;
@@ -51,50 +52,50 @@ namespace editor {
                         blocks[offset1] = block1 | data_1;
 
 
-                        /*
-                    block1 = BlockID::AIR_ID;
-                    if (y == 0) { block1 = BlockID::BEDROCK_ID; }
 
-                    u32 jumpBL, jumpDA;
-
-                    if (y == 1) {
-                        if (x % 2 != 0 || z % 2 != 0) {
-                            if (chunkData->chunkX < -16 || chunkData->chunkX > 16 ||
-                                chunkData->chunkZ <   0 || chunkData->chunkZ >  1) {
-                                block1 = BlockID::AIR_ID;
-                                goto END;
-                            }
-                            block1 = BlockID::BEDROCK_ID;
-                            goto END;
-                        }
-                    }
-
-                    if (y == 2) {
-                        if (chunkData->chunkX < -16 || chunkData->chunkX > 16 ||
-                            chunkData->chunkZ <   0 || chunkData->chunkZ >  1) {
-                            goto END;
-                        }
-
-                        if (x % 2 != 0 || z % 2 != 0) {
-                            goto END;
-                        }
-
-                        jumpBL = 8 * (chunkData->chunkX + 16);
-                        jumpDA = 8 *  chunkData->chunkZ;
-
-                        block1 = (jumpBL + x / 2) << 4;
-                        data_1 = jumpDA + z / 2;
-
-                        if (block1 > 252 << 4 || block1 == BlockID::BEACON_ID) {
-                            block1 = 0;
-                            data_1 = 0;
-                        }
-                    }
+                    // block1 = BlockID::AIR_ID;
+                    // if (y == 0) { block1 = BlockID::BEDROCK_ID; }
+//
+                    // u32 jumpBL, jumpDA;
+//
+                    // if (y == 1) {
+                    //     if (x % 2 != 0 || z % 2 != 0) {
+                    //         if (chunkData->chunkX < -16 || chunkData->chunkX > 16 ||
+                    //             chunkData->chunkZ <   0 || chunkData->chunkZ >  1) {
+                    //             block1 = BlockID::AIR_ID;
+                    //             goto END;
+                    //         }
+                    //         block1 = BlockID::BEDROCK_ID;
+                    //         goto END;
+                    //     }
+                    // }
+//
+                    // if (y == 2) {
+                    //     if (chunkData->chunkX < -16 || chunkData->chunkX > 16 ||
+                    //         chunkData->chunkZ <   0 || chunkData->chunkZ >  1) {
+                    //         goto END;
+                    //     }
+//
+                    //     if (x % 2 != 0 || z % 2 != 0) {
+                    //         goto END;
+                    //     }
+//
+                    //     jumpBL = 8 * (chunkData->chunkX + 16);
+                    //     jumpDA = 8 *  chunkData->chunkZ;
+//
+                    //     block1 = (jumpBL + x / 2) << 4;
+                    //     data_1 = jumpDA + z / 2;
+//
+                    //     if (block1 > 252 << 4 || block1 == BlockID::BEACON_ID) {
+                    //         block1 = 0;
+                    //         data_1 = 0;
+                    //     }
+                    // }
 
                     END:
 
                     blocks[offset1] = block1 | data_1;
-                     */
+
                     }
                 }
             }
@@ -114,9 +115,10 @@ namespace editor {
             chunkManager.ensureCompressed(console);
         }
 
-        fileListing.ptrs.region_overworld[regionIndex]->data.deallocate();
-        fileListing.ptrs.region_overworld[regionIndex]->data = region.write(console);
+        fileListing.ptrs.old_reg_overworld[regionIndex]->data.deallocate();
+        fileListing.ptrs.old_reg_overworld[regionIndex]->data = region.write(console);
     }
+    */
 
 
     /**
@@ -125,13 +127,14 @@ namespace editor {
      * @param regionIndex
      * @param fileListing
      */
+     /*
     void removeNetherrack(size_t regionIndex, FileListing& fileListing) {
-        const lce::CONSOLE console = fileListing.myReadSettings.getConsole();
-        if (regionIndex >= fileListing.ptrs.region_nether.size()) { return; }
+        const lce::CONSOLE console = fileListing.myReadSettings.console();
+        if (regionIndex >= fileListing.ptrs.old_reg_nether.size()) { return; }
 
         // read a region file
         RegionManager region;
-        region.read(fileListing.ptrs.region_nether[regionIndex]);
+        region.read(fileListing.ptrs.old_reg_nether[regionIndex]);
 
         for (ChunkManager& chunkManager: region.chunks) {
             if (chunkManager.size == 0) {
@@ -172,9 +175,10 @@ namespace editor {
             chunkManager.ensureCompressed(console);
         }
 
-        fileListing.ptrs.region_nether[regionIndex]->data.deallocate();
-        fileListing.ptrs.region_nether[regionIndex]->data = region.write(console);
+        fileListing.ptrs.old_reg_nether[regionIndex]->data.deallocate();
+        fileListing.ptrs.old_reg_nether[regionIndex]->data = region.write(console);
     }
+      */
 
 
     /**
@@ -183,22 +187,24 @@ namespace editor {
      * @param regionIndex
      * @param fileListing
      */
-    void convertChunksToAquatic(size_t regionIndex, FileList& fileList,
-                                      const lce::CONSOLE inConsole, const lce::CONSOLE outConsole) {
-
-        if (regionIndex >= fileList.size()) { return; }
+    void convertChunksToAquatic(LCEFile& file,
+                                const lce::CONSOLE inConsole, const lce::CONSOLE outConsole) {
 
         // read a region file
         RegionManager region;
-        region.read(fileList[regionIndex]);
+        region.read(&file);
 
-        for (auto & chunkManager : region.chunks) {
+
+
+        for (int i = 0; i < 1024; i++) {
+            ChunkManager& chunkManager = region.m_chunks[i];
+
             chunkManager.readChunk(inConsole);
             if (!chunkManager.chunkData->validChunk) continue;
 
             // convert chunks to aquatic
-
             if (chunkManager.chunkData->lastVersion == 7) {
+                chunkManager.chunkHeader.setNewSaveFlag(1);
                 // fix shit old xbox NBT
                 if (chunkManager.chunkData->entities.get<NBTList>().subType() != eNBT::COMPOUND)
                     chunkManager.chunkData->entities = makeList(eNBT::COMPOUND, {});
@@ -214,14 +220,14 @@ namespace editor {
                 } else {
                     chunkManager.chunkData->convertNBT256ToAquatic();
                 }
-                chunkManager.fileData.setNewSaveFlag(1);
+
                 if (chunkManager.chunkData->terrainPopulated == 1) {
                     chunkManager.chunkData->terrainPopulated = 2046;
                 }
 
             } else if (chunkManager.chunkData->lastVersion == 10) {
                 chunkManager.chunkData->convertNBT256ToAquatic();
-                chunkManager.fileData.setNewSaveFlag(1);
+                chunkManager.chunkHeader.setNewSaveFlag(1);
                 if (chunkManager.chunkData->terrainPopulated == 1) {
                     chunkManager.chunkData->terrainPopulated = 2046;
                 }
@@ -229,9 +235,11 @@ namespace editor {
             } else if (chunkManager.chunkData->lastVersion == 8 ||
                 chunkManager.chunkData->lastVersion == 9 ||
                 chunkManager.chunkData->lastVersion == 11) {
+                chunkManager.chunkHeader.setNewSaveFlag(1);
                 chunkManager.chunkData->convertOldToAquatic();
 
             } else if (chunkManager.chunkData->lastVersion == 13) {
+                chunkManager.chunkHeader.setNewSaveFlag(1);
                 chunkManager.chunkData->convert114ToAquatic();
 
             }/* else if (chunkManager.chunkData->lastVersion != 12) {
@@ -239,12 +247,10 @@ namespace editor {
             }*/
 
             chunkManager.writeChunk(outConsole);
-            chunkManager.ensureCompressed(outConsole);
         }
 
-        fileList[regionIndex]->data.deallocate();
-        fileList[regionIndex]->data = region.write(outConsole);
-        fileList[regionIndex]->console = outConsole;
+        file.m_data = region.write(outConsole);
+        file.m_console = outConsole;
     }
 
 

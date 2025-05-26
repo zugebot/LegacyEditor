@@ -1,7 +1,5 @@
 #include "v11.hpp"
 
-#include <cstring>
-
 #include "code/Chunk/chunkData.hpp"
 #include "code/Chunk/helpers.hpp"
 #include "common/nbt.hpp"
@@ -28,35 +26,39 @@ namespace editor::chunk {
     // #####################################################
 
 
-    void ChunkV11::readChunk() const {
+    void ChunkV11::readChunk(DataReader& reader) {
         allocChunk();
 
-        chunkData->chunkX = dataManager->read<i32>();
-        chunkData->chunkZ = dataManager->read<i32>();
-        chunkData->lastUpdate = dataManager->read<i64>();
+        chunkData->chunkX = reader.read<i32>();
+        chunkData->chunkZ = reader.read<i32>();
+        chunkData->lastUpdate = reader.read<i64>();
 
         chunkData->DataGroupCount = 0;
         if (chunkData->lastVersion > 8) {
-            chunkData->inhabitedTime = dataManager->read<i64>();
+            chunkData->inhabitedTime = reader.read<i64>();
         }
 
-        readBlockData();
+        c_auto dataArray = fetchSections<8, true>(chunkData, reader);
+        readBlocks(dataArray[0], &chunkData->oldBlocks[0]);
+        readBlocks(dataArray[1], &chunkData->oldBlocks[32768]);
+        readSection(dataArray[2], &chunkData->blockData[0]);
+        readSection(dataArray[3], &chunkData->blockData[16384]);
+        readSection(dataArray[4], &chunkData->skyLight[0]);
+        readSection(dataArray[5], &chunkData->skyLight[16384]);
+        readSection(dataArray[6], &chunkData->blockLight[0]);
+        readSection(dataArray[7], &chunkData->blockLight[16384]);
 
-        c_auto dataArray = readGetDataBlockVector<6>(chunkData, dataManager);
+        reader.readBytes(256, chunkData->heightMap.data());
+        chunkData->terrainPopulated = reader.read<i16>();
+        reader.readBytes(256, chunkData->biomes.data());
 
-        readDataBlock(dataArray[0], &chunkData->blockData[0]);
-        readDataBlock(dataArray[1], &chunkData->blockData[16384]);
-        readDataBlock(dataArray[2], &chunkData->skyLight[0]);
-        readDataBlock(dataArray[3], &chunkData->skyLight[16384]);
-        readDataBlock(dataArray[4], &chunkData->blockLight[0]);
-        readDataBlock(dataArray[5], &chunkData->blockLight[16384]);
-
-        dataManager->readBytes(256, chunkData->heightMap.data());
-        chunkData->terrainPopulated = dataManager->read<i16>();
-        dataManager->readBytes(256, chunkData->biomes.data());
-
-        if (*dataManager->ptr() == 0x0A) {
-            chunkData->oldNBTData.read(*dataManager);
+        if (*reader.ptr() == 0x0A) {
+            chunkData->oldNBTData.read(reader);
+            auto* nbt = chunkData->oldNBTData.getTag("");
+            chunkData->entities = nbt->extractTag("Entities").value_or(makeList(eNBT::COMPOUND));
+            chunkData->tileEntities = nbt->extractTag("TileEntities").value_or(makeList(eNBT::COMPOUND));
+            chunkData->tileTicks = nbt->extractTag("TileTicks").value_or(makeList(eNBT::COMPOUND));
+            chunkData->oldNBTData = NBTBase();
         }
 
         chunkData->validChunk = true;
@@ -64,161 +66,86 @@ namespace editor::chunk {
 
 
 
-    static int calcOffset(int value) {
-        int num = value / 32;
-        int num2 = value % 32;
-        return num / 4 * 64 + num % 4 * 4 + num2 * 1024;
-    }
 
-    // xzy or zxy?
-    /**
-     *
-     * @param writeVec
-     * @param grid
-     * @param writeOffset ALWAYS 32768 or 65536
-     * @param readOffset 1 to 64
-     */
-    static void putBlocks(u8_vec& writeVec,  c_u8* grid,
-                          c_int writeOffset, c_int readOffset) {
+    // TODO: this function is complete ass
+    static void putBlocks(u8* oldBlockPtr, c_u8* blockBuffer, c_int gridIndex) {
+        // blockBuffer order: XZY
+        const int num_ = gridIndex / 32;  // y is stored last, so shifting it over (for X and Z)
+        const int num2_ = gridIndex % 32; // y
+        const int readOffset = num_ / 4 * 64 + num_ % 4 * 4 + num2_ * 1024;
+
         int num = 0;
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                for (int k = 0; k < 4; k++) {
-                    int num2 = readOffset + i * 16 + j + k * 256;
-                    writeVec[num2 + writeOffset] = grid[num++];
+        for (int z = 0; z < 4; z++) {
+            for (int x = 0; x < 4; x++) {
+                for (int y = 0; y < 4; y++) {
+                    const int num2 = readOffset + x + z * 16 + y * 256;
+                    oldBlockPtr[num2] = blockBuffer[num++];
                 }
             }
         }
     }
 
 
-    /**
-     * the data is stored in the m_order of
-     * [ byte2 | byte1 ]
-     * but for readability we will swap it.
-     *
-     *
-     *         [    byte0 |    byte1 ]
-     * VAR:    [ XXXXXXXX | XXXXXXXX ]
-     *
-     * IF:
-     * value : [ -------- | 00000111 ]
-     *
-     * THEN:
-     * block : [ XXXXXXXX | -------- ]
-     *
-     * ELSE:
-     * format: [ -------- | ------XX ]
-     * offset: [ -------X | XXXXXX-- ]
-     *
-     * This does not skip dataManager->data.
-     *
-     * c_u32 dataOffset = (byte1 << 7U) + ((byte2 & 0b11111100U) >> 1);
-     */
-    class MU Grid {
-        MU union {
-            u16 grid;
-            struct {
-                u8 byte0;
-                u8 byte1;
-            } A;
-        } U;
-    };
+    void ChunkV11::readBlocks(std::span<const u8> dataIn, u8* oldBlockPtr) const {
+        c_u32 blockLength = dataIn.size() - GRID_COUNT * 2;
+        if (blockLength > 65536) { return; } // checks for underflow
 
+        std::span<const u8> gridHeader = {dataIn.data(), GRID_COUNT * 2};
+        std::span<const u8> gridDataPtr = {dataIn.data() + GRID_COUNT * 2, blockLength};
 
+        // 64 grids of 4x4x4 blocks, stored in XZY order
+        for (int gridIndex = 0; gridIndex < GRID_COUNT; gridIndex++) {
 
-    void ChunkV11::readBlockData() const {
+            Grid grid(
+                    gridHeader[gridIndex * 2],
+                    gridHeader[gridIndex * 2 + 1]
+            );
+            u8 blockBuffer[MAX_BLOCKS_SIZE] = {};
 
-        for (int putBlockOffset = 0; putBlockOffset < 65536; putBlockOffset += 32768) {
-            c_i32 blockLength = static_cast<i32>(dataManager->read<u32>()) - GRID_HEADER_SIZE;
-
-            if (blockLength < 0) { continue; }
-
-            // access: 0 <-> 1023
-            c_u8* gridHeader = dataManager->ptr();
-            dataManager->skip(GRID_HEADER_SIZE);
-
-            // access: 0 <-> blockLength
-            c_u8 *const blockDataPtr = dataManager->ptr();
-            dataManager->skip(blockLength);
-
-            /**
-             * the data is stored in the m_order of
-             * [ byte2 | byte1 ]
-             * but for readability we will swap it.
-             *
-             *
-             *         [    byte1 |    byte2 ]
-             * VAR:    [ XXXXXXXX | XXXXXXXX ]
-             *
-             * IF:
-             * value : [ -------- | 00000111 ]
-             *
-             * THEN:
-             * block : [ XXXXXXXX | -------- ]
-             *
-             * ELSE:
-             * format: [ -------- | ------XX ]
-             * offset: [ -------X | XXXXXX-- ]
-             *
-             * This does not skip dataManager->data.
-             */
-            for (int gridIndex = 0; gridIndex < GRID_HEADER_SIZE; gridIndex += 2) {
-                // read the grid header bytes
-                c_u8 byte0 = gridHeader[gridIndex];
-                c_u8 byte1 = gridHeader[gridIndex + 1];
-
-                u8 grid[GRID_SIZE] = {};
-
-                if (byte0 == 0b00000111) {
-                    // this is only here to optimize filling with blocks
-                    if (byte1 != 0) {
-                        for (u8& gridIter: grid) {
-                            gridIter = byte1;
-                        }
-                    }
-
-                } else {
-                    // find the location of the grid's data
-                    c_u32 dataOffset = ((byte0 & 0b11111100U) >> 1) + (byte1 << 7U);
-                    c_u8* const gridPositionPtr = blockDataPtr + dataOffset;
-
-                    // switch over format
-                    switch (byte0 & 0b11U) {
-                        case 0: readGrid<1>(gridPositionPtr, grid); break;
-                        case 1: readGrid<2>(gridPositionPtr, grid); break;
-                        case 2: readGrid<4>(gridPositionPtr, grid); break;
-                        case 3: fillAllBlocks<GRID_SIZE>(gridPositionPtr, grid); break;
-                        default: return;
-                    }
+            if (grid.isSingleBlock()) {
+                if (grid.getSingleBlock() != 0)
+                    for (u8& gridIter: blockBuffer)
+                        gridIter = grid.getSingleBlock();
+            } else {
+                // find the location of the grid's data
+                c_u8* const gridOffsetPtr = gridDataPtr.data() + grid.getOffset();
+                // switch over format
+                switch (grid.getFormat()) {
+                    case 0: readGrid<1>(gridOffsetPtr, blockBuffer); break;
+                    case 1: readGrid<2>(gridOffsetPtr, blockBuffer); break;
+                    case 2: readGrid<4>(gridOffsetPtr, blockBuffer); break;
+                    case 3: fillAllBlocks<MAX_BLOCKS_SIZE>(gridOffsetPtr, blockBuffer); break;
+                    default: return;
                 }
-                // place the grid blocks into the chunkData
-                putBlocks(chunkData->oldBlocks, grid, putBlockOffset, calcOffset(gridIndex / 2));
             }
+            // place the grid blocks into the chunkData
+            putBlocks(oldBlockPtr, blockBuffer, gridIndex);
         }
     }
+
 
 
     template<size_t BitsPerBlock>
-    bool ChunkV11::readGrid(u8 const* buffer, u8 grid[GRID_SIZE]) {
-        c_int size = 1 << BitsPerBlock;
+    bool ChunkV11::readGrid(u8 const* gridDataPtr, u8 blockBuffer[MAX_BLOCKS_SIZE]) {
+        constexpr int size = 1 << BitsPerBlock;
+        constexpr int blocks_per_byte = 8 / BitsPerBlock;
+
         u8_vec palette(size);
-        std::copy_n(buffer, size, palette.begin());
+        std::copy_n(gridDataPtr, size, palette.begin());
 
         int gridIndex = 0;
-        c_int blocksPerByte = 8 / BitsPerBlock;
         // iterates over all bytes
         for (size_t byteOffset = 0; byteOffset < 8 * BitsPerBlock; byteOffset++) {
-            u16 currentByte = buffer[size + byteOffset];
+            u16 currentByte = gridDataPtr[size + byteOffset];
             // iterates over each block in a byte
-            for (u32 j = 0; j < blocksPerByte; j++) {
+            for (u32 j = 0; j < blocks_per_byte; j++) {
                 u16 paletteIndex = 0;
                 // iterates over each bit in the byte, could be made faster?
                 for (u32 bitPerBlock = 0; bitPerBlock < BitsPerBlock; bitPerBlock++) {
                     paletteIndex |= (currentByte & 1) << bitPerBlock;
                     currentByte >>= 1;
                 }
-                grid[gridIndex++] = palette[paletteIndex];
+                blockBuffer[gridIndex++] = palette[paletteIndex];
             }
         }
         return true;
@@ -229,27 +156,28 @@ namespace editor::chunk {
     // #####################################################
 
 
-    void ChunkV11::writeChunk() {
-        dataManager->write<i32>(chunkData->chunkX);
-        dataManager->write<i32>(chunkData->chunkZ);
-        dataManager->write<i64>(chunkData->lastUpdate);
+    void ChunkV11::writeChunk(DataWriter& writer) {
+        writer.write<i32>(chunkData->chunkX);
+        writer.write<i32>(chunkData->chunkZ);
+        writer.write<i64>(chunkData->lastUpdate);
 
         if (chunkData->lastVersion > 8) {
-            dataManager->write<i64>(chunkData->inhabitedTime);
+            writer.write<i64>(chunkData->inhabitedTime);
         }
 
-        writeBlockData();
+        writeBlocks(writer, &chunkData->oldBlocks[0]);
+        writeBlocks(writer, &chunkData->oldBlocks[32768]);
 
-        writeDataBlock(dataManager, &chunkData->blockData[0]);
-        writeDataBlock(dataManager, &chunkData->blockData[16384]);
-        writeDataBlock(dataManager, &chunkData->skyLight[0]);
-        writeDataBlock(dataManager, &chunkData->skyLight[16384]);
-        writeDataBlock(dataManager, &chunkData->blockLight[0]);
-        writeDataBlock(dataManager, &chunkData->blockLight[16384]);
+        writeSection(writer, &chunkData->blockData[0]);
+        writeSection(writer, &chunkData->blockData[16384]);
+        writeSection(writer, &chunkData->skyLight[0]);
+        writeSection(writer, &chunkData->skyLight[16384]);
+        writeSection(writer, &chunkData->blockLight[0]);
+        writeSection(writer, &chunkData->blockLight[16384]);
 
-        dataManager->writeBytes(chunkData->heightMap.data(), 256);
-        dataManager->write<i16>(chunkData->terrainPopulated);
-        dataManager->writeBytes(chunkData->biomes.data(), 256);
+        writer.writeBytes(chunkData->heightMap.data(), 256);
+        writer.write<i16>(chunkData->terrainPopulated);
+        writer.writeBytes(chunkData->biomes.data(), 256);
 
         NBTBase nbt = makeCompound({
                 {"", makeCompound(
@@ -260,115 +188,125 @@ namespace editor::chunk {
                              }
                              )}
         });
-        nbt.write(*dataManager);
+        nbt.write(writer);
     }
 
 
-    MU void ChunkV11::writeBlockData() const {
+    MU void ChunkV11::writeBlocks(DataWriter& writer, u8 const* oldBlockPtr) const {
+        static constexpr u32 GRID_HEADER_SIZE = 2 * GRID_COUNT;
 
+        u32 H_BEGIN = (chunkData->lastVersion <= 8) ? 16 : 24;
+        u32 H_GRID_DATA   = H_BEGIN + 4 + GRID_HEADER_SIZE;
+        u32 h_grid_offset = 0;
+
+        writer.seek(H_GRID_DATA);
 
         u8 blockMap[MAP_SIZE] = {};
-        MU u8 gridHeader[1024];
+        u8 gridHeader[GRID_HEADER_SIZE];
+        i32 gridIndex = 0;
 
+        u8FixVec_t blockVec;
+        u8FixVec_t blockLoc;
+        for (i32 gridY = 0; gridY < 32; gridY++) {
+        for (i32 gridZ = 0; gridZ < 4; gridZ++) {
+        for (i32 gridX = 0; gridX < 4; gridX++) {
+            c_u32 blockOffset = toIndex<XZY>(gridX + 4, gridY * 4, gridZ * 4);
 
-        for (u32 sectionIndex = 0; sectionIndex < 2; sectionIndex++) {
+            blockVec.set_size(0);
+            blockLoc.set_size(0);
 
-            u16_vec blockVec;
-            u16_vec blockLoc;
-            for (u32 gridX = 0; gridX < 65536; gridX += 16384) {
-            for (u32 gridZ = 0; gridZ < 4096; gridZ += 1024) {
-                c_u32 gridYLower = sectionIndex * 8;
-                c_u32 gridYUpper = gridYLower + 8;
-            for (u32 gridY = gridYLower; gridY < gridYUpper; gridY += 4) {
-                blockVec.clear();
-                blockLoc.clear();
-
-                // iterate over the blocks in the 4x4x4 subsection of the chunk, called a grid
-                MU bool noSubmerged = true;
-                c_u32 offsetInBlock = sectionIndex * 16 + gridY + gridZ + gridX;
-                for (u32 blockX = 0; blockX < 16384; blockX += 4096) {
-                for (u32 blockZ = 0; blockZ < 1024; blockZ += 256) {
-                for (u32 blockY = 0; blockY < 4; blockY++) {
-                    c_u32 blockIndex = offsetInBlock + blockY + blockZ + blockX;
-                    u16 block = chunkData->newBlocks[blockIndex];
-                    if (blockMap[block]) {
-                        blockLoc.push_back(blockMap[block] - 1);
-                    } else {
-                        blockMap[block] = blockVec.size() + 1;
-                        u16 location = blockVec.size();
-                        blockVec.push_back(block);
-                        blockLoc.push_back(location);
-                    }
+            for (i32 blockY = 0; blockY < 4; blockY++) {
+            for (i32 blockZ = 0; blockZ < 4; blockZ++) {
+            for (i32 blockX = 0; blockX < 4; blockX++) {
+                c_u32 blockIndex = blockOffset + toIndex<XZY>(blockX, blockY, blockZ);
+                c_u8 block = oldBlockPtr[blockIndex];
+                if (blockMap[block]) {
+                    blockLoc.push_back(blockMap[block] - 1);
+                } else {
+                    blockMap[block] = blockVec.current_size() + 1;
+                    u8 location = blockVec.current_size();
+                    blockVec.push_back(block);
+                    blockLoc.push_back(location);
                 }
-                }
-                }
+            }}}
 
-                MU u16 gridID;
-                MU u16 gridFormat;
-                switch (blockVec.size()) {
-                    case 1:
-                        /* do something */
-                        goto SWITCH_END;
-                    case 2:
-                        gridFormat = V11_1_BIT; writeGrid<1>(blockVec, blockLoc, blockMap);
-                        break;
-                    case 3: case 4:
-                        gridFormat = V11_2_BIT; writeGrid<2>(blockVec, blockLoc, blockMap);
-                        break;
-                    case 5: case 6: case 7: case 8:
-                        gridFormat = V11_3_BIT; writeGrid<3>(blockVec, blockLoc, blockMap);
-                        break;
-                    case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16:
-                        gridFormat = V11_4_BIT; writeGrid<4>(blockVec, blockLoc, blockMap);
-                        break;
+            /*
+             * case  1:   // 65535 (-1 unsigned)
+             * case  2:   // 0
+             * case  3-4: // 1
+             * case  5-8: // 2
+             * case 9-16: // 3
+             * this code assumes blockVec is never 0
+             */
+            const size_t n = blockVec.current_size();
+            MU const auto gridFormat = static_cast<V11GridFormat>(n == 1 ? 0
+                          : 32 - __builtin_clz(static_cast<unsigned>(n - 1)) - 1);
+            switch (gridFormat) {
+                case V11_0_BIT:
+                    gridHeader[gridIndex++] = Grid::IS_SINGLE_BLOCK_FLAG;
+                    gridHeader[gridIndex++] = blockVec[0];
+                    continue;
+                case V11_1_BIT: writeGrid<1>(writer, blockVec, blockLoc, blockMap); break;
+                case V11_2_BIT: writeGrid<2>(writer, blockVec, blockLoc, blockMap); break;
+                case V11_3_BIT: writeGrid<3>(writer, blockVec, blockLoc, blockMap); break;
+                case V11_4_BIT: {
+                    for (size_t i = 0; i < GRID_COUNT; i++)
+                        writer.write<u8>(blockVec[blockLoc[i]]);
+                    for (c_u16 block : blockVec)
+                        blockMap[block] = 0;
+                    break;
                 }
-                // gridID = sectionSize / 4 | gridFormat << 12U;
-            SWITCH_END:;
-                // gridHeader[gridIndex++] = gridID;
-                // sectionSize += V11_GRID_SIZES[gridFormat];
             }
-            }
-            }
-        }
+            Grid grid;
+            grid.setFormatOffset(h_grid_offset, gridFormat);
+            gridHeader[gridIndex++] = grid.m_byte0;
+            gridHeader[gridIndex++] = grid.m_byte1;
+            h_grid_offset += V11_GRID_SIZES[gridFormat];
+        }}}
 
 
-
-
-
+        u32 finalSize = GRID_HEADER_SIZE + h_grid_offset;
+        writer.seek(H_BEGIN);
+        writer.write<u16>(finalSize);                    //< write section size
+        writer.writeBytes(gridHeader, GRID_HEADER_SIZE); //< write grid header
+        writer.seek(H_GRID_DATA + h_grid_offset);        //< seek to end of data
     }
 
 
     template<size_t BitsPerBlock>
-    void ChunkV11::writeGrid(MU u16_vec& blockVector, MU u16_vec& blockLocations, MU u8 blockMap[MAP_SIZE]) const {
-        /*
-        c_int size = 1 << BitsPerBlock;
-        u8_vec palette(size);
-        std::copy_n(buffer, size, palette.begin());
+    void ChunkV11::writeGrid(DataWriter& writer,
+                             u8FixVec_t& blockVector,
+                             u8FixVec_t& blockLocations,
+                             u8 blockMap[MAP_SIZE]) const {
+        size_t total = 1 << BitsPerBlock;
+        size_t count = blockVector.current_size();
 
-        int gridIndex = 0;
-        c_int blocksPerByte = 8 / BitsPerBlock;
-        // iterates over all bytes
-        for (size_t byteOffset = 0; byteOffset < 8 * BitsPerBlock; byteOffset++) {
-            u16 currentByte = buffer[size + byteOffset];
-            // iterates over each block in a byte
-            for (u32 j = 0; j < blocksPerByte; j++) {
-                u16 paletteIndex = 0;
-                // iterates over each bit in the byte, could be made faster?
-                for (u32 bitPerBlock = 0; bitPerBlock < BitsPerBlock; bitPerBlock++) {
-                    paletteIndex |= (currentByte & 1) << bitPerBlock;
-                    currentByte >>= 1;
-                }
-                grid[gridIndex++] = palette[paletteIndex];
-            }
+        // write the palette data
+        for (size_t blockIndex = 0; blockIndex < count; blockIndex++) {
+            writer.write<u8>(blockVector[blockIndex]);
         }
-        return true;
-         */
+        // fill remaining palette spots with 0xFF
+        size_t remaining = total - count;
+        for (size_t rest = 0; rest < remaining; rest++) {
+            writer.write<u8>(0xFF);
+        }
+
+        //  write the position data
+        //  so, write the first bit of each position, as a single u64,
+        //  then the second, third etc. N times, where N is BitsPerBlock
+        for (size_t bitIndex = 0; bitIndex < BitsPerBlock; bitIndex++) {
+            u64 position = 0;
+            for (size_t locIndex = 0; locIndex < GRID_COUNT; locIndex++) {
+                c_u64 pos = blockLocations[locIndex];
+                position |= (pos >> bitIndex & 1U) << (GRID_COUNT - locIndex - 1);
+            }
+            writer.write<u64>(position);
+        }
+
+        // clear the table
+        for (size_t i = 0; i < count; ++i) {
+            blockMap[blockVector[i]] = 0;
+        }
     }
-
-
-    void ChunkV11::writeWithMaxBlocks(MU const u16_vec& blockVector, MU const u16_vec& blockLocations, MU u8 blockMap[MAP_SIZE]) const {
-
-    }
-
 
 } // namespace editor::chunk

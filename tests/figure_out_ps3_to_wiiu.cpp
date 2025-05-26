@@ -190,9 +190,9 @@ int main() {
     DataManager(wiiUChunk->data, wiiUChunk->size).writeToFile(OUT_STUFF + "1_BASE_wiiUChunk" + wiiUChunk->getDataAsString());
     DataManager(convChunk->data, convChunk->size).writeToFile(OUT_STUFF + "1_BASE_convChunk" + convChunk->getDataAsString());
 
-    ps3_Chunk->ensureDecompress(ps3_Save.myConsole);
+    ps3_Chunk->ensureDecompress(ps3_Save.m_console);
 
-    wiiUChunk->ensureDecompress(wiiUSave.myConsole);
+    wiiUChunk->ensureDecompress(wiiUSave.m_console);
 
     convChunk->ensureDecompress(lce::CONSOLE::NONE);
 
@@ -200,18 +200,18 @@ int main() {
     DataManager(wiiUChunk->data, wiiUChunk->size).writeToFile(OUT_STUFF + "2_DECOMP_wiiUChunk" + wiiUChunk->getDataAsString());
     DataManager(convChunk->data, convChunk->size).writeToFile(OUT_STUFF + "2_DECOMP_convChunk" + convChunk->getDataAsString());
 
-    ps3_Chunk->ensureCompressed(ps3_Save.myConsole);
-    wiiUChunk->ensureCompressed(wiiUSave.myConsole);
-    convChunk->ensureCompressed(convSave.myConsole);
+    ps3_Chunk->ensureCompressed(ps3_Save.m_console);
+    wiiUChunk->ensureCompressed(wiiUSave.m_console);
+    convChunk->ensureCompressed(convSave.m_console);
 
     DataManager(ps3_Chunk->data, ps3_Chunk->size).writeToFile(OUT_STUFF + "3_COMPRESSED_ps3_Chunk" + ps3_Chunk->getDataAsString());
     DataManager(wiiUChunk->data, wiiUChunk->size).writeToFile(OUT_STUFF + "3_COMPRESSED_wiiUChunk" + wiiUChunk->getDataAsString());
     DataManager(convChunk->data, convChunk->size).writeToFile(OUT_STUFF + "3_COMPRESSED_convChunk" + convChunk->getDataAsString());
 
-    // ps3_Chunk->ensureDecompress(ps3_Save.myConsole);
+    // ps3_Chunk->ensureDecompress(ps3_Save.m_console);
     // DataManager(ps3_Chunk->data, ps3_Chunk->size).writeToFile(OUT_STUFF + "4_DECOMP_ps3_Chunk" + ps3_Chunk->getDataAsString());
 
-    // ps3_Chunk->ensureCompressed(ps3_Save.myConsole);
+    // ps3_Chunk->ensureCompressed(ps3_Save.m_console);
     // DataManager(ps3_Chunk->data, ps3_Chunk->size).writeToFile(OUT_STUFF + "5_COMPRESSED_ps3_Chunk" + ps3_Chunk->getDataAsString());
     */
     /*
@@ -237,8 +237,8 @@ int main() {
             // if (!foundChunk) {
                 // foundChunk = true;
 
-            chunk.ensureDecompress(fileListing.myConsole);
-            chunk.readChunk(fileListing.myConsole);
+            chunk.ensureDecompress(fileListing.m_console);
+            chunk.readChunk(fileListing.m_console);
             auto* chunkData = chunk.chunkData;
             if (!chunkData->validChunk) {
                 printf("found invalid chunk...\n");
@@ -253,22 +253,22 @@ int main() {
                 }
             }
             chunk.chunkData->defaultNBT();
-            chunk.writeChunk(fileListing.myConsole);
-            chunk.ensureCompressed(fileListing.myConsole);
+            chunk.writeChunk(fileListing.m_console);
+            chunk.ensureCompressed(fileListing.m_console);
                 // continue;
             //}
 
             // chunk.deallocate();
-            // chunk.ensureDecompress(fileListing.myConsole);
-            // chunk.readChunk(fileListing.myConsole);
+            // chunk.ensureDecompress(fileListing.m_console);
+            // chunk.readChunk(fileListing.m_console);
             // c_auto* chunkData = chunk.chunkData;
             // if (!chunkData->validChunk) { continue; }
             // chunk.chunkData->defaultNBT();
-            // chunk.writeChunk(fileListing.myConsole);
-            // chunk.ensureCompressed(fileListing.myConsole);
+            // chunk.writeChunk(fileListing.m_console);
+            // chunk.ensureCompressed(fileListing.m_console);
         }
 
-        fileListing.replaceRegionOW(i, region, fileListing.myConsole);
+        fileListing.replaceRegionOW(i, region, fileListing.m_console);
 
         printf("done!\n");
 

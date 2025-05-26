@@ -1,13 +1,12 @@
 #include "BINSupport.hpp"
 
-#include <cstring>
-#include <stdexcept>
+#include "include/lce/processor.hpp"
 
 
 namespace editor {
 
 
-    void StfsVD::readStfsVD(DataManager& input) {
+    void StfsVD::readStfsVD(DataReader& input) {
         size = input.read<u8>();
         input.read<u8>(); // reserved
         blockSeparation = input.read<u8>();
@@ -21,7 +20,7 @@ namespace editor {
     }
 
 
-    int BINHeader::readHeader(DataManager& binFile) {
+    int BINHeader::readHeader(DataReader& binFile) {
         binFile.seek(0x340U);
         headerSize = binFile.read<u32>();
 
@@ -49,14 +48,13 @@ namespace editor {
         binFile.seek(0x1712U);
         // get thumbnail image, if not present, use the title one if present
         if (c_u32 thumbnailImageSize = binFile.read<u32>()) {
-            binFile.skip<4>(); //read the other size but it will not be used
-            u8* thumbnailImageData = binFile.readBytes(thumbnailImageSize);
-            thumbnailImage = DataManager(thumbnailImageData, thumbnailImageSize);
+            binFile.skip<4>(); // read the other size but it will not be used
+            thumbnailImage = binFile.readBuffer(thumbnailImageSize);
         } else {
             if (c_u32 titleThumbImageSize = binFile.read<u32>()) {
                 binFile.seek(0x571AU);
-                u8* titleThumbnailImageData = binFile.readBytes(thumbnailImageSize);
-                thumbnailImage = DataManager(titleThumbnailImageData, titleThumbImageSize);
+
+                thumbnailImage = binFile.readBuffer(thumbnailImageSize);
             }
         }
         return 1;
@@ -67,7 +65,7 @@ namespace editor {
     }
 
 
-    Data StfsPackage::extractFile(StfsFileEntry* entry) {
+    Buffer StfsPackage::extractFile(StfsFileEntry* entry) {
         if (entry->nameLen == 0) { entry->name = "default"; }
         std::vector<u8> out2;
 
@@ -159,9 +157,9 @@ namespace editor {
                 write(out2, buffer, (int) fileSize);
             }
         }
-        Data ret;
+        Buffer ret;
         ret.allocate(out2.size());
-        std::memcpy(ret.data, out2.data(), out2.size());
+        std::memcpy(ret.data(), out2.data(), out2.size());
         return ret;
     }
 
@@ -408,11 +406,11 @@ namespace editor {
 
     void StfsPackage::parse() {
         BINHeader header;
-        if (c_int result = header.readHeader(data); !result) {
+        if (c_int result = metaData.readHeader(data); !result) {
             // free(inputData);
             return; // SaveFileInfo();
         }
-        metaData = header;
+        metaData = std::move(header);
         packageSex = (~metaData.stfsVD.blockSeparation) & 1;
 
         if (packageSex == 0) { // female

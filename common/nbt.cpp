@@ -1,6 +1,9 @@
 #include "nbt.hpp"
 
 
+NBTList::NBTList() : m_subType(eNBT::COMPOUND) {}
+
+
 NBTList::NBTList(eNBT expectedType) : m_subType(expectedType) {}
 
 
@@ -50,122 +53,160 @@ void NBTList::clear() {
 }
 
 
-void NBTBase::read(DataManager &input) {
-    switch (type) {
-        case eNBT::UINT8: value = static_cast<uint8_t>(input.read<u8>()); break;
-        case eNBT::INT16: value = static_cast<int16_t>(input.read<u16>()); break;
-        case eNBT::INT32: value = static_cast<int32_t>(input.read<u32>()); break;
-        case eNBT::INT64: value = static_cast<int64_t>(input.read<u64>()); break;
-        case eNBT::FLOAT: value = static_cast<float>(input.read<float>()); break;
-        case eNBT::DOUBLE: value = static_cast<double>(input.read<double>()); break;
+
+MU void NBTBase::read(DataReader& reader) {
+    m_type = eNBT::COMPOUND;
+    readInternal(reader);
+}
+
+
+MU void NBTBase::readFile(const std::string &path) {
+    std::ifstream in(path, std::ios::binary);
+    if (!in) throw std::runtime_error("Failed to open NBT file");
+
+    std::vector<char> buffer((std::istreambuf_iterator<char>(in)), {});
+    DataReader reader(reinterpret_cast<u8*>(buffer.data()), buffer.size());
+
+    read(reader);
+}
+
+
+void NBTBase::write(DataWriter& writer) const {
+    writeInternal(writer);
+}
+
+
+MU void NBTBase::writeFile(const std::string &path) const {
+    DataWriter writer;
+    write(writer);
+
+    std::ofstream out(path, std::ios::binary);
+    if (!out) throw std::runtime_error("Failed to open file for writing");
+    out.write(reinterpret_cast<const char*>(writer.data()), writer.size());
+}
+
+
+void NBTBase::readInternal(DataReader & reader) {
+    switch (m_type) {
+        case eNBT::UINT8: m_value = static_cast<u8>(reader.read<u8>()); break;
+        case eNBT::INT16: m_value = static_cast<i16>(reader.read<u16>()); break;
+        case eNBT::INT32: m_value = static_cast<i32>(reader.read<u32>()); break;
+        case eNBT::INT64: m_value = static_cast<i64>(reader.read<u64>()); break;
+        case eNBT::FLOAT: m_value = static_cast<float>(reader.read<float>()); break;
+        case eNBT::DOUBLE: m_value = static_cast<double>(reader.read<double>()); break;
 
         case eNBT::BYTE_ARRAY: {
-            auto size = (int32_t)input.read<u32>();
-            auto* data = input.readBytes(size);
-            value = NBTByteArray(data, data + size);
+            i32 size = reader.read<i32>();
+            c_u8* start = reader.ptr();
+            reader.skip(size);
+            m_value = NBTByteArray(start, start + size);
             break;
         }
         case eNBT::STRING: {
-            c_u32 length = input.read<u16>();
-            value = input.readString(length);
+            c_u32 length = reader.read<u16>();
+            m_value = reader.readString(length);
             break;
         }
         case eNBT::LIST: {
-            auto subType = static_cast<eNBT>(input.read<u8>());
-            auto size = (int32_t)input.read<u32>();
+            auto subType = static_cast<eNBT>(reader.read<u8>());
+            auto size = (i32) reader.read<u32>();
             NBTList list(subType);
             for (int i = 0; i < size; ++i) {
                 NBTBase element(subType, {});
-                element.read(input);
+                element.readInternal(reader);
                 list.push_back(std::move(element));
             }
-            value = std::move(list);
+            m_value = std::move(list);
             break;
         }
         case eNBT::COMPOUND: {
             NBTCompound compound;
             while (true) {
-                if (input.eof()) break;
-                auto subType = static_cast<eNBT>(input.read<u8>());
+                if (reader.eof()) break;
+                auto subType = static_cast<eNBT>(reader.read<u8>());
                 if (subType == eNBT::NONE) break;
-                c_u32 length = input.read<u16>();
-                std::string key = input.readString(length);
+                c_u32 length = reader.read<u16>();
+                std::string key = reader.readString(length);
                 NBTBase subTag(subType, {});
-                subTag.read(input);
+                subTag.readInternal(reader);
                 compound[key] = std::move(subTag);
             }
-            value = std::move(compound);
+            m_value = std::move(compound);
             break;
         }
         case eNBT::INT_ARRAY: {
-            auto size = (int32_t)input.read<u32>();
+            i32 size = reader.read<i32>();
             NBTIntArray arr(size);
-            for (int i = 0; i < size; ++i) arr[i] = (int32_t)input.read<u32>();
-            value = std::move(arr);
+            for (int i = 0; i < size; ++i) arr[i] = reader.read<i32>();
+            m_value = std::move(arr);
             break;
         }
         case eNBT::LONG_ARRAY: {
-            auto size = (int32_t)input.read<u32>();
+            i32 size = reader.read<i32>();
             NBTLongArray arr(size);
-            for (int i = 0; i < size; ++i) arr[i] = (int64_t)input.read<u64>();
-            value = std::move(arr);
+            for (int i = 0; i < size; ++i) arr[i] = reader.read<i64>();
+            m_value = std::move(arr);
             break;
         }
-        default: value = std::monostate{};
+        default: m_value = std::monostate{};
     }
 }
 
 
-void NBTBase::write(DataManager &output) const {
-    switch (type) {
-        case eNBT::UINT8: output.write<u8>(get<uint8_t>()); break;
-        case eNBT::INT16: output.write<u16>(get<int16_t>()); break;
-        case eNBT::INT32: output.write<u32>(get<int32_t>()); break;
-        case eNBT::INT64: output.write<u64>(get<int64_t>()); break;
-        case eNBT::FLOAT: output.write<float>(get<float>()); break;
-        case eNBT::DOUBLE: output.write<double>(get<double>()); break;
+
+void NBTBase::writeInternal(DataWriter & writer) const {
+    switch (m_type) {
+        case eNBT::UINT8: writer.write<u8>(get<u8>()); break;
+        case eNBT::INT16: writer.write<u16>(get<i16>()); break;
+        case eNBT::INT32: writer.write<u32>(get<i32>()); break;
+        case eNBT::INT64: writer.write<u64>(get<i64>()); break;
+        case eNBT::FLOAT: writer.write<float>(get<float>()); break;
+        case eNBT::DOUBLE: writer.write<double>(get<double>()); break;
         case eNBT::BYTE_ARRAY: {
             const auto& arr = get<NBTByteArray>();
-            output.write<u32>(static_cast<int32_t>(arr.size()));
-            output.writeBytes(arr.data(), arr.size());
+            writer.write<u32>(static_cast<i32>(arr.size()));
+            writer.writeBytes(arr.data(), arr.size());
             break;
         }
         case eNBT::STRING: {
-            output.writeString(get<std::string>());
+            writer.writeStringLengthPrefixed(get<std::string>());
             break;
         }
         case eNBT::LIST: {
             const auto& list = get<NBTList>();
-            output.write<u8>(static_cast<u8>(list.empty() ? eNBT::NONE : list.subType()));
-            output.write<u32>(static_cast<int32_t>(list.size()));
-            for (const auto& item : list) item.write(output);
+            writer.write<u8>(static_cast<u8>(list.empty() ? eNBT::NONE : list.subType()));
+            writer.write<u32>(static_cast<i32>(list.size()));
+            for (const auto& item : list) item.writeInternal(writer);
             break;
         }
         case eNBT::COMPOUND: {
             const auto& compound = get<NBTCompound>();
             for (const auto& [key, val] : compound) {
-                output.write<u8>(static_cast<u8>(val.type));
-                output.writeString(key);
-                val.write(output);
+                writer.write<u8>(static_cast<u8>(val.m_type));
+                writer.writeStringLengthPrefixed(key);
+                val.writeInternal(writer);
             }
-            output.write<u8>(static_cast<u8>(eNBT::NONE));
+            writer.write<u8>(static_cast<u8>(eNBT::NONE));
             break;
         }
         case eNBT::INT_ARRAY: {
             const auto& arr = get<NBTIntArray>();
-            output.write<u32>(static_cast<int32_t>(arr.size()));
-            for (int32_t v : arr) output.write<u32>(v);
+            writer.write<u32>(static_cast<i32>(arr.size()));
+            for (i32 v : arr) writer.write<u32>(v);
             break;
         }
         case eNBT::LONG_ARRAY: {
             const auto& arr = get<NBTLongArray>();
-            output.write<u32>(static_cast<int32_t>(arr.size()));
-            for (int64_t v : arr) output.write<u64>(v);
+            writer.write<u32>(static_cast<i32>(arr.size()));
+            for (i64 v : arr) writer.write<u64>(v);
             break;
         }
         default: break;
     }
 }
+
+
+
 
 
 void NBTBase::printHelper(int depth, const std::string &theKey) const {
@@ -181,13 +222,13 @@ void NBTBase::printHelper(int depth, const std::string &theKey) const {
             std::cout << "null\n";
         } else if constexpr (std::is_same_v<T, std::string>) {
             std::cout << "\"" << arg << "\"\n";
-        } else if constexpr (std::is_same_v<T, uint8_t>) {
+        } else if constexpr (std::is_same_v<T, u8>) {
             std::cout << static_cast<int>(arg) << "b\n";
-        } else if constexpr (std::is_same_v<T, int16_t>) {
+        } else if constexpr (std::is_same_v<T, i16>) {
             std::cout << arg << "s\n";
-        } else if constexpr (std::is_same_v<T, int32_t>) {
+        } else if constexpr (std::is_same_v<T, i32>) {
             std::cout << arg << "\n";
-        } else if constexpr (std::is_same_v<T, int64_t>) {
+        } else if constexpr (std::is_same_v<T, i64>) {
             std::cout << arg << "L\n";
         } else if constexpr (std::is_same_v<T, float>) {
             std::cout << arg << "f\n";
@@ -214,50 +255,18 @@ void NBTBase::printHelper(int depth, const std::string &theKey) const {
         } else {
             std::cout << "<unknown type>\n";
         }
-    }, value);
-}
-
-
-NBTBase NBTBase::readFromFile(const std::string &path) {
-    std::ifstream in(path, std::ios::binary);
-    if (!in) throw std::runtime_error("Failed to open NBT file");
-
-    std::vector<char> buffer((std::istreambuf_iterator<char>(in)), {});
-    DataManager dm(reinterpret_cast<uint8_t*>(buffer.data()), buffer.size());
-
-    auto type = static_cast<eNBT>(dm.read<u8>());
-    c_u32 length = dm.read<u16>();
-    std::string rootName = dm.readString(length);
-
-    NBTBase root(type, {});
-    root.read(dm);
-    return root;
-}
-
-
-void NBTBase::writeToFile(const std::string &path) const {
-    std::vector<uint8_t> raw;
-    raw.resize(131072);
-    DataManager dm(raw.data(), 0, Endian::Big);
-
-    dm.write<u8>(static_cast<u8>(type));
-    dm.writeString("");
-    write(dm);
-
-    std::ofstream out(path, std::ios::binary);
-    if (!out) throw std::runtime_error("Failed to open file for writing");
-    out.write(reinterpret_cast<const char*>(dm.start()), dm.size());
+    }, m_value);
 }
 
 
 bool NBTBase::equals(const NBTBase &other) const {
-    if (type != other.type) return false;
+    if (m_type != other.m_type) return false;
 
     return std::visit([&](const auto& a) -> bool {
         using T = std::decay_t<decltype(a)>;
 
-        if (!std::holds_alternative<T>(other.value)) return false;
-        const auto& b = std::get<T>(other.value);
+        if (!std::holds_alternative<T>(other.m_value)) return false;
+        const auto& b = std::get<T>(other.m_value);
 
         if constexpr (std::is_same_v<T, std::monostate>) {
             return true;
@@ -282,16 +291,16 @@ bool NBTBase::equals(const NBTBase &other) const {
         } else {
             return false;
         }
-    }, value);
+    }, m_value);
 }
 
 
 NBTBase NBTBase::copy() const {
-    switch (type) {
-        case eNBT::UINT8:     return makeByte(get<uint8_t>());
-        case eNBT::INT16:    return makeShort(get<int16_t>());
-        case eNBT::INT32:    return makeInt(get<int32_t>());
-        case eNBT::INT64:    return makeLong(get<int64_t>());
+    switch (m_type) {
+        case eNBT::UINT8:     return makeByte(get<u8>());
+        case eNBT::INT16:    return makeShort(get<i16>());
+        case eNBT::INT32:    return makeInt(get<i32>());
+        case eNBT::INT64:    return makeLong(get<i64>());
         case eNBT::FLOAT:    return makeFloat(get<float>());
         case eNBT::DOUBLE:   return makeDouble(get<double>());
         case eNBT::STRING:   return makeString(get<std::string>());
@@ -341,8 +350,8 @@ MU bool NBTBase::hasKey(const std::string &key) const {
 
 bool NBTBase::hasKey(const std::string& key, const eNBT nbtType) {
     if (hasKey(key)) {
-        if (type == nbtType) { return true; }
-        if (type != eNBT::PRIMITIVE) { return false; }
+        if (m_type == nbtType) { return true; }
+        if (m_type != eNBT::PRIMITIVE) { return false; }
         return nbtType == eNBT::UINT8 ||
                nbtType == eNBT::INT16 ||
                nbtType == eNBT::INT32 ||
@@ -378,8 +387,8 @@ MU NBTBase *NBTBase::getTag(const std::string &key) {
 
 MU void NBTBase::setTag(const std::string &key, NBTBase tag) {
     if (!is<NBTCompound>()) {
-        type  = eNBT::COMPOUND;
-        value = NBTCompound{};
+        m_type  = eNBT::COMPOUND;
+        m_value = NBTCompound{};
     }
     get<NBTCompound>()[key] = std::move(tag);
 }
@@ -590,46 +599,46 @@ std::optional<NBTBase> NBTBase::extractTag(const std::string& k) {
 
 
 template<typename T>
-std::optional<T> NBTCompound::tryGet(const std::string& key) const {
+std::optional<T> NBTCompound::value(const std::string& key) const {
     if (const NBTBase* t = find(key); t && t->is<T>())
         return t->get<T>();
     return std::nullopt;
 }
 
 
-template std::optional<std::monostate>NBTCompound::tryGet<std::monostate>(const std::string&) const;
-template std::optional<uint8_t>       NBTCompound::tryGet<uint8_t>(const std::string&) const;
-template std::optional<int16_t>       NBTCompound::tryGet<int16_t>(const std::string&) const;
-template std::optional<int32_t>       NBTCompound::tryGet<int32_t>(const std::string&) const;
-template std::optional<int64_t>       NBTCompound::tryGet<int64_t>(const std::string&) const;
-template std::optional<float>         NBTCompound::tryGet<float>(const std::string&) const;
-template std::optional<double>        NBTCompound::tryGet<double>(const std::string&) const;
-template std::optional<NBTByteArray>  NBTCompound::tryGet<NBTByteArray>(const std::string&) const;
-template std::optional<std::string>   NBTCompound::tryGet<std::string>(const std::string&) const;
-template std::optional<NBTList>       NBTCompound::tryGet<NBTList>(const std::string&) const;
-template std::optional<NBTCompound>   NBTCompound::tryGet<NBTCompound>(const std::string&) const;
-template std::optional<NBTIntArray>   NBTCompound::tryGet<NBTIntArray>(const std::string&) const;
-template std::optional<NBTLongArray>  NBTCompound::tryGet<NBTLongArray>(const std::string&) const;
+template std::optional<std::monostate>NBTCompound::value<std::monostate>(const std::string&) const;
+template std::optional<u8>            NBTCompound::value<u8>(const std::string&) const;
+template std::optional<i16>           NBTCompound::value<i16>(const std::string&) const;
+template std::optional<i32>           NBTCompound::value<i32>(const std::string&) const;
+template std::optional<i64>           NBTCompound::value<i64>(const std::string&) const;
+template std::optional<float>         NBTCompound::value<float>(const std::string&) const;
+template std::optional<double>        NBTCompound::value<double>(const std::string&) const;
+template std::optional<NBTByteArray>  NBTCompound::value<NBTByteArray>(const std::string&) const;
+template std::optional<std::string>   NBTCompound::value<std::string>(const std::string&) const;
+template std::optional<NBTList>       NBTCompound::value<NBTList>(const std::string&) const;
+template std::optional<NBTCompound>   NBTCompound::value<NBTCompound>(const std::string&) const;
+template std::optional<NBTIntArray>   NBTCompound::value<NBTIntArray>(const std::string&) const;
+template std::optional<NBTLongArray>  NBTCompound::value<NBTLongArray>(const std::string&) const;
 
 
 template<typename T>
-std::optional<T> NBTBase::tryGet(const std::string& key) const {
+std::optional<T> NBTBase::value(const std::string& key) const {
     if (const NBTBase* t = get<NBTCompound>().find(key); t && t->is<T>())
         return t->get<T>();
     return std::nullopt;
 }
 
 
-template std::optional<std::monostate>NBTBase::tryGet<std::monostate>(const std::string&) const;
-template std::optional<uint8_t>       NBTBase::tryGet<uint8_t>(const std::string&) const;
-template std::optional<int16_t>       NBTBase::tryGet<int16_t>(const std::string&) const;
-template std::optional<int32_t>       NBTBase::tryGet<int32_t>(const std::string&) const;
-template std::optional<int64_t>       NBTBase::tryGet<int64_t>(const std::string&) const;
-template std::optional<float>         NBTBase::tryGet<float>(const std::string&) const;
-template std::optional<double>        NBTBase::tryGet<double>(const std::string&) const;
-template std::optional<NBTByteArray>  NBTBase::tryGet<NBTByteArray>(const std::string&) const;
-template std::optional<std::string>   NBTBase::tryGet<std::string>(const std::string&) const;
-template std::optional<NBTList>       NBTBase::tryGet<NBTList>(const std::string&) const;
-template std::optional<NBTCompound>   NBTBase::tryGet<NBTCompound>(const std::string&) const;
-template std::optional<NBTIntArray>   NBTBase::tryGet<NBTIntArray>(const std::string&) const;
-template std::optional<NBTLongArray>  NBTBase::tryGet<NBTLongArray>(const std::string&) const;
+template std::optional<std::monostate>NBTBase::value<std::monostate>(const std::string&) const;
+template std::optional<u8>            NBTBase::value<u8>(const std::string&) const;
+template std::optional<i16>           NBTBase::value<i16>(const std::string&) const;
+template std::optional<i32>           NBTBase::value<i32>(const std::string&) const;
+template std::optional<i64>           NBTBase::value<i64>(const std::string&) const;
+template std::optional<float>         NBTBase::value<float>(const std::string&) const;
+template std::optional<double>        NBTBase::value<double>(const std::string&) const;
+template std::optional<NBTByteArray>  NBTBase::value<NBTByteArray>(const std::string&) const;
+template std::optional<std::string>   NBTBase::value<std::string>(const std::string&) const;
+template std::optional<NBTList>       NBTBase::value<NBTList>(const std::string&) const;
+template std::optional<NBTCompound>   NBTBase::value<NBTCompound>(const std::string&) const;
+template std::optional<NBTIntArray>   NBTBase::value<NBTIntArray>(const std::string&) const;
+template std::optional<NBTLongArray>  NBTBase::value<NBTLongArray>(const std::string&) const;

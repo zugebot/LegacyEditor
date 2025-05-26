@@ -1,35 +1,30 @@
 #include "fileListing.hpp"
 
-#include <cstdio>
-
-#include "include/ghc/fs_std.hpp"
-
-
-#include "include/lce/processor.hpp"
-
 #include "common/nbt.hpp"
+#include "common/fmt.hpp"
 
-#include "code/ConsoleParser/headerUnion.hpp"
-#include "code/ConsoleParser/include.hpp"
 #include "code/scripts.hpp"
 
 
+
+struct Coordinate {
+    i32 x, z;
+
+    bool operator==(const Coordinate&) const = default;
+};
+
+namespace std {
+    template <>
+    struct hash<Coordinate> {
+        size_t operator()(const Coordinate& rc) const noexcept {
+            return std::hash<i32>{}(rc.x) ^ (std::hash<i32>{}(rc.z) << 1);
+        }
+    };
+}
+
+
+
 namespace editor {
-
-
-    FileListing::FileListing() {
-        initializeActions();
-
-        typedef std::array<std::unique_ptr<ConsoleParser>, 2> consoleParserArrayUQPtr;
-        consoleInstances.emplace(lce::CONSOLE::XBOX360, consoleParserArrayUQPtr{std::make_unique<Xbox360DAT>(), std::make_unique<Xbox360BIN>()});
-        consoleInstances.emplace(lce::CONSOLE::PS3, consoleParserArrayUQPtr{std::make_unique<PS3>(), nullptr});
-        consoleInstances.emplace(lce::CONSOLE::RPCS3, consoleParserArrayUQPtr{std::make_unique<RPCS3>(), nullptr});
-        consoleInstances.emplace(lce::CONSOLE::PS4, consoleParserArrayUQPtr{std::make_unique<PS4>(), nullptr});
-        consoleInstances.emplace(lce::CONSOLE::VITA, consoleParserArrayUQPtr{std::make_unique<Vita>(), nullptr});
-        consoleInstances.emplace(lce::CONSOLE::WIIU, consoleParserArrayUQPtr{std::make_unique<WiiU>(), nullptr});
-        consoleInstances.emplace(lce::CONSOLE::SWITCH, consoleParserArrayUQPtr{std::make_unique<Switch>(), nullptr});
-        consoleInstances.emplace(lce::CONSOLE::XBOX1, consoleParserArrayUQPtr{std::make_unique<Xbox1>(), nullptr});
-    }
 
 
     FileListing::~FileListing() {
@@ -37,226 +32,475 @@ namespace editor {
     }
 
 
-    int FileListing::read(const fs::path& theFilePath) {
-        myReadSettings.setFilePath(theFilePath);
+    int FileListing::readListing(const Buffer & bufferIn, lce::CONSOLE consoleIn) {
+        static constexpr u32 WSTRING_SIZE = 64;
+        MU static constexpr u32 FILELISTING_HEADER_SIZE = 12;
 
-        i32 status1 = findConsole(theFilePath);
-        if (status1 != SUCCESS) {
-            printf("Failed to find console from %s\n", theFilePath.string().c_str());
-            return status1;
+        DataReader reader(bufferIn.data(), bufferIn.size(), getConsoleEndian(consoleIn));
+
+        c_u32 indexOffset = reader.read<u32>();
+        u32 fileCount = reader.read<u32>();
+        setOldestVersion(reader.read<u16>());
+        setCurrentVersion(reader.read<u16>());
+
+        u32 FOOTER_ENTRY_SIZE = 144;
+        if (currentVersion() <= 1) {
+            FOOTER_ENTRY_SIZE = 136;
+            fileCount /= 136;
         }
 
-        i32 status2 = readSave();
-        if (status2 != SUCCESS) {
-            printf("Failed to read save from %s\n", theFilePath.string().c_str());
-            return status2;
+        m_allFiles.clear();
+
+        MU u32 totalSize = 0;
+        for (u32 fileIndex = 0; fileIndex < fileCount; fileIndex++) {
+            reader.seek(indexOffset + fileIndex * FOOTER_ENTRY_SIZE);
+
+            std::string fileName = reader.readWAsString(WSTRING_SIZE);
+
+            u32 fileSize = reader.read<u32>();
+            c_u32 index = reader.read<u32>();
+            u64 timestamp = 0;
+            if (currentVersion() > 1) {
+                timestamp = reader.read<u64>();
+            }
+            totalSize += fileSize;
+
+            reader.seek(index);
+
+            Buffer buffer = reader.readBuffer(fileSize);
+            m_allFiles.emplace_back(consoleIn, std::move(buffer), timestamp);
+            editor::LCEFile &file = m_allFiles.back();
+            file.setFileName(fileName);
+
+            if (fileName.ends_with(".mcr")) {
+                if (fileName.starts_with("DIM-1")) {
+                    file.setType(lce::FILETYPE::OLD_REGION_NETHER);
+                } else if (fileName.starts_with("DIM1")) {
+                    file.setType(lce::FILETYPE::OLD_REGION_END);
+                } else if (fileName.starts_with("r")) {
+                    file.setType(lce::FILETYPE::OLD_REGION_OVERWORLD);
+                }
+                c_auto [fst, snd] = extractRegionCoords(fileName);
+                file.setRegionX(static_cast<i16>(fst));
+                file.setRegionZ(static_cast<i16>(snd));
+
+            } else if (fileName == "entities.dat") {
+                file.setType(lce::FILETYPE::ENTITY_OVERWORLD);
+
+            } else if (fileName.ends_with("entities.dat")) {
+                file.setFileName(fileName);
+                if (fileName.starts_with("DIM-1")) {
+                    file.setType(lce::FILETYPE::ENTITY_NETHER);
+                } else if (fileName.starts_with("DIM1/")) {
+                    file.setType(lce::FILETYPE::ENTITY_END);
+                }
+                file.setFileName(fileName);
+
+            } else if (fileName == "level.dat") {
+                file.setType(lce::FILETYPE::LEVEL);
+
+            } else if (fileName.starts_with("data/map_")) {
+                c_i16 mapNumber = extractMapNumber(fileName);
+                file.setMapNumber(mapNumber);
+                file.setType(lce::FILETYPE::MAP);
+
+            }else if (fileName == "data/villages.dat") {
+                file.setType(lce::FILETYPE::VILLAGE);
+
+            } else if (fileName == "data/largeMapDataMappings.dat") {
+                file.setType(lce::FILETYPE::DATA_MAPPING);
+
+            } else if (fileName.starts_with("data/")) {
+                file.setType(lce::FILETYPE::STRUCTURE);
+
+            } else if (fileName.ends_with(".grf")) {
+                file.setType(lce::FILETYPE::GRF);
+
+            } else if (fileName.starts_with("players/") ||
+                       fileName.find('/') == -1LLU) {
+                file.setType(lce::FILETYPE::PLAYER);
+
+            } else {
+                printf("Unknown File: %s\n", fileName.c_str());
+            }
+
         }
 
         return SUCCESS;
     }
 
 
-    int FileListing::readSave() {
-        int readerIndex = 0;
-        auto it = consoleInstances.find(myReadSettings.getConsole());
-        if (it != consoleInstances.end()) {
+    void convertNewGenChunksToOldGen(FileListing* fileListing,
+                                     StateSettings& stateSettings,
+                                     WriteSettings& writeSettings) {
 
-            if (myReadSettings.getIsXbox360BIN() && myReadSettings.getConsole() == lce::CONSOLE::XBOX360)
-                readerIndex = 1; // use the .bin reader instead
+        std::vector<std::vector<int>> positions = {
+                {-1, -1}, {-1, 0}, {0, -1}, {0, 0}
+        };
 
-            int status = it->second[readerIndex]->read(this, myReadSettings.getFilePath());
-            // printf("detected save as %s\n", lce::consoleToStr(myConsole).c_str());
-            return status;
-        }
-        return INVALID_CONSOLE;
-    }
+        auto makeSmaller = [](int v) {
+            return (v >= 0) ? v / 2 : (v - 1) / 2;
+        };
+
+        using ft = lce::FILETYPE;
+        using Map = std::unordered_map<Coordinate, editor::RegionManager>;
+
+        std::vector<std::tuple<ft, ft, ft, Map>> dimensions;
+        dimensions.reserve(3);
+        dimensions.emplace_back(ft::NEW_REGION_OVERWORLD, ft::OLD_REGION_OVERWORLD, ft::ENTITY_OVERWORLD, Map{});
+        dimensions.emplace_back(ft::NEW_REGION_NETHER,    ft::OLD_REGION_NETHER,    ft::ENTITY_NETHER,    Map{});
+        dimensions.emplace_back(ft::NEW_REGION_END,       ft::OLD_REGION_END,       ft::ENTITY_END,       Map{});
 
 
-    int FileListing::writeSave(WriteSettings& theSettings) {
-        auto it = consoleInstances.find(theSettings.getConsole());
-        if (it != consoleInstances.end()) {
-            int status = it->second[0]->write(this, theSettings);
-            if (status != 0) {
-                printf("failed to write save %s.\n", theSettings.getInFolderPath().string().c_str());
+        for (auto& [newFmt, oldFmt, entityFmt, regionMap] : dimensions) {
+
+            // (1) read entities file
+            std::list<LCEFile> entityFileList = fileListing->collectFiles(entityFmt);
+            std::unordered_map<Coordinate, NBTBase> entityMap;
+            if (!entityFileList.empty()) {
+                LCEFile& entityFile = entityFileList.front();
+                DataReader entityReader(entityFile.m_data.span());
+                int entityCount = entityReader.read<i32>();
+                for (int i = 0; i < entityCount; i++) {
+                    int chunkX = entityReader.read<i32>();
+                    int chunkZ = entityReader.read<i32>();
+                    NBTBase nbt;
+                    entityReader.skip(3);
+                    nbt.read(entityReader);
+                    // nbt.print();
+                    // std::cout << std::flush;
+                    entityMap.emplace(Coordinate(chunkX, chunkZ), std::move(nbt));
+                }
             }
-            return status;
+
+            // (2) build regions
+            for (auto& pos : positions) {
+                Coordinate key{pos[0], pos[1]};
+
+                regionMap.emplace(
+                        std::piecewise_construct,
+                        std::forward_as_tuple(key),
+                        std::forward_as_tuple(key.x, key.z)
+                );
+            }
+
+            // (3) collect new format
+            std::list<LCEFile> regionFiles = fileListing->collectFiles(newFmt);
+
+            // (4) place contents into old regions
+            for (auto& regionFile: regionFiles) {
+                Coordinate tinyCoord(
+                        makeSmaller(regionFile.getRegionX()),
+                        makeSmaller(regionFile.getRegionZ())
+                );
+                if (tinyCoord.x < -1 || tinyCoord.x > 0 || tinyCoord.x < -1 || tinyCoord.x > 0) {
+                    continue;
+                }
+
+                RegionManager tinyRegion;
+                tinyRegion.read(&regionFile);
+
+                auto bigIt = regionMap.find(tinyCoord);
+                if (bigIt == regionMap.end()) {
+                    continue;
+                    // auto [insertedIt, success] = regionMap.emplace(
+                    //         std::piecewise_construct,
+                    //         std::forward_as_tuple(tinyCoord),
+                    //         std::forward_as_tuple(tinyCoord.x, tinyCoord.z)
+                    // );
+                    // bigIt = insertedIt;
+                }
+
+                // (4a) move chunks from tiny regions to big regions
+                RegionManager& bigRegion = bigIt->second;
+                for (int sx = 0; sx < 16; ++sx) {
+                    for (int sz = 0; sz < 16; ++sz) {
+                        int dx = sx + 16 * std::abs(tinyRegion.x() & 1);
+                        int dz = sz + 16 * std::abs(tinyRegion.z() & 1);
+
+                        int scale = 27;
+                        bool onLeft   = (bigRegion.x() == -1);
+                        bool onRight  = (bigRegion.x() ==  0);
+                        bool onTop    = (bigRegion.z() == -1);
+                        bool onBottom = (bigRegion.z() ==  0);
+                        int xMin = onLeft  ? 32 - scale : 0;
+                        int xMax = onRight ? scale : 32;
+                        int zMin = onTop    ? 32 - scale  : 0;
+                        int zMax = onBottom ? scale : 32;
+                        if (dx < xMin || dx >= xMax || dz < zMin || dz >= zMax) {
+                            continue;
+                        }
+
+
+
+                        if (!inRange(sx, sz, bigRegion.m_regScale)){
+                            continue;
+                        }
+                        if (!inRange(dx, dz, bigRegion.m_regScale)){
+                            continue;
+                        }
+                        ChunkManager chunk;
+                        if (!tinyRegion.extractChunk(sx, sz, chunk)){
+                            continue;
+                        }
+
+                        Coordinate realChunkCoord = {
+                                bigRegion.x() * 32 + dx,
+                                bigRegion.z() * 32 + dz
+                        };
+
+                        chunk.readChunk(stateSettings.console());
+
+                        if (chunk.chunkData->lastVersion == 7) {
+                            chunk.chunkHeader.setNewSaveFlag(1);
+                            // fix shit old xbox NBT
+                            if (chunk.chunkData->entities.get<NBTList>().subType() != eNBT::COMPOUND)
+                                chunk.chunkData->entities = makeList(eNBT::COMPOUND, {});
+
+                            if (chunk.chunkData->tileEntities.get<NBTList>().subType() != eNBT::COMPOUND)
+                                chunk.chunkData->tileEntities = makeList(eNBT::COMPOUND, {});
+
+                            if (chunk.chunkData->tileTicks.get<NBTList>().subType() != eNBT::COMPOUND)
+                                chunk.chunkData->tileTicks = makeList(eNBT::COMPOUND, {});
+
+                            if (chunk.chunkData->chunkHeight == 128) {
+                                chunk.chunkData->convertNBT128ToAquatic();
+                            } else {
+                                chunk.chunkData->convertNBT256ToAquatic();
+                            }
+
+                            if (chunk.chunkData->terrainPopulated == 1) {
+                                chunk.chunkData->terrainPopulated = 2046;
+                            }
+
+                        } else if (chunk.chunkData->lastVersion == 10) {
+                            chunk.chunkData->convertNBT256ToAquatic();
+                            chunk.chunkHeader.setNewSaveFlag(1);
+                            if (chunk.chunkData->terrainPopulated == 1) {
+                                chunk.chunkData->terrainPopulated = 2046;
+                            }
+
+                        } else if (chunk.chunkData->lastVersion == 8 ||
+                                   chunk.chunkData->lastVersion == 9 ||
+                                   chunk.chunkData->lastVersion == 11) {
+                            chunk.chunkHeader.setNewSaveFlag(1);
+                            chunk.chunkData->convertOldToAquatic();
+
+                        } else if (chunk.chunkData->lastVersion == 13) {
+                            chunk.chunkHeader.setNewSaveFlag(1);
+                            chunk.chunkData->convert114ToAquatic();
+                        }
+
+                        auto entityIt = entityMap.extract(realChunkCoord);
+                        if (!entityIt.empty()) {
+                            if (chunk.chunkData->validChunk) {
+                                NBTBase nbt = std::move(entityIt.mapped().get<NBTCompound>().extract("Entities")
+                                                                .value_or(makeList(eNBT::COMPOUND))/*.get<NBTList>()*/);
+                                chunk.chunkData->entities = std::move(nbt);
+                            }
+                        }
+
+                        chunk.writeChunk(writeSettings.getConsole());
+
+                        if (!bigRegion.insertChunk(dx, dz, std::move(chunk))){
+                            continue;
+                        }
+
+                        std::cout << "moved chunk(" << sx << ", " << sz << ") "
+                                  << "tiny reg[" << tinyRegion.x() << ", " << tinyRegion.z() << "] "
+                                  << "to chunk(" <<  dx << ", " << dz << ") "
+                                  << "big reg[" << bigRegion.x() << ", " << bigRegion.z() << "]\n";
+
+                    }
+                }
+
+
+            }
         }
-        return INVALID_CONSOLE;
+
+        auto consoleWrite = writeSettings.getConsole();
+
+        // create files from old regions
+        std::list<LCEFile> convertedFiles;
+        for (auto& [newFmt, oldFmt, entityFmt, regionMap] : dimensions) {
+            for (auto& [coord, region] : regionMap) {
+                Buffer buffer = region.write(consoleWrite);
+                if (buffer.empty()) continue;
+                auto& file = convertedFiles.emplace_back(
+                        consoleWrite, std::move(buffer), 0
+                );
+                file.setType(oldFmt);
+                file.setRegionX((i16)coord.x);
+                file.setRegionZ((i16)coord.z);
+                std::string fileName = file.constructFileName(consoleWrite);
+                file.setFileName(fileName);
+            }
+        }
+
+        fileListing->addFiles(std::move(convertedFiles));
     }
 
 
-    MU ND int FileListing::preprocess(WriteSettings& theWriteSettings) {
+
+
+
+
+
+    Buffer FileListing::writeListing(StateSettings& stateSettings, WriteSettings& writeSettings) {
+        static constexpr u32 WSTRING_SIZE = 64;
+        static constexpr u32 FILELISTING_HEADER_SIZE = 12;
+        static const std::set<lce::FILETYPE> kOldGenRegions = {
+                lce::FILETYPE::OLD_REGION_OVERWORLD,
+                lce::FILETYPE::OLD_REGION_NETHER,
+                lce::FILETYPE::OLD_REGION_END
+        };
+        static const std::set<lce::FILETYPE> kNewGenRegions = {
+                lce::FILETYPE::NEW_REGION_OVERWORLD,
+                lce::FILETYPE::NEW_REGION_NETHER,
+                lce::FILETYPE::NEW_REGION_END
+        };
+        static const std::set<lce::FILETYPE> kEntities = {
+                lce::FILETYPE::ENTITY_OVERWORLD,
+                lce::FILETYPE::ENTITY_NETHER,
+                lce::FILETYPE::ENTITY_END
+        };
+
+        auto consoleIn = stateSettings.console();
+        auto consoleOut = writeSettings.getConsole();
+
+        // old gen -> old gen
+        if (!lce::isConsoleNewGen(consoleIn) && !lce::isConsoleNewGen(consoleOut)) {
+            std::cout << "[-] rewriting all region chunks to adjust endian, this may take a minute.\n";
+            for (LCEFile& file : view_of(kOldGenRegions)) {
+                editor::convertChunksToAquatic(file, consoleIn, consoleOut);
+            }
+
+        // new gen -> old gen
+        } else if (lce::isConsoleNewGen(consoleIn) && !lce::isConsoleNewGen(consoleOut)) {
+            std::cout << "[-] rewriting + reordering all region chunks, this may take a minute.\n";
+            // removeFileTypes(kEntities);
+            convertNewGenChunksToOldGen(this, stateSettings, writeSettings);
+            std::set<lce::FILETYPE> levelSet = {lce::FILETYPE::LEVEL};
+            for (auto& level : view_of(levelSet)) {
+                DataReader reader(level.m_data.span());
+                NBTBase nbt;
+                nbt.read(reader);
+                if (auto* nbtData = nbt.getTag("Data"); nbtData) {
+                    int xzSize = nbtData->value<i32>("XZSize").value_or(54);
+                    if (xzSize != 54) {
+                        nbtData->setTag("HellScale", makeInt(3));
+                        nbtData->setTag("XZSize", makeInt(54));
+                        nbtData->setTag("StrongholdX", makeInt(0));
+                        nbtData->setTag("StrongholdZ", makeInt(0));
+                        nbtData->setTag("StrongholdEndPortalX", makeInt(0));
+                        nbtData->setTag("StrongholdEndPortalZ", makeInt(0));
+                    }
+                }
+                DataWriter writer;
+                nbt.write(writer);
+                level.m_data = std::move(writer.take());
+            }
+        } else {
+            convertRegions(consoleOut);
+        }
+
+        // step 1: get the file count and size of all sub-files
+        c_u32 fileCount = m_allFiles.size();
+
+        u32 fileDataSize = 0;
+        for (const editor::LCEFile& file: m_allFiles) {
+            fileDataSize += file.m_data.size();
+        }
+
+        c_u32 fileInfoOffset = fileDataSize + FILELISTING_HEADER_SIZE;
+        u32 FOOTER_ENTRY_SIZE = (currentVersion() > 1) ? 144 : 136;
+
+        // step 2: find total binary size and create its data buffer
+        c_u32 totalFileSize = fileInfoOffset + FOOTER_ENTRY_SIZE * fileCount;
+        DataWriter writer(totalFileSize, getConsoleEndian(consoleOut));
+
+        // step 3: write start
+        writer.write<u32>(fileInfoOffset);
+        u32 innocuousVariableName = fileCount;
+        if (currentVersion() <= 1) {
+            innocuousVariableName *= 136;
+        }
+        writer.write<u32>(innocuousVariableName);
+        writer.write<u16>(oldestVersion());
+        writer.write<u16>(currentVersion());
+
+
+        // step 4: write each files data
+        u32 offsetIndex = 0;
+        u32 totalOffset = FILELISTING_HEADER_SIZE;
+        u32* fileOffsets = new u32[m_allFiles.size()];
+
+        for (editor::LCEFile& fileIter : m_allFiles) {
+            fileOffsets[offsetIndex++] = totalOffset;
+            totalOffset += fileIter.m_data.size();
+            writer.writeBytes(fileIter.m_data.data(), fileIter.m_data.size());
+        }
+
+        // step 5: write file metadata
+        offsetIndex = 0;
+        for (const editor::LCEFile& fileIter: m_allFiles) {
+            std::string fileIterName = fileIter.constructFileName(consoleOut);
+            writer.writeWStringFromString(fileIterName, WSTRING_SIZE);
+            writer.write<u32>(fileIter.m_data.size());
+            writer.write<u32>(fileOffsets[offsetIndex]);
+            if (currentVersion() > 1) {
+                writer.write<u64>(fileIter.m_timestamp);
+            }
+            offsetIndex++;
+        }
+
+        delete[] fileOffsets;
+
+        return writer.take();
+    }
+
+
+
+
+
+
+
+    MU ND int FileListing::preprocess(StateSettings& stateSettings, WriteSettings& theWriteSettings) {
         if (!theWriteSettings.areSettingsValid()) {
             printf("Write Settings are not valid, exiting\n");
             return STATUS::INVALID_ARGUMENT;
         }
 
+        const bool diffConsoles = stateSettings.console() != theWriteSettings.getConsole();
+
         // TODO: create default output file path if not set
-        if (theWriteSettings.shouldRemovePlayers || myReadSettings.getConsole() != theWriteSettings.getConsole()) {
+        if (theWriteSettings.shouldRemovePlayers/* || diffConsoles*/) {
             removeFileTypes({lce::FILETYPE::PLAYER});
         }
-        if (theWriteSettings.shouldRemoveDataMapping || myReadSettings.getConsole() != theWriteSettings.getConsole()) {
+        if (theWriteSettings.shouldRemoveDataMapping/* || diffConsoles*/) {
             removeFileTypes({lce::FILETYPE::DATA_MAPPING});
         }
-        if (theWriteSettings.shouldRemoveMaps || myReadSettings.getConsole() != theWriteSettings.getConsole()) {
+        if (theWriteSettings.shouldRemoveMaps) {
             removeFileTypes({lce::FILETYPE::MAP});
         }
-        if (theWriteSettings.shouldRemoveStructures || myReadSettings.getConsole() != theWriteSettings.getConsole()) {
-            removeFileTypes({lce::FILETYPE::STRUCTURE});
-            removeFileTypes({lce::FILETYPE::VILLAGE});
+        if (theWriteSettings.shouldRemoveStructures/* || diffConsoles*/) {
+            removeFileTypes({lce::FILETYPE::STRUCTURE, lce::FILETYPE::VILLAGE});
         }
-        if (lce::getConsoleEndian(myReadSettings.getConsole()) != lce::getConsoleEndian(theWriteSettings.getConsole())) {
+        if (theWriteSettings.shouldRemoveRegionsOverworld) {
+            removeFileTypes({lce::FILETYPE::OLD_REGION_OVERWORLD, lce::FILETYPE::NEW_REGION_OVERWORLD});
+        }
+        if (theWriteSettings.shouldRemoveRegionsNether) {
+            removeFileTypes({lce::FILETYPE::OLD_REGION_NETHER, lce::FILETYPE::NEW_REGION_NETHER});
+        }
+        if (theWriteSettings.shouldRemoveRegionsEnd) {
+            removeFileTypes({lce::FILETYPE::OLD_REGION_END, lce::FILETYPE::NEW_REGION_END});
+        }
+        // TODO: properly convert GRF
+        if (lce::getConsoleEndian(stateSettings.console()) != lce::getConsoleEndian(theWriteSettings.getConsole())) {
             removeFileTypes({lce::FILETYPE::GRF});
         }
 
         return 0;
     }
-
-
-    int FileListing::write(WriteSettings& theWriteSettings) {
-        if (!theWriteSettings.areSettingsValid()) {
-            printf("Write Settings are not valid, exiting\n");
-            return STATUS::INVALID_ARGUMENT;
-        }
-
-
-        const auto consoleOut = theWriteSettings.getConsole();
-        if (true || lce::getConsoleEndian(myReadSettings.getConsole()) != lce::getConsoleEndian(consoleOut)) {
-            std::cout << "[-] reading and writing all chunks to change their endian, this will take a minute." << std::endl;
-            for (size_t index = 0; index < ptrs.region_overworld.size(); index++) {
-                editor::convertChunksToAquatic(index, ptrs.region_overworld, myReadSettings.getConsole(), consoleOut);
-            }
-            for (size_t index = 0; index < ptrs.region_nether.size(); index++) {
-                editor::convertChunksToAquatic(index, ptrs.region_nether, myReadSettings.getConsole(), consoleOut);
-            }
-            for (size_t index = 0; index < ptrs.region_end.size(); index++) {
-                editor::convertChunksToAquatic(index, ptrs.region_end, myReadSettings.getConsole(), consoleOut);
-            }
-        } else {
-            convertRegions(theWriteSettings.getConsole());
-        }
-
-        int status = writeSave(theWriteSettings);
-        if (status != 0) {
-            printf("failed to write gamedata to %s", theWriteSettings.getInFolderPath().string().c_str());
-        }
-        return status;
-    }
-
-
-    int FileListing::findConsole(const fs::path& inFilePath) {
-        static constexpr uint32_t CON_MAGIC = 0x434F4E20;
-        static constexpr uint32_t ZLIB_MAGIC = 0x789C;
-
-
-        FILE* f_in = fopen(inFilePath.string().c_str(), "rb");
-        if (f_in == nullptr) {
-            return printf_err(FILE_ERROR, ERROR_4, inFilePath.string().c_str());
-        }
-
-        fseek(f_in, 0, SEEK_END);
-        c_u64 input_size = ftell(f_in);
-        fseek(f_in, 0, SEEK_SET);
-        if (input_size < 12) {
-            return printf_err(FILE_ERROR, ERROR_5);
-        }
-        HeaderUnion headerUnion{};
-        fread(&headerUnion, 1, 12, f_in);
-        fclose(f_in);
-
-        Data data;
-        data.setScopeDealloc(true);
-        if (headerUnion.getInt1() <= 2) {
-            if (headerUnion.getShort5() == ZLIB_MAGIC) {
-                if (headerUnion.getInt2Swap() >= headerUnion.getDestSize()) {
-                    myReadSettings.setConsole(lce::CONSOLE::WIIU);
-                } else {
-                    const std::string parentDir = myReadSettings.getFilePath().parent_path().filename().string();
-                    myReadSettings.setConsole(lce::CONSOLE::SWITCH);
-                    if (parentDir == "savedata0") {
-                        myReadSettings.setConsole(lce::CONSOLE::PS4);
-                    }
-                }
-            } else {
-                // TODO: change this to write custom checker for FILE_COUNT * 144 == diff. with
-                // TODO: with custom vitaRLE decompress checker
-                c_u32 indexFromSF = headerUnion.getInt2Swap() - headerUnion.getInt3Swap();
-                if (indexFromSF > 0 && indexFromSF < 65536) {
-                    myReadSettings.setConsole(lce::CONSOLE::VITA);
-                } else { // compressed ps3
-                    myReadSettings.setConsole(lce::CONSOLE::PS3);
-                }
-            }
-        } else if (headerUnion.getInt2() <= 2) {
-            /// if (int2 == 0) it is an xbox savefile unless it's a massive
-            /// file, but there won't be 2 files in a savegame file for PS3
-            myReadSettings.setConsole(lce::CONSOLE::XBOX360);
-            myReadSettings.setIsXbox360BIN(false);
-            // TODO: don't use arbitrary guess for a value
-        } else if (headerUnion.getInt2() < 100) { // uncompressed PS3 / RPCS3
-            /// otherwise if (int2) > 100 then it is a random file
-            /// because likely ps3 won't have more than 100 files
-            myReadSettings.setConsole(lce::CONSOLE::RPCS3);
-        } else if (headerUnion.getInt1() == CON_MAGIC) {
-            myReadSettings.setConsole(lce::CONSOLE::XBOX360);
-            myReadSettings.setIsXbox360BIN(true);
-        } else {
-            return printf_err(INVALID_SAVE, ERROR_3);
-        }
-
-        return SUCCESS;
-    }
-
-
-    void FileListing::initializeActions() {
-        ptrs.clearDelete = {
-                {lce::FILETYPE::STRUCTURE, [this] { ptrs.structures.removeAll(); }},
-                {lce::FILETYPE::MAP, [this] { ptrs.maps.removeAll(); }},
-                {lce::FILETYPE::PLAYER, [this] { ptrs.players.removeAll(); }},
-                {lce::FILETYPE::REGION_NETHER, [this] { ptrs.region_nether.removeAll(); }},
-                {lce::FILETYPE::REGION_OVERWORLD, [this] { ptrs.region_overworld.removeAll(); }},
-                {lce::FILETYPE::REGION_END, [this] { ptrs.region_end.removeAll(); }},
-                {lce::FILETYPE::ENTITY_NETHER, [this] { ptrs.entity_nether->deleteData(); ptrs.entity_nether = nullptr; }},
-                {lce::FILETYPE::ENTITY_OVERWORLD, [this] { ptrs.entity_overworld->deleteData(); ptrs.entity_overworld = nullptr; }},
-                {lce::FILETYPE::ENTITY_END, [this] { ptrs.entity_end->deleteData(); ptrs.entity_end = nullptr; }},
-                {lce::FILETYPE::VILLAGE, [this] { ptrs.village->deleteData(); ptrs.village = nullptr; }},
-                {lce::FILETYPE::DATA_MAPPING, [this] { ptrs.largeMapDataMappings->deleteData(); ptrs.largeMapDataMappings = nullptr; }},
-                {lce::FILETYPE::LEVEL, [this] { ptrs.level->deleteData(); ptrs.level = nullptr; }},
-                {lce::FILETYPE::GRF, [this] { ptrs.grf->deleteData(); ptrs.grf = nullptr; }},
-        };
-
-        ptrs.clearRemove = {
-                {lce::FILETYPE::STRUCTURE, [this] { ptrs.structures.clear(); }},
-                {lce::FILETYPE::MAP, [this] { ptrs.maps.clear(); }},
-                {lce::FILETYPE::PLAYER, [this] { ptrs.players.clear(); }},
-                {lce::FILETYPE::REGION_NETHER, [this] { ptrs.region_nether.clear(); }},
-                {lce::FILETYPE::REGION_OVERWORLD, [this] { ptrs.region_overworld.clear(); }},
-                {lce::FILETYPE::REGION_END, [this] { ptrs.region_end.clear(); }},
-                {lce::FILETYPE::ENTITY_NETHER, [this] { ptrs.entity_nether = nullptr; }},
-                {lce::FILETYPE::ENTITY_OVERWORLD, [this] { ptrs.entity_overworld = nullptr; }},
-                {lce::FILETYPE::ENTITY_END, [this] { ptrs.entity_end = nullptr; }},
-                {lce::FILETYPE::VILLAGE, [this] { ptrs.village = nullptr; }},
-                {lce::FILETYPE::DATA_MAPPING, [this] { ptrs.largeMapDataMappings = nullptr; }},
-                {lce::FILETYPE::LEVEL, [this] { ptrs.level = nullptr; }},
-                {lce::FILETYPE::GRF, [this] { ptrs.grf = nullptr; }},
-        };
-
-        ptrs.addUpdate = {
-                {lce::FILETYPE::STRUCTURE, [this](LCEFile& file) { ptrs.structures.push_back(&file); }},
-                {lce::FILETYPE::VILLAGE, [this](LCEFile& file) { ptrs.village = &file; }},
-                {lce::FILETYPE::DATA_MAPPING, [this](LCEFile& file) { ptrs.largeMapDataMappings = &file; }},
-                {lce::FILETYPE::MAP, [this](LCEFile& file) { ptrs.maps.push_back(&file); }},
-                {lce::FILETYPE::REGION_NETHER, [this](LCEFile& file) { ptrs.region_nether.push_back(&file); }},
-                {lce::FILETYPE::REGION_OVERWORLD, [this](LCEFile& file) { ptrs.region_overworld.push_back(&file); }},
-                {lce::FILETYPE::REGION_END, [this](LCEFile& file) { ptrs.region_end.push_back(&file); }},
-                {lce::FILETYPE::PLAYER, [this](LCEFile& file) { ptrs.players.push_back(&file); }},
-                {lce::FILETYPE::LEVEL, [this](LCEFile& file) { ptrs.level = &file; }},
-                {lce::FILETYPE::GRF, [this](LCEFile& file) { ptrs.grf = &file; }},
-                {lce::FILETYPE::ENTITY_NETHER, [this](LCEFile& file) { ptrs.entity_nether = &file; }},
-                {lce::FILETYPE::ENTITY_OVERWORLD, [this](LCEFile& file) { ptrs.entity_overworld = &file; }},
-                {lce::FILETYPE::ENTITY_END, [this](LCEFile& file) { ptrs.entity_end = &file; }},
-        };
-    }
-
 
 }

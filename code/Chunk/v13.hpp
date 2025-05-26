@@ -1,11 +1,10 @@
 #pragma once
 
+#include "include/lce/processor.hpp"
 #include "chunkData.hpp"
 
 #include "common/error_status.hpp"
-
-
-class DataManager;
+#include "vBase.hpp"
 
 namespace editor::chunk {
 
@@ -35,7 +34,7 @@ namespace editor::chunk {
 
 
     /// "Aquatic" chunks.
-    class ChunkV13 {
+    class ChunkV13 : VChunkBase {
         static constexpr u32 DATA_HEADER_SIZE = 28;
         static constexpr u32 SECTION_HEADER_SIZE = 50;
 
@@ -46,7 +45,7 @@ namespace editor::chunk {
 
         // Read Section
 
-        void readBlockData() const;
+        void readBlockData(DataReader& reader) const;
         template<size_t BitsPerBlock>
         bool readGrid(c_u8* buffer, u8 grid[128]) const;
         template<size_t BitsPerBlock>
@@ -54,20 +53,19 @@ namespace editor::chunk {
 
         // Write Section
 
-        void writeBlockData() const;
+        void writeBlockData(DataWriter& writer) const;
         template<size_t BitsPerBlock, size_t BlockCount, size_t EmptyCount>
-        void writeGrid(u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[MAP_SIZE]) const;
-        void writeWithMaxBlocks(const u16_vec& blockVector, const u16_vec& blockLocations, u8 blockMap[MAP_SIZE]) const;
+        void writeGrid(DataWriter& writer, u16_vec& blockVector, u16_vec& blockLocations, u8 blockMap[MAP_SIZE]) const;
+        void writeWithMaxBlocks(DataWriter& writer, const u16_vec& blockVector, const u16_vec& blockLocations, u8 blockMap[MAP_SIZE]) const;
 
     public:
-        ChunkData* chunkData = nullptr;
-        DataManager* dataManager = nullptr;
         u16 maxGridAmount = 0;
+        explicit ChunkV13(ChunkData* chunkDataIn) : VChunkBase(chunkDataIn) {}
 
-        ChunkV13(ChunkData* chunkDataIn, DataManager* managerIn) : chunkData(chunkDataIn), dataManager(managerIn) {}
-        MU void allocChunk() const;
-        MU void readChunk();
-        MU void writeChunk() const;
+
+        MU void allocChunk() const override;
+        MU void readChunk(DataReader& reader) override;
+        MU void writeChunk(DataWriter& writer) override;
 
     };
 }

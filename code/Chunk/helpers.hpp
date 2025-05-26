@@ -1,10 +1,9 @@
 #pragma once
 
-#include <cstring>
+#include "include/lce/processor.hpp"
 
 #include "bitChecking.hpp"
-#include "common/dataManager.hpp"
-#include "include/lce/processor.hpp"
+#include "common/DataReader.hpp"
 
 
 namespace editor::chunk {
@@ -15,14 +14,14 @@ namespace editor::chunk {
     }
 
 
-    __forceinline static u8 getNibble(const u8_vec& buf, int nibIdx) {
+    FORCEINLINE static u8 getNibble(const u8_vec& buf, int nibIdx) {
         const int byteIdx = nibIdx >> 1;
         const int shift   = (nibIdx & 1) * 4;
         return (buf[byteIdx] >> shift) & 0xF;
     }
 
 
-    __forceinline static void setNibble(u8_vec& buf, int nibIdx, u8 value) {
+    FORCEINLINE static void setNibble(u8_vec& buf, int nibIdx, u8 value) {
         int byteIdx = nibIdx >> 1;
         int shift   = (nibIdx & 1) * 4;
         buf[byteIdx] &= ~(0xF << shift);
@@ -30,37 +29,48 @@ namespace editor::chunk {
     }
 
 
-    static void readDataBlock(c_u8* dataIn, u8* dataOut) {
-        static constexpr int DATA_SECTION_SIZE = 128;
+    // TODO: rename to readSection
+    static void readSection(std::span<const u8> dataIn, u8* dataOut) {
+        static constexpr int SUB_SECT_SIZE = 128;
         int offset = 0;
 
         // first section
-        for (int k = 0; k < DATA_SECTION_SIZE; k++) {
-            if (dataIn[k] == DATA_SECTION_SIZE) {
-                memset(&dataOut[offset], 0, DATA_SECTION_SIZE);
-            } else if (dataIn[k] == DATA_SECTION_SIZE + 1) {
-                memset(&dataOut[offset], 255, DATA_SECTION_SIZE);
+        for (int k = 0; k < SUB_SECT_SIZE; k++) {
+            if (dataIn[k] == SUB_SECT_SIZE) {
+                memset(&dataOut[offset], 0, SUB_SECT_SIZE);
+            } else if (dataIn[k] == SUB_SECT_SIZE + 1) {
+                memset(&dataOut[offset], 255, SUB_SECT_SIZE);
             } else {
-                std::memcpy(&dataOut[offset], &dataIn[toIndex(dataIn[k])], DATA_SECTION_SIZE);
+                std::memcpy(&dataOut[offset], &dataIn[toIndex(dataIn[k])], SUB_SECT_SIZE);
             }
-            offset += DATA_SECTION_SIZE;
+            offset += SUB_SECT_SIZE;
         }
     }
 
-    template<int SIZE>
-    static std::vector<u8*> readGetDataBlockVector(ChunkData* chunkData, DataManager* managerIn) {
-        std::vector<u8*> dataArray(SIZE);
+
+
+    template<int SIZE, bool firstTwoWithoutToIndex = false>
+    static std::vector<std::span<const u8>>
+    fetchSections(ChunkData* chunkData, DataReader& managerIn) {
+        std::vector<std::span<const u8>> dataArray(SIZE);
         for (int i = 0; i < SIZE; i++) {
-            c_u32 index = toIndex(managerIn->read<u32>());
-            dataArray[i] = managerIn->ptr();
-            managerIn->skip(index);
-            chunkData->DataGroupCount += index;
+            if (firstTwoWithoutToIndex && i < 2) {
+                c_u32 index = managerIn.read<u32>();
+                dataArray[i] = {managerIn.ptr(), index};
+                managerIn.skip(index);
+                chunkData->DataGroupCount += index;
+            } else {
+                c_u32 index = toIndex(managerIn.read<u32>());
+                dataArray[i] = {managerIn.ptr(), index};
+                managerIn.skip(index);
+                chunkData->DataGroupCount += index;
+            }
         }
         return dataArray;
     }
 
 
-    static void writeDataBlock(DataManager* managerIn, const u8* dataIn)  {
+    static void writeSection(DataWriter& writer, const u8* dataIn)  {
         static constexpr int GRID_COUNT = 64;
         static constexpr int DATA_SECTION_SIZE = 128;
 
@@ -72,8 +82,8 @@ namespace editor::chunk {
         // it does it twice, after the first interval, readOffset should be 32767
         // for (int index = 0; index < countIn; index++) {
 
-        c_u32 start = managerIn->tell();
-        managerIn->write<u32>(0);
+        c_u32 start = writer.tell();
+        writer.write<u32>(0);
         sectionOffsets.clear();
 
         // Write headers
@@ -81,12 +91,12 @@ namespace editor::chunk {
         c_u8* ptr = dataIn + readOffset;
         for (int i = 0; i < DATA_SECTION_SIZE; i++) {
             if (is_zero_128(ptr)) {
-                managerIn->write<u8>(DATA_SECTION_SIZE);
+                writer.write<u8>(DATA_SECTION_SIZE);
             } else if (is_ff_128(ptr)) {
-                managerIn->write<u8>(DATA_SECTION_SIZE + 1);
+                writer.write<u8>(DATA_SECTION_SIZE + 1);
             } else {
                 sectionOffsets.push_back(readOffset);
-                managerIn->write<u8>(sectionOffsetSize++);
+                writer.write<u8>(sectionOffsetSize++);
             }
             ptr += DATA_SECTION_SIZE;
             readOffset += DATA_SECTION_SIZE;
@@ -94,19 +104,19 @@ namespace editor::chunk {
 
         // Write light data sections
         for (c_u32 offset : sectionOffsets) {
-            managerIn->writeBytes(&dataIn[offset], DATA_SECTION_SIZE);
+            writer.writeBytes(&dataIn[offset], DATA_SECTION_SIZE);
         }
 
         // Calculate and write the size
-        c_u32 end = managerIn->tell();
+        c_u32 end = writer.tell();
         c_u32 size = (end - start - 4 - 128) / 128; // -4 to exclude size header
-        managerIn->writeAtOffset<u32>(start, size);
+        writer.writeAtOffset<u32>(start, size);
     }
 
 
-    template<int GRID_SIZE>
-    void fillAllBlocks(c_u8* buffer, u8 grid[GRID_SIZE]) {
-        std::memcpy(grid, buffer, GRID_SIZE);
+    template<int GridSize>
+    void fillAllBlocks(c_u8* buffer, u8 grid[GridSize]) {
+        std::memcpy(grid, buffer, GridSize);
     }
 
 

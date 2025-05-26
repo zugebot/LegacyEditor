@@ -58,8 +58,8 @@ int main() {
             // if (!foundChunk) {
                 // foundChunk = true;
 
-            chunk.ensureDecompress(fileListing.myConsole);
-            chunk.readChunk(fileListing.myConsole);
+            chunk.ensureDecompress(fileListing.m_console);
+            chunk.readChunk(fileListing.m_console);
             auto* chunkData = chunk.chunkData;
             if (!chunkData->validChunk) {
                 printf("found invalid chunk...\n");
@@ -74,22 +74,22 @@ int main() {
                 }
             }
             chunk.chunkData->defaultNBT();
-            chunk.writeChunk(fileListing.myConsole);
-            chunk.ensureCompressed(fileListing.myConsole);
+            chunk.writeChunk(fileListing.m_console);
+            chunk.ensureCompressed(fileListing.m_console);
                 // continue;
             //}
 
             // chunk.deallocate();
-            // chunk.ensureDecompress(fileListing.myConsole);
-            // chunk.readChunk(fileListing.myConsole);
+            // chunk.ensureDecompress(fileListing.m_console);
+            // chunk.readChunk(fileListing.m_console);
             // c_auto* chunkData = chunk.chunkData;
             // if (!chunkData->validChunk) { continue; }
             // chunk.chunkData->defaultNBT();
-            // chunk.writeChunk(fileListing.myConsole);
-            // chunk.ensureCompressed(fileListing.myConsole);
+            // chunk.writeChunk(fileListing.m_console);
+            // chunk.ensureCompressed(fileListing.m_console);
         }
 
-        fileListing.replaceRegionOW(i, region, fileListing.myConsole);
+        fileListing.replaceRegionOW(i, region, fileListing.m_console);
 
         printf("done!\n");
 

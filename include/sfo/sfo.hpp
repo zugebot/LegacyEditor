@@ -86,7 +86,7 @@ public:
     [[maybe_unused]] void saveToFile(const std::string& outputPath);
 
 private:
-    std::string myFilePath;
+    std::string m_filePath;
     FILE* myFile;
     struct index_table_entry* myEntries;
     struct table {

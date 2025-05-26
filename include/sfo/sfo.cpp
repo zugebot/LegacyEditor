@@ -8,13 +8,13 @@
 
 
 SFOManager::SFOManager(std::string theFilePath)
-    : myFilePath(std::move(theFilePath)), myFile(nullptr), myEntries(nullptr) {
+    : m_filePath(std::move(theFilePath)), myFile(nullptr), myEntries(nullptr) {
     loadFile();
 }
 
 
 SFOManager::SFOManager()
-    : myFilePath(), myFile(nullptr), myEntries(nullptr) {}
+    : m_filePath(), myFile(nullptr), myEntries(nullptr) {}
 
 
 struct pkg_table_entry {
@@ -42,7 +42,7 @@ std::vector<SFOManager::Attribute> SFOManager::getAttributes() const {
                 const char* ptr = &myDataTable.content[entry.data_offset];
                 const uint32_t include_null = entry.param_fmt == eSFO_FMT::UTF8_NORMAL;
                 attr.myValue = std::string(ptr, entry.param_len - include_null);
-                attr.myValue = "\"" + attr.myValue + "\"";
+                // attr.myValue = "\"" + attr.myValue + "\"";
                 break;
             }
             case eSFO_FMT::INT: {
@@ -313,9 +313,9 @@ static uint32_t bswap_32(uint32_t val) {
 
 
 void SFOManager::loadFile() {
-    myFile = fopen(myFilePath.c_str(), "rb");
+    myFile = fopen(m_filePath.c_str(), "rb");
     if (!myFile) {
-        throw std::runtime_error("Could not open file \"" + myFilePath + "\".");
+        throw std::runtime_error("Could not open file \"" + m_filePath + "\".");
     }
 
     uint32_t magic;

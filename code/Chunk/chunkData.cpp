@@ -147,16 +147,29 @@ namespace editor::chunk {
 
         // remove 1.14 blocks here...
         for (int i = 0; i < 65536; i++) {
-            c_u16 id = newBlocks[i] >> 4 & 1023;
-            if (id > 318) {
-                newBlocks[i] = lce::blocks::COBBLESTONE_ID;
+            // if (newBlocks[i] != 0) {
+            //     newBlocks[i] = lce::blocks::COBBLESTONE_ID << 4;
+            // }
+            // continue;
+
+            c_u16 id1 = newBlocks[i] >> 4 & 1023;
+            if ((id1 > 259 && id1 < 263) || id1 > 318) {
+                newBlocks[i] = lce::blocks::COBBLESTONE_ID << 4;
             }
+            continue;
+            c_u16 id2 = submerged[i] >> 4 & 1023;
+            if (id2 > 250) {
+                submerged[i] = lce::blocks::COBBLESTONE_ID << 4;
+            }
+
         }
 
         lastVersion = 12;
 
         // This for now, until nbt can be cleaned up
-        defaultNBT();
+        // this->tileEntities = makeList(eNBT::COMPOUND, {});
+
+        // defaultNBT();
     }
 
 

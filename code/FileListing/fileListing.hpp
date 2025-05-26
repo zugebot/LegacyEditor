@@ -1,135 +1,129 @@
 #pragma once
 
-#include <filesystem>
-#include <functional>
-#include <list>
-#include <map>
-#include <set>
-
-#include "include/ghc/fs_std.hpp"
+#include <ranges>
 
 #include "include/lce/processor.hpp"
-#include "include/lce/include/picture.hpp"
+#include "include/ghc/fs_std.hpp"
 
 #include "stateSettings.hpp"
 #include "writeSettings.hpp"
 
-#include "code/ConsoleParser/ConsoleParser.hpp"
-#include "code/FileInfo/FileInfo.hpp"
 #include "code/LCEFile/LCEFile.hpp"
-#include "code/Region/RegionManager.hpp"
 #include "common/error_status.hpp"
 
-
-class ConsoleParser;
 
 namespace editor {
 
 
-    class FileList : public std::vector<LCEFile*> {
-    public:
-        void removeAll() {
-            for (LCEFile* file : *this) {
-                delete[] file->data.data;
-                file->data.data = nullptr;
-            }
-            clear();
-        }
-    };
-
-
     class FileListing {
-        std::unordered_map<lce::CONSOLE, std::array<std::unique_ptr<ConsoleParser>, 2>> consoleInstances;
+        std::list<LCEFile> m_allFiles;
+        i32 m_oldestVersion{};
+        i32 m_currentVersion{};
+        i32 m_isNewGen = false;
 
     public:
-        StateSettings myReadSettings;
-        // this can probably be renamed to "myInternalFiles"
-        std::list<LCEFile> myAllFiles;
 
-        // these can probably be stored in a std::list called external files
-        FileInfo fileInfo{};
-        Picture icon0png;
+
 
         /// Constructors
 
-        FileListing();
+        FileListing() = default;
         ~FileListing();
-
-        /// Details
-
-        void printDetails() const;
-        void printFileList() const;
-
-        /// Functions
-
-        MU ND int dumpToFolder(const fs::path& inDirPath) const;
 
         /// Modify State
 
+        MU void setOldestVersion(i32 theVersion) { m_oldestVersion = theVersion; }
+        MU ND i32 oldestVersion() const { return m_oldestVersion; }
+
+        MU void setCurrentVersion(i32 theVersion) { m_currentVersion = theVersion; }
+        MU ND i32 currentVersion() const { return m_currentVersion; }
+
+        void setNewGen(bool isNewGen) { m_isNewGen = isNewGen; }
+        bool isNewGen() const { return m_isNewGen; }
+
+        // file stuff
+
         void deallocate();
-        void removeFileTypes(const std::set<lce::FILETYPE>& typesToRemove);
-        MU void addFiles(std::list<LCEFile> filesIn);
-        std::list<LCEFile> collectFiles(lce::FILETYPE fileType);
 
-        /// Parse from console files
 
-        MU ND int read(const fs::path& theFilePath);
-        MU ND int preprocess(WriteSettings& theWriteSettings);
-        MU ND int write(WriteSettings& theWriteSettings);
+        // processing
 
-        /// Conversion
-
-        MU ND int convertTo(const fs::path& inFilePath, const fs::path& outFilePath, lce::CONSOLE consoleOut);
-        MU ND int convertAndReplaceRegions(const fs::path& inFilePath, const fs::path& inFileRegionReplacementPath,
-                                           const fs::path& outFilePath, lce::CONSOLE consoleOut);
+        ND int readListing(const Buffer & bufferIn, lce::CONSOLE consoleIn);
+        ND Buffer writeListing(StateSettings& stateSettings, WriteSettings& writeSettings);
+        MU ND int preprocess(StateSettings& stateSettings, WriteSettings& theWriteSettings);
 
         /// Region Helpers
 
         MU void convertRegions(lce::CONSOLE consoleOut);
         MU void pruneRegions();
-        MU void replaceRegionOW(size_t regionIndex, editor::RegionManager& region, lce::CONSOLE consoleOut);
 
-        /// File pointer stuff
+        // accessors
 
-        void clearPointers();
-        void updatePointers();
+        ND size_t size() const { return m_allFiles.size(); }
 
-    private:
 
-        /// Parser
+        template<class... Args>
+        LCEFile& emplaceFile(Args&&... args) {
+            m_allFiles.emplace_back(std::forward<Args>(args)...);
+            return m_allFiles.back();
+        }
 
-        MU ND int findConsole(const fs::path& inFilePath);
-        MU ND int readSave();
-        int writeSave(WriteSettings& theSettings);
 
-    public:
+        auto begin()             { return m_allFiles.begin(); }
+        auto end()               { return m_allFiles.end();   }
+        MU ND auto begin()   const     { return m_allFiles.begin(); }
+        MU ND auto end()     const     { return m_allFiles.end();   }
 
-        /// Pointers
-        struct {
-            FileList* dimFileLists[3] = {&region_nether, &region_overworld, &region_end};
-            FileList region_nether;
-            FileList region_overworld;
-            FileList region_end;
-            FileList maps;
-            FileList structures;
-            FileList players;
-            LCEFile *entity_nether{};
-            LCEFile *entity_overworld{};
-            LCEFile *entity_end{};
-            LCEFile *largeMapDataMappings{};
-            LCEFile *level{};
-            LCEFile *grf{};
-            LCEFile *village{};
+        template<class SetT>
+        auto view_of(const SetT& keepTypes) {
+            using std::views::filter;
+            return m_allFiles | filter([&keepTypes](const LCEFile& f) {
+                         return keepTypes.contains(f.m_fileType);
+                     });
+        }
+        template<class SetT>
+        ND auto view_of(const SetT& keepTypes) const {
+            using std::views::filter;
+            return m_allFiles | filter([&keepTypes](const LCEFile& f) {
+                         return keepTypes.contains(f.m_fileType);
+                     });
+        }
 
-            std::map<lce::FILETYPE, std::function<void()>> clearDelete;
-            std::map<lce::FILETYPE, std::function<void()>> clearRemove;
-            std::map<lce::FILETYPE, std::function<void(LCEFile&)>> addUpdate;
-        } ptrs;
+        auto view_of(std::initializer_list<lce::FILETYPE> iList) {
+            static const std::set<lce::FILETYPE> tmp;
+            std::set<lce::FILETYPE> keys(iList);
+            return view_of(keys);
+        }
+        ND auto view_of(std::initializer_list<lce::FILETYPE> iList) const {
+            std::set<lce::FILETYPE> keys(iList);
+            return view_of(keys);
+        }
 
-        void initializeActions();
+        std::optional<std::reference_wrapper<LCEFile>>
+        findFile(lce::FILETYPE want) {
+            for (auto &f : m_allFiles)
+                if (f.m_fileType == want)
+                    return std::ref(f);
+            return std::nullopt;
+        }
 
+        std::optional<std::reference_wrapper<const LCEFile>>
+        findFile(lce::FILETYPE want) const {
+            for (auto &f : m_allFiles)
+                if (f.m_fileType == want)
+                    return std::cref(f);
+            return std::nullopt;
+        }
+
+        ND std::size_t countFiles(lce::FILETYPE t) const {
+            return std::ranges::count_if(
+                    m_allFiles,
+                    [t](auto const& f) { return f.m_fileType == t; });
+        }
+        void removeFileTypes(const std::set<lce::FILETYPE>& typesToRemove);
+        MU void addFiles(std::list<LCEFile>&& filesIn);
+        MU std::list<LCEFile> collectFiles(lce::FILETYPE fileType);
+        MU std::list<LCEFile> collectFiles(const std::set<lce::FILETYPE>& typesToCollect);
     };
-
-
 }
 

@@ -1,24 +1,19 @@
 #pragma once
 
 #include "code/Chunk/chunkData.hpp"
-
-class DataManager;
+#include "vBase.hpp"
 
 
 namespace editor::chunk {
 
     /// "NBT" chunks.
-    class ChunkVNBT {
-        ChunkData* chunkData = nullptr;
-        DataManager* dataManager = nullptr;
-
+    class ChunkVNBT : VChunkBase {
     public:
-        ChunkVNBT(ChunkData* chunkDataIn, DataManager* managerIn) :
-           chunkData(chunkDataIn), dataManager(managerIn) {}
+        explicit ChunkVNBT(ChunkData* chunkDataIn) : VChunkBase(chunkDataIn) {}
 
-        MU void allocChunk() const;
-        MU void readChunk();
-        MU void writeChunk();
+        MU void allocChunk() const override;
+        MU void readChunk(DataReader& reader) override;
+        MU void writeChunk(DataWriter& writer) override;
     };
 
 }

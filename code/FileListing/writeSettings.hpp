@@ -1,13 +1,11 @@
 #pragma once
 
-#include <utility>
-
 #include "include/ghc/fs_std.hpp"
 
 #include "include/lce/enums.hpp"
 #include "include/lce/processor.hpp"
 
-#include "productcodes.hpp"
+#include "code/ConsoleParser/productcodes.hpp"
 
 
 namespace editor {
@@ -22,61 +20,71 @@ namespace editor {
      * etc.
      */
     class MU WriteSettings {
-        lce::CONSOLE myConsole;
-        fs::path myInFolderPath;
-        fs::path myOutFilePath;
+        lce::CONSOLE m_console;
+        fs::path m_inFolderPath;
+        fs::path m_outFilePath;
 
 
     public:
-        ProductCodes myProductCodes;
-        /// im lazy, write getter + setter
+        ProductCodes m_productCodes;
+
         bool shouldRemovePlayers = true;
-        /// im lazy, write getter + setter
+
         bool shouldRemoveDataMapping = true;
-        /// im lazy, write getter + setter
+
         bool shouldRemoveMaps = true;
-        /// im lazy, write getter + setter
+
         bool shouldRemoveStructures = true;
-        /// im lazy, write getter + setter
+
+        bool shouldRemoveRegionsOverworld = false;
+
+        bool shouldRemoveRegionsNether = false;
+
+        bool shouldRemoveRegionsEnd = false;
+
         bool shouldRemoveEntities = true;
 
 
-        WriteSettings() : myConsole(lce::CONSOLE::NONE) {}
+        WriteSettings() : m_console(lce::CONSOLE::NONE) {}
 
         MU explicit WriteSettings(lce::CONSOLE theConsole)
-            : myConsole(theConsole) {}
+            : m_console(theConsole) {}
 
         MU WriteSettings(const lce::CONSOLE theConsole, fs::path theFilePath)
-            : myConsole(theConsole), myInFolderPath(std::move(theFilePath)) {}
+            : m_console(theConsole), m_inFolderPath(std::move(theFilePath)) {}
         
         
         MU WriteSettings(const lce::CONSOLE theConsole, const ePS3ProductCode thePCode, fs::path theFilePath)
-            : myConsole(theConsole), myInFolderPath(std::move(theFilePath)) {
-            myProductCodes.setPS3(thePCode);
+            : m_console(theConsole), m_inFolderPath(std::move(theFilePath)) {
+            m_productCodes.setPS3(thePCode);
         }
         
         MU WriteSettings(const lce::CONSOLE theConsole, const eVITAProductCode thePCode, fs::path theFilePath)
-            : myConsole(theConsole), myInFolderPath(std::move(theFilePath)) {
-            myProductCodes.setVITA(thePCode);
+            : m_console(theConsole), m_inFolderPath(std::move(theFilePath)) {
+            m_productCodes.setVITA(thePCode);
         }
         
         MU WriteSettings(const lce::CONSOLE theConsole, const ePS4ProductCode thePCode, fs::path theFilePath)
-            : myConsole(theConsole), myInFolderPath(std::move(theFilePath)) {
-            myProductCodes.setPS4(thePCode);
+            : m_console(theConsole), m_inFolderPath(std::move(theFilePath)) {
+            m_productCodes.setPS4(thePCode);
         }
         
-        MU ND lce::CONSOLE getConsole() const { return myConsole; }
+        MU ND lce::CONSOLE getConsole() const { return m_console; }
 
-        MU ND fs::path getInFolderPath() const { return myInFolderPath; }
+        MU ND fs::path getInFolderPath() const { return m_inFolderPath; }
 
-        MU ND fs::path getOutFilePath() const { return myOutFilePath; }
+        MU ND fs::path getOutFilePath() const { return m_outFilePath; }
 
-        MU void setOutFilePath(const fs::path& theOutFilePath) { myOutFilePath = theOutFilePath; }
+        MU void setConsole(const lce::CONSOLE console) { m_console = console; }
+
+        MU void setInFolderPath(const fs::path& theFolderPath) { m_inFolderPath = theFolderPath; }
+
+        MU void setOutFilePath(const fs::path& theOutFilePath) { m_outFilePath = theOutFilePath; }
 
         MU ND bool areSettingsValid() const {
-            if (myConsole == lce::CONSOLE::PS3 && !myProductCodes.isVarSetPS3()) return false;
-            if (myConsole == lce::CONSOLE::PS4 && !myProductCodes.isVarSetPS4()) return false;
-            if (myConsole == lce::CONSOLE::VITA && !myProductCodes.isVarSetVITA()) return false;
+            if (m_console == lce::CONSOLE::PS3 && !m_productCodes.isVarSetPS3()) return false;
+            if (m_console == lce::CONSOLE::PS4 && !m_productCodes.isVarSetPS4()) return false;
+            if (m_console == lce::CONSOLE::VITA && !m_productCodes.isVarSetVITA()) return false;
             return true;
         }
     };

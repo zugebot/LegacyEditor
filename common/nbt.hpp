@@ -1,18 +1,8 @@
 #pragma once
 
-#include "common/dataManager.hpp"
-#include <cassert>
-#include <cstdint>
-#include <cstring>
-#include <fstream>
-#include <functional>
-#include <iostream>
-#include <optional>
-#include <string>
-#include <unordered_map>
-#include <utility>
-#include <variant>
-#include <vector>
+#include "common/DataReader.hpp"
+#include "common/DataWriter.hpp"
+
 
 // ----------------------------------------
 // NBT Type Enum
@@ -66,7 +56,7 @@ class NBTList {
     std::vector<NBTBase> m_elements;
 public:
 
-    NBTList() = delete;
+    NBTList();
     explicit NBTList(eNBT expectedType);
     NBTList(eNBT expectedType, std::initializer_list<NBTBase> list);
     
@@ -127,7 +117,7 @@ public:
     [[nodiscard]] size_type size() const noexcept { return _size;  }
 
     template <typename T>
-    std::optional<T> tryGet(const std::string& key) const;
+    std::optional<T> value(const std::string& key) const;
     NBTBase*       find(const std::string& k);
     ND const NBTBase* find(const std::string& k) const;
     ND std::optional<NBTBase> extract(const std::string& k);
@@ -198,36 +188,36 @@ using NBTValue = std::variant<
 // ----------------------------------------
 
 class NBTBase {
-    eNBT type = eNBT::NONE;
-    NBTValue value;
+    eNBT m_type = eNBT::NONE;
+    NBTValue m_value;
 
 public:
     NBTBase() = default;
-    NBTBase(eNBT type, NBTValue val) : type(type), value(std::move(val)) {}
-
-    void write(DataManager& output) const;
-    void read(DataManager& input);
-
+    NBTBase(eNBT type, NBTValue val) : m_type(type), m_value(std::move(val)) {}
 
     ND NBTBase copy() const;
     ND bool equals(const NBTBase& other) const;
 
-    static NBTBase readFromFile(const std::string& path);
-    void writeToFile(const std::string& path) const;
 
-    ND eNBT getType() const { return type; }
+    void read(DataReader& reader);
+    void readFile(const std::string& path);
 
-    template<typename T>
-    ND bool is() const { return std::holds_alternative<T>(value); }
+    void write(DataWriter& writer) const;
+    void writeFile(const std::string& path) const;
 
-    template<typename T>
-    T& get() { return std::get<T>(value); }
+    ND eNBT getType() const { return m_type; }
 
     template<typename T>
-    const T& get() const { return std::get<T>(value); }
+    ND bool is() const { return std::holds_alternative<T>(m_value); }
+
+    template<typename T>
+    T& get() { return std::get<T>(m_value); }
+
+    template<typename T>
+    const T& get() const { return std::get<T>(m_value); }
 
     template <typename T>
-    std::optional<T> tryGet(const std::string& key) const;
+    std::optional<T> value(const std::string& key) const;
 
     void print() const { printHelper(0, ""); }
 
@@ -246,6 +236,9 @@ public:
     MU void merge(const NBTBase& other);
 
 private:
+    void readInternal(DataReader& reader);
+    void writeInternal(DataWriter& writer) const;
+
     void printHelper(int depth = 0, const std::string& theKey = "") const;
 };
 
@@ -267,6 +260,12 @@ inline NBTBase makeList(NBTList v)                    { return {eNBT::LIST, std:
 inline NBTBase makeCompound(NBTCompound v)            { return {eNBT::COMPOUND, std::move(v) }; }
 
 
+inline NBTBase makeList(eNBT expectedType) {
+    NBTList result(expectedType, {});
+    return {eNBT::LIST, std::move(result) };
+}
+
+
 inline NBTBase makeList(eNBT expectedType, std::initializer_list<NBTBase> list) {
     NBTList result(expectedType, list);
     return {eNBT::LIST, std::move(result) };
@@ -276,5 +275,10 @@ MU inline NBTBase makeCompound(std::initializer_list<std::pair<std::string, NBTB
     NBTCompound compound;
     for (auto&& [key, val] : list)
         compound[key] = val;
+    return {eNBT::COMPOUND, std::move(compound) };
+}
+
+MU inline NBTBase makeCompound() {
+    NBTCompound compound;
     return {eNBT::COMPOUND, std::move(compound) };
 }

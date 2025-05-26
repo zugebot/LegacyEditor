@@ -1,8 +1,6 @@
 #pragma once
 
-#include <iostream>
-#include <map>
-#include <string>
+#include "lce/processor.hpp"
 
 #include "include/ghc/fs_std.hpp"
 

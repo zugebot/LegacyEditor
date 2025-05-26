@@ -1,11 +1,10 @@
 #pragma once
 
-#include <cstring>
+#include "include/lce/processor.hpp"
 #if defined(__AVX2__)
 #include <immintrin.h>
 #endif
 
-#include "include/lce/processor.hpp"
 
 
 
@@ -41,7 +40,7 @@ namespace editor::chunk {
 #define HAS_AVX2 1
     static inline bool _chunk_has_byte_NEQ(const __m256i& v,
                                           __m256i pattern) noexcept {
-        // v == pattern  → 0xFF bytes                (cmp-true = 0xFF)
+        // v == pattern  → 0xFF bytes (cmp-true = 0xFF)
         // v != pattern  → 0x00 somewhere → mask ≠ −1
         __m256i cmp = _mm256_cmpeq_epi8(v, pattern);
         return !_mm256_testc_si256(cmp, _mm256_set1_epi8(-1));

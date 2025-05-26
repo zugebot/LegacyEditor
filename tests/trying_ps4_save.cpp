@@ -4,10 +4,10 @@
 
 #include "include/lce/processor.hpp"
 
-#include "code/FileInfo/FileInfo.hpp"
+#include "/LegacyEditor/unit_tests.hpp"
+#include "code/DisplayMetadata/DisplayMetadata.hpp"
 #include "code/include.hpp"
 #include "utils/timer.hpp"
-#include "/LegacyEditor/unit_tests.hpp"
 
 
 int main() {
@@ -20,7 +20,7 @@ int main() {
     /*
     const std::string fileIn  = R"(C:\Users\jerrin\CLionProjects\LegacyEditor\tests\CODY_UUAS_2017010800565100288444\GAMEDATA)";
     const std::string fileOut = dir_path + R"(230918230206_out.ext)";
-    editor::FileInfo save_info;
+    editor::DisplayMetadata save_info;
     save_info.readFile(fileIn);
     const DataManager manager(save_info.thumbnail);
     int status = manager.writeToFile(dir_path + "thumbnail.png");

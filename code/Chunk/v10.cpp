@@ -19,20 +19,19 @@ namespace editor::chunk {
     // TODO: The pointer a vector points to... I will look that up later.
 
     // TODO: add cases for when tags are not found
-    void ChunkVNBT::readChunk() {
+    void ChunkVNBT::readChunk(DataReader& reader) {
         allocChunk();
 
-        dataManager->read<u8>();
-        chunkData->oldNBTData.read(*dataManager);
-        // auto& level = chunkData->oldNBTData.get<NBTCompound>();
-        auto compound = chunkData->oldNBTData.tryGet<NBTCompound>("Level").value_or(NBTCompound{});
-        // compound = level.copy();
+        chunkData->oldNBTData.read(reader);
+        auto compound = chunkData->oldNBTData
+                                .value<NBTCompound>("").value_or(NBTCompound{})
+                                .value<NBTCompound>("Level").value_or(NBTCompound{});
 
-        chunkData->chunkX = compound.tryGet<i32>("xPos").value_or(0);
-        chunkData->chunkZ = compound.tryGet<i32>("zPos").value_or(0);
-        chunkData->lastUpdate = compound.tryGet<i64>("LastUpdate").value_or(0);
-        chunkData->terrainPopulated = compound.tryGet<u8>("TerrainPopulated").value_or(
-                compound.tryGet<u8>("TerrainPopulatedFlags").value_or(
+        chunkData->chunkX = compound.value<i32>("xPos").value_or(0);
+        chunkData->chunkZ = compound.value<i32>("zPos").value_or(0);
+        chunkData->lastUpdate = compound.value<i64>("LastUpdate").value_or(0);
+        chunkData->terrainPopulated = compound.value<u8>("TerrainPopulated").value_or(
+                compound.value<u8>("TerrainPopulatedFlags").value_or(
                         0
                         )
         );
@@ -68,9 +67,9 @@ namespace editor::chunk {
                    blockLight->get<NBTByteArray>().size());
         }
 
-        chunkData->entities = compound.extract("Entities").value_or(makeList(eNBT::COMPOUND, {}));
-        chunkData->tileEntities = compound.extract("TileEntities").value_or(makeList(eNBT::COMPOUND, {}));
-        chunkData->tileTicks = compound.extract("TileTicks").value_or(makeList(eNBT::COMPOUND, {}));
+        chunkData->entities = compound.extract("Entities").value_or(makeList(eNBT::COMPOUND));
+        chunkData->tileEntities = compound.extract("TileEntities").value_or(makeList(eNBT::COMPOUND));
+        chunkData->tileTicks = compound.extract("TileTicks").value_or(makeList(eNBT::COMPOUND));
 
         // chunkData->oldNBTData = NBTBase();
 
@@ -79,7 +78,7 @@ namespace editor::chunk {
     }
 
 
-    void ChunkVNBT::writeChunk() {
+    void ChunkVNBT::writeChunk(DataWriter& writer) {
 
     }
 

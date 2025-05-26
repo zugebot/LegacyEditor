@@ -3,9 +3,8 @@
 #include "code/Chunk/chunkData.hpp"
 #include "common/error_status.hpp"
 #include "common/fixedVector.hpp"
+#include "vBase.hpp"
 
-
-class DataManager;
 
 namespace editor::chunk {
 
@@ -50,7 +49,7 @@ namespace editor::chunk {
 
 
     /// "Aquatic" chunks.
-    class ChunkV12 {
+    class ChunkV12 : VChunkBase {
         static constexpr int SECTION_COUNT = 16;
         static constexpr int GRID_COUNT = 64;
         static constexpr int GRID_SIZE = 128;
@@ -58,7 +57,7 @@ namespace editor::chunk {
 
         // Read Section
 
-        void readBlockData() const;
+        void readBlockData(DataReader& reader) const;
         template<size_t BitsPerBlock>
         bool readGrid(c_u8* buffer, u8 grid[GRID_SIZE]) const;
         template<size_t BitsPerBlock>
@@ -68,24 +67,23 @@ namespace editor::chunk {
 
         using u16FixVec_t = FixedVector<u16, GRID_COUNT>;
 
-        void writeBlockData() const;
+        void writeBlockData(DataWriter& writer) const;
 
         template<size_t BitsPerBlock, size_t BlockCount, size_t EmptyCount>
-        void writeGrid(u16FixVec_t& blockVector, u16FixVec_t& blockLocations, u8 blockMap[MAP_SIZE]) const;
-        void writeWithMaxBlocks(const u16FixVec_t& blockVector, const u16FixVec_t& blockLocations, u8 blockMap[MAP_SIZE]) const;
+        void writeGrid(DataWriter& writer, u16FixVec_t& blockVector, u16FixVec_t& blockLocations, u8 blockMap[MAP_SIZE]) const;
+        static void writeWithMaxBlocks(DataWriter& writer, const u16FixVec_t& blockVector, const u16FixVec_t& blockLocations, u8 blockMap[MAP_SIZE]) ;
 
         template<size_t BitsPerBlock, size_t BlockCount, size_t EmptyCount>
-        void writeGridSubmerged(u16FixVec_t& blockVector, u16FixVec_t& blockLocations,
+        void writeGridSubmerged(DataWriter& writer, u16FixVec_t& blockVector, u16FixVec_t& blockLocations,
                                 const u16FixVec_t& sbmrgLocations, u8 blockMap[MAP_SIZE]) const;
 
     public:
-        ChunkData* chunkData = nullptr;
-        DataManager* dataManager = nullptr;
+        explicit ChunkV12(ChunkData* chunkDataIn) : VChunkBase(chunkDataIn) {}
 
-        ChunkV12(ChunkData* chunkDataIn, DataManager* managerIn) : chunkData(chunkDataIn), dataManager(managerIn) {}
-        MU void allocChunk() const;
-        MU void readChunk() const;
-        MU void writeChunk() const;
+
+        MU void allocChunk() const override;
+        MU void readChunk(DataReader& reader) override;
+        MU void writeChunk(DataWriter& writer) override;
 
     };
 }

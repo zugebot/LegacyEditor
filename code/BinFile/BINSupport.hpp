@@ -3,7 +3,8 @@
 #include <chrono>
 #include <optional>
 
-#include "common/dataManager.hpp"
+#include "common/buffer.hpp"
+#include "common/dataReader.hpp"
 
 
 namespace editor {
@@ -41,7 +42,7 @@ namespace editor {
         u32 allocBlockCount;
         u32 unallocatedBlockCount;
 
-        void readStfsVD(DataManager& input);
+        void readStfsVD(DataReader& input);
     };
 
 
@@ -68,27 +69,27 @@ namespace editor {
         u32 headerSize{};
         StfsVD stfsVD{};
         std::wstring displayName;
-        DataManager thumbnailImage = DataManager(nullptr, 0, Endian::Big); // TODO: lol
+        Buffer thumbnailImage; // TODO: lol
 
-        int readHeader(DataManager& binFile);
+        int readHeader(DataReader& binFile);
     };
 
 
     /// extractFile a file (by FileEntry) to a designated file path
     class StfsPackage {
     public:
-        explicit StfsPackage(DataManager& input) : data(input) {}
+        explicit StfsPackage(DataReader& input) : data(input) {}
 
         ND StfsFileListing getFileListing() { return fileListing; }
 
         /// Instead of taking a 'DataOutputManager', it now instead returns 'Data'.
-        Data extractFile(StfsFileEntry* entry);
+        Buffer extractFile(StfsFileEntry* entry);
 
         ND u32 blockToAddress(u32 blockNum) const;
 
         ND u32 getHashAddressOfBlock(u32 blockNum);
 
-        ND BINHeader getMetaData() { return metaData; }
+        ND BINHeader* getMetaData() { return &metaData; }
 
         /// parse the file
         void parse();
@@ -96,7 +97,7 @@ namespace editor {
     private:
         BINHeader metaData;
         StfsFileListing fileListing;
-        DataManager& data;
+        DataReader& data;
         /// 0 female, 1 male
         u8 packageSex{};
         u32 blockStep[2]{};
@@ -125,7 +126,7 @@ namespace editor {
 
     // std::optional<std::chrono::system_clock::time_point> TimePointFromFatTimestamp(u32 fat);
 
-    // FileInfo extractSaveGameDat(u8* inputData, i64 inputSize);
+    // DisplayMetadata extractSaveGameDat(u8* inputData, i64 inputSize);
 
 
     inline std::time_t to_utc_time(std::tm& tm) {

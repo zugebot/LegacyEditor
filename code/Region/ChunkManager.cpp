@@ -1,15 +1,13 @@
 #include "ChunkManager.hpp"
 
-#include <cstring>
-#include <format>
+#include "include/lce/processor.hpp"
 
 #include "include/tinf/tinf.h"
 #include "include/zlib-1.2.12/zlib.h"
 
-#include "include/lce/processor.hpp"
 
 #include "common/RLE/rle.hpp"
-#include "common/XBOX_LZX/XDecompress.hpp"
+#include "common/codec/XDecompress.hpp"
 
 #include "code/Chunk/chunkData.hpp"
 #include "code/Chunk/v10.hpp"
@@ -26,94 +24,110 @@ namespace editor {
 
     ChunkManager::ChunkManager() {
         chunkData = new chunk::ChunkData();
+        this->buffer.clear();
     }
 
 
     ChunkManager::~ChunkManager() {
         delete chunkData;
+        chunkData = nullptr;
     }
 
 
-    int ChunkManager::checkVersion() const {
-        if (this->data == nullptr) {
+    MU int ChunkManager::checkVersion() const {
+        if (this->buffer.empty()) {
             return -1;
         }
-        DataManager checker(data, size);
-        int version = checker.readAtOffset<u16>(0);
+        DataReader checker(buffer.data(), buffer.size());
+        int version = checker.peek_at<u16>(0);
         return version;
 
     }
 
 
     MU void ChunkManager::readChunk(MU const lce::CONSOLE inConsole) {
+        // if the file is compressed, decompress it first
+        if (chunkHeader.isZipCompressed()) {
+            int status = ensureDecompress(inConsole);
+            if (status != SUCCESS) {
+                return;
+            }
+        }
         // cannot read chunk if there is no data
-        if (size == 0) {
+        if (buffer.empty()) {
             return;
         }
-        // if the file is compressed, decompress it first
-        if (fileData.getCompressedFlag()) {
-            ensureDecompress(inConsole);
-        }
         // read the chunk
-        DataManager managerIn(data, size);
+        DataReader reader(buffer.span());
 
-        chunkData->lastVersion = managerIn.read<u16>();
+        chunkData->lastVersion = reader.read<u16>();
         if (chunkData->lastVersion == 0x0A00) { // start of NBT
             chunkData->lastVersion = chunk::eChunkVersion::V_UNVERSIONED;
+            reader.rewind();
         }
 
         switch(chunkData->lastVersion) {
             case chunk::eChunkVersion::V_UNVERSIONED:
             case chunk::eChunkVersion::V_NBT:
-                chunk::ChunkVNBT(chunkData, &managerIn).readChunk();
+                chunk::ChunkVNBT(chunkData).readChunk(reader);
                 break;
             case chunk::eChunkVersion::V_8: 
             case chunk::eChunkVersion::V_9: 
             case chunk::eChunkVersion::V_11:
-                chunk::ChunkV11(chunkData, &managerIn).readChunk();
+                chunk::ChunkV11(chunkData).readChunk(reader);
                 break;
             case chunk::eChunkVersion::V_12:
-                chunk::ChunkV12(chunkData, &managerIn).readChunk();
+                chunk::ChunkV12(chunkData).readChunk(reader);
                 break;
             case chunk::eChunkVersion::V_13:
-                chunk::ChunkV13(chunkData, &managerIn).readChunk();
+                chunk::ChunkV13(chunkData).readChunk(reader);
                 break;
             default:;
         }
 
 
-        u32 length = managerIn.ptr() - data;
-        managerIn.update(managerIn.start(), length);
 
+        /*
         if (chunkData->chunkX == 0 && chunkData->chunkZ == -10) {
-            managerIn.writeToFile(R"(C:\Users\jerrin\CLionProjects\LegacyEditor\chunks\0_-10.read)");
+            try {
+                DataWriter::writeFile(R"(C:\Users\jerrin\CLionProjects\LegacyEditor\chunks\0_-10.read)",
+                                      reader.span());
+            } catch (const std::exception& e) {
+
+            }
         }
+         */
     }
 
 
     MU void ChunkManager::writeChunk(MU lce::CONSOLE outConsole) {
-        Data outBuffer;
-        outBuffer.allocate(CHUNK_BUFFER_SIZE);
-#ifndef DONT_MEMSET0
-        memset(outBuffer.data, 0, CHUNK_BUFFER_SIZE);
-#endif
-        DataManager managerOut(outBuffer);
+        if (chunkHeader.isZipCompressed()) {
+            return;
+        }
+
+
+//         Buffer outBuffer;
+//         outBuffer.allocate(CHUNK_BUFFER_SIZE);
+// #ifndef DONT_MEMSET0
+//         memset(outBuffer.data, 0, CHUNK_BUFFER_SIZE);
+// #endif
+        DataWriter writer;
 
 
         switch (chunkData->lastVersion) {
             case chunk::eChunkVersion::V_UNVERSIONED:
             case chunk::eChunkVersion::V_NBT:
-                chunk::ChunkVNBT(chunkData, &managerOut).writeChunk();
+                chunk::ChunkVNBT(chunkData).writeChunk(writer);
                 break;
             case chunk::eChunkVersion::V_8:
             case chunk::eChunkVersion::V_9:
             case chunk::eChunkVersion::V_11:
-                managerOut.write<u16>(chunkData->lastVersion);
-                chunk::ChunkV11(chunkData, &managerOut).writeChunk();
+                writer.write<u16>(chunkData->lastVersion);
+                chunk::ChunkV11(chunkData).writeChunk(writer);
                 break;
             case chunk::eChunkVersion::V_12:
-                managerOut.write<u16>(chunkData->lastVersion);
-                chunk::ChunkV12(chunkData, &managerOut).writeChunk();
+                writer.write<u16>(chunkData->lastVersion);
+                chunk::ChunkV12(chunkData).writeChunk(writer);
                 break;
             case chunk::eChunkVersion::V_13:
                 printf("ChunkManager::writeChunk v13 forbidden\n");
@@ -125,44 +139,52 @@ namespace editor {
         //     managerOut.writeToFile(R"(C:\Users\jerrin\CLionProjects\LegacyEditor\chunks\0_-10.write)");
         // }
 
-        Data outData;
-        outData.allocate(managerOut.tell());
-        std::memcpy(outData.data, outBuffer.data, outData.size);
-        outBuffer.deallocate();
+        buffer = std::move(writer.take());
 
-        deallocate();
-        data = outData.data;
-        size = outData.size;
+        // buffer.clear();
+        // buffer.allocate(writer.tell());
+        // std::memcpy(buffer.data(), writer.data(), writer.size());
+        chunkHeader.setDecSize(buffer.size());
 
-        fileData.setDecSize(size);
+        if (!chunkHeader.isZipCompressed()) {
+            int status = ensureCompressed(outConsole);
+            if (status != SUCCESS) {
+                return;
+            }
+        }
     }
 
 
     // TODO: rewrite to return status
-    int ChunkManager::ensureDecompress(lce::CONSOLE consoleIn, bool skipRLE) {
-        if (fileData.getCompressedFlag() == 0U
-            || data == nullptr
-            || size == 0) {
+    int ChunkManager::ensureDecompress(lce::CONSOLE console) {
+        if (chunkHeader.isZipCompressed() == 0U
+            || buffer.empty()) {
             return SUCCESS;
         }
 
-        u32 dec_size = fileData.getDecSize();
-        Data decompData;
-        decompData.allocate(fileData.getDecSize());
+        Buffer decompressedZip;
+        if (chunkHeader.isRLECompressed()) {
+            decompressedZip.allocate(chunkHeader.getRLESize());
+        } else {
+            decompressedZip.allocate(chunkHeader.getDecSize());
+        }
 
 
         int result = SUCCESS;
-        switch (consoleIn) {
+        switch (console) {
             case lce::CONSOLE::XBOX360: {
-                u8 *ptr = data;
-                result = XDecompress(
-                        decompData.start(), &decompData.size, ptr, size);
+                codec::XmemErr err = codec::XDecompress(buffer.data(), buffer.size(),
+                                                        decompressedZip.data(), decompressedZip.size_ptr());
+                if (err != codec::XmemErr::Ok) {
+                    result = -1;
+                }
                 break;
             }
             case lce::CONSOLE::RPCS3:
             case lce::CONSOLE::PS3: {
                 result = tinf_uncompress(
-                        decompData.start(), &decompData.size, data, size);
+                        decompressedZip.data(), decompressedZip.size_ptr(),
+                        buffer.data(), buffer.size());
                 break;
             }
             case lce::CONSOLE::SWITCH:
@@ -170,27 +192,28 @@ namespace editor {
             case lce::CONSOLE::VITA:
             case lce::CONSOLE::PS4:
                 result = tinf_zlib_uncompress(
-                        decompData.start(), &decompData.size, data, size);
+                        decompressedZip.data(), decompressedZip.size_ptr(),
+                        buffer.data(), buffer.size());
                 break;
             default:
                 break;
         }
+        if (result != SUCCESS) {
+            return STATUS::DECOMPRESS;
+        }
+        chunkHeader.setZipCompressed(0U);
 
-        fileData.setCompressedFlag(0U);
 
-
-        if (fileData.getRLEFlag() == 1U && !skipRLE) {
-            deallocate();
-            allocate(fileData.getRLESize());
-            RLE_decompress(decompData.start(),
-                decompData.size, start(), dec_size);
-
-            fileData.setRLEFlag(0U);
-            decompData.deallocate();
-
+        if (chunkHeader.isRLECompressed() == 1U) {
+            buffer.clear();
+            buffer.allocate(chunkHeader.getDecSize());
+            // TODO: why is this crashing, what did I do
+            codec::RLE_decompress(decompressedZip.data(), decompressedZip.size(),
+                                  buffer.data(), buffer.size_ref());
+            chunkHeader.setRLECompressed(0U);
+            decompressedZip.clear();
         } else {
-            steal(decompData);
-            if (!skipRLE) { size = dec_size; }
+            buffer = std::move(decompressedZip);
         }
 
         return result;
@@ -198,24 +221,25 @@ namespace editor {
 
 
     // TODO: rewrite to return status
-    int ChunkManager::ensureCompressed(const lce::CONSOLE console, bool skipRLE) {
-        if (fileData.getCompressedFlag() != 0U
+    int ChunkManager::ensureCompressed(const lce::CONSOLE console) {
+        if (chunkHeader.isZipCompressed() != 0U
             || console == lce::CONSOLE::NONE
-            || data == nullptr
-            || size == 0) {
+            || buffer.empty()) {
             return SUCCESS;
         }
-        fileData.setCompressedFlag(1U);
-        fileData.setDecSize(size);
 
-        if (fileData.getRLEFlag() == 0U && !skipRLE) {
-            Data rleBuffer;
-            rleBuffer.allocate(size);
-            RLE_compress(data, size, rleBuffer.data, rleBuffer.size);
-            steal(rleBuffer);
+        chunkHeader.setZipCompressed(1U);
+        chunkHeader.setDecSize(buffer.size());
 
-            fileData.setRLESize(size);
-            fileData.setRLEFlag(1);
+
+        if (chunkHeader.isRLECompressed() == 0U) {
+            Buffer rleBuffer;
+            rleBuffer.allocate(buffer.size());
+            codec::RLE_compress(buffer.data(), buffer.size(), rleBuffer.data(), rleBuffer.size_ref());
+            buffer = std::move(rleBuffer);
+
+            chunkHeader.setRLESize(buffer.size());
+            chunkHeader.setRLECompressed(1);
         }
 
         // allocate memory and recompress
@@ -230,22 +254,19 @@ namespace editor {
 
             case lce::CONSOLE::PS3:
             case lce::CONSOLE::RPCS3: {
-                auto *comp_ptr = new u8[size];
-                uLongf comp_size = size;
-                status = compress(comp_ptr, &comp_size, data, size);
-                deallocate();
+                Buffer compressed(buffer.size());
+                status = compress(compressed.data(), (uLongf*) compressed.size_ptr(),
+                                  buffer.data(), buffer.size());
+                buffer.clear();
                 if (status != 0) {
                     printf("error has occurred compressing chunk\n");
                     return MALLOC_FAILED;
                 }
                 // copy it over, and remove ZLIB header
-                data = new u8[comp_size - 2];
-                size = comp_size - 2;
-                std::memcpy(data, comp_ptr + 2, size);
+                buffer = Buffer(compressed.size() - 2);
+                std::memcpy(buffer.data(), compressed.data() + 2, buffer.size());
                 // zero out ending integrity check, as the console does
                 // std::memset(data + comp_size - 6, 0, 4);
-                delete[] comp_ptr;
-                comp_size = 0;
                 break;
             }
 
@@ -253,18 +274,15 @@ namespace editor {
             case lce::CONSOLE::PS4:
             case lce::CONSOLE::WIIU:
             case lce::CONSOLE::VITA: {
-                auto* comp_ptr = new u8[size];
-                auto comp_size = (uLongf)(float(size) * 1.25F);
-
-                status = compress(comp_ptr, &comp_size, data, size);
-                deallocate();
+                Buffer compressed((u32)(float(buffer.size()) * 1.25F));
+                status = compress(compressed.data(), (uLongf*) compressed.size_ptr(),
+                                  buffer.data(), buffer.size());
+                buffer.clear();
                 if (status != 0) {
                     printf("error has occurred compressing chunk\n");
                     return MALLOC_FAILED;
                 }
-                data = comp_ptr;
-                size = comp_size;
-                comp_size = 0;
+                buffer = std::move(compressed);
                 break;
             }
             default:
@@ -276,19 +294,62 @@ namespace editor {
 
 
     void ChunkManager::setVariableFlags(c_u32 sizeIn) {
-        // std::cout << std::format("0x{:08X}\n", sizeIn);
-
-        fileData.setRLEFlag(sizeIn >> 31);
-        fileData.setNewSaveFlag((sizeIn >> 30) & 1);
-        size = sizeIn & 0x3FFFFFFF;
+        chunkHeader.setRLECompressed(sizeIn >> 31);
+        chunkHeader.setNewSaveFlag((sizeIn >> 30) & 1);
+        *buffer.size_ptr() = sizeIn & 0x3FFFFFFF;
     }
 
 
     u32 ChunkManager::getSizeForWriting() const {
-        u32 sizeOut = size;
-        if (fileData.getRLEFlag() != 0U) { sizeOut |= 0x80000000; }
-        if (fileData.getNewSaveFlag() != 0U) { sizeOut |= 0x40000000; }
+        u32 sizeOut = buffer.size();
+        if (chunkHeader.isRLECompressed() != 0U) { sizeOut |= 0x80000000; }
+        if (chunkHeader.getNewSaveFlag() != 0U) { sizeOut |= 0x40000000; }
         return sizeOut;
+    }
+
+
+    int ChunkManager::read(DataReader& reader, lce::CONSOLE console) {
+        setVariableFlags(reader.read<u32>());
+        bool status = buffer.allocate(buffer.size());
+        if (!status) {
+            printf("Failed to allocate %d bytes for chunk", buffer.size());
+            return STATUS::MALLOC_FAILED;
+        }
+        // TODO: is this needed
+        std::memset(buffer.data(), 0, buffer.size());
+
+        switch (console) {
+            case lce::CONSOLE::PS3:
+            case lce::CONSOLE::RPCS3: {
+                chunkHeader.setDecSize(reader.read<u32>());
+                chunkHeader.setRLESize(reader.read<u32>());
+                break;
+            }
+            default:
+                c_u32 dec_and_rle_size = reader.read<u32>();
+                chunkHeader.setDecSize(dec_and_rle_size);
+                chunkHeader.setRLESize(dec_and_rle_size);
+                break;
+        }
+        std::memcpy(buffer.data(), reader.ptr(), buffer.size());
+        return SUCCESS;
+    }
+
+
+    int ChunkManager::write(DataWriter& writer, lce::CONSOLE console) {
+        writer.write<u32>(getSizeForWriting());
+        switch (console) {
+            case lce::CONSOLE::PS3:
+            case lce::CONSOLE::RPCS3:
+                writer.write<u32>(chunkHeader.getDecSize());
+                writer.write<u32>(chunkHeader.getRLESize());
+                break;
+            default:
+                writer.write<u32>(chunkHeader.getDecSize());
+                break;
+        }
+        writer.writeBytes(buffer.data(), buffer.size());
+        return SUCCESS;
     }
 
 

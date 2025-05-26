@@ -1,9 +1,7 @@
 #pragma once
 
 #include "include/lce/processor.hpp"
-
 #include "common/utils.hpp"
-
 
 namespace editor {
     /**
@@ -11,45 +9,24 @@ namespace editor {
      * uses many struct unions to interpret the header for the save file of different consoles.
      */
     class HeaderUnion {
-
-        static bool isSystemLittle() {
-            return isSystemLittleEndian();
-        }
-
         union {
-            /// header size: 12 bytes
             struct {
-                /// bytes 0-3
-                u32 int1;
-                /// bytes 4-7
-                u32 int2;
-                /// bytes 8-11
-                u32 int3;
-            } INT_VIEW;
-            /// header size: 10 bytes
+                u32 int1; ///< bytes 0-3
+                u32 int2; ///< bytes 4-7
+                u32 int3; ///< bytes 8-11
+            } INT_VIEW; ///< header size: 12 bytes
             struct {
-                /// bytes 0-7
-                u64 dest_size;
-                /// bytes 8-9
-                u16 zlib_magic;
-            } ZLIB;
-
+                u64 dest_size;  ///< bytes 0-7
+                u16 zlib_magic; ///< bytes 8-9
+            } ZLIB; ///< header size: 10 bytes
         } UNION;
     public:
-        /// bytes 0-3
-        ND u32 getInt1() const { return isSystemLittle() ? swapEndian32(UNION.INT_VIEW.int1) : UNION.INT_VIEW.int1; }
-        /// bytes 4-7
-        ND u32 getInt2() const { return isSystemLittle() ? swapEndian32(UNION.INT_VIEW.int2) : UNION.INT_VIEW.int2; }
-        /// bytes 8-11
-        ND u32 getInt3() const { return isSystemLittle() ? swapEndian32(UNION.INT_VIEW.int3) : UNION.INT_VIEW.int3; }
-        /// bytes 8-9
-        ND u32 getShort5() const { return isSystemLittle() ? swapEndian16(UNION.ZLIB.zlib_magic) : UNION.ZLIB.zlib_magic; }
-        /// bytes 0-7
-        ND u64 getDestSize() const { return isSystemLittle() ? swapEndian64(UNION.ZLIB.dest_size) : UNION.ZLIB.dest_size; }
-        /// bytes 4-7
-        ND u32 getInt2Swap() const { return isSystemLittle() ? UNION.INT_VIEW.int2 : swapEndian32(UNION.INT_VIEW.int2); }
-        /// bytes 8-11
-        ND u32 getInt3Swap() const { return isSystemLittle() ? UNION.INT_VIEW.int3 : swapEndian32(UNION.INT_VIEW.int3); }
+        ND u32 getInt1()     const { return detail::maybe_bswap(UNION.INT_VIEW.int1, Endian::Big); }    ///< bytes 0-3, Big
+        ND u32 getInt2()     const { return detail::maybe_bswap(UNION.INT_VIEW.int2, Endian::Big); }    ///< bytes 4-7, Big
+        ND u32 getInt3()     const { return detail::maybe_bswap(UNION.INT_VIEW.int3, Endian::Big); }    ///< bytes 8-11, Big
+        ND u32 getShort5()   const { return detail::maybe_bswap(UNION.ZLIB.zlib_magic, Endian::Big); }  ///< bytes 8-9, Big
+        ND u64 getDestSize() const { return detail::maybe_bswap(UNION.ZLIB.dest_size, Endian::Big); }   ///< bytes 0-7, Big
+        ND u32 getInt2Swap() const { return detail::maybe_bswap(UNION.INT_VIEW.int2, Endian::Little); } ///< bytes 4-7, Little
+        ND u32 getInt3Swap() const { return detail::maybe_bswap(UNION.INT_VIEW.int3, Endian::Little); } ///< bytes 8-11, Little
     };
-
 }

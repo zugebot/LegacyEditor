@@ -1,7 +1,7 @@
 #include "threaded.hpp"
 
-#include <functional>
-#include <vector>
+#include "lce/processor.hpp"
+
 #include <thread>
 
 #include "code/FileListing/fileListing.hpp"

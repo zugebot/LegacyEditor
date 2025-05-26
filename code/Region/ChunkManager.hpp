@@ -2,71 +2,59 @@
 
 #include "include/lce/enums.hpp"
 
-#include "common/data.hpp"
 #include "common/error_status.hpp"
 
 #include "code/Chunk/chunkData.hpp"
+#include "common/buffer.hpp"
 
 
 namespace editor {
-    // namespace chunk {
-    //     class ChunkData;
-    // }
 
-    class ChunkManager : public Data {
-        static constexpr u32 CHUNK_BUFFER_SIZE = 0xFFFFFF; // 4,194,303
 
+    class ChunkManager {
     public:
-        struct FileData {
+        struct ChunkHeader {
         private:
-
         public:
-            u32 rleSize;
-            struct {
-                u32 timestamp : 32;
-                u64 decSize : 29;
-                u64 isCompressed : 1;
-                u64 rleFlag : 1;
-                u64 newSaveFlag : 1;
-            } anon{};
-            FileData() {
-                anon.decSize = 0;
-                rleSize = 0;
-                anon.isCompressed = 1;
-                anon.rleFlag = 1;
-                anon.newSaveFlag = 1;
-                anon.timestamp = 0;
-            }
+            u32 rleSize{0};
+            u32 timestamp : 32 {0};
+            u32 decSize : 29 {0};
+            u32 isCompressedZip : 1 {1};
+            u32 isCompressedRLE : 1 {1};
+            u32 newSaveFlag : 1 {1};
 
-            MU void setTimestamp(c_u32 val) { anon.timestamp = val; }
-            MU void setDecSize(c_u64 val) { anon.decSize = val; }
+            MU ND u32 getTimestamp() const { return timestamp; }
+            MU void setTimestamp(c_u32 val) { timestamp = val; }
+
+            MU ND u64 getDecSize() const { return decSize; }
+            MU void setDecSize(c_u64 val) { decSize = val; }
+
+            MU ND u32 getRLESize() const { return rleSize; }
             MU void setRLESize(c_u64 val) { rleSize = val; }
 
-            MU void setRLEFlag(c_u64 val) { anon.rleFlag = val; }
-            MU void setNewSaveFlag(c_u64 val) { anon.newSaveFlag = val; }
-            MU void setCompressedFlag(c_u64 val) { anon.isCompressed = val; }
+            MU ND u64 isRLECompressed() const { return isCompressedRLE; }
+            MU void setRLECompressed(c_u64 val) { isCompressedRLE = val; }
 
-            MU ND u32 getTimestamp() const { return anon.timestamp; }
-            MU ND u64 getDecSize() const { return anon.decSize; }
-            MU ND u32 getRLESize() const { return rleSize; }
-            MU ND u64 getRLEFlag() const { return anon.rleFlag; }
-            MU ND u64 getNewSaveFlag() const { return anon.newSaveFlag; }
-            MU ND u64 getCompressedFlag() const { return anon.isCompressed; }
+            MU ND u64 getNewSaveFlag() const { return newSaveFlag; }
+            MU void setNewSaveFlag(c_u64 val) { newSaveFlag = val; }
+
+            MU ND u64 isZipCompressed() const { return isCompressedZip; }
+            MU void setZipCompressed(c_u64 val) { isCompressedZip = val; }
         };
 
-        FileData fileData;
+        Buffer buffer;
+        ChunkHeader chunkHeader;
         chunk::ChunkData* chunkData = nullptr;
 
         MU ND std::string getDataAsString() const {
             std::string result;
-            result += "__timestamp_" + std::to_string(fileData.anon.timestamp) + "___";
-            result += "decSize_" + std::to_string(fileData.anon.decSize) + "___";
-            result += "isComp_" + std::to_string(fileData.anon.isCompressed) + "___";
-            result += "rleFlag_" + std::to_string(fileData.anon.rleFlag) + "___";
-            result += "unknown_" + std::to_string(fileData.anon.newSaveFlag);
+            result += "__timestamp_" + std::to_string(chunkHeader.timestamp) + "___";
+            result += "decSize_" + std::to_string(chunkHeader.decSize) + "___";
+            result += "isComp_" + std::to_string(chunkHeader.isCompressedZip) + "___";
+            result += "rleFlag_" + std::to_string(chunkHeader.isCompressedRLE) + "___";
+            result += "unknown_" + std::to_string(chunkHeader.newSaveFlag);
             return result;
         }
-
 
 
         /// CONSTRUCTORS
@@ -74,19 +62,42 @@ namespace editor {
         ChunkManager();
         ~ChunkManager();
 
+        ChunkManager(ChunkManager&& other) noexcept
+            : buffer(std::move(other.buffer)),
+              chunkHeader(other.chunkHeader),
+              chunkData(other.chunkData) {
+            other.chunkHeader = ChunkHeader();
+            other.chunkData = nullptr;
+        }
+
+        ChunkManager& operator=(ChunkManager&& other) noexcept {
+            if (this != &other) {
+                buffer = std::move(other.buffer);
+                chunkHeader = other.chunkHeader;
+                chunkData = other.chunkData;
+                other.chunkData = nullptr;
+            }
+            return *this;
+        }
+
+        ChunkManager(const ChunkManager&) = delete;
+        ChunkManager& operator=(const ChunkManager&) = delete;
+
         /// FUNCTIONS
 
         MU ND int checkVersion() const;
 
-        int ensureDecompress(lce::CONSOLE consoleIn, bool skipRLE = false);
-        int ensureCompressed(lce::CONSOLE console, bool skipRLE = false);
+        int ensureDecompress(lce::CONSOLE console);
+        int ensureCompressed(lce::CONSOLE console);
+
+        MU int read(DataReader& reader, lce::CONSOLE console);
+        MU int write(DataWriter& writer, lce::CONSOLE console);
 
         MU void readChunk(lce::CONSOLE inConsole);
         MU void writeChunk(lce::CONSOLE outConsole);
 
         void setVariableFlags(u32 sizeIn);
         ND u32 getSizeForWriting() const;
-
     };
 
-}
+} // namespace editor

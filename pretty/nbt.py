@@ -141,14 +141,14 @@ class NBTListPrinter:
                     eNBT_INT8,  eNBT_INT16,  eNBT_INT32,
                     eNBT_INT64, eNBT_FLOAT,  eNBT_DOUBLE
             ):
-                active  = _variant_active(elt["value"])
+                active  = _variant_active(elt["m_value"])
                 typname, _ = PRIMITIVE_MAP[self.sub_kind]
                 real_t  = gdb.lookup_type(typname).strip_typedefs()
                 yield f"[{i}]", active.cast(real_t)
                 continue
 
             if self.sub_kind == eNBT_STRING:
-                active = _variant_active(elt["value"])
+                active = _variant_active(elt["m_value"])
                 try:
                     s = active["_M_storage"]
                 except gdb.error:
@@ -208,8 +208,8 @@ class NBTCompoundPrinter:
             key_str = key_gdb  # already a std::string gdb.Value
 
             # decide how we want to show the value
-            kind      = int(val_gdb["type"])
-            variant   = val_gdb["value"]
+            kind      = int(val_gdb["m_type"])
+            variant   = val_gdb["m_value"]
             active    = _variant_active(variant)
 
             # ─ primitives / string → flatten ─
@@ -255,15 +255,15 @@ class NBTBasePrinter:
 
     # summary shown in the Value column / CLI print
     def to_string(self):
-        string = f"NBT<{_enum_name(self.val['type'])}>"
-        kind = int(self.val["type"])
+        string = f"NBT<{_enum_name(self.val['m_type'])}>"
+        kind = int(self.val["m_type"])
         if kind == eNBT_COMPOUND:
             string += ""
         return string
 
     # CLion / GDB uses this to decide whether to format as array / map / string
     def display_hint(self):
-        kind = int(self.val["type"])
+        kind = int(self.val["m_type"])
         if kind in (1,2,3,4,5,6,8):
             return "string"     # PRIMITIVES
         elif kind == 9:
@@ -274,8 +274,8 @@ class NBTBasePrinter:
 
     # ── children() – return (name , gdb.Value) pairs ──────────────────
     def children(self):
-        kind    = int(self.val['type'])
-        variant = self.val['value']
+        kind    = int(self.val['m_type'])
+        variant = self.val['m_value']
         active  = _variant_active(variant)
 
         # always show the tag
@@ -288,7 +288,7 @@ class NBTBasePrinter:
                 actual = active['_M_storage']
             except gdb.error:
                 actual = active
-            yield "value", actual
+            yield "m_value", actual
             return
 
         # ————————————— BYTE/INT/LONG ARRAY —————————————
@@ -322,12 +322,12 @@ def lookup(val):
 
     if tag.endswith("NBTBase"):
         try:
-            k = int(val["type"])
+            k = int(val["m_type"])
             if k == eNBT_COMPOUND:
-                cmpd = _variant_active(val["value"])["_M_storage"]
+                cmpd = _variant_active(val["m_value"])["_M_storage"]
                 return NBTCompoundPrinter(cmpd)
             if k == eNBT_LIST:
-                lst  = _variant_active(val["value"])["_M_storage"]
+                lst  = _variant_active(val["m_value"])["_M_storage"]
                 return NBTListPrinter(lst)
         except gdb.error:
             pass

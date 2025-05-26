@@ -1,304 +1,346 @@
 #include <iostream>
 
 #include "include/ghc/fs_std.hpp"
-
+#include "include/nlohmann/json.hpp"
 #include "include/lce/processor.hpp"
 
-#include "code/include.hpp"
+#include "common/windows/force_utf8.hpp"
+#include "common/fmt.hpp"
 #include "common/timer.hpp"
 
+#include "code/include.hpp"
 
-void waitForEnter() {
-    std::cout << "[>] Press ENTER to exit...";
-    std::cin.clear();
+using namespace cmn;
+
+
+void consumeEnter() {
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    std::cin.get();
 }
 
 
-
-int getNumberFromUser(const std::string& param, int lower, int upper) {
-    int number;
-
+static int getNumberFromUser(const std::string& prompt, int min, int max) {
+    int selection;
     while (true) {
-        std::cout << param;
-        std::cin >> number;
-
-        // Check if the input is an integer and within the specified range
-        if (std::cin.fail() || number < lower || number > upper) {
-            std::cin.clear(); // Clear the error flag
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Discard invalid input
-            std::cout << "[X] Invalid input. Please try again." << std::endl;
-        } else {
-            break; // Valid input received, exit the loop
+        log(eLog::input, "{}", prompt);
+        std::cin >> selection;
+        if (selection >= min && selection <= max) {
+            return selection;
         }
+        log(eLog::error, "Invalid selection. Try again.\n");
     }
-    return number;
 }
 
 
-int main(int argc, char *argv[]) {
+template<typename EnumType>
+EnumType selectProductCode(const editor::EnumMapper<EnumType>& mapper, const std::string& consoleName) {
+    log("Select a \"{}\" product code:\n", consoleName);
+    mapper.printOptions();
+    int choice = getNumberFromUser("Enter index: ", 1,
+                                   static_cast<int>(mapper.size() - 1));
+
+    auto selectedCode = mapper.selectOption(choice);
+    if (selectedCode.has_value()) {
+        auto info = mapper.getInfo(selectedCode.value());
+        log(eLog::success, "Selected: {}\n", info->name);
+        return selectedCode.value();
+    }
+
+    return EnumType::NONE;
+}
+
+
+fs::path getOutputPath(const nlohmann::json& jsonConfig, const std::string& consoleStr, const fs::path& defaultPath) {
+
+    auto outputConfig = jsonConfig.value("conversionOutput", nlohmann::json::object());
+    auto outputPath = outputConfig.value("path", nlohmann::json::object());
+
+    if (outputPath.contains(consoleStr)) {
+        const auto& consoleConfig = outputPath[consoleStr];
+        bool useDefault = consoleConfig.value("useDefaultPath", true);
+        if (useDefault) {
+            return defaultPath;
+        } else {
+            return consoleConfig.value("conversionPath", defaultPath.string());
+        }
+    }
+
+    return defaultPath;
+}
+
+
+void handleRemovalOption(const std::string& prompt, bool& setting) {
+    log(eLog::input, "{} (y/n): ", prompt);
+    char choice = 'y';
+    std::cin >> choice;
+    consumeEnter();
+    setting = (choice == 'y' || choice == 'Y');
+    // log(setting ? eLog::warning : eLog::info,
+    //          setting ? "Data will be removed.\n"
+    //                  : "Data will NOT be removed.\n");
+}
+
+
+int main(int argc, char* argv[]) {
+#ifdef _WIN32
+    force_utf8_console();
+#endif
+
 
     /*
-    std::string path = R"(C:\Users\jerrin\CLionProjects\BetterNBT\level.dat)";
-    DataManager manager;
-    manager.readFromFile(path);
+    std::string entitiesFile = "C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\dump\\250524034012_ps4__0\\DIM1\\entities.dat";
+    Buffer buffer = DataReader::readFile(entitiesFile);
+    DataReader reader(buffer.span());
 
-    c_auto* nbt = NBT::readTag(manager);
-
-    if (nbt == nullptr) {
-        return -1;
+    int count = reader.read<i32>();
+    std::vector<NBTList> nbtList(count);
+    for (int i = 0; i < count; i++) {
+        int x = reader.read<i32>();
+        int z = reader.read<i32>();
+        NBTBase nbt;
+        nbt.read(reader);
+        nbtList[i] = nbt.get<NBTCompound>().extract("Entities")
+                        .value_or(makeList(eNBT::COMPOUND)).get<NBTList>();
     }
-
-    std::cout << nbt->toString() << "\n";
-
-    return 0;
-    */
+     */
 
 
 
-    // DataManager bin;
-    // bin.readFromFile(R"(C:\Users\jerrin\CLionProjects\LegacyEditor\tests\XBOX360\XBOX360_TU74.dat)");
-    // bin.writeToFile(bin.data + 12, bin.size - 12, "D:/PycharmProjects/testLZX/XBOX360_TU74_new.dat");
-
-#ifdef DEBUG
-    bool takeInput = false;
-#else
-    bool takeInput = true;
-#endif
-    std::string autoConsole = "wiiu";
-    fs::path outDir;
 
 
-    std::cout << "\n";
-    std::cout << "[-] Find the project here! https://github.com/zugebot/LegacyEditor" << std::endl;
-    std::cout << "\n";
-    std::cout << "[-] Supports reading [ Xbox360, PS3, RPCS3, PSVITA, PS4, WiiU, Switch ]\n"
-                 "[-] Supports writing [ -------  ---  RPCS3, PSVITA, ---  WiiU  ------ ]\n";
 
+    log(eLog::detail,
+             "Find the project here! https://github.com/zugebot/LegacyEditor\n\n");
+    log(eLog::detail,
+             "Supports reading  [ Xbox360, PS3, RPCS3, PSVITA, PS4, WiiU, Switch ]\n");
+    log(eLog::detail,
+             "Supports writing  [ -------  ---  RPCS3, PSVITA, ---  WiiU  ------ ]\n\n");
 
-    // Make sure user provides files
-    if (argc < 2) {
-        std::cerr << "\nMust supply at least one save file to convert.\n";
-        std::cerr << "You can do this by dragging and dropping the GAMEDATA/SAVEGAME/.dat/.bin file[s] onto the executable, or passing them as command line arguments.\n";
-        std::cerr << "click ENTER to exit.\n";
-        waitForEnter();
-        return -1;
-    }
+    fs::path exePath = fs::path(argv[0]).parent_path();
+    fs::path defaultOutDir = exePath / "out";
 
-
-    // Ensure the "out" directory exists
-    fs::path dirMain(argv[0]);
-    outDir = dirMain.parent_path() / "out";
-#ifdef DEBUG
-    outDir = R"(E:\Emulators\cemu_1.27.1\mlc01\usr\save\00050000\101d9d00\user\80000001)";
-#endif
-    if (!fs::exists(outDir)) {
-        fs::create_directory(outDir);
-    }
-
-    // Gets the console out
-    std::cout << "\n[*] Name the console you want your saves converted to (don't include spaces)."
-                 "\n[>] Console: ";
-    std::string consoleIn;
-    if (takeInput) {
-        std::cin >> consoleIn;
+    // Read conversion.json
+    nlohmann::json jsonConfig;
+    fs::path configPath = exePath / "conversion.json";
+    if (fs::exists(configPath)) {
+        std::ifstream in(configPath);
+        try {
+            in >> jsonConfig;
+        } catch (const std::exception& e) {
+            log(eLog::error, "Error reading conversion.json: {}\n", e.what());
+        }
     } else {
-        consoleIn = autoConsole;
-    }
-    const lce::CONSOLE consoleOut = lce::strToConsole(consoleIn);
-    if (consoleOut == lce::CONSOLE::NONE) {
-        std::cerr << "Invalid console name, exiting\n";
-        std::cerr << "click ENTER to exit.\n";
-        waitForEnter();
-        return -1;
-    }
-
-    // gets ps3 product code, if ps3 / rpcs3 are chosen
-    editor::WriteSettings writeSettings(consoleOut, outDir);
-    if (consoleOut == lce::CONSOLE::RPCS3 ||
-        consoleOut == lce::CONSOLE::PS3) {
-        std::cout << "\n[*] Please select a PS3 region (type the index number):" << std::endl;
-        std::cout << "[1] NPEB01899 | Europe (HDD)\n"
-                  << "[2] NPUB31419 | USA    (HDD)\n"
-                  << "[3] NPJB00549 | Japan  (HDD)\n"
-                  << "[4] BLES01976 | Europe (Disc)(not tested)\n"
-                  << "[5] BLUS31426 | USA    (Disc)(not tested)\n";
-        std::string prompt = "[>] Region:";
-        int selection = getNumberFromUser(prompt, 1, 5);
-        auto pCode = editor::PS3ProductCodeArray[selection];
-        writeSettings.myProductCodes.setPS3(pCode);
-    }
-
-    // gets psvita product code, if psvita is chosen
-    if (consoleOut == lce::CONSOLE::VITA) {
-        std::cout << "\n[*] Please select a PSVita region (type the index number):" << std::endl;
-        std::cout << "[1] PCSE00491 | Europe\n"
-                  << "[2] PCSB00560 | USA\n"
-                  << "[3] PCSG00302 | Japan \n";
-        std::string prompt = "[>] Region:";
-        int selection = getNumberFromUser(prompt, 1, 3);
-        auto pCode = editor::PSVITAProductCodeArray[selection];
-        writeSettings.myProductCodes.setVITA(pCode);
+        log(eLog::warning, "No conversion.json found. Using default paths.\n");
     }
 
 
-
-    // remove player data
-    // if (writeSettings.getConsole() != consoleOut) {
-    //     writeSettings.shouldRemovePlayers = true;
-    //     std::cout << "[!] Source and target consoles differ. Player data will be removed.\n";
-    // } else
-    {
-        std::cout << "\n[*] Do you want to remove all player data from the save files?";
-        std::cout << "\n[>] Option (y/n):";
-        char wipeChoice;
-        if (takeInput) {
-            std::cin >> wipeChoice;
-        } else {
-            wipeChoice = 'y';
-        }
-        if (wipeChoice == 'y' || wipeChoice == 'Y') {
-            writeSettings.shouldRemovePlayers = true;
-            std::cout << "[!] Player data will be removed.\n";
-        } else {
-            writeSettings.shouldRemovePlayers = false;
-            std::cout << "[!] Player data will NOT be removed.\n";
-        }
-    }
+    std::vector<std::string> saveFileArgs;
 
 
-    // remove map data
-    // if (writeSettings.getConsole() != consoleOut) {
-    //     writeSettings.shouldRemoveMaps = true;
-    //     std::cout << "[!] Source and target consoles differ. Map data will be removed.\n";
-    // } else
-    {
-        std::cout << "\n[*] Do you want to remove all map data from the save files?";
-        std::cout << "\n[>] Option (y/n):";
-        char wipeChoice;
-        if (takeInput) {
-            std::cin >> wipeChoice;
-        } else {
-            wipeChoice = 'y';
+    auto inputConfig = jsonConfig.value("conversionInput", nlohmann::json::object());
+
+    bool autoInput = inputConfig.value("autoInput", false);
+    if (autoInput) {
+        log(eLog::input, "Reading auto input from \"configuration.json\"\n");
+
+        std::string idx = inputConfig.value("autoKey", "0");
+        std::string path = inputConfig["autoPath"].value(idx, "");
+        if (!inputConfig["autoPath"].contains(idx) || path.empty()) {
+
+            log(eLog::error,
+                     "Invalid input conversionInput.autoPath[{}]\n", idx);
+            return -1;
         }
-        if (wipeChoice == 'y' || wipeChoice == 'Y') {
-            writeSettings.shouldRemoveMaps = true;
-            std::cout << "[!] Map data will be removed.\n";
-        } else {
-            writeSettings.shouldRemoveMaps = false;
-            std::cout << "[!] Map data will NOT be removed.\n";
+        saveFileArgs.push_back(path);
+
+    } else {
+        if (argc < 2) {
+            log(eLog::error, "Must supply at least one save file to convert.\n");
+            log(eLog::info, "Drag & drop the GAMEDATA/SAVEGAME/.dat/.bin on the executable or pass as arguments.\n");
+            log(eLog::input, "Press ENTER to exit.\n");
+            consumeEnter();
+            return -1;
+        }
+        for (int i = 0; i < argc; i++) {
+            saveFileArgs.emplace_back(argv[i]);
         }
     }
 
+    lce::CONSOLE consoleOutput;
+    editor::WriteSettings writeSettings;
 
-    // remove structure data
-    //if (writeSettings.getConsole() != consoleOut) {
-    //    writeSettings.shouldRemoveStructures = true;
-    //    std::cout << "[!] Source and target consoles differ. Structure data will be removed.\n";
-    //} else
-    {
-        std::cout << "\n[*] Do you want to remove all structure data from the save files?";
-        std::cout << "\n[>] Option (y/n):";
-        char wipeChoice;
-        if (takeInput) {
-            std::cin >> wipeChoice;
+    auto outputConfig = jsonConfig.value("conversionOutput", nlohmann::json::object());
+
+    bool autoOutput = outputConfig.value("autoOutput", false);
+    if (autoOutput) {
+        std::string jsonConsole = outputConfig["autoConsole"];
+        consoleOutput = lce::strToConsole(jsonConsole);
+        if (consoleOutput == lce::CONSOLE::NONE) {
+            log(eLog::error, "Invalid json conversionOutput.autoConsole\n");
+            return -1;
         } else {
-            wipeChoice = 'y';
+            log(eLog::input, "Using auto output: console=\"{}\"\n", consoleToStr(consoleOutput));
         }
-        if (wipeChoice == 'y' || wipeChoice == 'Y') {
-            writeSettings.shouldRemoveStructures = true;
-            std::cout << "[!] Structure data will be removed.\n";
-        } else {
-            writeSettings.shouldRemoveStructures = false;
-            std::cout << "[!] Structure data will NOT be removed.\n";
+
+        writeSettings.shouldRemoveMaps = outputConfig["variables"].value("removeMaps", true);
+        writeSettings.shouldRemovePlayers = outputConfig["variables"].value("removePlayers", true);
+        writeSettings.shouldRemoveStructures = outputConfig["variables"].value("removeStructures", true);
+        writeSettings.shouldRemoveRegionsOverworld = outputConfig["variables"].value("removeRegionsOverworld", false);
+        writeSettings.shouldRemoveRegionsNether = outputConfig["variables"].value("removeRegionsNether", false);
+        writeSettings.shouldRemoveRegionsEnd = outputConfig["variables"].value("removeRegionsEnd", false);
+
+
+        if (consoleOutput == lce::CONSOLE::RPCS3 || consoleOutput == lce::CONSOLE::PS3) {
+            std::string optStr = outputConfig.value("autoPs3ProductCode", "");
+            auto optEnum = editor::PS3Mapper.fromString(optStr);
+            if (optEnum) {
+                writeSettings.m_productCodes.setPS3(optEnum.value());
+                log(eLog::input, "Using auto output: PS3 P.C.=\"{}\"\n", optStr);
+            } else {
+                log(eLog::error, "Invalid input \"conversionOutput.autoPs3ProductCode\"\n");
+            }
+        } else if (consoleOutput == lce::CONSOLE::VITA) {
+            std::string optStr = outputConfig.value("autoPsVProductCode", "");
+            auto optEnum = editor::VITAMapper.fromString(optStr);
+            if (optEnum) {
+                writeSettings.m_productCodes.setVITA(optEnum.value());
+                log(eLog::input, "Using auto output: PsVita P.C.=\"{}\"\n", optStr);
+            } else {
+                log(eLog::error, "Invalid input \"conversionOutput.autoPsVProductCode\"\n");
+            }
         }
+
+        log(eLog::input,
+            "Using auto output: removeMaps=\"{}\"\n",
+            writeSettings.shouldRemoveMaps ? "true" : "false");
+        log(eLog::input,
+            "Using auto output: removePlayers=\"{}\"\n",
+            writeSettings.shouldRemovePlayers ? "true" : "false");
+        log(eLog::input,
+            "Using auto output: removeStructures=\"{}\"\n",
+            writeSettings.shouldRemoveStructures ? "true" : "false");
+        log(eLog::input,
+            "Using auto output: removeRegionsOverworld=\"{}\"\n",
+            writeSettings.shouldRemoveRegionsOverworld ? "true" : "false");
+        log(eLog::input,
+            "Using auto output: removeRegionsNether=\"{}\"\n",
+            writeSettings.shouldRemoveRegionsNether ? "true" : "false");
+        log(eLog::input,
+            "Using auto output: removeRegionsEnd=\"{}\"\n",
+            writeSettings.shouldRemoveRegionsEnd ? "true" : "false");
+
+    } else {
+
+        log(eLog::input, "Name the console you want your saves converted to: ");
+        std::string userInput;
+        std::cin >> userInput;
+        consumeEnter();
+        consoleOutput = lce::strToConsole(userInput);
+        if (consoleOutput == lce::CONSOLE::NONE) {
+            log(eLog::error, "Invalid console name, exiting\n");
+            consumeEnter();
+            return -1;
+        }
+
+        if (consoleOutput == lce::CONSOLE::RPCS3 || consoleOutput == lce::CONSOLE::PS3) {
+            editor::ePS3ProductCode code = selectProductCode(editor::PS3Mapper, "PS3");
+            writeSettings.m_productCodes.setPS3(code);
+        } else if (consoleOutput == lce::CONSOLE::VITA) {
+            auto code = selectProductCode(editor::VITAMapper, "VITA");
+            writeSettings.m_productCodes.setVITA(code);
+        }
+
+        handleRemovalOption("Do you want to remove all map data", writeSettings.shouldRemoveMaps);
+        handleRemovalOption("Do you want to remove all player data", writeSettings.shouldRemovePlayers);
+        handleRemovalOption("Do you want to remove all structure data", writeSettings.shouldRemoveStructures);
+        handleRemovalOption("Do you want to remove all overworld regions", writeSettings.shouldRemoveRegionsOverworld);
+        handleRemovalOption("Do you want to remove all nether regions", writeSettings.shouldRemoveRegionsNether);
+        handleRemovalOption("Do you want to remove all end regions", writeSettings.shouldRemoveRegionsEnd);
     }
 
 
-    // remove structure data
-    //if (writeSettings.getConsole() != consoleOut) {
-    //    writeSettings.shouldRemoveStructures = true;
-    //    std::cout << "[!] Source and target consoles differ. Structure data will be removed.\n";
-    //} else
-    /*
-    {
-        std::cout << "\n[*] Do you want to remove all entity data from the save files?";
-        std::cout << "\n[*] Only try this if there is an issue with loading your world.";
-        std::cout << "\n[>] Option (y/n):";
-        char wipeChoice;
-        if (takeInput) {
-            std::cin >> wipeChoice;
-        } else {
-            wipeChoice = 'y';
-        }
-        if (wipeChoice == 'y' || wipeChoice == 'Y') {
-            writeSettings.shouldRemoveEntities = true;
-            std::cout << "[!] Entity data will be removed.\n";
-        } else {
-            writeSettings.shouldRemoveEntities = false;
-            std::cout << "[!] Entity data will NOT be removed.\n";
-        }
+
+
+
+
+
+
+    const std::string consoleStr = consoleToStr(consoleOutput);
+    const fs::path outputPath = getOutputPath(jsonConfig, consoleStr, defaultOutDir);
+    if (!outputPath.empty() && !fs::exists(outputPath)) {
+        fs::create_directories(outputPath);
     }
-    */
+    writeSettings.setConsole(consoleOutput);
+    writeSettings.setInFolderPath(outputPath);
 
+    log(eLog::info, "Output directory: {}\n", outputPath.string());
 
-
-
-
-
-    std::cout << "\n";
 
 
     // iterate over all the files they gave
-    for (int saveIndex = 1; saveIndex < argc; ++saveIndex) {
+    for (const auto& arg: saveFileArgs) {
+        fs::path filePath(arg);
+        std::cout << "\n";
+        log(eLog::input, "Loading savefile: {}\n", filePath.string());
 
-        // ensure file exists
-        fs::path filePath(argv[saveIndex]);
         if (!fs::exists(filePath)) {
-            std::cerr << "File does not exist: " << filePath.make_preferred() << "\n";
+            log(eLog::error, "File does not exist: {}\n", filePath.make_preferred().string());
             continue;
         }
 
-        // read the file
         Timer readTimer;
-        editor::FileListing fileListing;
-        if (fileListing.read(filePath.string()) != 0) {
-            std::cerr << "Failed to load file: " << filePath.make_preferred() << "\n";
+        editor::SaveProject saveProject;
+        if (saveProject.read(filePath.string()) != 0) {
+            log(eLog::error, "Failed to load file: {}\n", filePath.make_preferred().string());
             continue;
         }
-        std::cout << "[%] Time to read: " << readTimer.getSeconds() << " sec\n";
+        log(eLog::time, "Time to load: {} sec\n", readTimer.getSeconds());
 
-        // preprocess write settings
-        const int statusProcess = fileListing.preprocess(writeSettings);
+        int failedToDump = saveProject.dumpToFolder("");
+        if (failedToDump != 0) {
+            log(eLog::info, "Failed to dump fileListing.");
+        }
+
+        const int statusProcess = saveProject.m_fileListing.preprocess(saveProject.m_stateSettings, writeSettings);
         if (statusProcess != 0) {
-            std::cerr << "Preprocessing " << consoleToStr(consoleOut)
-                      << " failed for file: " << filePath << "\n";
+            log(eLog::error,
+                     "Preprocessing {} failed for file: {}\n",
+                     consoleStr, filePath.string());
             continue;
         }
 
-        // fileListing.removeFileTypes({lce::FILETYPE::REGION_END, lce::FILETYPE::REGION_NETHER});
+        saveProject.printDetails();
 
-        // print save details, dump to folder
-        fileListing.printDetails();
-        MU int stat = fileListing.dumpToFolder("");
-
-        // write to new console
         Timer writeTimer;
-        const int statusOut = fileListing.write(writeSettings);
+        const int statusOut = saveProject.write(writeSettings);
         if (statusOut != 0) {
-            std::cerr << "Converting to " << consoleToStr(consoleOut)
-                      << " failed for file: " << filePath << "\n";
+            log(eLog::error, "Converting to {} failed for file: {}\n", consoleStr, filePath.string());
             continue;
         }
-        std::cout << "[%] Time to write: " << readTimer.getSeconds() << " sec\n";
+        log(eLog::time, "Time to write: {} sec\n", writeTimer.getSeconds());
 
-        // alert user of new location
-        std::cout << "[>]: " << filePath.make_preferred() << "\n";
-        std::cout << "[<]: " << writeSettings.getOutFilePath().make_preferred() << "\n";
+        // saveProject.printDetails();
+        // (int*)saveProject.dumpToFolder("ps4_to_wiiu");
+
+#ifdef DEBUG
+        std::cout << "[*] level.dat: ";
+        if (auto *level = saveProject.m_fileListing.findFile(lce::FILETYPE::LEVEL))
+            DataWriter::writeFile("C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\orig_level.dat", level.m_data.span());
+            DataReader reader(level.m_data.span());
+            NBTBase nbt = makeCompound();
+            nbt.read(reader);
+            nbt.print();
+            nbt.writeFile("C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\level.dat");
+        }
+#endif
+
+        std::cout << "\n";
+        log(eLog::info, "Conversion Paths:\n");
+        log(eLog::output, "{}\n", filePath.make_preferred().string());
+        log(eLog::input, "{}\n", writeSettings.getOutFilePath().make_preferred().string());
     }
 
     std::cout << "\n";
-    waitForEnter();
+    log(eLog::input, "Press ENTER to exit...\n");
+    consumeEnter();
     return 0;
 }
