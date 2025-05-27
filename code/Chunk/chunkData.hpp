@@ -143,6 +143,7 @@ namespace editor::chunk {
         MU void convertNBT256ToAquatic();
         MU void convertOldToAquatic();
         MU void convert114ToAquatic();
+        MU void convertAquaticToElytra();
 
 
         /// places a block

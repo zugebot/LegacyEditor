@@ -13,9 +13,17 @@ namespace editor {
         ~NewGenConsoleParser() override = default;
 
     protected:
-        int inflateListing(SaveProject* saveProject) override;
+        int inflateListing(SaveProject& saveProject) override;
 
-        int readExternalFolder(const fs::path& inDirPath, SaveProject* saveProject);
+        virtual std::vector<fs::path> findExternalFolder(SaveProject& saveProject) = 0;
+        virtual int readExternalFolders(SaveProject& saveProject) = 0;
+
+        virtual int writeExternalFolders(SaveProject& saveProject, const fs::path& outDirPath) = 0;
+
+
+        static int readExternalFolder(SaveProject& saveProject, const fs::path& inDirPath);
+
+
     };
 
 }

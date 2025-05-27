@@ -27,6 +27,13 @@ void DataReader::readBytes(c_u32 length, u8* dataIn) {
 }
 
 
+std::span<const u8> DataReader::readSpan(u32 length) {
+    std::span<const u8> _span = {_ptr, length};
+    skip(length);
+    return _span;
+}
+
+
 std::string DataReader::readString(c_u32 length) {
     const char* start = reinterpret_cast<const char*>(_ptr);
     // Look for a NUL in the next `length` bytes (nullptr if none found).
@@ -92,7 +99,6 @@ std::wstring DataReader::readNullTerminatedWString() {
     }
     return returnString;
 }
-
 
 /**
  * Only used by nintendo switch edition...

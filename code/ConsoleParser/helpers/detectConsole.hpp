@@ -4,7 +4,7 @@
 #include "include/lce/processor.hpp"
 
 #include "code/ConsoleParser/headerUnion.hpp"
-#include "code/FileListing/stateSettings.hpp"
+#include "code/SaveFile/stateSettings.hpp"
 
 #include "common/error_status.hpp"
 #include "common/buffer.hpp"
@@ -44,6 +44,9 @@ namespace editor {
                     if (parentDir == "savedata0") {
                         stateSettings.setConsole(lce::CONSOLE::PS4);
                     }
+                    if (fs::exists(stateSettings.filePath().parent_path() / "wd_displayname.txt")) {
+                        stateSettings.setConsole(lce::CONSOLE::WINDURANGO);
+                    }
                 }
             } else {
                 // TODO: change this to write custom checker for FILE_COUNT * 144 == diff. with
@@ -61,13 +64,18 @@ namespace editor {
             stateSettings.setConsole(lce::CONSOLE::XBOX360);
             stateSettings.setXbox360Bin(false);
             // TODO: don't use arbitrary guess for a value
-        } else if (headerUnion.getInt2() < 100) { // uncompressed PS3 / RPCS3
-            /// otherwise if (int2) > 100 then it is a random file
-            /// because likely ps3 won't have more than 100 files
-            stateSettings.setConsole(lce::CONSOLE::RPCS3);
         } else if (headerUnion.getInt1() == CON_MAGIC) {
             stateSettings.setConsole(lce::CONSOLE::XBOX360);
             stateSettings.setXbox360Bin(true);
+        } else if (headerUnion.getInt2() % 136 == 0) {
+            // This is here as a gag, but it will work!
+            stateSettings.setConsole(lce::CONSOLE::XBOX360);
+            stateSettings.setXbox360Bin(false);
+            stateSettings.setShouldDecompress(false);
+        } else if (headerUnion.getInt2() < 1000) { // uncompressed PS3 / RPCS3
+            /// otherwise if (int2) > 100 then it is a random file
+            /// because likely ps3 won't have more than 100 files
+            stateSettings.setConsole(lce::CONSOLE::RPCS3);
         } else {
             return printf_err(INVALID_SAVE, ERROR_3);
         }

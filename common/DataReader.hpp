@@ -21,6 +21,8 @@ public:
         : _buf(s), _ptr(s.data()), _end(e) {}
     DataReader(c_u8* p, std::size_t n, Endian e = Endian::Big)
         : DataReader(std::span<c_u8>(p, n), e) {}
+    DataReader(const Buffer& b, Endian e = Endian::Big)
+        : DataReader(std::span<c_u8>(b.data(), b.size()), e) {}
 
     void setEndian(Endian order) { _end = order; }
 
@@ -111,6 +113,7 @@ public:
 
     Buffer readBuffer(u32 length);
     void readBytes(u32 length, u8* dataIn);
+    std::span<const u8> readSpan(u32 length);
 
     // file I/O ------------------------------------------------------
 

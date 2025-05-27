@@ -5,7 +5,7 @@
 
 #include "code/ConsoleParser/ConsoleParser.hpp"
 #include "code/ConsoleParser/headerUnion.hpp"
-#include "code/FileListing/stateSettings.hpp"
+#include "code/SaveFile/stateSettings.hpp"
 
 #include "common/error_status.hpp"
 #include "lce/enums.hpp"
@@ -19,7 +19,7 @@
 #include "code/ConsoleParser/consoles/Xbox1.hpp"
 #include "code/ConsoleParser/consoles/Xbox360BIN.hpp"
 #include "code/ConsoleParser/consoles/Xbox360DAT.hpp"
-
+#include "code/ConsoleParser/consoles/Windurango.hpp"
 
 namespace editor {
 
@@ -48,6 +48,8 @@ namespace editor {
                 return std::make_unique<WiiU>();
             case lce::CONSOLE::SWITCH:
                 return std::make_unique<Switch>();
+            case lce::CONSOLE::WINDURANGO:
+                return std::make_unique<Windurango>();
             default:
                 return nullptr;
         }

@@ -191,6 +191,8 @@ namespace editor {
             case lce::CONSOLE::WIIU:
             case lce::CONSOLE::VITA:
             case lce::CONSOLE::PS4:
+            case lce::CONSOLE::XBOX1:
+            case lce::CONSOLE::WINDURANGO:
                 result = tinf_zlib_uncompress(
                         decompressedZip.data(), decompressedZip.size_ptr(),
                         buffer.data(), buffer.size());
@@ -273,7 +275,9 @@ namespace editor {
             case lce::CONSOLE::SWITCH:
             case lce::CONSOLE::PS4:
             case lce::CONSOLE::WIIU:
-            case lce::CONSOLE::VITA: {
+            case lce::CONSOLE::VITA:
+            case lce::CONSOLE::XBOX1:
+            case lce::CONSOLE::WINDURANGO: {
                 Buffer compressed((u32)(float(buffer.size()) * 1.25F));
                 status = compress(compressed.data(), (uLongf*) compressed.size_ptr(),
                                   buffer.data(), buffer.size());

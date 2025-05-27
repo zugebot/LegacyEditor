@@ -18,18 +18,18 @@ namespace editor {
         virtual ~ConsoleParser() = default;
 
         ND virtual SaveLayout discoverSaveLayout(const fs::path& rootFolder) = 0;
-        ND virtual int inflateFromLayout(const fs::path& inFilePath, SaveProject* theSave) = 0;
+        ND virtual int inflateFromLayout(SaveProject& theSave, const fs::path& inFilePath) = 0;
 
-        ND virtual int deflateToSave(SaveProject* saveProject, WriteSettings& theSettings) const = 0;
-        virtual void supplyRequiredDefaults(SaveProject* saveProject) const = 0;
+        ND virtual int deflateToSave(SaveProject& saveProject, WriteSettings& theSettings) const = 0;
+        virtual void supplyRequiredDefaults(SaveProject& saveProject) const = 0;
 
     protected:
 
-        ND virtual int inflateListing(SaveProject* saveProject) = 0;
+        ND virtual int inflateListing(SaveProject& saveProject) = 0;
         ND virtual int deflateListing(const fs::path& gameDataPath, Buffer& inflatedData, Buffer& deflatedData) const = 0;
 
 
-        void readFileInfo(SaveProject* saveProject) const;
-        static void defaultFileInfo(SaveProject* saveProject) ;
+        void readFileInfo(SaveProject& saveProject) const;
+        static void defaultFileInfo(SaveProject& saveProject);
     };
 }

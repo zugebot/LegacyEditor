@@ -9,7 +9,7 @@
 // ----------------------------------------
 
 enum class eNBT : uint8_t {
-    NONE = 0,
+    NONE = 0, ///< officially "END"
     UINT8 = 1,
     INT16 = 2,
     INT32 = 3,

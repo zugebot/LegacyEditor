@@ -4,14 +4,16 @@
 #include "common/utils.hpp"
 #include "common/RLE/rle_vita.hpp"
 
-#include "code/FileListing/fileListing.hpp"
-#include "code/SaveProject/SaveProject.hpp"
+#include "code/SaveFile/stateSettings.hpp"
+#include "code/SaveFile/SaveProject.hpp"
+#include "code/SaveFile/fileListing.hpp"
+#include "code/SaveFile/writeSettings.hpp"
 
 
 namespace editor {
 
 
-    int Vita::inflateFromLayout(const fs::path& theFilePath, SaveProject* saveProject) {
+    int Vita::inflateFromLayout(SaveProject& saveProject, const fs::path& theFilePath) {
         m_filePath = theFilePath;
 
         int status = inflateListing(saveProject);
@@ -26,7 +28,7 @@ namespace editor {
     }
 
 
-    int Vita::inflateListing(SaveProject* saveProject) {
+    int Vita::inflateListing(SaveProject& saveProject) {
         Buffer fileData;
         DataReader reader;
 
@@ -48,7 +50,7 @@ namespace editor {
 
         codec::RLEVITA_DECOMPRESS(reader.data() + 8, reader.size() - 8, dst.data(), dst.size());
 
-        int status = saveProject->m_fileListing.readListing(dst, m_console);
+        int status = FileListing::readListing(saveProject, dst, m_console);
         if (status != 0) {
             return -1;
         }
@@ -57,7 +59,7 @@ namespace editor {
     }
 
 
-    int Vita::deflateToSave(SaveProject* saveProject, WriteSettings& theSettings) const {
+    int Vita::deflateToSave(SaveProject& saveProject, WriteSettings& theSettings) const {
         int status;
         fs::path rootPath = theSettings.getInFolderPath();
 
@@ -71,7 +73,7 @@ namespace editor {
 
         // GAMEDATA
         fs::path gameDataPath = rootPath / "GAMEDATA.bin";
-        Buffer deflatedData = saveProject->m_fileListing.writeListing(saveProject->m_stateSettings, theSettings);
+        Buffer deflatedData = FileListing::writeListing(saveProject, theSettings);
         Buffer inflatedData;
 
         status = deflateListing(gameDataPath, deflatedData, inflatedData);
@@ -83,7 +85,7 @@ namespace editor {
 
         // FILE INFO
         fs::path fileInfoPath = rootPath / "THUMBDATA.bin";
-        Buffer fileInfoData = saveProject->m_displayMetadata.write(m_console);
+        Buffer fileInfoData = saveProject.m_displayMetadata.write(m_console);
 
         try {
             DataWriter::writeFile(fileInfoPath, fileInfoData.span());

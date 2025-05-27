@@ -1,11 +1,13 @@
 #include "PS4.hpp"
 
-#include "code/FileListing/fileListing.hpp"
-#include "code/SaveProject/SaveProject.hpp"
-
 #include "include/sfo/sfo.hpp"
 #include "include/tinf/tinf.h"
 #include "common/utils.hpp"
+
+#include "code/SaveFile/stateSettings.hpp"
+#include "code/SaveFile/SaveProject.hpp"
+#include "code/SaveFile/writeSettings.hpp"
+#include "code/SaveFile/fileListing.hpp"
 
 
 namespace editor {
@@ -18,7 +20,7 @@ namespace editor {
     }
 
 
-    int PS4::inflateFromLayout(const fs::path& theFilePath, SaveProject* saveProject) {
+    int PS4::inflateFromLayout(SaveProject& saveProject, const fs::path& theFilePath) {
         m_filePath = theFilePath;
 
         int status = inflateListing(saveProject);
@@ -28,13 +30,13 @@ namespace editor {
         }
 
         readFileInfo(saveProject);
-        readExternalFiles(saveProject);
+        readExternalFolders(saveProject);
 
         return SUCCESS;
     }
 
 
-    int PS4::deflateToSave(MU SaveProject* saveProject, MU WriteSettings& theSettings) const {
+    int PS4::deflateToSave(MU SaveProject& saveProject, MU WriteSettings& theSettings) const {
 
         printf("PS4.write(): not implemented!\n");
         return NOT_IMPLEMENTED;
@@ -45,9 +47,9 @@ namespace editor {
     }
 
 
-    std::vector<fs::path> PS4::findExternalFolder(SaveProject* saveProject) {
+    std::vector<fs::path> PS4::findExternalFolder(SaveProject& saveProject) {
         // go from "root/00000001/savedata0/GAMEDATA" to "root/00000001/savedata0"
-        const fs::path mainDirPath = saveProject->m_stateSettings.filePath().parent_path();
+        const fs::path mainDirPath = saveProject.m_stateSettings.filePath().parent_path();
 
 
         // get sfo data from "root/00000001/savedata0/sce_sys/param.sfo"
@@ -58,14 +60,14 @@ namespace editor {
         }
 
         const fs::path icon0Path = mainDirPath / "sce_sys" / "icon0.png";
-        if (!saveProject->m_displayMetadata.icon0png.isValid() && fs::exists(icon0Path)) {
-            saveProject->m_displayMetadata.icon0png.loadFromFile(icon0Path.string().c_str());
+        if (!saveProject.m_displayMetadata.icon0png.isValid() && fs::exists(icon0Path)) {
+            saveProject.m_displayMetadata.icon0png.loadFromFile(icon0Path.string().c_str());
         }
 
         // get the "CUSA00744-240620222358.0"-alike str from the main "param.sfo"
         SFOManager mainSFO(sfoFilePath.string());
         const std::wstring subtitle = stringToWstring(mainSFO.getAttribute("SUBTITLE"));
-        saveProject->m_displayMetadata.worldName = subtitle;
+        saveProject.m_displayMetadata.worldName = subtitle;
 
 
         std::string mainAttr = mainSFO.getAttribute("SAVEDATA_DIRECTORY");
@@ -124,18 +126,23 @@ namespace editor {
     }
 
 
-    int PS4::readExternalFiles(SaveProject* saveProject) {
+    int PS4::readExternalFolders(SaveProject& saveProject) {
         auto folders = findExternalFolder(saveProject);
         int status;
         for (c_auto& folder : folders) {
-            status = readExternalFolder(folder, saveProject);
+            status = readExternalFolder(saveProject, folder);
             if (status != 0) {
                 printf("Failed to read associated external files.\n");
                 break;
             }
         }
-        saveProject->m_stateSettings.setNewGen(true);
+        saveProject.m_stateSettings.setNewGen(true);
         return status;
+    }
+
+
+    int PS4::writeExternalFolders(SaveProject& saveProject, const fs::path& outDirPath) {
+        return NOT_IMPLEMENTED;
     }
 
 

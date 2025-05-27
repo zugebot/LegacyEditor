@@ -3,14 +3,16 @@
 #include "common/codec/XDecompress.hpp"
 #include "common/utils.hpp"
 
-#include "code/FileListing/fileListing.hpp"
-#include "code/SaveProject/SaveProject.hpp"
+#include "code/SaveFile/stateSettings.hpp"
+#include "code/SaveFile/SaveProject.hpp"
+#include "code/SaveFile/fileListing.hpp"
+#include "code/SaveFile/writeSettings.hpp"
 
 
 namespace editor {
 
 
-    int Xbox360DAT::inflateFromLayout(const fs::path& theFilePath, SaveProject* saveProject) {
+    int Xbox360DAT::inflateFromLayout(SaveProject& saveProject, const fs::path& theFilePath) {
         m_filePath = theFilePath;
 
         int status = inflateListing(saveProject);
@@ -25,7 +27,7 @@ namespace editor {
     }
 
 
-    int Xbox360DAT::inflateListing(MU SaveProject* saveProject) {
+    int Xbox360DAT::inflateListing(MU SaveProject& saveProject) {
         Buffer fileData;
         DataReader reader;
 
@@ -34,6 +36,11 @@ namespace editor {
             reader = DataReader(fileData.span(), Endian::Big);
         } catch (const std::exception& e) {
             return printf_err(FILE_ERROR, ERROR_4, m_filePath.string().c_str());
+        }
+
+        if (!saveProject.m_stateSettings.shouldDecompress()) {
+            int status = FileListing::readListing(saveProject, fileData, m_console);
+            return status;
         }
 
         if (reader.size() < 12) {
@@ -45,12 +52,12 @@ namespace editor {
         u32 file_size = reader.read<u32>();
 
         Buffer inflatedData;
-       if(!inflatedData.allocate(file_size)) {
-           return printf_err(MALLOC_FAILED, ERROR_1, file_size);
-       }
+        if (!inflatedData.allocate(file_size)) {
+            return printf_err(MALLOC_FAILED, ERROR_1, file_size);
+        }
 
-       codec::XmemErr error = codec::XDecompress(
-               reader.ptr(), src_size, inflatedData.data(), inflatedData.size_ptr());
+        codec::XmemErr error = codec::XDecompress(
+                reader.ptr(), src_size, inflatedData.data(), inflatedData.size_ptr());
         if (error != codec::XmemErr::Ok) {
             return printf_err(DECOMPRESS, "%s (%s)", ERROR_3, to_string(error));
         }
@@ -59,13 +66,12 @@ namespace editor {
             return printf_err(DECOMPRESS, "%s", ERROR_3);
         }
 
-        int status = saveProject->m_fileListing.readListing(inflatedData, m_console);
-
+        int status = FileListing::readListing(saveProject, inflatedData, m_console);
         return status;
     }
 
 
-    int Xbox360DAT::deflateToSave(MU SaveProject* saveProject, MU WriteSettings& theSettings) const {
+    int Xbox360DAT::deflateToSave(MU SaveProject& saveProject, MU WriteSettings& theSettings) const {
         printf("Xbox360DAT.write(): not implemented!\n");
         return NOT_IMPLEMENTED;
     }

@@ -2,18 +2,21 @@
 
 #include "include/zlib-1.2.12/zlib.h"
 #include "include/tinf/tinf.h"
-#include "common/utils.hpp"
 
-#include "code/FileListing/fileListing.hpp"
-#include "code/SaveProject/SaveProject.hpp"
+#include "common/utils.hpp"
 #include "common/DataWriter.hpp"
 #include "common/fmt.hpp"
+
+#include "code/SaveFile/stateSettings.hpp"
+#include "code/SaveFile/SaveProject.hpp"
+#include "code/SaveFile/fileListing.hpp"
+#include "code/SaveFile/writeSettings.hpp"
 
 
 namespace editor {
 
 
-    int WiiU::inflateFromLayout(const fs::path& theFilePath, SaveProject* saveProject) {
+    int WiiU::inflateFromLayout(SaveProject& saveProject, const fs::path& theFilePath) {
         m_filePath = theFilePath;
 
         int status = inflateListing(saveProject);
@@ -28,7 +31,7 @@ namespace editor {
     }
 
 
-    int WiiU::inflateListing(SaveProject* saveProject) {
+    int WiiU::inflateListing(SaveProject& saveProject) {
         Buffer fileData;
         DataReader reader;
 
@@ -54,7 +57,7 @@ namespace editor {
             return DECOMPRESS;
         }
 
-        status = saveProject->m_fileListing.readListing(dst, m_console);
+        status = FileListing::readListing(saveProject, dst, m_console);
         if (status != 0) {
             return -1;
         }
@@ -63,15 +66,14 @@ namespace editor {
     }
 
 
-    int WiiU::deflateToSave(SaveProject* saveProject, WriteSettings& theSettings) const {
+    int WiiU::deflateToSave(SaveProject& saveProject, WriteSettings& theSettings) const {
         int status;
 
         const fs::path rootPath = theSettings.getInFolderPath();
 
         // GAMEDATA
         fs::path gameDataPath = rootPath / getCurrentDateTimeString();
-        Buffer inflatedData = saveProject->m_fileListing.writeListing(
-                saveProject->m_stateSettings, theSettings);
+        Buffer inflatedData = FileListing::writeListing(saveProject, theSettings);
 
         Buffer deflatedData;
 
@@ -88,7 +90,7 @@ namespace editor {
         fs::path fileInfoPath = gameDataPath;
         fileInfoPath += ".ext";
 
-        Buffer fileInfoData = saveProject->m_displayMetadata.write(m_console);
+        Buffer fileInfoData = saveProject.m_displayMetadata.write(m_console);
         try {
             DataWriter::writeFile(fileInfoPath, fileInfoData.span());
         } catch(const std::exception& error) {

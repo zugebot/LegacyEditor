@@ -1,41 +1,69 @@
 #pragma once
 
+#include <utility>
+
 #include "include/lce/enums.hpp"
 #include "include/lce/processor.hpp"
 
 #include "common/error_status.hpp"
 #include "common/nbt.hpp"
-#include "common/Buffer.hpp"
+#include "common/buffer.hpp"
 
 namespace editor {
 
 
     class LCEFile {
         NBTCompound m_nbt;
+        fs::path m_folderPath;
+        fs::path m_fileName;
+
     public:
-        Buffer m_data;
-        u64 m_timestamp = 0;
-        std::string m_internalName;
         lce::CONSOLE m_console = lce::CONSOLE::NONE;
         lce::FILETYPE m_fileType = lce::FILETYPE::NONE;
+        u64 m_timestamp = 0;
 
-        explicit LCEFile(lce::CONSOLE consoleIn);
-        explicit LCEFile(lce::CONSOLE consoleIn, u32 sizeIn);
-        LCEFile(lce::CONSOLE consoleIn, u32 sizeIn, u64 timestampIn);
+        explicit
+        LCEFile(const lce::CONSOLE consoleIn) : m_console(consoleIn) {}
 
-        template<class B>
-            requires std::same_as<std::remove_cvref_t<B>, Buffer>
-        LCEFile(lce::CONSOLE consoleIn, B&& bufferIn, c_u64 timestampIn)
-            : m_data(std::forward<B>(bufferIn)),
+        LCEFile(lce::CONSOLE consoleIn, c_u64 timestampIn,
+                fs::path folderPathIn, const std::string& fileNameIn) :
               m_timestamp(timestampIn),
-              m_console(consoleIn) {}
+              m_console(consoleIn),
+              m_folderPath(std::move(folderPathIn)),
+              m_fileName(fileNameIn) {
+            initialize(fileNameIn);
+        }
 
-        ~LCEFile();
+        ND fs::path path() const {
+            return m_folderPath / m_fileName;
+        }
+
+        MU ND Buffer getBuffer() const {
+            return DataReader::readFile(path());
+        }
+
+        MU void setBuffer(Buffer buffer) const {
+            DataWriter::writeFile(path(), buffer.span());
+        }
+
+        u64 detectSize() const {
+            fs::path filePath = path();
+            if (fs::exists(filePath) && fs::is_regular_file(filePath)) {
+                return fs::file_size(filePath);
+            }
+            return 0;
+        }
 
         MU ND bool isRegionType() const {
             return m_fileType == lce::FILETYPE::OLD_REGION_NETHER ||
                    m_fileType == lce::FILETYPE::OLD_REGION_OVERWORLD ||
                    m_fileType == lce::FILETYPE::OLD_REGION_END;
+        }
+
+        MU ND bool isTinyRegionType() const {
+            return m_fileType == lce::FILETYPE::NEW_REGION_NETHER ||
+                   m_fileType == lce::FILETYPE::NEW_REGION_OVERWORLD ||
+                   m_fileType == lce::FILETYPE::NEW_REGION_END;
         }
 
         MU ND bool isEntityType() const {
@@ -44,20 +72,16 @@ namespace editor {
                    m_fileType == lce::FILETYPE::ENTITY_END;
         }
 
-        void clear();
-        // MU void steal(Data& other) { m_data.steal(other); }
-
-        ND std::string constructFileName(lce::CONSOLE console) const;
-        MU ND bool isEmpty() const { return !m_data.empty(); }
         MU ND std::string toString() const;
 
-        MU void setType(lce::FILETYPE fileTypeIn) {
-            m_fileType = fileTypeIn;
-        }
+        MU void setType(lce::FILETYPE fileTypeIn) { m_fileType = fileTypeIn; }
         MU ND lce::FILETYPE getType() const { return m_fileType; }
-        MU void setFileName(const std::string& filename);
-        MU ND std::string getFileName() const;
 
+        MU void setFileName(const fs::path& filename);
+        MU ND fs::path getFileName() const;
+
+        void initialize(const std::string& fileNameIn);
+        ND std::string constructFileName(lce::CONSOLE console) const;
 
         MU void setRegionX(i16 regionX);
         MU ND i16 getRegionX() const;

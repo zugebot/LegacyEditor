@@ -1,4 +1,4 @@
-#include "RegionManager.hpp"
+#include "Region.hpp"
 
 #include "include/lce/processor.hpp"
 
@@ -7,6 +7,7 @@
 
 #include "common/DataReader.hpp"
 #include "common/DataWriter.hpp"
+#include "common/RLE/rle_nsxps4.hpp"
 
 
 namespace {
@@ -19,7 +20,7 @@ namespace {
 namespace editor {
 
 
-    MU ND bool RegionManager::extractChunk(i32 x, i32 z, ChunkManager& out) {
+    MU ND bool Region::extractChunk(i32 x, i32 z, ChunkManager& out) {
         if (!inRange(x, z, m_regScale)) return false;
 
         ChunkManager* src = getChunk(x, z);
@@ -30,7 +31,7 @@ namespace editor {
         return true;
     }
 
-    MU ND bool RegionManager::insertChunk(i32 x, i32 z, ChunkManager&& in) {
+    MU ND bool Region::insertChunk(i32 x, i32 z, ChunkManager&& in) {
         if (!inRange(x, z, m_regScale)) return false;
         ChunkManager* dst = getChunk(x, z);
         if (!dst) return false;
@@ -40,7 +41,7 @@ namespace editor {
     }
 
 
-    bool RegionManager::moveChunkTo(RegionManager& dst,
+    bool Region::moveChunkTo(Region& dst,
                                     i32 x, i32 z,
                                     i32 dx, i32 dz) {
         if (dx == -1) dx = x;
@@ -56,7 +57,7 @@ namespace editor {
     }
 
 
-    void RegionManager::convertChunks(lce::CONSOLE consoleIn) {
+    void Region::convertChunks(lce::CONSOLE consoleIn) {
         MU int index = 0;
         for (auto& chunk: m_chunks) {
             if (chunk.buffer.empty()) continue;
@@ -69,14 +70,14 @@ namespace editor {
     }
 
 
-    MU ChunkManager* RegionManager::getChunk(c_int xIn, c_int zIn) {
+    MU ChunkManager* Region::getChunk(c_int xIn, c_int zIn) {
         c_u32 index = xIn + zIn * m_regScale;
         if (index > CHUNK_COUNT) { return nullptr; }
         return &m_chunks[index];
     }
 
 
-    MU ChunkManager* RegionManager::getNonEmptyChunk() {
+    MU ChunkManager* Region::getNonEmptyChunk() {
         for (auto& chunk: m_chunks) {
             if (!chunk.buffer.empty()) {
                 return &chunk;
@@ -96,8 +97,24 @@ namespace editor {
      * step 7: each chunk gets its own memory
      * @param fileIn
      */
-    int RegionManager::read(const LCEFile* fileIn) {
-        if (fileIn->m_data.empty()) {
+    int Region::read(const LCEFile* fileIn) {
+
+        Buffer buffer = fileIn->getBuffer();
+
+        // new gen stuff
+        if (fileIn->isTinyRegionType()) {
+            DataReader reader(buffer.data(), buffer.size(), Endian::Little);
+            if (reader.size() == 0) { return SUCCESS; }
+
+            c_u32 fileSize = reader.read<u32>();
+            Buffer decomp(fileSize);
+            codec::RLE_NSX_OR_PS4_DECOMPRESS(reader.ptr(), reader.size() - 4,
+                                             decomp.data(), decomp.size());
+            buffer = std::move(decomp);
+        }
+
+
+        if (buffer.empty()) {
             return SUCCESS;
         }
 
@@ -108,9 +125,8 @@ namespace editor {
         m_regZ = fileIn->getRegionZ();
 
         m_console = fileIn->m_console;
-        auto* dataIn = &fileIn->m_data;
 
-        c_u32 totalSectors = dataIn->size() / SECTOR_BYTES + 1;
+        c_u32 totalSectors = buffer.size() / SECTOR_BYTES + 1;
 
         size_t chunkIndex;
         std::vector<u8> sectors;
@@ -118,7 +134,7 @@ namespace editor {
         sectors.resize(CHUNK_COUNT);
         locations.resize(CHUNK_COUNT);
 
-        DataReader reader(dataIn->data(), dataIn->size(), getConsoleEndian(m_console));
+        DataReader reader(buffer.data(), buffer.size(), getConsoleEndian(m_console));
 
 
         reader.skip<0x2000>();
@@ -136,7 +152,7 @@ namespace editor {
             if (locations[chunkIndex] + sectors[chunkIndex] > totalSectors) {
                 printf("[%u] chunk sector[%u, %u] end goes outside file...\n",
                        totalSectors, locations[chunkIndex], sectors[chunkIndex]);
-                throw std::runtime_error("RegionManager::read error\n");
+                throw std::runtime_error("Region::read error\n");
             }
 
             // read chunk
@@ -159,7 +175,7 @@ namespace editor {
      * @param consoleIn
      * @return
      */
-    Buffer RegionManager::write(const lce::CONSOLE consoleIn) {
+    Buffer Region::write(const lce::CONSOLE consoleIn) {
         std::vector<u8> sectors;
         std::vector<u32> locations;
         sectors.resize(CHUNK_COUNT);

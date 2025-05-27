@@ -8,6 +8,7 @@
 #include "common/fmt.hpp"
 #include "common/timer.hpp"
 
+#include "code/scripts.hpp"
 #include "code/include.hpp"
 
 using namespace cmn;
@@ -85,7 +86,6 @@ int main(int argc, char* argv[]) {
     force_utf8_console();
 #endif
 
-
     /*
     std::string entitiesFile = "C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\dump\\250524034012_ps4__0\\DIM1\\entities.dat";
     Buffer buffer = DataReader::readFile(entitiesFile);
@@ -111,9 +111,9 @@ int main(int argc, char* argv[]) {
     log(eLog::detail,
              "Find the project here! https://github.com/zugebot/LegacyEditor\n\n");
     log(eLog::detail,
-             "Supports reading  [ Xbox360, PS3, RPCS3, PSVITA, PS4, WiiU, Switch ]\n");
+             "Supports reading  [ Xbox360, PS3, RPCS3, PSVITA, PS4, WiiU, Switch, Windurango ]\n");
     log(eLog::detail,
-             "Supports writing  [ -------  ---  RPCS3, PSVITA, ---  WiiU  ------ ]\n\n");
+             "Supports writing  [ -------  ---  RPCS3, PSVITA, ---  WiiU  ------, ---------- ]\n\n");
 
     fs::path exePath = fs::path(argv[0]).parent_path();
     fs::path defaultOutDir = exePath / "out";
@@ -300,7 +300,7 @@ int main(int argc, char* argv[]) {
             log(eLog::info, "Failed to dump fileListing.");
         }
 
-        const int statusProcess = saveProject.m_fileListing.preprocess(saveProject.m_stateSettings, writeSettings);
+        const int statusProcess = editor::preprocess(saveProject, saveProject.m_stateSettings, writeSettings);
         if (statusProcess != 0) {
             log(eLog::error,
                      "Preprocessing {} failed for file: {}\n",
@@ -309,6 +309,12 @@ int main(int argc, char* argv[]) {
         }
 
         saveProject.printDetails();
+
+
+        editor::convert(saveProject, writeSettings);
+
+        saveProject.printDetails();
+
 
         Timer writeTimer;
         const int statusOut = saveProject.write(writeSettings);

@@ -4,7 +4,7 @@
 
 #include "include/lce/processor.hpp"
 
-#include "code/SaveProject/SaveProject.hpp"
+#include "code/SaveFile/SaveProject.hpp"
 #include "code/include.hpp"
 #include "common/timer.hpp"
 
@@ -178,7 +178,7 @@ int main(MU int argc, char* argv[]) {
 
             // 3. get valid regionManager and chunkManager
             editor::ChunkManager* chunkManager = nullptr;
-            editor::RegionManager regionManager;
+            editor::Region regionManager;
             for (auto regionFile: saveProject.m_fileListing.ptrs.old_reg_overworld) {
                 regionManager.read(regionFile);
                 chunkManager = regionManager.getNonEmptyChunk();

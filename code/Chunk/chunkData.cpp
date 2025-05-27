@@ -139,6 +139,27 @@ namespace editor::chunk {
     }
 
 
+    void ChunkData::convertAquaticToElytra() {
+        oldBlocks = u8_vec(65536);
+        for (int xIter = 0; xIter < 16; xIter++) {
+            for (int zIter = 0; zIter < 16; zIter++) {
+                for (int yIter = 0; yIter < 256; yIter++) {
+
+                    u16 block = getBlock<eChunkVersion::V_12>(xIter, yIter, zIter);
+                    if (((block & 0x1FF0) >> 4) > 255) {
+                            block = lce::blocks::COBBLESTONE_ID << 4;
+                    }
+
+                    setBlock<eChunkVersion::V_11>(xIter, yIter, zIter, block);
+                }
+            }
+        }
+        lastVersion = 11;
+        u16_vec().swap(newBlocks);
+        u16_vec().swap(submerged);
+    }
+
+
     /**
      * Still a work in progress.
      *
@@ -171,6 +192,8 @@ namespace editor::chunk {
 
         // defaultNBT();
     }
+
+
 
 
 

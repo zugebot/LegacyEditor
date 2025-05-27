@@ -1,36 +1,25 @@
 #pragma once
 
-#include <ranges>
-
-#include "include/lce/processor.hpp"
-#include "include/ghc/fs_std.hpp"
-
-#include "stateSettings.hpp"
-#include "writeSettings.hpp"
-
-#include "code/LCEFile/LCEFile.hpp"
-#include "common/error_status.hpp"
-
+#include "code/ConsoleParser/helpers/detectConsole.hpp"
+#include "code/ConsoleParser/helpers/makeParserForConsole.hpp"
+#include "code/DisplayMetadata/DisplayMetadata.hpp"
+#include "code/SaveFile/fileListing.hpp"
 
 namespace editor {
 
+    class SaveProject {
+    public:
+        fs::path m_tempFolder;
 
-    class FileListing {
+        DisplayMetadata m_displayMetadata;
+        StateSettings m_stateSettings;
+
         std::list<LCEFile> m_allFiles;
         i32 m_oldestVersion{};
         i32 m_currentVersion{};
+
+        // move to state settings grr
         i32 m_isNewGen = false;
-
-    public:
-
-
-
-        /// Constructors
-
-        FileListing() = default;
-        ~FileListing();
-
-        /// Modify State
 
         MU void setOldestVersion(i32 theVersion) { m_oldestVersion = theVersion; }
         MU ND i32 oldestVersion() const { return m_oldestVersion; }
@@ -41,23 +30,25 @@ namespace editor {
         void setNewGen(bool isNewGen) { m_isNewGen = isNewGen; }
         bool isNewGen() const { return m_isNewGen; }
 
-        // file stuff
-
-        void deallocate();
 
 
-        // processing
 
-        ND int readListing(const Buffer & bufferIn, lce::CONSOLE consoleIn);
-        ND Buffer writeListing(StateSettings& stateSettings, WriteSettings& writeSettings);
-        MU ND int preprocess(StateSettings& stateSettings, WriteSettings& theWriteSettings);
+        int read(const fs::path& theFilePath);
+        int write(WriteSettings& theWriteSettings);
 
-        /// Region Helpers
 
-        MU void convertRegions(lce::CONSOLE consoleOut);
-        MU void pruneRegions();
+        MU void printDetails() const;
+        MU void printFileList() const;
+        MU ND int dumpToFolder(const std::string& detail) const;
 
-        // accessors
+
+
+
+
+
+
+
+
 
         ND size_t size() const { return m_allFiles.size(); }
 
@@ -78,15 +69,15 @@ namespace editor {
         auto view_of(const SetT& keepTypes) {
             using std::views::filter;
             return m_allFiles | filter([&keepTypes](const LCEFile& f) {
-                         return keepTypes.contains(f.m_fileType);
-                     });
+                       return keepTypes.contains(f.m_fileType);
+                   });
         }
         template<class SetT>
         ND auto view_of(const SetT& keepTypes) const {
             using std::views::filter;
             return m_allFiles | filter([&keepTypes](const LCEFile& f) {
-                         return keepTypes.contains(f.m_fileType);
-                     });
+                       return keepTypes.contains(f.m_fileType);
+                   });
         }
 
         auto view_of(std::initializer_list<lce::FILETYPE> iList) {
@@ -107,7 +98,7 @@ namespace editor {
             return std::nullopt;
         }
 
-        std::optional<std::reference_wrapper<const LCEFile>>
+        ND std::optional<std::reference_wrapper<const LCEFile>>
         findFile(lce::FILETYPE want) const {
             for (auto &f : m_allFiles)
                 if (f.m_fileType == want)
@@ -125,5 +116,5 @@ namespace editor {
         MU std::list<LCEFile> collectFiles(lce::FILETYPE fileType);
         MU std::list<LCEFile> collectFiles(const std::set<lce::FILETYPE>& typesToCollect);
     };
-}
 
+} // namespace editor

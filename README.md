@@ -10,21 +10,20 @@ IF YOU FIND ANY ISSUES, PLEASE REPORT THEM! It helps me develop faster :)
 ## Supported Consoles and Formats
 
 ### Reading From:
-- **WiiU**
-- **PS3**
-- **RPCS3 Emulator**
-- **PSVita**
+- **PS4**
+- **Switch**
 - **Xbox 360 (.dat format)**
 - **Xbox 360 (.bin format)**
-
-### Partially Reading From:
-- **PS4** (entity conversion missing)
-- **Switch** (region/entity conversion missing)
+- **Windurango Emulator** (Xbox1)
+- **PS3**
+- **RPCS3 Emulator** (PS3)
+- **WiiU** (also applies to **Cemu Emulator**)
+- **PSVita**
 
 ### Writing To:
-- **WiiU**
+- **RPCS3 Emulator (PS3)**
+- **WiiU** (also applies to **Cemu Emulator**)
 - **PSVita**
-- **RPCS3 Emulator**
 
 ### Partially Writing To:
 - **PS3** (PARAM.PFD not yet resignable)
@@ -62,7 +61,9 @@ This project makes use of several external libraries, including:
 
 ## Outside Help
 
-PS-VITA: https://docs.google.com/document/d/1HUoeH9YcIwqYPYMx9ps0Ui3YF0x_g9QkluADAx_fTJQ
+PSVita: https://docs.google.com/document/d/1HUoeH9YcIwqYPYMx9ps0Ui3YF0x_g9QkluADAx_fTJQ
+PS4   : 
+
 
 ## License
 

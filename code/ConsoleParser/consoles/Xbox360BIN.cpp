@@ -4,14 +4,16 @@
 #include "common/codec/XDecompress.hpp"
 #include "common/utils.hpp"
 
-#include "code/FileListing/fileListing.hpp"
-#include "code/SaveProject/SaveProject.hpp"
+#include "code/SaveFile/stateSettings.hpp"
+#include "code/SaveFile/SaveProject.hpp"
+#include "code/SaveFile/fileListing.hpp"
+#include "code/SaveFile/writeSettings.hpp"
 
 
 namespace editor {
 
     // TODO: IDK if it should but it is for now, get fileInfo out of it, fix memory leaks
-    int Xbox360BIN::inflateFromLayout(const fs::path& theFilePath, SaveProject* saveProject) {
+    int Xbox360BIN::inflateFromLayout(SaveProject& saveProject, const fs::path& theFilePath) {
         m_filePath = theFilePath;
 
         FILE *f_in = fopen(m_filePath.string().c_str(), "rb");
@@ -52,9 +54,9 @@ namespace editor {
         MU auto createdTime = TimePointFromFatTimestamp(entry->createdTimeStamp);
         BINHeader* meta = stfsInfo.getMetaData();
         if (!meta->thumbnailImage.empty()) {
-            saveProject->m_displayMetadata.read(meta->thumbnailImage, lce::CONSOLE::XBOX360);
+            saveProject.m_displayMetadata.read(meta->thumbnailImage, lce::CONSOLE::XBOX360);
         }
-        saveProject->m_displayMetadata.worldName = stfsInfo.getMetaData()->displayName;
+        saveProject.m_displayMetadata.worldName = stfsInfo.getMetaData()->displayName;
 
         const Buffer _ = stfsInfo.extractFile(entry);
         DataReader deflatedData(_.data(), _.size());
@@ -75,7 +77,7 @@ namespace editor {
             return DECOMPRESS;
         }
 
-        int status = saveProject->m_fileListing.readListing(data, m_console);
+        int status = FileListing::readListing(saveProject, data, m_console);
         if (status != 0) {
             return -1;
         }
@@ -84,12 +86,12 @@ namespace editor {
     }
 
 
-    int Xbox360BIN::inflateListing(MU SaveProject* saveProject) {
+    int Xbox360BIN::inflateListing(MU SaveProject& saveProject) {
         return NOT_IMPLEMENTED;
     }
 
 
-    ND int Xbox360BIN::deflateToSave(MU SaveProject* saveProject, MU WriteSettings& theSettings) const {
+    ND int Xbox360BIN::deflateToSave(MU SaveProject& saveProject, MU WriteSettings& theSettings) const {
         printf("Xbox360BIN.write(): not implemented!\n");
         return NOT_IMPLEMENTED;
     }

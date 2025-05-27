@@ -4,14 +4,16 @@
 #include "tinf/tinf.h"
 #include "common/utils.hpp"
 
-#include "code/FileListing/fileListing.hpp"
-#include "code/SaveProject/SaveProject.hpp"
+#include "code/SaveFile/stateSettings.hpp"
+#include "code/SaveFile/SaveProject.hpp"
+#include "code/SaveFile/fileListing.hpp"
+#include "code/SaveFile/writeSettings.hpp"
 
 
 namespace editor {
 
 
-    int Switch::inflateFromLayout(const fs::path& theFilePath, SaveProject* saveProject) {
+    int Switch::inflateFromLayout(SaveProject& saveProject, const fs::path& theFilePath) {
         m_filePath = theFilePath;
 
         int status = inflateListing(saveProject);
@@ -21,13 +23,13 @@ namespace editor {
         }
 
         readFileInfo(saveProject);
-        readExternalFiles(saveProject);
+        readExternalFolders(saveProject);
 
         return SUCCESS;
     }
 
 
-    int Switch::deflateToSave(MU SaveProject* saveProject, MU WriteSettings& theSettings) const {
+    int Switch::deflateToSave(MU SaveProject& saveProject, MU WriteSettings& theSettings) const {
         printf("Switch.write(): not implemented!\n");
         return NOT_IMPLEMENTED;
     }
@@ -38,25 +40,30 @@ namespace editor {
     }
 
 
-
-    int Switch::readExternalFiles(SaveProject* saveProject) {
+    std::vector<fs::path> Switch::findExternalFolder(editor::SaveProject &saveProject) {
         fs::path folder = m_filePath;
         folder.replace_extension(".sub");
-
-        int status;
-        if (!fs::is_directory(folder)) {
-            return printf_err(FILE_ERROR, "Failed to read associated external files.\n");
-        } else if (!folder.empty()) {
-            status = readExternalFolder(folder, saveProject);
-            saveProject->m_stateSettings.setNewGen(true);
-        } else {
-            return printf_err(FILE_ERROR, "Failed to find associated external files.\n");
+        if (!fs::is_directory(folder) || folder.empty()) {
+            return {};
         }
-        return status;
+        return { folder };
     }
 
 
-    MU int Switch::writeExternalFolder(MU const fs::path& outDirPath) {
+    int Switch::readExternalFolders(SaveProject& saveProject) {
+        auto folders = findExternalFolder(saveProject);
+        if (folders.empty()) {
+            return printf_err(FILE_ERROR, "Failed to find associated external files.\n");
+        } else {
+            // there is only one folder
+            int status = readExternalFolder(saveProject, folders[0]);
+            saveProject.m_stateSettings.setNewGen(true);
+            return status;
+        }
+    }
+
+
+    int Switch::writeExternalFolders(SaveProject& saveProject, const fs::path& outDirPath) {
         printf("FileListing::writeExternalFolder: not implemented!");
         return NOT_IMPLEMENTED;
     }

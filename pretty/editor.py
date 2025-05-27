@@ -1,3 +1,5 @@
+import os
+import sys
 import gdb
 import gdb.printing
 
@@ -16,6 +18,15 @@ def _string_data(s: gdb.Value) -> str:
     except gdb.error:
         return "<err>"
 
+def _fs_path_to_string(path_val: gdb.Value) -> str:
+    try:
+        string = str(path_val.cast(gdb.lookup_type('std::wstring')))
+        string = string[2:-1]
+        string = string.replace("\\\\", "\\")
+        return string
+    except Exception:
+        return "<err>"
+
 
 class LCEFilePrinter:
     """Pretty‑printer for editor::LCEFile (non‑pointer)."""
@@ -24,13 +35,23 @@ class LCEFilePrinter:
 
     # summary line
     def to_string(self):
-        # try:
-            name   = _string_data(self.val['m_internalName'])
-            size   = int(self.val['m_data']['m_size'])
-            return f"{{\"{name}\", size={size}}}"
-        # except gdb.error as e:
-        #     print(e)
-        #     return "{Invalid}"
+        try:
+            name = _fs_path_to_string(self.val['m_fileName'])
+            folder = _fs_path_to_string(self.val['m_folderPath'])
+            console = str(self.val['m_console']).replace("lce::CONSOLE::", "")
+            base_dir = os.getcwd()
+
+            full_path = os.path.join(base_dir, folder, name)
+            print(full_path)
+
+            try:
+                size = os.path.getsize(full_path)
+            except OSError:
+                size = "<not found>"
+
+            return f"{{{console}, size={size}, \"{name}\"}}"
+        except gdb.error:
+            return "{Invalid}"
 
     def display_hint(self):
         return "string"

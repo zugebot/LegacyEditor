@@ -14,11 +14,12 @@ namespace editor::map {
                          const fs::path& filename) {
         static constexpr int MAP_BYTE_SIZE = 16384;
 
-        if (map->m_data.empty()) {
+        Buffer buffer = map->getBuffer();
+        if (buffer.empty()) {
             return;
         }
 
-        DataReader mapManager(map->m_data.data(), map->m_data.size());
+        DataReader mapManager(buffer.data(), buffer.size());
         NBTBase data;
         data.read(mapManager);
         auto byteArray = data

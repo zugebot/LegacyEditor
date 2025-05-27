@@ -6,26 +6,72 @@
 namespace editor {
 
 
-    LCEFile::LCEFile(const lce::CONSOLE consoleIn) : m_console(consoleIn) {
+    void LCEFile::initialize(const std::string& fileNameIn) {
+        if (fileNameIn.ends_with(".mcr")) {
+            if (fileNameIn.starts_with("DIM-1")) {
+                setType(lce::FILETYPE::OLD_REGION_NETHER);
+            } else if (fileNameIn.starts_with("DIM1")) {
+                setType(lce::FILETYPE::OLD_REGION_END);
+            } else if (fileNameIn.starts_with("r")) {
+                setType(lce::FILETYPE::OLD_REGION_OVERWORLD);
+            }
+            c_auto [fst, snd] = extractRegionCoords(fileNameIn);
+            setRegionX(static_cast<i16>(fst));
+            setRegionZ(static_cast<i16>(snd));
 
-    }
+        } else if (fileNameIn.starts_with("GAMEDATA_000")) {
+            static constexpr lce::FILETYPE REGION_DIMENSIONS[3] = {
+                    lce::FILETYPE::NEW_REGION_OVERWORLD,
+                    lce::FILETYPE::NEW_REGION_NETHER,
+                    lce::FILETYPE::NEW_REGION_END};
+            if (c_auto dimChar = static_cast<char>(static_cast<int>(fileNameIn.at(12)) - 48);
+                dimChar < 0 || dimChar > 2) {
+                m_fileType = lce::FILETYPE::NONE;
+            } else {
+                m_fileType = REGION_DIMENSIONS[static_cast<int>(static_cast<u8>(dimChar))];
+            }
+            c_i16 rX = static_cast<i8>(strtol(fileNameIn.substr(13, 2).c_str(), nullptr, 16));
+            c_i16 rZ = static_cast<i8>(strtol(fileNameIn.substr(15, 2).c_str(), nullptr, 16));
+            setRegionX(rX);
+            setRegionZ(rZ);
 
-    LCEFile::LCEFile(const lce::CONSOLE consoleIn, c_u32 sizeIn) : m_console(consoleIn) {
-        m_data = Buffer(sizeIn);
-    }
+        } else if (fileNameIn == "entities.dat") {
+            setType(lce::FILETYPE::ENTITY_OVERWORLD);
 
-    LCEFile::LCEFile(const lce::CONSOLE consoleIn, c_u32 sizeIn, c_u64 timestampIn) : m_timestamp(timestampIn), m_console(consoleIn) {
-        m_data = Buffer(sizeIn);
-    }
+        } else if (fileNameIn.ends_with("entities.dat")) {
+            if (fileNameIn.starts_with("DIM-1")) {
+                setType(lce::FILETYPE::ENTITY_NETHER);
+            } else if (fileNameIn.starts_with("DIM1/")) {
+                setType(lce::FILETYPE::ENTITY_END);
+            }
 
+        } else if (fileNameIn == "level.dat") {
+            setType(lce::FILETYPE::LEVEL);
 
-    LCEFile::~LCEFile() {
-        m_data.clear();
-    }
+        } else if (fileNameIn.starts_with("data/map_")) {
+            c_i16 mapNumber = extractMapNumber(fileNameIn);
+            setMapNumber(mapNumber);
+            setType(lce::FILETYPE::MAP);
 
+        }else if (fileNameIn == "data/villages.dat") {
+            setType(lce::FILETYPE::VILLAGE);
 
-    void LCEFile::clear() {
-        m_data.clear();
+        } else if (fileNameIn == "data/largeMapDataMappings.dat") {
+            setType(lce::FILETYPE::DATA_MAPPING);
+
+        } else if (fileNameIn.starts_with("data/")) {
+            setType(lce::FILETYPE::STRUCTURE);
+
+        } else if (fileNameIn.ends_with(".grf")) {
+            setType(lce::FILETYPE::GRF);
+
+        } else if (fileNameIn.starts_with("players/") ||
+                   fileNameIn.find('/') == -1LLU) {
+            setType(lce::FILETYPE::PLAYER);
+
+        } else {
+            setType(lce::FILETYPE::NONE);
+        }
     }
 
 
@@ -56,7 +102,7 @@ namespace editor {
                 printf("file encountered with no type, possibly an error?");
                 break;
             case lce::FILETYPE::STRUCTURE:
-                name = getFileName();
+                name = getFileName().string();
                 break;
             case lce::FILETYPE::MAP: {
                 c_i16 mapNum = getMapNumber();
@@ -64,7 +110,7 @@ namespace editor {
                 break;
             }
             case lce::FILETYPE::PLAYER:
-                name = getFileName();
+                name = getFileName().string();
                 break;
             // TODO: rewrite to put files in different location for switch / ps4
             case lce::FILETYPE::OLD_REGION_NETHER:
@@ -130,12 +176,12 @@ namespace editor {
 
     MU ND i16 LCEFile::getMapNumber() const { return getTag("#"); }
 
-    MU void LCEFile::setFileName(const std::string& filename) {
-        m_internalName = filename;
+    MU void LCEFile::setFileName(const fs::path& path) {
+        m_fileName = path;
     }
 
-    MU ND std::string LCEFile::getFileName() const {
-        return m_internalName;
+    MU ND fs::path LCEFile::getFileName() const {
+        return m_fileName;
     }
 
     MU void LCEFile::setTag(const std::string& key, i16 value) {
