@@ -43,9 +43,8 @@ namespace editor::chunk {
                 chunkData->chunkHeight = 128;
             }
         } else {
-            // std::cout << "No blocks found in NBT???\n";
+
         }
-        // std::cout << chunkData->oldBlocks.size() << "\n";
 
         if (auto data = compound.extract("Data")) {
             chunkData->blockData = std::move(data->get<NBTByteArray>());
@@ -70,8 +69,6 @@ namespace editor::chunk {
         chunkData->entities = compound.extract("Entities").value_or(makeList(eNBT::COMPOUND));
         chunkData->tileEntities = compound.extract("TileEntities").value_or(makeList(eNBT::COMPOUND));
         chunkData->tileTicks = compound.extract("TileTicks").value_or(makeList(eNBT::COMPOUND));
-
-        // chunkData->oldNBTData = NBTBase();
 
         chunkData->validChunk = true;
 

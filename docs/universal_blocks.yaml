@@ -1,0 +1,675 @@
+# author: Jerrin Shirks
+# file  : universal_blocks.yaml
+# detail: canonical tag schema
+
+property_sets:
+
+  facingNSEW: &facingNSEW_props
+    facing: [north, south, east, west]
+
+  facing_all: &facing_all_props
+    facing: [down, up, north, south, east, west]
+
+  half: &half_props
+    half: [lower, upper]
+
+  powered: &powered_props
+    powered: [true, false]
+
+  door: &door_props
+    <<: [*facingNSEW_props, *half_props,
+      { hinge: [left, right],
+        powered: [true, false],
+        open: [true, false]
+      }]
+
+  trapdoor: &trapdoor_props
+    <<: [*facingNSEW_props, *half_props, { open: [true, false] }]
+
+  fence_gate: &fence_gate_props
+    <<: [*facingNSEW_props, *powered_props, { open: [true, false] }]
+
+  stairs: &stairs_props
+    <<: [*facingNSEW_props, *half_props]
+
+  slab: &slab_props
+    type: [top, bottom, double]
+
+  axis_3d: &axis_props
+    axis: [x, y, z]
+
+  button: &button_props
+    <<: [*facingNSEW_props, *powered_props, {
+      face: [ceiling, floor, wall]
+    }]
+
+  lever: &lever_props
+    <<: [*facingNSEW_props, *powered_props, {
+      face: [ceiling, floor, wall]
+    }]
+
+  bed: &bed_props
+    <<: [*facingNSEW_props, {
+      occupied: [true, false],
+      part: [head, foot]
+    }]
+
+  rail_shape: &rail_shape_props
+    shape:
+      - north_south
+      - east_west
+      - ascending_east
+      - ascending_west
+      - ascending_north
+      - ascending_south
+      - south_east
+      - south_west
+      - north_west
+      - north_east
+
+  powered_rail: &powered_rail_props
+    <<: [*rail_shape_props, *powered_props]
+
+  leaves: &leaves_props
+    persistent: [true, false]
+
+  lit: &lit_props
+    lit: [true, false]
+
+  age0_15: &age0_15       { age: ["0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"] }
+  age0_7:  &age0_7        { age: ["0","1","2","3","4","5","6","7"] }
+  age0_5:  &age0_5        { age: ["0","1","2","3","4","5"] }
+  age0_3:  &age0_3        { age: ["0","1","2","3"] }
+  age0_2:  &age0_2        { age: ["0","1","2"] }
+  age0_1:  &age0_1        { age: ["0","1"] }
+
+  power_0_15: &power_props
+    power: ["0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"]
+
+  portal_axis: &portal_axis_props
+    axis: [x, z]
+
+  mushroom_faces: &mushroom_props
+    down: [true, false]
+    up: [true, false]
+    north: [true, false]
+    south: [true, false]
+    east: [true, false]
+    west: [true, false]
+
+blocks:
+  air: { }
+  stone: { }
+  granite: { }
+  polished_granite: { }
+  diorite: { }
+  polished_diorite: { }
+  andesite: { }
+  polished_andesite: { }
+  grass_block: { }
+  dirt: { }
+  coarse_dirt: { }
+  podzol: { }
+  cobblestone: { }
+  spruce_planks: { }
+  birch_planks: { }
+  jungle_planks: { }
+  acacia_planks: { }
+  dark_oak_planks: { }
+  oak_planks: { }
+  spruce_sapling: *age0_1
+  birch_sapling: *age0_1
+  jungle_sapling: *age0_1
+  acacia_sapling: *age0_1
+  dark_oak_sapling: *age0_1
+  oak_sapling: *age0_1
+  bedrock: { }
+  flowing_water: { }
+  water: { }
+  flowing_lava: { }
+  lava: { }
+  red_sand: { }
+  sand: { }
+  gravel: { }
+  gold_ore: { }
+  iron_ore: { }
+  coal_ore: { }
+  spruce_log: *axis_props
+  birch_log: *axis_props
+  jungle_log: *axis_props
+  oak_log: *axis_props
+  spruce_leaves: *leaves_props
+  birch_leaves: *leaves_props
+  jungle_leaves: *leaves_props
+  oak_leaves: *leaves_props
+  wet_sponge: { }
+  sponge: { }
+  glass: { }
+  lapis_ore: { }
+  lapis_block: { }
+  dispenser:
+    triggered: [true, false]
+  chiseled_sandstone: { }
+  cut_sandstone: { }
+  sandstone: { }
+  note_block: { }
+  red_bed: *bed_props
+  powered_rail: *powered_rail_props
+  detector_rail: *powered_rail_props
+  sticky_piston:
+    <<: *facing_all_props
+    extended: [true, false]
+  cobweb: { }
+  grass: { }
+  fern: { }
+  dead_bush: { }
+  piston:
+    <<: *facing_all_props
+    extended: [true, false]
+  piston_head:
+    <<: *facing_all_props
+    type: [sticky, normal]
+  orange_wool: { }
+  magenta_wool: { }
+  light_blue_wool: { }
+  yellow_wool: { }
+  lime_wool: { }
+  pink_wool: { }
+  gray_wool: { }
+  light_gray_wool: { }
+  cyan_wool: { }
+  purple_wool: { }
+  blue_wool: { }
+  brown_wool: { }
+  green_wool: { }
+  red_wool: { }
+  black_wool: { }
+  white_wool: { }
+  moving_piston:
+    <<: *facing_all_props
+    type: [sticky, normal]
+  dandelion: { }
+  blue_orchid: { }
+  allium: { }
+  azure_bluet: { }
+  red_tulip: { }
+  orange_tulip: { }
+  white_tulip: { }
+  pink_tulip: { }
+  oxeye_daisy: { }
+  poppy: { }
+  brown_mushroom: { }
+  red_mushroom: { }
+  gold_block: { }
+  iron_block: { }
+  smooth_stone_slab: *slab_props
+  sandstone_slab: *slab_props
+  petrified_oak_slab: *slab_props
+  cobblestone_slab: *slab_props
+  brick_slab: *slab_props
+  stone_brick_slab: *slab_props
+  nether_brick_slab: *slab_props
+  quartz_slab: *slab_props
+  smooth_stone: { }
+  smooth_sandstone: { }
+  smooth_quartz: { }
+  bricks: { }
+  tnt:
+    unstable: [true, false]
+  bookshelf: { }
+  mossy_cobblestone: { }
+  obsidian: { }
+  wall_torch: *facingNSEW_props
+  torch: { }
+  fire: *age0_15
+  spawner: { }
+  oak_stairs: *stairs_props
+  chest: *facingNSEW_props
+  redstone_wire: *power_props
+  diamond_ore: { }
+  diamond_block: { }
+  crafting_table: { }
+  wheat: *age0_7
+  farmland:
+    moisture: ["0","1","2","3","4","5","6","7"]
+  furnace: *lit_props
+  sign:
+    rotation: ["0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"]
+  oak_door: *door_props
+  ladder: *facingNSEW_props
+  rail: *rail_shape_props
+  cobblestone_stairs: *stairs_props
+  wall_sign: *facingNSEW_props
+  lever: *lever_props
+  stone_pressure_plate: *powered_props
+  iron_door: *door_props
+  oak_pressure_plate: *powered_props
+  redstone_ore: *lit_props
+  redstone_wall_torch:
+    <<: [*facingNSEW_props, *lit_props]
+  redstone_torch: *powered_props
+  stone_button: *button_props
+  snow:
+    layers: ["1","2","3","4","5","6","7","8"]
+  ice: { }
+  snow_block: { }
+  cactus: *age0_15
+  clay: { }
+  sugar_cane: *age0_15
+  jukebox:
+    has_record: [true, false]
+  oak_fence: { } # TODO
+  carved_pumpkin: *facingNSEW_props
+  netherrack: { }
+  soul_sand: { }
+  glowstone: { }
+  nether_portal: *portal_axis_props
+  jack_o_lantern: *facingNSEW_props
+  cake:
+    bites: ["0","1","2","3","4","5","6"]
+  repeater:
+    <<: [*facingNSEW_props, *powered_props]
+    delay: ["1","2","3","4"]
+  white_stained_glass: { }
+  orange_stained_glass: { }
+  magenta_stained_glass: { }
+  light_blue_stained_glass: { }
+  yellow_stained_glass: { }
+  lime_stained_glass: { }
+  pink_stained_glass: { }
+  gray_stained_glass: { }
+  light_gray_stained_glass: { }
+  cyan_stained_glass: { }
+  purple_stained_glass: { }
+  blue_stained_glass: { }
+  brown_stained_glass: { }
+  green_stained_glass: { }
+  red_stained_glass: { }
+  black_stained_glass: { }
+  oak_trapdoor: *trapdoor_props
+  infested_stone: { }
+  infested_cobblestone: { }
+  infested_stone_bricks: { }
+  infested_mossy_stone_bricks: { }
+  infested_cracked_stone_bricks: { }
+  infested_chiseled_stone_bricks: { }
+  stone_bricks: { }
+  mossy_stone_bricks: { }
+  cracked_stone_bricks: { }
+  chiseled_stone_bricks: { }
+  brown_mushroom_stem: *mushroom_props
+  brown_mushroom_block: *mushroom_props
+  red_mushroom_stem: *mushroom_props
+  red_mushroom_block: *mushroom_props
+  iron_bars: { }
+  glass_pane: { }
+  melon: { }
+  pumpkin_stem: *age0_7
+  melon_stem: *age0_7
+  vine:
+    up: [true, false]
+    north: [true, false]
+    south: [true, false]
+    east: [true, false]
+    west: [true, false]
+  oak_fence_gate: *fence_gate_props
+  brick_stairs: *stairs_props
+  stone_brick_stairs: *stairs_props
+  mycelium: { }
+  lily_pad: { }
+  nether_bricks: { }
+  nether_brick_fence: { }
+  nether_brick_stairs: *stairs_props
+  nether_wart: *age0_3
+  enchanting_table: { }
+  brewing_stand:
+    has_bottle_0: [true, false]
+    has_bottle_1: [true, false]
+    has_bottle_2: [true, false]
+  cauldron:
+    level: ["0","1","2","3","4","5"]
+  end_portal: { }
+  end_portal_frame:
+    <<: *facingNSEW_props
+    eye: [true, false]
+  end_stone: { }
+  dragon_egg: { }
+  redstone_lamp: *lit_props
+  spruce_slab: *slab_props
+  birch_slab: *slab_props
+  jungle_slab: *slab_props
+  acacia_slab: *slab_props
+  dark_oak_slab: *slab_props
+  oak_slab: *slab_props
+  cocoa:
+    <<: [*facingNSEW_props, *age0_2]
+  sandstone_stairs: *stairs_props
+  emerald_ore: { }
+  ender_chest: *facingNSEW_props
+  tripwire_hook:
+    <<: [*facingNSEW_props, *powered_props]
+    attached: [true, false]
+  tripwire:
+    <<: *powered_props
+    attached: [true,false]
+    disarmed: [true,false]
+  emerald_block: { }
+  spruce_stairs: *stairs_props
+  birch_stairs: *stairs_props
+  jungle_stairs: *stairs_props
+  command_block: { }
+  beacon: { }
+  mossy_cobblestone_wall: { }
+  cobblestone_wall: { }
+  flower_pot: { }
+  potted_poppy: { }
+  potted_dandelion: { }
+  potted_oak_sapling: { }
+  potted_spruce_sapling: { }
+  potted_birch_sapling: { }
+  potted_jungle_sapling: { }
+  potted_red_mushroom: { }
+  potted_brown_mushroom: { }
+  potted_cactus: { }
+  potted_dead_bush: { }
+  potted_fern: { }
+  potted_acacia_sapling: { }
+  potted_dark_oak_sapling: { }
+  carrots: *age0_7
+  potatoes: *age0_7
+  oak_button: *button_props
+  skeleton_skull: *facingNSEW_props # TODO
+  skeleton_wall_skull: *facingNSEW_props
+  chipped_anvil: *facingNSEW_props
+  damaged_anvil: *facingNSEW_props
+  anvil: *facingNSEW_props
+  trapped_chest: { }
+  light_weighted_pressure_plate: *powered_props
+  heavy_weighted_pressure_plate: *powered_props
+  comparator:
+    <<: [*facingNSEW_props, *powered_props]
+    mode: [compare, subtract]
+  daylight_detector:
+    inverted: [true, false]
+    power: ["0"] # TODO
+  redstone_block: { }
+  nether_quartz_ore: { }
+  hopper:
+    enabled: [true, false]
+    facing: [down, north, south, east, west]
+  chiseled_quartz_block: { }
+  quartz_pillar: *axis_props
+  quartz_block: { }
+  quartz_stairs: *stairs_props
+  activator_rail: *powered_rail_props
+  dropper:
+    <<: *facing_all_props
+    triggered: [true, false]
+  white_terracotta: { }
+  orange_terracotta: { }
+  magenta_terracotta: { }
+  light_blue_terracotta: { }
+  yellow_terracotta: { }
+  lime_terracotta: { }
+  pink_terracotta: { }
+  gray_terracotta: { }
+  light_gray_terracotta: { }
+  cyan_terracotta: { }
+  purple_terracotta: { }
+  blue_terracotta: { }
+  brown_terracotta: { }
+  green_terracotta: { }
+  red_terracotta: { }
+  black_terracotta: { }
+  white_stained_glass_pane: { }
+  orange_stained_glass_pane: { }
+  magenta_stained_glass_pane: { }
+  light_blue_stained_glass_pane: { }
+  yellow_stained_glass_pane: { }
+  lime_stained_glass_pane: { }
+  pink_stained_glass_pane: { }
+  gray_stained_glass_pane: { }
+  light_gray_stained_glass_pane: { }
+  cyan_stained_glass_pane: { }
+  purple_stained_glass_pane: { }
+  blue_stained_glass_pane: { }
+  brown_stained_glass_pane: { }
+  green_stained_glass_pane: { }
+  red_stained_glass_pane: { }
+  black_stained_glass_pane: { }
+  dark_oak_leaves: *leaves_props
+  acacia_leaves: *leaves_props
+  dark_oak_log: *axis_props
+  acacia_log: *axis_props
+  acacia_stairs: *stairs_props
+  dark_oak_stairs: *stairs_props
+  slime_block: { }
+  barrier: { }
+  iron_trapdoor: *trapdoor_props
+  prismarine_bricks: { }
+  dark_prismarine: { }
+  prismarine: { }
+  sea_lantern: { }
+  hay_block: *axis_props
+  white_carpet: { }
+  orange_carpet: { }
+  magenta_carpet: { }
+  light_blue_carpet: { }
+  yellow_carpet: { }
+  lime_carpet: { }
+  pink_carpet: { }
+  gray_carpet: { }
+  light_gray_carpet: { }
+  cyan_carpet: { }
+  purple_carpet: { }
+  blue_carpet: { }
+  brown_carpet: { }
+  green_carpet: { }
+  red_carpet: { }
+  black_carpet: { }
+  terracotta: { }
+  coal_block: { }
+  packed_ice: { }
+  sunflower: { }
+  lilac: { }
+  tall_grass: { }
+  large_fern: { }
+  rose_bush: { }
+  peony: { }
+  white_banner:
+    rotation: ["0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"]
+  white_wall_banner: *facingNSEW_props
+  red_sandstone: { }
+  chiseled_red_sandstone: { }
+  cut_red_sandstone: { }
+  red_sandstone_stairs: *stairs_props
+  red_sandstone_slab: *slab_props
+  spruce_fence_gate: *fence_gate_props
+  birch_fence_gate: *fence_gate_props
+  jungle_fence_gate: *fence_gate_props
+  dark_oak_fence_gate: *fence_gate_props
+  acacia_fence_gate: *fence_gate_props
+  spruce_fence: { } # TODO
+  birch_fence: { } # TODO
+  jungle_fence: { } # TODO
+  dark_oak_fence: { } # TODO
+  acacia_fence: { } # TODO
+  spruce_door: *door_props
+  birch_door: *door_props
+  jungle_door: *door_props
+  acacia_door: *door_props
+  dark_oak_door: *door_props
+  end_rod: *facing_all_props
+  chorus_plant: { }
+  chorus_flower: *age0_5
+  purpur_block: { }
+  purpur_pillar: { }
+  purpur_stairs: *stairs_props
+  purpur_slab: *slab_props
+  end_stone_bricks: { }
+  beetroots: *age0_3
+  grass_path: { }
+  end_gateway: { }
+  repeating_command_block: { }
+  chain_command_block: { }
+  frosted_ice: { }
+  magma_block: { }
+  nether_wart_block: { }
+  red_nether_bricks: { }
+  bone_block: *axis_props
+  structure_void: { }
+  observer:
+    <<: [*facing_all_props, *powered_props]
+  white_shulker_box: { }
+  orange_shulker_box: { }
+  magenta_shulker_box: { }
+  light_blue_shulker_box: { }
+  yellow_shulker_box: { }
+  lime_shulker_box: { }
+  pink_shulker_box: { }
+  gray_shulker_box: { }
+  light_gray_shulker_box: { }
+  cyan_shulker_box: { }
+  purple_shulker_box: { }
+  blue_shulker_box: { }
+  brown_shulker_box: { }
+  green_shulker_box: { }
+  red_shulker_box: { }
+  black_shulker_box: { }
+  white_glazed_terracotta: { }
+  orange_glazed_terracotta: { }
+  magenta_glazed_terracotta: { }
+  light_blue_glazed_terracotta: { }
+  yellow_glazed_terracotta: { }
+  lime_glazed_terracotta: { }
+  pink_glazed_terracotta: { }
+  gray_glazed_terracotta: { }
+  light_gray_glazed_terracotta: { }
+  cyan_glazed_terracotta: { }
+  purple_glazed_terracotta: { }
+  blue_glazed_terracotta: { }
+  brown_glazed_terracotta: { }
+  green_glazed_terracotta: { }
+  red_glazed_terracotta: { }
+  black_glazed_terracotta: { }
+  white_concrete: { }
+  orange_concrete: { }
+  magenta_concrete: { }
+  light_blue_concrete: { }
+  yellow_concrete: { }
+  lime_concrete: { }
+  pink_concrete: { }
+  gray_concrete: { }
+  light_gray_concrete: { }
+  cyan_concrete: { }
+  purple_concrete: { }
+  blue_concrete: { }
+  brown_concrete: { }
+  green_concrete: { }
+  red_concrete: { }
+  black_concrete: { }
+  white_concrete_powder: { }
+  orange_concrete_powder: { }
+  magenta_concrete_powder: { }
+  light_blue_concrete_powder: { }
+  yellow_concrete_powder: { }
+  lime_concrete_powder: { }
+  pink_concrete_powder: { }
+  gray_concrete_powder: { }
+  light_gray_concrete_powder: { }
+  cyan_concrete_powder: { }
+  purple_concrete_powder: { }
+  blue_concrete_powder: { }
+  brown_concrete_powder: { }
+  green_concrete_powder: { }
+  red_concrete_powder: { }
+  black_concrete_powder: { }
+  structure_block: { }
+  conduit: { }
+  pumpkin: { }
+  kelp: *age0_15
+  tube_coral_block: { }
+  brain_coral_block: { }
+  bubble_coral_block: { }
+  fire_coral_block: { }
+  horn_coral_block: { }
+  dead_tube_coral_block: { }
+  dead_brain_coral_block: { }
+  dead_bubble_coral_block: { }
+  dead_fire_coral_block: { }
+  dead_horn_coral_block: { }
+  tube_coral: { }
+  brain_coral: { }
+  bubble_coral: { }
+  fire_coral: { }
+  horn_coral: { }
+  dead_tube_coral: { }
+  dead_brain_coral: { }
+  dead_bubble_coral: { }
+  dead_fire_coral: { }
+  dead_horn_coral: { }
+  tube_coral_fan: { }
+  brain_coral_fan: { }
+  bubble_coral_fan: { }
+  fire_coral_fan: { }
+  horn_coral_fan: { }
+  dead_tube_coral_fan: { }
+  dead_brain_coral_fan: { }
+  dead_bubble_coral_fan: { }
+  dead_fire_coral_fan: { }
+  dead_horn_coral_fan: { }
+  dead_tube_coral_wall_fan: *facingNSEW_props
+  brain_coral_wall_fan: *facingNSEW_props
+  dead_brain_coral_wall_fan: *facingNSEW_props
+  tube_coral_wall_fan: *facingNSEW_props
+  dead_bubble_coral_wall_fan: *facingNSEW_props
+  fire_coral_wall_fan: *facingNSEW_props
+  dead_fire_coral_wall_fan: *facingNSEW_props
+  bubble_coral_wall_fan: *facingNSEW_props
+  dead_horn_coral_wall_fan: *facingNSEW_props
+  horn_coral_wall_fan: *facingNSEW_props
+  dried_kelp_block: { }
+  seagrass: { }
+  tall_seagrass: *half_props
+  sea_pickle:
+    pickles: ["1","2","3","4"]
+    waterlogged: [true, false]
+  bubble_column:
+    drag: [true, false]
+  blue_ice: { }
+  spruce_trapdoor: *trapdoor_props
+  birch_trapdoor: *trapdoor_props
+  jungle_trapdoor: *trapdoor_props
+  acacia_trapdoor: *trapdoor_props
+  dark_oak_trapdoor: *trapdoor_props
+  turtle_egg:
+    eggs: ["1","2","3","4"]
+    hatch: ["1","2","3","4"] # TODO
+  prismarine_stairs: *stairs_props
+  prismarine_brick_stairs: *stairs_props
+  dark_prismarine_stairs: *stairs_props
+  stripped_spruce_log: *axis_props
+  stripped_birch_log: *axis_props
+  stripped_jungle_log: *axis_props
+  stripped_acacia_log: *axis_props
+  stripped_dark_oak_log: *axis_props
+  stripped_oak_log: *axis_props
+  acacia_pressure_plate: *powered_props
+  birch_pressure_plate: *powered_props
+  dark_oak_pressure_plate: *powered_props
+  jungle_pressure_plate: *powered_props
+  spruce_pressure_plate: *powered_props
+  acacia_button: *button_props
+  birch_button: *button_props
+  dark_oak_button: *button_props
+  jungle_button: *button_props
+  spruce_button: *button_props
+  prismarine_brick_slab: *slab_props
+  dark_prismarine_slab: *slab_props
+  prismarine_slab: *slab_props
+  spruce_wood: *axis_props
+  birch_wood: *axis_props
+  jungle_wood: *axis_props
+  acacia_wood: *axis_props
+  dark_oak_wood: *axis_props
+  oak_wood: *axis_props

@@ -1,32 +1,49 @@
 # LegacyEditor Project Documentation
 
-My goal is to write the code necessary to convert saves between
-all "Minecraft Console Edition" consoles and all their specific versions. It will also be able to handle
-player conversion, and be usable in such a way to be easily scriptable
-for editing blocks / nbt.
+My goal is to write the code necessary to **convert saves between all "Minecraft Legacy Console Edition" platforms and versions**.
 
-IF YOU FIND ANY ISSUES, PLEASE REPORT THEM! It helps me develop faster :)
+This will include:
+- Full world conversion
+- Full player data conversion
+- Easy scripting support for block and NBT editing
+- Many libraries specific to managing niche console things...
 
-## Supported Consoles and Formats
+**If you find any issues, please report them!**  
+It helps me develop faster 🙂
 
-### Reading From:
-- **PS4**
-- **Switch**
-- **Xbox 360 (.dat format)**
-- **Xbox 360 (.bin format)**
-- **Windurango Emulator** (Xbox1)
-- **PS3**
-- **RPCS3 Emulator** (PS3)
-- **WiiU** (also applies to **Cemu Emulator**)
-- **PSVita**
+## Consoles Supported
 
-### Writing To:
-- **RPCS3 Emulator (PS3)**
-- **WiiU** (also applies to **Cemu Emulator**)
-- **PSVita**
+| **Console**                  | **Reading From** | **Writing To**                           |
+|------------------------------|------------------|------------------------------------------|
+| **Xbox 360 (.dat)**          | ✔️               | ❌                                        |
+| **Xbox 360 (.bin)**          | ✔️               | ❌                                        |
+| \>\> **Xenia Emulator**      | ✔️               | ❌                                        |
+| **WiiU**                     | ✔️               | ✔️                                       |
+| \>\> **Cemu Emulator**       | ✔️               | ✔️                                       |
+| **PS Vita**                  | ✔️               | ✔️                                       |
+| \>\> **Vita3K Emulator**     | ✔️               | ✔️                                       |
+| **PS3**                      | ✔️               | ⚠️ *(Partial - cannot resign PARAM.PFD)* |
+| \>\> **RPCS3 Emulator**      | ✔️               | ✔️                                       |
+| **Xbox One**                 | ❌                | ❌                                        |
+| \>\> **Windurango Emulator** | ✔️               | ❌                                        |
+| **Switch**                   | ✔️               | ❌                                        |
+| **PS4**                      | ✔️               | ❌                                        |
 
-### Partially Writing To:
-- **PS3** (PARAM.PFD not yet resignable)
+## Versions Support
+
+| Version           | Reading From  | Writing To  |
+|-------------------|---------------|-------------|
+| Pre-Release       | ✅             | ❌           |
+| Pistons           | ✅             | ❌           |
+| Generation        | ✅             | ❌           |
+| Adventure         | ✅             | ❌           |
+| Horse             | ✅             | ❌           |
+| Bountiful         | ✅             | ❌           |
+| Elytra            | ✅             | ❌           |
+| Aquatic           | ✅             | ✅           |
+| Village & Pillage | ✅             | ❌           |
+
+More coming soon!
 
 ## Setup
 
@@ -38,35 +55,36 @@ git submodule add https://github.com/lce-resources/lceLIB.git include/lce
 git submodule update --init
 ```
 
-## Usage
-
-Refer to the `tests/` directory to see different ways the code can be used.
-For unit testing, edit the folder locations in `code/unit_tests.cpp` to the directory that contains your saves (e.g., `tests/`).
-
-## Dependencies
-
-This project makes use of several external libraries, including:
-- [gulrak/filesystem](https://github.com/gulrak/filesystem) for filesystem operations
-- [stb](http://nothings.org/stb) by Sean Barrett
-- [jibsen/tinf](https://github.com/jibsen/tinf) for data compression
-- LZX - Jed Wing <jedwin@ugcs.caltech.edu>
-- TINF - Joergen Ibsen
-- SFO - [hippie68 @github](https://github.com/hippie68/sfo)
-
 ## Building
 
 - ``CLion`` - Have the IDE auto-detect the ``CMakeLists.txt``.
 - ``Windows`` - Run ``build.bat``.
 - ``Linux`` - Run ``build.sh``. I have not tested this one.
 
-## Outside Help
+## Usage
 
-PSVita: https://docs.google.com/document/d/1HUoeH9YcIwqYPYMx9ps0Ui3YF0x_g9QkluADAx_fTJQ
-PS4   : 
+### BatchConverter
 
+To use BatchConverter.exe, supply the full filepath of your savefiles
+
+Information on extracting save files: [Google Docs Guide](https://docs.google.com/document/d/1HUoeH9YcIwqYPYMx9ps0Ui3YF0x_g9QkluADAx_fTJQ)
+
+### Code Examples
+
+Refer to the `tests/` directory to see different ways the code can be used.
+For unit testing, edit the folder locations in `code/unit_tests.cpp` to the directory that contains your saves (e.g., `tests/`).
+
+## Dependencies
+
+- [`gulrak/filesystem`](https://github.com/gulrak/filesystem) – Cross-platform filesystem operations
+- [`stb`](http://nothings.org/stb) – Image loading and rendering utilities
+- [`jibsen/tinf`](https://github.com/jibsen/tinf) – Tiny inflate/deflate compression
+- **LZX** – Jed Wing <jedwin@ugcs.caltech.edu>
+- **TINF** – Joergen Ibsen
+- [`SFO`](https://github.com/hippie68/sfo) – Save file metadata handler by hippie68
 
 ## License
 
-Please refer to `LICENSE.md` for detailed information on the licensing of this code and its usage permissions.
+Please refer to [`LICENSE.md`](LICENSE.md) for detailed information on the licensing of this code and its usage permissions.
 
 ---

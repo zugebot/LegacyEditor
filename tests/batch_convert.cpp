@@ -11,6 +11,8 @@
 #include "code/scripts.hpp"
 #include "code/include.hpp"
 
+#include "code/DisplayMetadata/CacheBinManager.hpp"
+
 using namespace cmn;
 
 
@@ -86,6 +88,11 @@ int main(int argc, char* argv[]) {
     force_utf8_console();
 #endif
 
+    // fs::path cachePath = "E:\\Emulators\\Vita3K\\LOL\\ux0\\user\\00\\savedata\\PCSE00491\\CACHE.bin";
+    // CacheBinManager manager;
+    // manager.load(cachePath);
+
+
     /*
     std::string entitiesFile = "C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\dump\\250524034012_ps4__0\\DIM1\\entities.dat";
     Buffer buffer = DataReader::readFile(entitiesFile);
@@ -103,17 +110,12 @@ int main(int argc, char* argv[]) {
     }
      */
 
-
-
-
-
-
     log(eLog::detail,
              "Find the project here! https://github.com/zugebot/LegacyEditor\n\n");
     log(eLog::detail,
-             "Supports reading  [ Xbox360, PS3, RPCS3, PSVITA, PS4, WiiU, Switch, Windurango ]\n");
+             "Supports reading  [ Xbox360, PS3, RPCS3, PSVITA, PS4, WiiU/Cemu, Switch, Windurango ]\n");
     log(eLog::detail,
-             "Supports writing  [ -------  ---  RPCS3, PSVITA, ---  WiiU  ------, ---------- ]\n\n");
+             "Supports writing  [ -------  ---  RPCS3, PSVITA, ---  WiiU/Cemu  ------, ---------- ]\n\n");
 
     fs::path exePath = fs::path(argv[0]).parent_path();
     fs::path defaultOutDir = exePath / "out";
@@ -156,11 +158,13 @@ int main(int argc, char* argv[]) {
         if (argc < 2) {
             log(eLog::error, "Must supply at least one save file to convert.\n");
             log(eLog::info, "Drag & drop the GAMEDATA/SAVEGAME/.dat/.bin on the executable or pass as arguments.\n");
+            log(eLog::info, "More information can be found here: jerrin.org/links/lceditdoc/\n");
+            log(eLog::info, "Or contact \"jerrinth\" on discord.\n");
             log(eLog::input, "Press ENTER to exit.\n");
             consumeEnter();
             return -1;
         }
-        for (int i = 0; i < argc; i++) {
+        for (int i = 1; i < argc; i++) {
             saveFileArgs.emplace_back(argv[i]);
         }
     }
@@ -230,6 +234,16 @@ int main(int argc, char* argv[]) {
 
     } else {
 
+        log(eLog::input, "Saves Detected:\n");
+        int count = 0;
+        for (const auto& arg: saveFileArgs) {
+            count++;
+            auto consoleDetected = editor::SaveProject::detectConsole(arg);
+            std::cout << "[" << count << "] [" + lce::consoleToStr(consoleDetected) << "] "
+                << arg << "\n";
+        }
+        std::cout << "\n" << std::flush;
+
         log(eLog::input, "Name the console you want your saves converted to: ");
         std::string userInput;
         std::cin >> userInput;
@@ -282,6 +296,7 @@ int main(int argc, char* argv[]) {
         std::cout << "\n";
         log(eLog::input, "Loading savefile: {}\n", filePath.string());
 
+
         if (!fs::exists(filePath)) {
             log(eLog::error, "File does not exist: {}\n", filePath.make_preferred().string());
             continue;
@@ -289,6 +304,7 @@ int main(int argc, char* argv[]) {
 
         Timer readTimer;
         editor::SaveProject saveProject;
+
         if (saveProject.read(filePath.string()) != 0) {
             log(eLog::error, "Failed to load file: {}\n", filePath.make_preferred().string());
             continue;
@@ -323,9 +339,6 @@ int main(int argc, char* argv[]) {
             continue;
         }
         log(eLog::time, "Time to write: {} sec\n", writeTimer.getSeconds());
-
-        // saveProject.printDetails();
-        // (int*)saveProject.dumpToFolder("ps4_to_wiiu");
 
 #ifdef DEBUG
         std::cout << "[*] level.dat: ";

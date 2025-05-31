@@ -41,7 +41,7 @@ namespace editor {
         MU void printFileList() const;
         MU ND int dumpToFolder(const std::string& detail) const;
 
-
+        static lce::CONSOLE detectConsole(const fs::path& savePath);
 
 
 

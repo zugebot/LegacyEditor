@@ -47,7 +47,21 @@ set(CMAKE_C_STANDARD            17)
 set(CMAKE_CXX_STANDARD          23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS       OFF)
-set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type")
+
+
+# Better optimization in Release, bake in STD libraries as well
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG" CACHE STRING "Flags for Release" FORCE)
+set(CMAKE_C_FLAGS_RELEASE   "-O3 -DNDEBUG" CACHE STRING "Flags for Release" FORCE)
+if(MSVC)
+    foreach(flag_var CMAKE_C_FLAGS_RELEASE CMAKE_CXX_FLAGS_RELEASE)
+        string(REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+    endforeach()
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -static-libgcc -static-libstdc++")
+endif()
+
+
+# set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type")
 # set(CMAKE_CXX_FLAGS_DEBUG "-g1")
 
 # Where final binaries go
@@ -74,11 +88,19 @@ include_directories(${CMAKE_SOURCE_DIR}/include/)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
 
-# OpenSSL
-set(OPENSSL_ROOT_DIR       "C:/msys64/mingw64")
-set(OPENSSL_INCLUDE_DIR    "C:/msys64/mingw64/include")
-set(OPENSSL_CRYPTO_LIBRARY "C:/msys64/mingw64/lib/libcrypto.a")
-find_package(OpenSSL REQUIRED)
+
+
+unset(INCLUDE_OPENSSL CACHE)
+option(INCLUDE_OPENSSL "include openssl" OFF)
+if(LC_BUILD_EXECUTABLES)
+    set(OPENSSL_ROOT_DIR       "C:/msys64/mingw64")
+    set(OPENSSL_INCLUDE_DIR    "C:/msys64/mingw64/include")
+    set(OPENSSL_CRYPTO_LIBRARY "C:/msys64/mingw64/lib/libcrypto.a")
+    find_package(OpenSSL REQUIRED)
+endif()
+
+
+
 
 # Glob all sources
 file(GLOB_RECURSE LEGACY_EDITOR_SOURCES
@@ -104,7 +126,9 @@ function(add_cli NAME SRC)
     if (DEFINED LCE_PCH)
         target_precompile_headers(${NAME} PUBLIC "$<$<COMPILE_LANGUAGE:CXX>:${LCE_PCH}>")
     endif()
-    target_link_libraries(${NAME} PRIVATE ${OPENSSL_CRYPTO_LIBRARY})
+    if (INCLUDE_OPENSSL)
+        target_link_libraries(${NAME} PRIVATE ${OPENSSL_CRYPTO_LIBRARY})
+    endif()
     add_custom_command(
             TARGET ${NAME}
             POST_BUILD
@@ -113,6 +137,7 @@ function(add_cli NAME SRC)
             COMMENT "Copying lce assets → ${LCE_ASSETS_DEST_DIR}"
     )
 endfunction()
+
 
 unset(LC_BUILD_EXECUTABLES CACHE)
 option(LC_BUILD_EXECUTABLES "Build LegacyEditor standalone executable" ON)

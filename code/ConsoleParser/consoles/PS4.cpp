@@ -74,7 +74,7 @@ namespace editor {
         auto mainAttrParts = split(mainAttr, '.');
 
         if (mainAttrParts.size() != 2) {
-            printf("main param.sfo does not seem to be formatted correctly.");
+            printf("param.sfo does not seem to be formatted correctly.");
             return {""};
         }
 
@@ -94,6 +94,14 @@ namespace editor {
                 continue;
             }
 
+            if (entry.path().filename().string().contains("OPTIONS")) {
+                continue;
+            }
+
+            if (entry.path().filename().string().contains("CACHE")) {
+                continue;
+            }
+
             fs::path tempCheckDirPath = entry.path() / "savedata0";
             if (!fs::exists(tempCheckDirPath)) {
                 continue;
@@ -110,7 +118,6 @@ namespace editor {
             auto tempAttrParts = split(tempAttr, '.');
 
             if (tempAttrParts.size() != 2) {
-                printf("to check param.sfo does not seem to be formatted correctly.");
                 continue;
             }
 

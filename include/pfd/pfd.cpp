@@ -3,6 +3,8 @@
 // -----------------------------------------------------------------------------
 // single‑translation‑unit implementation of every method declared in param_pfd.hpp
 // -----------------------------------------------------------------------------
+#ifdef INCLUDE_OPENSSL
+
 #include "pfd.hpp"
 
 #include <algorithm>
@@ -426,3 +428,5 @@ std::vector<uint8_t> ParamPFD::serialize() {
     std::memcpy(buf.data() + off, pad2.data(), 44);
     return buf;
 }
+
+#endif

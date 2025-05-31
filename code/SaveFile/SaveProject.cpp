@@ -57,7 +57,7 @@ namespace editor {
     int SaveProject::read(const fs::path& theFilePath) {
         m_stateSettings.setFilePath(theFilePath);
 
-        i32 status1 = detectConsole(theFilePath, m_stateSettings);
+        i32 status1 = ::editor::detectConsole(theFilePath, m_stateSettings);
         if (status1 != SUCCESS) {
             printf("Failed to find console from %s\n", theFilePath.string().c_str());
             return status1;
@@ -102,7 +102,7 @@ namespace editor {
 
 
     MU void SaveProject::printDetails() const {
-        printf("\n** FileListing Details **\n");
+        printf("\n** Savefile Details **\n");
         printf("1. Filename: %s\n", m_stateSettings.filePath().string().c_str());
         printf("2. Oldest  Version: %d\n", oldestVersion());
         printf("3. Current Version: %d\n", currentVersion());
@@ -123,6 +123,17 @@ namespace editor {
         }
         printf("\n");
         std::cout << std::flush;
+    }
+
+
+    lce::CONSOLE SaveProject::detectConsole(const fs::path& savePath) {
+        StateSettings settings;
+        i32 status1 = ::editor::detectConsole(savePath, settings);
+        if (status1 != SUCCESS) {
+            return lce::CONSOLE::NONE;
+        }
+
+        return settings.console();
     }
 
 

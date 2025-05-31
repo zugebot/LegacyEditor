@@ -95,6 +95,14 @@ namespace editor {
                               fileInfoPath.string().c_str());
         }
 
+        // UPDATE CACHE.BIN
+        // const fs::path cacheBinPath = saveProject.m_stateSettings.m_psVitaCachePath;
+        // if (!cacheBinPath.empty()) {
+        //     if (fs::exists(cacheBinPath)) {
+
+        //     }
+        // }
+
 
         return SUCCESS;
     }
