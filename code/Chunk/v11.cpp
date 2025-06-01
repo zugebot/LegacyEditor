@@ -53,36 +53,15 @@ namespace editor::chunk {
         reader.readBytes(256, chunkData->biomes.data());
 
         if (*reader.ptr() == 0x0A) {
-            chunkData->oldNBTData.read(reader);
-            auto* nbt = chunkData->oldNBTData.getTag("");
+            NBTBase nbtRoot = makeCompound({});
+            nbtRoot.read(reader);
+            auto* nbt = nbtRoot.getTag("");
             chunkData->entities = nbt->extractTag("Entities").value_or(makeList(eNBT::COMPOUND));
             chunkData->tileEntities = nbt->extractTag("TileEntities").value_or(makeList(eNBT::COMPOUND));
             chunkData->tileTicks = nbt->extractTag("TileTicks").value_or(makeList(eNBT::COMPOUND));
-            chunkData->oldNBTData = NBTBase();
         }
 
         chunkData->validChunk = true;
-    }
-
-
-
-
-    // TODO: this function is complete ass
-    static void putBlocks(u8* oldBlockPtr, c_u8* blockBuffer, c_int gridIndex) {
-        // blockBuffer order: XZY
-        const int num_ = gridIndex / 32;  // y is stored last, so shifting it over (for X and Z)
-        const int num2_ = gridIndex % 32; // y
-        const int readOffset = num_ / 4 * 64 + num_ % 4 * 4 + num2_ * 1024;
-
-        int num = 0;
-        for (int z = 0; z < 4; z++) {
-            for (int x = 0; x < 4; x++) {
-                for (int y = 0; y < 4; y++) {
-                    const int num2 = readOffset + x + z * 16 + y * 256;
-                    oldBlockPtr[num2] = blockBuffer[num++];
-                }
-            }
-        }
     }
 
 
@@ -94,7 +73,11 @@ namespace editor::chunk {
         std::span<const u8> gridDataPtr = {dataIn.data() + GRID_COUNT * 2, blockLength};
 
         // 64 grids of 4x4x4 blocks, stored in XZY order
-        for (int gridIndex = 0; gridIndex < GRID_COUNT; gridIndex++) {
+        int gridIndex = 0;
+        for (i32 gridZ = 0; gridZ < 4; gridZ++) {
+        for (i32 gridX = 0; gridX < 4; gridX++) {
+        for (i32 gridY = 0; gridY < 32; gridY++) {
+            int gridOffset = toIndex<BLOCK_ORDER>(gridX * 4, gridY * 4, gridZ * 4);
 
             Grid grid(
                     gridHeader[gridIndex * 2],
@@ -119,8 +102,18 @@ namespace editor::chunk {
                 }
             }
             // place the grid blocks into the chunkData
-            putBlocks(oldBlockPtr, blockBuffer, gridIndex);
-        }
+            int readOffset = 0;
+            for (int z = 0; z < 4; z++) {
+                for (int x = 0; x < 4; x++) {
+                    for (int y = 0; y < 4; y++) {
+                        c_int blockOffset = gridOffset + toIndex<BLOCK_ORDER>(x, y, z);
+                        oldBlockPtr[blockOffset] = blockBuffer[readOffset++];
+                    }
+                }
+            }
+            // increment to next grid
+            gridIndex++;
+        }}}
     }
 
 
@@ -156,7 +149,7 @@ namespace editor::chunk {
     // #####################################################
 
 
-    void ChunkV11::writeChunk(DataWriter& writer) {
+    void ChunkV11::writeChunk(DataWriter& writer, bool fastMode) {
         writer.write<i32>(chunkData->chunkX);
         writer.write<i32>(chunkData->chunkZ);
         writer.write<i64>(chunkData->lastUpdate);
@@ -168,34 +161,35 @@ namespace editor::chunk {
         writeBlocks(writer, &chunkData->oldBlocks[0]);
         writeBlocks(writer, &chunkData->oldBlocks[32768]);
 
-        writeSection(writer, &chunkData->blockData[0]);
-        writeSection(writer, &chunkData->blockData[16384]);
-        writeSection(writer, &chunkData->skyLight[0]);
-        writeSection(writer, &chunkData->skyLight[16384]);
-        writeSection(writer, &chunkData->blockLight[0]);
-        writeSection(writer, &chunkData->blockLight[16384]);
+        writeSection(writer, &chunkData->blockData[0], !fastMode, false);
+        writeSection(writer, &chunkData->blockData[16384], true, false);
+        writeSection(writer, &chunkData->skyLight[0], !fastMode, true);
+        writeSection(writer, &chunkData->skyLight[16384], true, true);
+        writeSection(writer, &chunkData->blockLight[0], !fastMode, true);
+        writeSection(writer, &chunkData->blockLight[16384], true, true);
 
         writer.writeBytes(chunkData->heightMap.data(), 256);
         writer.write<i16>(chunkData->terrainPopulated);
         writer.writeBytes(chunkData->biomes.data(), 256);
 
-        NBTBase nbt = makeCompound({
-                {"", makeCompound(
-                             {
-                                     {"Entities", chunkData->entities },
-                                     {"TileEntities", chunkData->tileEntities },
-                                     {"TileTicks", chunkData->tileTicks },
-                             }
-                             )}
+        NBTBase nbt = makeCompound();
+        if (!chunkData->entities.get<NBTList>().empty()) {
+            nbt.setTag("Entities", chunkData->entities);
+        }
+        nbt.setTag("TileEntities", chunkData->tileEntities);
+        nbt.setTag("TileTicks", chunkData->tileTicks);
+
+        NBTBase nbtRoot = makeCompound({
+                {"", nbt}
         });
-        nbt.write(writer);
+        nbtRoot.write(writer, true);
     }
 
 
     MU void ChunkV11::writeBlocks(DataWriter& writer, u8 const* oldBlockPtr) const {
         static constexpr u32 GRID_HEADER_SIZE = 2 * GRID_COUNT;
 
-        u32 H_BEGIN = (chunkData->lastVersion <= 8) ? 16 : 24;
+        u32 H_BEGIN = writer.tell();
         u32 H_GRID_DATA   = H_BEGIN + 4 + GRID_HEADER_SIZE;
         u32 h_grid_offset = 0;
 
@@ -207,18 +201,18 @@ namespace editor::chunk {
 
         u8FixVec_t blockVec;
         u8FixVec_t blockLoc;
-        for (i32 gridY = 0; gridY < 32; gridY++) {
         for (i32 gridZ = 0; gridZ < 4; gridZ++) {
         for (i32 gridX = 0; gridX < 4; gridX++) {
-            c_u32 blockOffset = toIndex<XZY>(gridX + 4, gridY * 4, gridZ * 4);
+        for (i32 gridY = 0; gridY < 32; gridY++) {
+            c_u32 blockOffset = toIndex<BLOCK_ORDER>(gridX * 4, gridY * 4, gridZ * 4);
 
             blockVec.set_size(0);
             blockLoc.set_size(0);
 
-            for (i32 blockY = 0; blockY < 4; blockY++) {
             for (i32 blockZ = 0; blockZ < 4; blockZ++) {
             for (i32 blockX = 0; blockX < 4; blockX++) {
-                c_u32 blockIndex = blockOffset + toIndex<XZY>(blockX, blockY, blockZ);
+            for (i32 blockY = 0; blockY < 4; blockY++) {
+                c_u32 blockIndex = blockOffset + toIndex<BLOCK_ORDER>(blockX, blockY, blockZ);
                 c_u8 block = oldBlockPtr[blockIndex];
                 if (blockMap[block]) {
                     blockLoc.push_back(blockMap[block] - 1);
@@ -230,21 +224,21 @@ namespace editor::chunk {
                 }
             }}}
 
-            /*
-             * case  1:   // 65535 (-1 unsigned)
-             * case  2:   // 0
-             * case  3-4: // 1
-             * case  5-8: // 2
-             * case 9-16: // 3
-             * this code assumes blockVec is never 0
-             */
+
             const size_t n = blockVec.current_size();
-            MU const auto gridFormat = static_cast<V11GridFormat>(n == 1 ? 0
-                          : 32 - __builtin_clz(static_cast<unsigned>(n - 1)) - 1);
+            MU V11GridFormat gridFormat;
+            if (oldBlockPtr == this->chunkData->oldBlocks.data()) {
+                gridFormat = V11_4_BIT;
+            } else {
+                gridFormat = static_cast<V11GridFormat>(n == 1 ? V11_0_BIT
+                 : 32 - __builtin_clz(static_cast<unsigned>(n - 1)) - 1);
+            }
+
             switch (gridFormat) {
                 case V11_0_BIT:
                     gridHeader[gridIndex++] = Grid::IS_SINGLE_BLOCK_FLAG;
                     gridHeader[gridIndex++] = blockVec[0];
+                    blockMap[blockVec[0]] = 0;
                     continue;
                 case V11_1_BIT: writeGrid<1>(writer, blockVec, blockLoc, blockMap); break;
                 case V11_2_BIT: writeGrid<2>(writer, blockVec, blockLoc, blockMap); break;
@@ -259,15 +253,15 @@ namespace editor::chunk {
             }
             Grid grid;
             grid.setFormatOffset(h_grid_offset, gridFormat);
-            gridHeader[gridIndex++] = grid.m_byte0;
-            gridHeader[gridIndex++] = grid.m_byte1;
+            gridHeader[gridIndex++] = static_cast<u8>(grid.data & 0xFF);
+            gridHeader[gridIndex++] = static_cast<u8>((grid.data >> 8) & 0xFF);
             h_grid_offset += V11_GRID_SIZES[gridFormat];
         }}}
 
 
         u32 finalSize = GRID_HEADER_SIZE + h_grid_offset;
         writer.seek(H_BEGIN);
-        writer.write<u16>(finalSize);                    //< write section size
+        writer.write<u32>(finalSize);                    //< write section size
         writer.writeBytes(gridHeader, GRID_HEADER_SIZE); //< write grid header
         writer.seek(H_GRID_DATA + h_grid_offset);        //< seek to end of data
     }

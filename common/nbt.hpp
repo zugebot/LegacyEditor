@@ -202,7 +202,7 @@ public:
     void read(DataReader& reader);
     void readFile(const std::string& path);
 
-    void write(DataWriter& writer) const;
+    void write(DataWriter& writer, bool skipEndTag = false) const;
     void writeFile(const std::string& path) const;
 
     ND eNBT getType() const { return m_type; }
@@ -237,7 +237,7 @@ public:
 
 private:
     void readInternal(DataReader& reader);
-    void writeInternal(DataWriter& writer) const;
+    void writeInternal(DataWriter& writer, bool skipEndTag) const;
 
     void printHelper(int depth = 0, const std::string& theKey = "") const;
 };

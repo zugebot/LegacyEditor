@@ -325,6 +325,162 @@ namespace editor {
     }
 
 
+
+
+
+
+
+
+    void convertOldGenChunksToNewGen(SaveProject& saveProject,
+                                     WriteSettings& writeSettings) {
+
+        // -2     -1     0     1     2     3
+        // -4,-3  -2,-1  0,1   2,3   4,5   6,7
+        auto makeBigger = [](int v) {
+            return v * 2;
+        };
+
+        struct EntityStruct {
+            Coordinate coordinate{};
+            NBTBase nbt;
+        };
+
+        using ft = lce::FILETYPE;
+        using EntityList = std::list<EntityStruct>;
+
+        std::vector<std::tuple<ft, ft, ft, EntityList>> dimensions;
+
+        dimensions.reserve(3);
+        dimensions.emplace_back(ft::NEW_REGION_OVERWORLD, ft::OLD_REGION_OVERWORLD, ft::ENTITY_OVERWORLD, EntityList{});
+        dimensions.emplace_back(ft::NEW_REGION_NETHER,    ft::OLD_REGION_NETHER,    ft::ENTITY_NETHER,    EntityList{});
+        dimensions.emplace_back(ft::NEW_REGION_END,       ft::OLD_REGION_END,       ft::ENTITY_END,       EntityList{});
+
+
+        auto consoleWrite = writeSettings.getConsole();
+        std::list<LCEFile> convertedFiles;
+
+        for (auto& [newFmt, oldFmt, entityFmt, entityList] : dimensions) {
+
+            // (3) collect old format
+            std::list<LCEFile> regionFiles = saveProject.collectFiles(oldFmt);
+
+            // (4) place contents into old regions
+            for (auto& regionFile: regionFiles) {
+
+                Coordinate bigCoord = {
+                        makeBigger(regionFile.getRegionX()),
+                        makeBigger(regionFile.getRegionZ())
+                };
+
+                Region tinyRegions[4] = {
+                    {bigCoord.x    , bigCoord.z    },
+                    {bigCoord.x    , bigCoord.z + 1},
+                    {bigCoord.x + 1, bigCoord.z    },
+                    {bigCoord.x + 1, bigCoord.z + 1}
+                };
+
+                for (int sx = 0; sx < 32; ++sx) {
+                    for (int sz = 0; sz < 32; ++sz) {
+                        int rx = sx / 16;
+                        int rz = sz / 16;
+                        int cx = sx & 15;
+                        int cz = sx & 15;
+
+                        auto& tinyRegion = tinyRegions[rx * 2 + rz];
+
+                        ChunkManager chunk;
+                        if (!tinyRegion.extractChunk(sx, sz, chunk)) {
+                            continue;
+                        }
+
+                        chunk.readChunk(saveProject.m_stateSettings.console());
+                        if (!chunk.chunkData->validChunk) continue;
+                        convertReadChunkToAquatic(chunk);
+
+                        // move entities from the chunk, into the ``entityList``
+                        if (!chunk.chunkData->entities.get<NBTList>().empty()) {
+                            entityList.emplace_back(
+                                Coordinate{chunk.chunkData->chunkX, chunk.chunkData->chunkZ},
+                                    makeCompound( { {"", chunk.chunkData->entities} } )
+                            );
+                            chunk.chunkData->entities = NBTBase();
+                        }
+
+
+                        chunk.writeChunk(consoleWrite);
+
+                        if (!tinyRegion.insertChunk(cx, cz, std::move(chunk))) {
+                            continue;
+                        }
+
+                        // std::cout << "moved chunk(" << sx << ", " << sz << ") "
+                        //           << "tiny reg[" << tinyRegion.x() << ", " << tinyRegion.z() << "] "
+                        //           << "to chunk(" <<  dx << ", " << dz << ") "
+                        //           << "big reg[" << bigRegion.x() << ", " << bigRegion.z() << "]\n";
+
+                    }
+                }
+
+                // save regions
+                for (auto& tinyRegion : tinyRegions) {
+                    Buffer buffer = tinyRegion.write(consoleWrite);
+                    if (buffer.empty()) continue;
+                    auto& file = convertedFiles.emplace_back(
+                            consoleWrite,
+                            0,
+                            saveProject.m_tempFolder,
+                            ""
+                    );
+                    file.setType(newFmt);
+                    file.setRegionX((i16)tinyRegion.x());
+                    file.setRegionZ((i16)tinyRegion.z());
+                    std::string fileName = file.constructFileName(consoleWrite);
+                    file.setFileName(fileName);
+                    file.setBuffer(std::move(buffer));
+                }
+
+                // save entities
+                DataWriter writer;
+                writer.write<u32>(entityList.size());
+                for (auto& [coord, entity] : entityList) {
+                    writer.write<i32>(coord.x);
+                    writer.write<i32>(coord.z);
+                    entity.write(writer);
+                }
+                auto& entityFile = convertedFiles.emplace_back(
+                        consoleWrite,
+                        0,
+                        saveProject.m_tempFolder,
+                        ""
+                );
+                entityFile.setType(entityFmt);
+                std::string fileName = entityFile.constructFileName(consoleWrite);
+                entityFile.setFileName(fileName);
+                entityFile.setBuffer(std::move(writer.take()));
+
+
+
+
+            }
+
+
+
+
+        }
+
+        saveProject.addFiles(std::move(convertedFiles));
+    }
+
+
+
+
+
+
+
+
+
+
+
     void convertNewGenChunksToOldGen(SaveProject& saveProject,
                                      WriteSettings& writeSettings) {
 
@@ -332,6 +488,8 @@ namespace editor {
                 {-1, -1}, {-1, 0}, {0, -1}, {0, 0}
         };
 
+        // -4 -3 -2 -1  0  1  2  3  4  5
+        // -2 -2 -1 -1  0  0  1  1  2  2
         auto makeSmaller = [](int v) {
             return (v >= 0) ? v / 2 : (v - 1) / 2;
         };
@@ -362,8 +520,6 @@ namespace editor {
                     NBTBase nbt;
                     entityReader.skip(3);
                     nbt.read(entityReader);
-                    // nbt.print();
-                    // std::cout << std::flush;
                     entityMap.emplace(Coordinate(chunkX, chunkZ), std::move(nbt));
                 }
             }

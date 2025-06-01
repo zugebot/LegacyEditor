@@ -70,7 +70,7 @@ namespace editor::chunk {
     }
 
 
-    static void writeSection(DataWriter& writer, const u8* dataIn)  {
+    static void writeSection(DataWriter& writer, const u8* dataIn, bool flatten = true, bool isLight = false)  {
         static constexpr int GRID_COUNT = 64;
         static constexpr int DATA_SECTION_SIZE = 128;
 
@@ -90,9 +90,10 @@ namespace editor::chunk {
         u32 sectionOffsetSize = 0;
         c_u8* ptr = dataIn + readOffset;
         for (int i = 0; i < DATA_SECTION_SIZE; i++) {
-            if (is_zero_128(ptr)) {
+            bool allowFlatten = flatten || (isLight && (i == DATA_SECTION_SIZE - 1));
+            if (is_zero_128(ptr) && allowFlatten) {
                 writer.write<u8>(DATA_SECTION_SIZE);
-            } else if (is_ff_128(ptr)) {
+            } else if (is_ff_128(ptr) && allowFlatten) {
                 writer.write<u8>(DATA_SECTION_SIZE + 1);
             } else {
                 sectionOffsets.push_back(readOffset);

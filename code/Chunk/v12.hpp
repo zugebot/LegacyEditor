@@ -83,7 +83,7 @@ namespace editor::chunk {
 
         MU void allocChunk() const override;
         MU void readChunk(DataReader& reader) override;
-        MU void writeChunk(DataWriter& writer) override;
+        MU void writeChunk(DataWriter& writer, bool fastMode) override;
 
     };
 }

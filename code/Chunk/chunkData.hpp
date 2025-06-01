@@ -21,36 +21,20 @@ namespace editor::chunk {
 
 
     enum eBlockOrder {
-        // XYZ,
         XZY,
         YXZ,
         YZX,
-        // ZXY,
-        // ZYX,
-        // XyZ,
-        // XZy,
         yXZ,
-        // yZX,
-        // ZXy,
-        // ZyX,
         yXZy,
         Yqq
     };
 
     MU static std::string toString(MU eBlockOrder order) {
         switch (order) {
-            // case eBlockOrder::XYZ: return x      + y* 16 + z*4096;
             case eBlockOrder::XZY: return "XZY";
             case eBlockOrder::YXZ: return "YXZ";
             case eBlockOrder::YZX: return "YZX";
-            // case eBlockOrder::ZXY: return x*  16 + y*256 + z;
-            // case eBlockOrder::ZYX: return x*4096 + y*16  + z;
-            // case eBlockOrder::XyZ: return x      + y* 16 + z*2048;
-            // case eBlockOrder::XZy: return x      + y*256 + z*  16;
             case eBlockOrder::yXZ: return "yXZ";
-            // case eBlockOrder::yZX: return x*2048 + y     + z* 128;
-            // case eBlockOrder::ZXy: return x*  16 + y*256 + z;
-            // case eBlockOrder::ZyX: return x*2048 + y*16  + z;
             case eBlockOrder::yXZy: return "yXZy";
             case eBlockOrder::Yqq: return "???";
         }
@@ -60,36 +44,20 @@ namespace editor::chunk {
     template<eBlockOrder ORDER>
     static i32 toIndex(i32 x, i32 y, i32 z) {
         switch (ORDER) {
-            // case eBlockOrder::XYZ: return x      + y* 16 + z*4096;
             case eBlockOrder::XZY: return x      + y*256 + z*  16;
             case eBlockOrder::YXZ: return x* 256 + y     + z*4096;
             case eBlockOrder::YZX: return x*4096 + y     + z* 256;
-            // case eBlockOrder::ZXY: return x*  16 + y*256 + z;
-            // case eBlockOrder::ZYX: return x*4096 + y*16  + z;
-            // case eBlockOrder::XyZ: return x      + y* 16 + z*2048;
-            // case eBlockOrder::XZy: return x      + y*256 + z*  16;
             case eBlockOrder::yXZ: return x * 128 + y     + z*2048;
-            // case eBlockOrder::yZX: return x*2048 + y     + z* 128;
-            // case eBlockOrder::ZXy: return x*  16 + y*256 + z;
-            // case eBlockOrder::ZyX: return x*2048 + y*16  + z;
             case eBlockOrder::yXZy: return x * 128 + (y % 128) + 32768 * (y > 127) + z * 128 * 16;
         }
     }
 
     static i32 toIndex(eBlockOrder order, i32 x, i32 y, i32 z) {
         switch (order) {
-            // case eBlockOrder::XYZ: return x      + y* 16 + z*4096;
             case eBlockOrder::XZY: return x      + y*256 + z*  16;
             case eBlockOrder::YXZ: return x* 256 + y     + z*4096;
             case eBlockOrder::YZX: return x*4096 + y     +z * 256;
-            // case eBlockOrder::ZXY: return x*  16 + y*256 + z;
-            // case eBlockOrder::ZYX: return x*4096 + y*16  + z;
-            // case eBlockOrder::XyZ: return x      + y* 16 + z*2048;
-            // case eBlockOrder::XZy: return x      + y*256 + z*  16;
             case eBlockOrder::yXZ: return x* 128 + y     + z*2048;
-            // case eBlockOrder::yZX: return x*2048 + y     + z* 128;
-            // case eBlockOrder::ZXy: return x*  16 + y*256 + z;
-            // case eBlockOrder::ZyX: return x*2048 + y*16  + z;
             case eBlockOrder::yXZy: return x * 128 + (y % 128) + 32768 * (y > 127) + z * 128 * 16;
             default:
                 return 0;
@@ -113,7 +81,6 @@ namespace editor::chunk {
         u8_vec skyLight;            //
         u8_vec heightMap;           //
         u8_vec biomes;              //
-        NBTBase oldNBTData = makeCompound({}); //
         i16 terrainPopulated = 0;   //
         i64 lastUpdate = 0;         //
         i64 inhabitedTime = 0;      //
@@ -131,11 +98,8 @@ namespace editor::chunk {
         i32 lastVersion = 0;
         bool validChunk = false;
 
-        ~ChunkData();
-
         MU ND std::string getCoords() const;
 
-        void defaultNBT();
 
         // MODIFIERS
 

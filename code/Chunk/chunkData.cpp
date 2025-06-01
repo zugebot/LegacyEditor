@@ -8,22 +8,10 @@
 namespace editor::chunk {
 
 
-    ChunkData::~ChunkData() = default;
-
-
-    void ChunkData::defaultNBT() {
-        entities = makeList(eNBT::COMPOUND, {});
-        tileEntities = makeList(eNBT::COMPOUND, {});
-        tileTicks = makeList(eNBT::COMPOUND, {});
-    }
-
 
     MU ND std::string ChunkData::getCoords() const {
         return "(" + std::to_string(chunkX) + ", " + std::to_string(chunkZ) + ")";
     }
-
-
-
 
 
 

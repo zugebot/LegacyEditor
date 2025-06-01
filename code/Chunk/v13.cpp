@@ -45,12 +45,12 @@ namespace editor::chunk {
         reader.readBytes(256, chunkData->biomes.data());
 
         if (*reader.ptr() == 0x0A) {
-            chunkData->oldNBTData.read(reader);
-            auto* nbt = chunkData->oldNBTData.getTag("");
+            NBTBase nbtRoot = makeCompound({});
+            nbtRoot.read(reader);
+            auto* nbt = nbtRoot.getTag("");
             chunkData->entities = nbt->extractTag("Entities").value_or(makeList(eNBT::COMPOUND));
             chunkData->tileEntities = nbt->extractTag("TileEntities").value_or(makeList(eNBT::COMPOUND));
             chunkData->tileTicks = nbt->extractTag("TileTicks").value_or(makeList(eNBT::COMPOUND));
-            chunkData->oldNBTData = NBTBase();
         }
 
         chunkData->lastVersion = 13;
@@ -278,7 +278,7 @@ namespace editor::chunk {
     // #####################################################
 
 
-    void ChunkV13::writeChunk(DataWriter& writer) {
+    void ChunkV13::writeChunk(DataWriter& writer, bool fastMode) {
         writer.write<u32>(chunkData->chunkX);
         writer.write<u32>(chunkData->chunkZ);
         writer.write<u64>(chunkData->lastUpdate);

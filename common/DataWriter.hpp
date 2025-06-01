@@ -19,11 +19,13 @@ class DataWriter {
     Endian _end = Endian::Big;
     bool _external = false;
 
-    void grow(std::size_t minExtra) {
+    void grow(std::size_t requiredSize) {
         if (_external)
             throw std::length_error("DataWriter overflow (external buffer)");
+
         std::size_t newCap = _cap ? _cap * 2 : 256;
-        while (newCap < _pos + minExtra) newCap *= 2;
+        while (newCap < requiredSize) newCap *= 2;
+
         auto newBuf = std::unique_ptr<u8[], void(*)(u8*)>(new u8[newCap], kDeleteArr);
         if (_buf) std::memcpy(newBuf.get(), _buf.get(), _pos);
         _buf = std::move(newBuf);
@@ -35,7 +37,7 @@ class DataWriter {
     }
     
     void needAt(std::size_t off, std::size_t n) {
-        if (off + n > _cap) grow(off + n - _cap);
+        if (off + n > _cap) grow(off + n);
     }
 
 public:

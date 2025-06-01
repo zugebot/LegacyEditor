@@ -22,10 +22,11 @@ namespace editor::chunk {
     void ChunkVNBT::readChunk(DataReader& reader) {
         allocChunk();
 
-        chunkData->oldNBTData.read(reader);
-        auto compound = chunkData->oldNBTData
-                                .value<NBTCompound>("").value_or(NBTCompound{})
-                                .value<NBTCompound>("Level").value_or(NBTCompound{});
+        NBTBase nbt = makeCompound({});
+        nbt.read(reader);
+        auto compound = nbt.value<NBTCompound>("").value_or(NBTCompound{})
+                           .value<NBTCompound>("Level").value_or(NBTCompound{});
+
 
         chunkData->chunkX = compound.value<i32>("xPos").value_or(0);
         chunkData->chunkZ = compound.value<i32>("zPos").value_or(0);
@@ -75,7 +76,7 @@ namespace editor::chunk {
     }
 
 
-    void ChunkVNBT::writeChunk(DataWriter& writer) {
+    void ChunkVNBT::writeChunk(DataWriter& writer, bool fastMode) {
 
     }
 

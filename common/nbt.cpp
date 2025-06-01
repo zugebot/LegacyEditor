@@ -71,8 +71,8 @@ MU void NBTBase::readFile(const std::string &path) {
 }
 
 
-void NBTBase::write(DataWriter& writer) const {
-    writeInternal(writer);
+void NBTBase::write(DataWriter& writer, bool skipEndTag) const {
+    writeInternal(writer, skipEndTag);
 }
 
 
@@ -153,8 +153,7 @@ void NBTBase::readInternal(DataReader & reader) {
 }
 
 
-
-void NBTBase::writeInternal(DataWriter & writer) const {
+void NBTBase::writeInternal(DataWriter& writer, bool skipEndTag) const {
     switch (m_type) {
         case eNBT::UINT8: writer.write<u8>(get<u8>()); break;
         case eNBT::INT16: writer.write<u16>(get<i16>()); break;
@@ -176,7 +175,7 @@ void NBTBase::writeInternal(DataWriter & writer) const {
             const auto& list = get<NBTList>();
             writer.write<u8>(static_cast<u8>(list.empty() ? eNBT::NONE : list.subType()));
             writer.write<u32>(static_cast<i32>(list.size()));
-            for (const auto& item : list) item.writeInternal(writer);
+            for (const auto& item : list) item.writeInternal(writer, false);
             break;
         }
         case eNBT::COMPOUND: {
@@ -184,9 +183,11 @@ void NBTBase::writeInternal(DataWriter & writer) const {
             for (const auto& [key, val] : compound) {
                 writer.write<u8>(static_cast<u8>(val.m_type));
                 writer.writeStringLengthPrefixed(key);
-                val.writeInternal(writer);
+                val.writeInternal(writer, false);
             }
-            writer.write<u8>(static_cast<u8>(eNBT::NONE));
+            if (!skipEndTag) {
+                writer.write<u8>(static_cast<u8>(eNBT::NONE));
+            }
             break;
         }
         case eNBT::INT_ARRAY: {

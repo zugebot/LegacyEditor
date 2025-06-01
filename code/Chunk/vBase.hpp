@@ -12,11 +12,15 @@ namespace editor::chunk {
     public:
         ChunkData* chunkData = nullptr;
 
-        VChunkBase(ChunkData* chunkDataIn) : chunkData(chunkDataIn) {}
+        explicit VChunkBase(ChunkData* chunkDataIn) : chunkData(chunkDataIn) {}
 
         virtual void allocChunk() const = 0;
         virtual void readChunk(DataReader& reader) = 0;
-        virtual void writeChunk(DataWriter& writer) = 0;
+        virtual void writeChunk(DataWriter& writer, bool fastMode) = 0;
+
+        void writeChunk(DataWriter& writer) {
+            writeChunk(writer, false);
+        }
 
     };
 

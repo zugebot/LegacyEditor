@@ -48,45 +48,42 @@ namespace editor::chunk {
     struct Grid {
         static constexpr u8 IS_SINGLE_BLOCK_FLAG = 0b00000111;
 
-        u8 m_byte0{};
-        u8 m_byte1{};
+        u16 data{};
 
         Grid() = default;
-
-        Grid(c_u8 byte0, c_u8 byte1) {
-            setBytes(byte0, byte1);
+        Grid(u8 byte0, u8 byte1) {
+            data = static_cast<u16>(byte0) | (static_cast<u16>(byte1) << 8);
         }
 
-        void setBytes(c_u8 byte0in, c_u8 byte1in) {
-            m_byte0 = byte0in;
-            m_byte1 = byte1in;
+        MU void setBytes(u8 byte0, u8 byte1) {
+            data = static_cast<u16>(byte0) | (static_cast<u16>(byte1) << 8);
         }
 
-        ND u32 getOffset() const {
-            return ((m_byte1 << 6U) + ((m_byte0 & 0b11111100U) >> 2)) * 2;
+        MU void setData(u16 val) { data = val; }
+
+        ND bool isSingleBlock() const {
+            return (data & 0b111) == IS_SINGLE_BLOCK_FLAG;
         }
 
-        MU ND u32 getFormat() const {
-            return m_byte0 & 0b11U;
+        u8 getSingleBlock() const {
+            return static_cast<u8>(data >> 8);
         }
 
-        void setFormatOffset(u16 offset, V11GridFormat format) {
-            offset = offset / 2;
-            m_byte0 = (m_byte0 & 0b11111100) | (format & 0b11);
-            // Set the 6 most significant bits of the offset in m_byte0
-            m_byte0 = (m_byte0 & 0b00000011) | ((offset & 0b1111110000) >> 6);
-            // Set the 2 least significant bits of the offset in m_byte1
-            m_byte1 = (m_byte1 & 0b00111111) | ((offset & 0b00000011) << 6);
+        u32 getFormat() const {
+            return data & 0b11;
         }
 
-        MU ND bool isSingleBlock() const {
-            return (m_byte0 & 0b111U) == Grid::IS_SINGLE_BLOCK_FLAG;
+        u32 getOffset() const {
+            u16 offsetBits = data >> 2; // bits 2–15
+            return offsetBits * 2;
         }
 
-        MU ND u32 getSingleBlock() const {
-            return m_byte1;
+        void setFormatOffset(u16 offset, u8 format) {
+            offset /= 2; // convert byte offset to word offset
+            data = ((offset & 0x3FFF) << 2) | (format & 0b11);
         }
     };
+
 
 
     /// "Elytra" chunks.
@@ -94,6 +91,7 @@ namespace editor::chunk {
         static constexpr i32 MAX_BLOCKS_SIZE = 64;
         static constexpr i32 GRID_COUNT = 512;
         static constexpr int MAP_SIZE = 256;
+        static constexpr eBlockOrder BLOCK_ORDER = XZY;
 
         using u8FixVec_t = FixedVector<u8, MAX_BLOCKS_SIZE>;
 
@@ -117,7 +115,7 @@ namespace editor::chunk {
 
         MU void allocChunk() const override;
         MU void readChunk(DataReader& reader) override;
-        MU void writeChunk(DataWriter& writer) override;
+        MU void writeChunk(DataWriter& writer, bool fastMode) override;
     };
 
 }
