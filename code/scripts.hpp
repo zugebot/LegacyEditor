@@ -759,16 +759,16 @@ namespace editor {
                 DataReader reader(levelBuffer);
                 NBTBase nbt;
                 nbt.read(reader);
-                if (auto* nbtData = nbt.getTag("Data"); nbtData) {
-                    int xzSize = nbtData->value<i32>("XZSize").value_or(54);
-                    if (xzSize != 54) {
-                        nbtData->setTag("HellScale", makeInt(3));
-                        nbtData->setTag("XZSize", makeInt(54));
-                        nbtData->setTag("StrongholdX", makeInt(0));
-                        nbtData->setTag("StrongholdZ", makeInt(0));
-                        nbtData->setTag("StrongholdEndPortalX", makeInt(0));
-                        nbtData->setTag("StrongholdEndPortalZ", makeInt(0));
-                    }
+                if (!nbt.hasKey("Data")) return;
+                auto nbtData = nbt["Data"];
+                int xzSize = nbtData->value<i32>("XZSize").value_or(54);
+                if (xzSize != 54) {
+                    nbtData["HellScale"] = makeInt(3);
+                    nbtData["XZSize"] = makeInt(54);
+                    nbtData["StrongholdX"] = makeInt(0);
+                    nbtData["StrongholdZ"] = makeInt(0);
+                    nbtData["StrongholdEndPortalX"] = makeInt(0);
+                    nbtData["StrongholdEndPortalZ"] = makeInt(0);
                 }
                 DataWriter writer;
                 nbt.write(writer);

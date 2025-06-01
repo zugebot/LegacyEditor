@@ -13,7 +13,6 @@
 #include "code/Chunk/v10.hpp"
 #include "code/Chunk/v11.hpp"
 #include "code/Chunk/v12.hpp"
-#include "code/Chunk/v13.hpp"
 
 
 namespace editor {
@@ -62,12 +61,11 @@ namespace editor {
 
         chunkData->lastVersion = reader.read<u16>();
         if (chunkData->lastVersion == 0x0A00) { // start of NBT
-            chunkData->lastVersion = chunk::eChunkVersion::V_UNVERSIONED;
+            chunkData->lastVersion = chunk::eChunkVersion::V_NBT;
             reader.rewind();
         }
 
         switch(chunkData->lastVersion) {
-            case chunk::eChunkVersion::V_UNVERSIONED:
             case chunk::eChunkVersion::V_NBT:
                 chunk::ChunkVNBT(chunkData).readChunk(reader);
                 break;
@@ -77,10 +75,8 @@ namespace editor {
                 chunk::ChunkV11(chunkData).readChunk(reader);
                 break;
             case chunk::eChunkVersion::V_12:
-                chunk::ChunkV12(chunkData).readChunk(reader);
-                break;
             case chunk::eChunkVersion::V_13:
-                chunk::ChunkV13(chunkData).readChunk(reader);
+                chunk::ChunkV12(chunkData).readChunk(reader);
                 break;
             default:;
         }
@@ -115,7 +111,6 @@ namespace editor {
 
 
         switch (chunkData->lastVersion) {
-            case chunk::eChunkVersion::V_UNVERSIONED:
             case chunk::eChunkVersion::V_NBT:
                 chunk::ChunkVNBT(chunkData).writeChunk(writer);
                 break;
@@ -126,24 +121,17 @@ namespace editor {
                 chunk::ChunkV11(chunkData).writeChunk(writer);
                 break;
             case chunk::eChunkVersion::V_12:
+            case chunk::eChunkVersion::V_13:
+                chunkData->lastVersion = 12;
                 writer.write<u16>(chunkData->lastVersion);
                 chunk::ChunkV12(chunkData).writeChunk(writer);
                 break;
-            case chunk::eChunkVersion::V_13:
-                printf("ChunkManager::writeChunk v13 forbidden\n");
-                exit(-1);
-            default:;
+            default:
+                break;
         }
-
-        // if (chunkData->chunkX == 0 && chunkData->chunkZ == -10) {
-        //     managerOut.writeToFile(R"(C:\Users\jerrin\CLionProjects\LegacyEditor\chunks\0_-10.write)");
-        // }
 
         buffer = std::move(writer.take());
 
-        // buffer.clear();
-        // buffer.allocate(writer.tell());
-        // std::memcpy(buffer.data(), writer.data(), writer.size());
         chunkHeader.setDecSize(buffer.size());
 
         if (!chunkHeader.isZipCompressed()) {

@@ -5,9 +5,6 @@
 #include "common/nbt.hpp"
 
 
-// TODO: I think I need to rewrite this all to place blocks as only u8's,
-// TODO: and to switch it to use oldBlocks instead of newBlocks
-
 namespace editor::chunk {
 
 
@@ -52,14 +49,7 @@ namespace editor::chunk {
         chunkData->terrainPopulated = reader.read<i16>();
         reader.readBytes(256, chunkData->biomes.data());
 
-        if (*reader.ptr() == 0x0A) {
-            NBTBase nbtRoot = makeCompound({});
-            nbtRoot.read(reader);
-            auto* nbt = nbtRoot.getTag("");
-            chunkData->entities = nbt->extractTag("Entities").value_or(makeList(eNBT::COMPOUND));
-            chunkData->tileEntities = nbt->extractTag("TileEntities").value_or(makeList(eNBT::COMPOUND));
-            chunkData->tileTicks = nbt->extractTag("TileTicks").value_or(makeList(eNBT::COMPOUND));
-        }
+        this->readNBT(reader);
 
         chunkData->validChunk = true;
     }
@@ -149,7 +139,7 @@ namespace editor::chunk {
     // #####################################################
 
 
-    void ChunkV11::writeChunk(DataWriter& writer, bool fastMode) {
+    void ChunkV11::writeChunkInternal(DataWriter& writer, bool fastMode) {
         writer.write<i32>(chunkData->chunkX);
         writer.write<i32>(chunkData->chunkZ);
         writer.write<i64>(chunkData->lastUpdate);
@@ -174,10 +164,10 @@ namespace editor::chunk {
 
         NBTBase nbt = makeCompound();
         if (!chunkData->entities.get<NBTList>().empty()) {
-            nbt.setTag("Entities", chunkData->entities);
+            nbt["Entities"] = chunkData->entities;
         }
-        nbt.setTag("TileEntities", chunkData->tileEntities);
-        nbt.setTag("TileTicks", chunkData->tileTicks);
+        nbt["TileEntities"] = chunkData->tileEntities;
+        nbt["TileTicks"] = chunkData->tileTicks;
 
         NBTBase nbtRoot = makeCompound({
                 {"", nbt}

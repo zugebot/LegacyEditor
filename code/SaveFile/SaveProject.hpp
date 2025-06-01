@@ -81,13 +81,22 @@ namespace editor {
         }
 
         auto view_of(std::initializer_list<lce::FILETYPE> iList) {
-            static const std::set<lce::FILETYPE> tmp;
-            std::set<lce::FILETYPE> keys(iList);
-            return view_of(keys);
+            static_assert(std::is_same_v<lce::FILETYPE, lce::FILETYPE>, "This version is for FILETYPE only.");
+            std::shared_ptr<std::set<lce::FILETYPE>> keys = std::make_shared<std::set<lce::FILETYPE>>(iList);
+            using std::views::filter;
+
+            return m_allFiles | filter([keys](const LCEFile& f) {
+                       return keys->contains(f.m_fileType);
+                   });
         }
+
         ND auto view_of(std::initializer_list<lce::FILETYPE> iList) const {
-            std::set<lce::FILETYPE> keys(iList);
-            return view_of(keys);
+            std::shared_ptr<std::set<lce::FILETYPE>> keys = std::make_shared<std::set<lce::FILETYPE>>(iList);
+            using std::views::filter;
+
+            return m_allFiles | filter([keys](const LCEFile& f) {
+                       return keys->contains(f.m_fileType);
+                   });
         }
 
         std::optional<std::reference_wrapper<LCEFile>>

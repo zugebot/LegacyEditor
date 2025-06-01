@@ -38,6 +38,14 @@ public:
     BufferBase(const BufferBase&) = delete;
     BufferBase& operator=(const BufferBase&) = delete;
 
+
+    // ──────── equivalence ────────
+    bool operator==(const BufferBase& other) const noexcept {
+        if (this == &other) return true;
+        if (m_size != other.m_size) return false;
+        return std::equal(m_data.get(), m_data.get() + m_size, other.m_data.get());
+    }
+
     // ───────── basic API ─────────
     ND u32 size() const { return m_size; }
     ND u32* size_ptr() { return &m_size; }

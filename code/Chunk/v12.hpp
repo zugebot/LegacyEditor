@@ -29,34 +29,23 @@ namespace editor::chunk {
      * return: size of memory that is being written to for that grid\n
      */
     static constexpr u32 V12_GRID_SIZES[16] = {
-            0,  // V12_0_UNO
-            0,
-            12, // V12_1_BIT
-            20, // V12_1_BIT_SUBMERGED
-            24, // V12_2_BIT
-            40, // V12_2_BIT_SUBMERGED
-            40, // V12_3_BIT
-            64, // V12_3_BIT_SUBMERGED
-            64, // V12_4_BIT
-            96, // V12_4_BIT_SUBMERGED
-            0,
-            0,
-            0,
-            0,
-            128,
-            256
+            0, 0, 12, 20, 24, 40, 40, 64, 64, 96, 0, 0, 0, 0, 128, 256
     };
 
 
-    /// "Aquatic" chunks.
-    class ChunkV12 : VChunkBase {
+    /// "Aquatic" + "Village & Pillage" chunks.
+    class ChunkV12 : public VChunkBase {
         static constexpr int SECTION_COUNT = 16;
         static constexpr int GRID_COUNT = 64;
-        static constexpr int GRID_SIZE = 128;
         static constexpr int MAP_SIZE = 65536;
 
+        static constexpr u32 SECTION_HEADER_SIZE = 50;
+        static constexpr int GRID_SIZE = 128;
+
+        static constexpr eBlockOrder BLOCK_ORDER = eBlockOrder::yXZy;
         // Read Section
 
+        static void setBlocks(u16_vec& writeVec, c_u8* grid, MU int gridOffset) ;
         void readBlockData(DataReader& reader) const;
         template<size_t BitsPerBlock>
         bool readGrid(c_u8* buffer, u8 grid[GRID_SIZE]) const;
@@ -83,7 +72,7 @@ namespace editor::chunk {
 
         MU void allocChunk() const override;
         MU void readChunk(DataReader& reader) override;
-        MU void writeChunk(DataWriter& writer, bool fastMode) override;
+        MU void writeChunkInternal(DataWriter& writer, bool fastMode) override;
 
     };
 }

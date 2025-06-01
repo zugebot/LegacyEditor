@@ -25,10 +25,14 @@ namespace editor::chunk {
     void ChunkV12::readChunk(DataReader& reader) {
         allocChunk();
 
+        if (chunkData->lastVersion == 13) {
+            chunkData->maxGridCount = reader.read<u16>();
+        }
         chunkData->chunkX = reader.read<i32>();
         chunkData->chunkZ = reader.read<i32>();
         chunkData->lastUpdate = reader.read<i64>();
         chunkData->inhabitedTime = reader.read<i64>();
+
 
         readBlockData(reader);
 
@@ -44,29 +48,19 @@ namespace editor::chunk {
         chunkData->terrainPopulated = reader.read<i16>();
         reader.readBytes(256, chunkData->biomes.data());
 
-        if (*reader.ptr() == 0x0A) {
-            NBTBase nbtRoot = makeCompound({});
-            nbtRoot.read(reader);
-            auto* nbt = nbtRoot.getTag("");
-            chunkData->entities = nbt->extractTag("Entities").value_or(makeList(eNBT::COMPOUND));
-            chunkData->tileEntities = nbt->extractTag("TileEntities").value_or(makeList(eNBT::COMPOUND));
-            chunkData->tileTicks = nbt->extractTag("TileTicks").value_or(makeList(eNBT::COMPOUND));
-        }
+        this->readNBT(reader);
 
-        chunkData->lastVersion = 12;
         chunkData->validChunk = true;
     }
 
 
-    static void setBlocks(u16_vec& writeVec, c_u8* grid, MU int gridOffset) {
+    void ChunkV12::setBlocks(u16_vec& writeVec, c_u8* grid, MU int gridOffset) {
         int readOffset = 0;
 
-        for (int zIter = 0; zIter < 4; zIter++) {
-            for (int xIter = 0; xIter < 4; xIter++) {
-                for (int yIter = 0; yIter < 4; yIter++) {
-                    c_int blockOffset = toIndex<eBlockOrder::yXZy>(xIter,
-                                                                   yIter,
-                                                                   zIter);
+        for (int z = 0; z < 4; z++) {
+            for (int x = 0; x < 4; x++) {
+                for (int y = 0; y < 4; y++) {
+                    c_int blockOffset = toIndex<BLOCK_ORDER>(x, y, z);
                     c_u8 num1 = grid[readOffset++];
                     c_u8 num2 = grid[readOffset++];
                     writeVec[gridOffset + blockOffset] = static_cast<u16>(num1)
@@ -77,19 +71,17 @@ namespace editor::chunk {
     }
 
 
-
     void ChunkV12::readBlockData(DataReader& reader) const {
-        c_u32 maxSectionAddress = reader.read<u16>() << 8U;
+        u32 CHUNK_HEADER_SIZE = chunkData->lastVersion == eChunkVersion::V_13 ? 28 : 26;
+
+        c_u32 maxSectionAddress = reader.read<u16>() << 8;
 
         u16_vec sectionJumpTable(16);
-        for (int i = 0; i < 16; i++) {
-            c_u16 address = reader.read<u16>();
-            sectionJumpTable[i] = address;
+        for (u32 i = 0; i < 16; i++) {
+            sectionJumpTable[i] = reader.read<u16>();
         }
 
-        // size: 16
-        c_u8* sizeOfSubChunks = reader.ptr();
-        reader.skip<16>();
+        c_u8* sizeOfSubChunks = reader.fetch<16>();
 
         if (maxSectionAddress == 0) {
             return;
@@ -97,113 +89,79 @@ namespace editor::chunk {
 
         for (int sectionY = 0; sectionY < 16; sectionY++) {
             c_u32 address = sectionJumpTable[sectionY];
-            // 26 chunk header + 50 sectionY header
-            reader.seek(76U + address);
+            reader.seek(CHUNK_HEADER_SIZE + SECTION_HEADER_SIZE + address);
             if (address == maxSectionAddress) {
                 break;
             }
             if (sizeOfSubChunks[sectionY] == 0U) {
                 continue;
             }
-            // TODO: replace with telling cpu to cache that address, and use a ptr?
-            // size: 128 bytes
-            c_u8* sectionHeader = reader.ptr();
-            reader.skip<128>();
-#ifdef DEBUG
-            u16 gridFormats[64] = {};
-            u16 gridOffsets[64] = {};
-            u32 gridFormatIndex = 0;
-            u32 gridOffsetIndex = 0;
-#endif
+
+            c_u8* sectionHeader = reader.fetch<GRID_SIZE>();
+
             for (int gridX = 0; gridX < 4; gridX++) {
-                for (int gridZ = 0; gridZ < 4; gridZ++) {
-                    for (int gridY = 0; gridY < 4; gridY++) {
-                        c_int gridIndex = gridY + gridX * 4 + gridZ * 16;
-                        u8 blockGrid[GRID_SIZE] = {};
-                        u8 sbmrgGrid[GRID_SIZE] = {};
+            for (int gridZ = 0; gridZ < 4; gridZ++) {
+            for (int gridY = 0; gridY < 4; gridY++) {
+                int gridOffset = toIndex<BLOCK_ORDER>(4 * gridX,
+                                                      4 * gridY + 16 * sectionY,
+                                                      4 * gridZ);
 
-                        c_u8 num1 = sectionHeader[gridIndex * 2];
-                        c_u8 num2 = sectionHeader[gridIndex * 2 + 1];
+                u8 blockGrid[GRID_SIZE] = {};
+                u8 sbmrgGrid[GRID_SIZE] = {};
 
-                        c_u16 format = num2 >> 4U;
-                        c_u16 offset = ((0x0fU & num2) << 8U | num1) * 4;
+                c_int gridIndex = gridY + gridX * 4 + gridZ * 16;
+                c_u8 blockLower = sectionHeader[gridIndex * 2];
+                c_u8 blockUpper = sectionHeader[gridIndex * 2 + 1];
+                c_u16 format = blockUpper >> 4U;
+                c_u16 offset = ((0x0fU & blockUpper) << 8 | blockLower) * 4;
 
-                        // 0x4c for start and 0x80 for header (26 chunk header, 50 sectionY header, 128 grid header)
-                        c_u16 gridPosition = 0xcc + address + offset;
+                c_u16 gridPosition = CHUNK_HEADER_SIZE + SECTION_HEADER_SIZE + GRID_SIZE + address + offset;
 
-                        // MU c_int offsetInBlockWrite = (sectionY * 16 + gridY * 4) + gridZ * 1024 + gridX * 16384;
-                        int gridOffset = toIndex<eBlockOrder::yXZy>(4 * gridX,
-                                                                    4 * gridY + 16 * sectionY,
-                                                                    4 * gridZ);
-#ifdef DEBUG
-                        gridFormats[gridFormatIndex++] = format;
-                        gridOffsets[gridOffsetIndex++] = gridPosition - 26;
-#endif
-                        // ensure not reading past the memory buffer
-                        if EXPECT_FALSE (gridPosition + V12_GRID_SIZES[format] >= reader.size() && format != 0) {
-                            return;
-                        }
-
-                        const u8* bufferPtr = reader.data() + gridPosition;
-                        reader.seek(gridPosition + V12_GRID_SIZES[format] + 128);
-
-                        bool success = true;
-                        switch(format) {
-                            case V12_0_UNO:
-                                for (int i = 0; i < 128; i += 2) {
-                                    blockGrid[i] = num1;
-                                    blockGrid[i + 1] = num2;
-                                }
-                                break;
-                            case V12_1_BIT:
-                                success = readGrid<1>(bufferPtr, blockGrid);
-                                break;
-                            case V12_1_BIT_SUBMERGED:
-                                success = readGridSubmerged<1>(bufferPtr, blockGrid, sbmrgGrid);
-                                break;
-                            case V12_2_BIT:
-                                success = readGrid<2>(bufferPtr, blockGrid);
-                                break;
-                            case V12_2_BIT_SUBMERGED:
-                                success = readGridSubmerged<2>(bufferPtr, blockGrid, sbmrgGrid);
-                                break;
-                            case V12_3_BIT:
-                                success = readGrid<3>(bufferPtr, blockGrid);
-                                break;
-                            case V12_3_BIT_SUBMERGED:
-                                success = readGridSubmerged<3>(bufferPtr, blockGrid, sbmrgGrid);
-                                break;
-                            case V12_4_BIT:
-                                success = readGrid<4>(bufferPtr, blockGrid);
-                                break;
-                            case V12_4_BIT_SUBMERGED:
-                                success = readGridSubmerged<4>(bufferPtr, blockGrid, sbmrgGrid);
-                                break;
-                            case V12_8_FULL:
-                                fillAllBlocks<GRID_SIZE>(bufferPtr, blockGrid);
-                                break;
-                            case V12_8_FULL_SUBMERGED:
-                                fillAllBlocks<GRID_SIZE>(bufferPtr, blockGrid);
-                                fillAllBlocks<GRID_SIZE>(bufferPtr + 128, sbmrgGrid);
-                                break;
-                            default: // this should never occur
-                                return;
-                        }
-
-                        if EXPECT_FALSE (!success) {
-                            return;
-                        }
-
-                        setBlocks(chunkData->newBlocks, blockGrid, gridOffset);
-                        if ((format & 1U) != 0) {
-                            chunkData->hasSubmerged = true;
-                            setBlocks(chunkData->submerged, sbmrgGrid, gridOffset);
-                        }
-                    }
+                // ensure not reading past the memory buffer
+                if EXPECT_FALSE (gridPosition + V12_GRID_SIZES[format] >= reader.size() && format != 0) {
+                    return;
                 }
-            }
+
+                const u8* bufferPtr = reader.data() + gridPosition;
+                reader.seek(gridPosition + V12_GRID_SIZES[format] + 128);
+
+                bool success = true;
+                switch(format) {
+                    case V12_0_UNO:
+                        for (int i = 0; i < GRID_SIZE; i += 2) {
+                            blockGrid[i] = blockLower;
+                            blockGrid[i + 1] = blockUpper;
+                        }
+                        break;
+                    case V12_1_BIT:           success = readGrid<1>(bufferPtr, blockGrid); break;
+                    case V12_1_BIT_SUBMERGED: success = readGridSubmerged<1>(bufferPtr, blockGrid, sbmrgGrid); break;
+                    case V12_2_BIT:           success = readGrid<2>(bufferPtr, blockGrid); break;
+                    case V12_2_BIT_SUBMERGED: success = readGridSubmerged<2>(bufferPtr, blockGrid, sbmrgGrid); break;
+                    case V12_3_BIT:           success = readGrid<3>(bufferPtr, blockGrid); break;
+                    case V12_3_BIT_SUBMERGED: success = readGridSubmerged<3>(bufferPtr, blockGrid, sbmrgGrid); break;
+                    case V12_4_BIT:           success = readGrid<4>(bufferPtr, blockGrid); break;
+                    case V12_4_BIT_SUBMERGED: success = readGridSubmerged<4>(bufferPtr, blockGrid, sbmrgGrid); break;
+                    case V12_8_FULL:          fillAllBlocks<GRID_SIZE>(bufferPtr, blockGrid); break;
+                    case V12_8_FULL_SUBMERGED:
+                        fillAllBlocks<GRID_SIZE>(bufferPtr, blockGrid);
+                        fillAllBlocks<GRID_SIZE>(bufferPtr + 128, sbmrgGrid);
+                        break;
+                    default:
+                        return;
+                }
+
+                if EXPECT_FALSE (!success) {
+                    return;
+                }
+
+                setBlocks(chunkData->newBlocks, blockGrid, gridOffset);
+                if ((format & 1U) != 0) {
+                    chunkData->hasSubmerged = true;
+                    setBlocks(chunkData->submerged, sbmrgGrid, gridOffset);
+                }
+            }}}
         }
-        reader.seek(76 + maxSectionAddress);
+        reader.seek(CHUNK_HEADER_SIZE + SECTION_HEADER_SIZE + maxSectionAddress);
     }
 
 
@@ -221,35 +179,26 @@ namespace editor::chunk {
         u16_vec palette(size);
         std::copy_n(buffer, size, palette.begin());
 
-        int index = 0;
-        while (index < 64) {
+        for (int index = 0; index < 64; index++) {
             u8 vBlocks[BitsPerBlock];
 
             c_int row = index / 8;
             c_int column = index % 8;
-
-            for (u32 j = 0; j < BitsPerBlock; j++) {
+            for (u32 j = 0; j < BitsPerBlock; j++)
                 vBlocks[j] = buffer[size + row + j * 8];
-            }
 
-            u8 mask = 128U >> column;
             u16 idx = 0;
-
-            for (u32 k = 0; k < BitsPerBlock; k++) {
+            u8 mask = 0b10000000 >> column;
+            for (u32 k = 0; k < BitsPerBlock; k++)
                 idx |= ((vBlocks[k] & mask) >> (7 - column)) << k;
-            }
 
-            if EXPECT_FALSE (idx >= size) {
+            if EXPECT_FALSE (idx >= size)
                 return false;
-            }
 
             c_int gridIndex = index * 2;
             c_int paletteIndex = idx * 2;
-
             grid[gridIndex + 0] = palette[paletteIndex + 0];
             grid[gridIndex + 1] = palette[paletteIndex + 1];
-
-            index++;
         }
         return true;
     }
@@ -316,7 +265,10 @@ namespace editor::chunk {
     // #####################################################
 
 
-    void ChunkV12::writeChunk(DataWriter& writer, bool fastMode) {
+    void ChunkV12::writeChunkInternal(DataWriter& writer, bool fastMode) {
+        if (chunkData->lastVersion == 13) {
+            writer.write<u16>(chunkData->maxGridCount);
+        }
         writer.write<i32>(chunkData->chunkX);
         writer.write<i32>(chunkData->chunkZ);
         writer.write<i64>(chunkData->lastUpdate);
@@ -333,16 +285,7 @@ namespace editor::chunk {
         writer.write<u16>(chunkData->terrainPopulated);
         writer.writeBytes(chunkData->biomes.data(), 256);
 
-        NBTBase nbt = makeCompound({
-                {"",
-                 makeCompound({
-                             {"Entities", chunkData->entities},
-                             {"TileEntities", chunkData->tileEntities},
-                             {"TileTicks", chunkData->tileTicks}
-                 })
-                }
-        });
-        nbt.write(writer);
+        this->writeNBT(writer);
     }
 
 
@@ -365,10 +308,10 @@ namespace editor::chunk {
 
 
         // header ptr offsets from start
-        constexpr u32 H_BEGIN           =           26;
-        constexpr u32 H_SECT_JUMP_TABLE = H_BEGIN +  2; // step 2: i16 * 16 section jump table
-        constexpr u32 H_SECT_SIZE_TABLE = H_BEGIN + 34; // step 3:  i8 * 16 section size table / 256
-        constexpr u32 H_SECT_START      = H_BEGIN + 50;
+        u32 CHUNK_HEADER_SIZE = chunkData->lastVersion == eChunkVersion::V_13 ? 28 : 26;
+        u32 H_SECT_JUMP_TABLE = CHUNK_HEADER_SIZE +  2; // step 2: i16 * 16 section jump table
+        u32 H_SECT_SIZE_TABLE = CHUNK_HEADER_SIZE + 34; // step 3:  i8 * 16 section size table / 256
+        u32 H_SECT_START      = CHUNK_HEADER_SIZE + 50;
 
         /// skip 50 for block header
         writer.seek(H_SECT_START);
@@ -396,13 +339,15 @@ namespace editor::chunk {
                         // iterate over the blocks in the 4x4x4 subsection of the chunk, called a grid
                         MU bool noSubmerged;
 
-                        int gridOffset = toIndex<eBlockOrder::yXZy>(4 * gridX, 4 * gridY + 16 * sectionY, 4 * gridZ);
+                        int gridOffset = toIndex<BLOCK_ORDER>(4 * gridX,
+                                                              4 * gridY + 16 * sectionY,
+                                                              4 * gridZ);
 
                         for (i32 blockZ = 0; blockZ < 4; blockZ++) {
                             for (i32 blockX = 0; blockX < 4; blockX++) {
                                 for (i32 blockY = 0; blockY < 4; blockY++) {
 
-                                    c_u32 blockIndex = toIndex<eBlockOrder::yXZy>(blockX, blockY, blockZ) + gridOffset;
+                                    c_u32 blockIndex = gridOffset + toIndex<BLOCK_ORDER>(blockX, blockY, blockZ);
 
                                     u16 block = chunkData->newBlocks[blockIndex];
                                     if (blockMap[block]) {
@@ -436,7 +381,6 @@ namespace editor::chunk {
                         }
 
                         // TODO: handle new code for writing submerged
-
                         u16 gridID;
                         u16 gridFormat;
                         if (true /*noSubmerged*/) {
@@ -521,7 +465,7 @@ namespace editor::chunk {
         c_u32 final_val = last_section_jump * 256;
 
         // at root header, write total file size
-        writer.writeAtOffset<u16>(H_BEGIN, final_val >> 8U);
+        writer.writeAtOffset<u16>(CHUNK_HEADER_SIZE, final_val >> 8U);
         writer.seek(H_SECT_START + final_val);
     }
 
@@ -541,7 +485,6 @@ namespace editor::chunk {
 
         // write the palette data
         writer.setEndian(Endian::Little);
-        // #pragma unroll
         for (size_t blockIndex = 0; blockIndex < BlockCount; blockIndex++) {
             writer.write<u16>(blockVector[blockIndex]);
         }
@@ -550,7 +493,6 @@ namespace editor::chunk {
         // fill rest of empty palette with 0xFF's
         // TODO: IDK if this is actually necessary
         if constexpr (EmptyCount != 0) {
-            // #pragma unroll EmptyCount
             for (size_t rest = 0; rest < EmptyCount; rest++) {
                 writer.write<u16>(0xFFFF);
             }

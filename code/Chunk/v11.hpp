@@ -87,7 +87,7 @@ namespace editor::chunk {
 
 
     /// "Elytra" chunks.
-    class ChunkV11 : VChunkBase {
+    class ChunkV11 : public VChunkBase {
         static constexpr i32 MAX_BLOCKS_SIZE = 64;
         static constexpr i32 GRID_COUNT = 512;
         static constexpr int MAP_SIZE = 256;
@@ -115,7 +115,7 @@ namespace editor::chunk {
 
         MU void allocChunk() const override;
         MU void readChunk(DataReader& reader) override;
-        MU void writeChunk(DataWriter& writer, bool fastMode) override;
+        MU void writeChunkInternal(DataWriter& writer, bool fastMode) override;
     };
 
 }

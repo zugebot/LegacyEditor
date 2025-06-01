@@ -197,7 +197,7 @@ public:
 
     ND NBTBase copy() const;
     ND bool equals(const NBTBase& other) const;
-
+    MU void merge(const NBTBase& other);
 
     void read(DataReader& reader);
     void readFile(const std::string& path);
@@ -217,6 +217,18 @@ public:
     const T& get() const { return std::get<T>(m_value); }
 
     template <typename T>
+    MU ND T getOr(std::string_view key, T def) {
+        return this->value<T>(std::string(key)).value_or(def);
+    }
+
+    template <typename T>
+    MU ND T getOr(std::string_view k1, std::string_view k2, T def) {
+        if (auto v = this->value<T>(std::string(k1))) return *v;
+        if (auto v = this->value<T>(std::string(k2))) return *v;
+        return def;
+    }
+
+    template <typename T>
     std::optional<T> value(const std::string& key) const;
 
     void print() const { printHelper(0, ""); }
@@ -226,20 +238,98 @@ public:
     MU ND bool hasKeys(std::initializer_list<std::string> keys) const;
     MU ND std::vector<std::string> getKeySet() const;
 
-    MU ND const NBTBase* getTag(const std::string& key) const;
-    MU NBTBase* getTag(const std::string& key);
-    std::optional<NBTBase> extractTag(const std::string& k);
-
-    MU void setTag(const std::string& key, NBTBase tag);
     MU void removeTag(const std::string& key);
 
-    MU void merge(const NBTBase& other);
+    std::optional<NBTBase> extract(const std::string& key) {
+        if (!is<NBTCompound>()) return std::nullopt;
+        return std::get<NBTCompound>(m_value).extract(key);
+    }
+
+    class SafeProxy {
+        const NBTBase* m_ptr;
+
+    public:
+        constexpr explicit SafeProxy(const NBTBase* ptr) : m_ptr(ptr) {}
+
+        SafeProxy operator[](const std::string& key) const {
+            if (!m_ptr || !m_ptr->is<NBTCompound>()) return SafeProxy(nullptr);
+            return SafeProxy(m_ptr->getTag(key));
+        }
+
+        const NBTBase* operator->() const {
+            static const NBTBase dummy;
+            return m_ptr ? m_ptr : &dummy;
+        }
+
+        constexpr explicit operator const NBTBase*() const { return m_ptr; }
+        constexpr explicit operator bool() const { return m_ptr != nullptr; }
+    };
+
+    SafeProxy operator[](const std::string& key) const {
+        if (!is<NBTCompound>()) return SafeProxy(nullptr);
+        return SafeProxy(getTag(key));
+    }
+
+    class MutableSafeProxy {
+        NBTBase* m_ptr;
+
+    public:
+        constexpr explicit MutableSafeProxy(NBTBase* ptr) : m_ptr(ptr) {}
+
+        MutableSafeProxy operator[](const std::string& key) const {
+            if (!m_ptr)
+                return MutableSafeProxy(nullptr);
+
+            if (!m_ptr->is<NBTCompound>()) {
+                NBTCompound compound;
+                *m_ptr = {eNBT::COMPOUND, std::move(compound) };
+            }
+
+            auto& compound = m_ptr->get<NBTCompound>();
+            return MutableSafeProxy(&compound[key]);
+        }
+
+
+        NBTBase* operator->() const {
+            static NBTBase dummy;
+            return m_ptr ? m_ptr : &dummy;
+        }
+
+        MutableSafeProxy& operator=(const NBTBase& rhs) {
+            if (m_ptr) *m_ptr = rhs;
+            return *this;
+        }
+        MutableSafeProxy& operator=(NBTBase&& rhs) {
+            if (m_ptr) *m_ptr = std::move(rhs);
+            return *this;
+        }
+
+        constexpr explicit operator NBTBase*()  const { return m_ptr; }
+        constexpr explicit operator bool()      const { return m_ptr != nullptr; }
+    };
+
+    MutableSafeProxy operator[](const std::string& key) {
+        if (!is<NBTCompound>()) {
+            *this = {eNBT::COMPOUND, NBTCompound() };
+        }
+
+        auto& compound = get<NBTCompound>();
+
+        if (!compound.contains(key)) {
+            compound.insert(key, {eNBT::COMPOUND, NBTCompound() });
+        }
+        return MutableSafeProxy(&compound[key]);
+    }
+
 
 private:
     void readInternal(DataReader& reader);
     void writeInternal(DataWriter& writer, bool skipEndTag) const;
 
     void printHelper(int depth = 0, const std::string& theKey = "") const;
+
+    MU ND const NBTBase* getTag(const std::string& key) const;
+    MU NBTBase* getTag(const std::string& key);
 };
 
 // ----------------------------------------

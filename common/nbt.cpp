@@ -386,15 +386,6 @@ MU NBTBase *NBTBase::getTag(const std::string &key) {
 }
 
 
-MU void NBTBase::setTag(const std::string &key, NBTBase tag) {
-    if (!is<NBTCompound>()) {
-        m_type  = eNBT::COMPOUND;
-        m_value = NBTCompound{};
-    }
-    get<NBTCompound>()[key] = std::move(tag);
-}
-
-
 MU void NBTBase::removeTag(const std::string &key) {
     if (!is<NBTCompound>()) { return; }
     get<NBTCompound>().erase(key);
@@ -590,12 +581,6 @@ std::optional<NBTBase> NBTCompound::extract(const std::string& k) {
         return result;
     }
     return std::nullopt;
-}
-
-
-std::optional<NBTBase> NBTBase::extractTag(const std::string& k) {
-    return is<NBTCompound>() ? get<NBTCompound>().extract(k)
-                             : std::nullopt;
 }
 
 

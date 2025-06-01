@@ -10,7 +10,6 @@ namespace editor::chunk {
 
 
     enum eChunkVersion : i16 {
-        V_UNVERSIONED = 0x0007,
         V_8   = 0x0008,
         V_9   = 0x0009,
         V_NBT = 0x000A,
@@ -90,6 +89,7 @@ namespace editor::chunk {
 
         /// Used to skip the lights in the chunk
         size_t DataGroupCount = 0;
+        u16 maxGridCount = 0;
 
         i32 chunkX = 0;
         i32 chunkZ = 0;

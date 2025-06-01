@@ -22,7 +22,7 @@ namespace editor::chunk {
         for (int xIter = 0; xIter < 16; xIter++) {
             for (int zIter = 0; zIter < 16; zIter++) {
                 for (int yIter = 0; yIter < 128; yIter++) {
-                    c_u16 block = getBlock<eChunkVersion::V_UNVERSIONED>(xIter, yIter, zIter);
+                    c_u16 block = getBlock<eChunkVersion::V_NBT>(xIter, yIter, zIter);
                     setBlock<eChunkVersion::V_12>(xIter, yIter, zIter, block);
                 }
             }
@@ -207,7 +207,6 @@ namespace editor::chunk {
 
     MU void ChunkData::setBlock(c_i32 xIn, c_i32 yIn, c_i32 zIn, c_u16 block) {
         switch (lastVersion) {
-            case eChunkVersion::V_UNVERSIONED:
             case eChunkVersion::V_NBT: {
                 c_i32 offset = toIndex<yXZy>(xIn, yIn, zIn);
                 oldBlocks[offset] = block;
@@ -237,7 +236,6 @@ namespace editor::chunk {
     template<eChunkVersion chunkVersion>
     MU void ChunkData::setBlock(c_i32 xIn, c_i32 yIn, c_i32 zIn, c_u16 block) {
         switch (chunkVersion) {
-            case eChunkVersion::V_UNVERSIONED:
             case eChunkVersion::V_NBT: {
                 c_i32 offset = toIndex<yXZy>(xIn, yIn, zIn);
                 oldBlocks[offset] = block >> 4;
@@ -262,7 +260,6 @@ namespace editor::chunk {
                 break;
         }
     }
-    template void ChunkData::setBlock<eChunkVersion::V_UNVERSIONED>(int,int,int,u16);
     template void ChunkData::setBlock<eChunkVersion::V_NBT>(int,int,int,u16);
     template void ChunkData::setBlock<eChunkVersion::V_8>(int,int,int,u16);
     template void ChunkData::setBlock<eChunkVersion::V_9>(int,int,int,u16);
@@ -281,7 +278,6 @@ namespace editor::chunk {
     /// Returns (blockID << 4 | dataTag).
     u16 ChunkData::getBlock(c_i32 xIn, c_i32 yIn, c_i32 zIn) {
         switch (lastVersion) {
-            case eChunkVersion::V_UNVERSIONED:
             case eChunkVersion::V_NBT: {
                 c_i32 offset = toIndex<yXZy>(xIn, yIn, zIn);
                 return oldBlocks[offset] << 4 | getNibble(blockData, offset);
@@ -306,7 +302,6 @@ namespace editor::chunk {
     template<eChunkVersion chunkVersion>
     u16 ChunkData::getBlock(c_i32 xIn, c_i32 yIn, c_i32 zIn) {
         switch (chunkVersion) {
-            case eChunkVersion::V_UNVERSIONED:
             case eChunkVersion::V_NBT: {
                 c_i32 offset = toIndex<yXZy>(xIn, yIn, zIn);
                 return oldBlocks[offset] << 4 | getNibble(blockData, offset);
@@ -327,7 +322,6 @@ namespace editor::chunk {
         }
     }
 
-    template u16 ChunkData::getBlock<eChunkVersion::V_UNVERSIONED>(int,int,int);
     template u16 ChunkData::getBlock<eChunkVersion::V_NBT>(int,int,int);
     template u16 ChunkData::getBlock<eChunkVersion::V_8>(int,int,int);
     template u16 ChunkData::getBlock<eChunkVersion::V_9>(int,int,int);
