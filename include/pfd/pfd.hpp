@@ -1,5 +1,5 @@
 #pragma once
-
+/*
 #include <array>
 #include <cstdint>
 #include <string>
@@ -91,3 +91,4 @@ private:
     std::array<uint8_t,44> pad2;
     std::array<uint8_t,20> realKey;
 };
+*/

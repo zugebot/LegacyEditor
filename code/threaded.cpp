@@ -1,3 +1,4 @@
+/*
 #include "threaded.hpp"
 
 #include "lce/processor.hpp"
@@ -32,3 +33,4 @@ template int run_parallel<32>(
         void (*)(size_t, editor::FileListing&),
         std::reference_wrapper<editor::FileListing>
 );
+ */

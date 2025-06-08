@@ -1,7 +1,8 @@
+/*
 #pragma once
 
 
-/**
+
  * \n
  * It is a requirement that the first argument passed to the
  * function is an index based on the maximum thread count.
@@ -13,6 +14,7 @@
  * @param func the function to call
  * @param args the arguments to pass to the function
  * @return
- */
+
 template<int threadCount, typename Function, typename... Args>
 int run_parallel(Function func, Args... args);
+*/

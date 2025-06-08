@@ -57,7 +57,10 @@ if(MSVC)
         string(REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
     endforeach()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -static-libgcc -static-libstdc++")
+    message(STATUS "✔ Linking External Libraries")
+    set(CMAKE_EXE_LINKER_FLAGS
+            "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++ -static-libgcc -Wl,-Bstatic -lwinpthread -Wl,-Bdynamic"
+    )
 endif()
 
 
