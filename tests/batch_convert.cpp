@@ -104,19 +104,18 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < count; i++) {
         int x = reader.read<i32>();
         int z = reader.read<i32>();
-        NBTBase nbt;
-        nbt.read(reader);
+        NBTBase nbt = NBTBase::read(reader);
         nbtList[i] = nbt.get<NBTCompound>().extract("Entities")
                         .value_or(makeList(eNBT::COMPOUND)).get<NBTList>();
     }
      */
 
     log(eLog::detail,
-             "Find the project here! https://github.com/zugebot/LegacyEditor\n\n");
+        "Find the project here! https://github.com/zugebot/LegacyEditor\n\n");
     log(eLog::detail,
-             "Supports reading  [ Xbox360, PS3, RPCS3, PSVITA, PS4, WiiU/Cemu, Switch, Windurango ]\n");
+        "Supports reading  [ Xbox360, PS3, RPCS3, PSVITA, PS4, WiiU/Cemu, Switch, Windurango ]\n");
     log(eLog::detail,
-             "Supports writing  [ -------  ---  RPCS3, PSVITA, ---  WiiU/Cemu  ------, ---------- ]\n\n");
+        "Supports writing  [ -------  ---  RPCS3, PSVITA, ---  WiiU/Cemu  ------, ---------- ]\n\n");
 
     fs::path exePath = fs::path(argv[0]).parent_path();
     fs::path defaultOutDir = exePath / "out";
@@ -150,7 +149,7 @@ int main(int argc, char* argv[]) {
         if (!inputConfig["autoPath"].contains(idx) || path.empty()) {
 
             log(eLog::error,
-                     "Invalid input conversionInput.autoPath[{}]\n", idx);
+                "Invalid input conversionInput.autoPath[{}]\n", idx);
             return -1;
         }
         saveFileArgs.push_back(path);
@@ -241,7 +240,7 @@ int main(int argc, char* argv[]) {
             count++;
             auto consoleDetected = editor::SaveProject::detectConsole(arg);
             std::cout << "[" << count << "] [" + lce::consoleToStr(consoleDetected) << "] "
-                << arg << "\n";
+                      << arg << "\n";
         }
         std::cout << "\n" << std::flush;
 
@@ -290,6 +289,9 @@ int main(int argc, char* argv[]) {
     log(eLog::info, "Output directory: {}\n", outputPath.string());
 
 
+    // editor::SaveProject toSteal;
+    // toSteal.read(R"(E:\Emulators\cemu_1.27.1\mlc01\usr\save\00050000\101dbe00\user\80000001\all_loot_chests)");
+
 
     // iterate over all the files they gave
     for (const auto& arg: saveFileArgs) {
@@ -320,17 +322,30 @@ int main(int argc, char* argv[]) {
         const int statusProcess = editor::preprocess(saveProject, saveProject.m_stateSettings, writeSettings);
         if (statusProcess != 0) {
             log(eLog::error,
-                     "Preprocessing {} failed for file: {}\n",
-                     consoleStr, filePath.string());
+                "Preprocessing {} failed for file: {}\n",
+                consoleStr, filePath.string());
             continue;
         }
 
-        saveProject.printDetails();
 
+        std::set<lce::FILETYPE> toRemove = {
+            lce::FILETYPE::NEW_REGION_NETHER, lce::FILETYPE::NEW_REGION_END};
+        saveProject.removeFileTypes(toRemove);
+
+        saveProject.printDetails();
 
         editor::convert(saveProject, writeSettings);
+        saveProject.setLatestVersion(10);
+        saveProject.setOldestVersion(10);
+
+        // std::set<lce::FILETYPE> toAdd = {lce::FILETYPE::OLD_REGION_OVERWORLD,
+        //                                     lce::FILETYPE::OLD_REGION_NETHER, lce::FILETYPE::OLD_REGION_END};
+        // saveProject.addFiles(toSteal.collectFiles(toAdd));
+
 
         saveProject.printDetails();
+
+
 
 
         Timer writeTimer;
@@ -345,22 +360,21 @@ int main(int argc, char* argv[]) {
         std::cout << "[*] level.dat: ";
         if (auto *level = saveProject.m_fileListing.findFile(lce::FILETYPE::LEVEL))
             DataWriter::writeFile("C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\orig_level.dat", level.m_data.span());
-            DataReader reader(level.m_data.span());
-            NBTBase nbt = makeCompound();
-            nbt.read(reader);
-            nbt.print();
-            nbt.writeFile("C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\level.dat");
-        }
+        DataReader reader(level.m_data.span());
+        NBTBase nbt = NBTBase::read(reader);
+        nbt.print();
+        nbt.writeFile("C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\level.dat");
+    }
 #endif
 
-        std::cout << "\n";
-        log(eLog::info, "Conversion Paths:\n");
-        log(eLog::output, "{}\n", filePath.make_preferred().string());
-        log(eLog::input, "{}\n", writeSettings.getOutFilePath().make_preferred().string());
-    }
-
     std::cout << "\n";
-    log(eLog::input, "Press ENTER to exit...\n");
-    consumeEnter();
-    return 0;
+    log(eLog::info, "Conversion Paths:\n");
+    log(eLog::output, "{}\n", filePath.make_preferred().string());
+    log(eLog::input, "{}\n", writeSettings.getOutFilePath().make_preferred().string());
+}
+
+std::cout << "\n";
+log(eLog::input, "Press ENTER to exit...\n");
+consumeEnter();
+return 0;
 }

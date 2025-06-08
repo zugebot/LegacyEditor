@@ -13,6 +13,7 @@
 namespace editor {
 
     // TODO: IDK if it should but it is for now, get fileInfo out of it, fix memory leaks
+    // TODO: I do not want to touch this (6/5/2025)
     int Xbox360BIN::inflateFromLayout(SaveProject& saveProject, const fs::path& theFilePath) {
         m_filePath = theFilePath;
 
@@ -58,26 +59,26 @@ namespace editor {
         }
         saveProject.m_displayMetadata.worldName = stfsInfo.getMetaData()->displayName;
 
-        const Buffer _ = stfsInfo.extractFile(entry);
-        DataReader deflatedData(_.data(), _.size());
-        c_u32 srcSize = deflatedData.read<u32>() - 8;
-        c_u32 inflatedSize = deflatedData.read<u64>();
+        const Buffer src = stfsInfo.extractFile(entry);
+        DataReader reader(src.data(), src.size());
+        c_u32 srcSize = reader.read<u32>() - 8;
+        c_u32 inflatedSize = reader.read<u64>();
         bin.clear();
 
 
-        Buffer data;
-        if (!data.allocate(inflatedSize)) {
+        Buffer dest;
+        if (!dest.allocate(inflatedSize)) {
             return MALLOC_FAILED;
         }
 
         codec::XmemErr err = codec::XDecompress(
-                deflatedData.ptr(), srcSize,
-                data.data(), data.size_ptr());
+                reader.ptr(), srcSize,
+                dest.data(), dest.size_ptr());
         if (err != codec::XmemErr::Ok) {
             return DECOMPRESS;
         }
 
-        int status = FileListing::readListing(saveProject, data, m_console);
+        int status = FileListing::readListing(saveProject, dest, m_console);
         if (status != 0) {
             return -1;
         }
@@ -99,5 +100,10 @@ namespace editor {
 
     int Xbox360BIN::deflateListing(MU const fs::path& gameDataPath, MU Buffer& inflatedData, MU Buffer& deflatedData) const {
         return NOT_IMPLEMENTED;
+    }
+
+
+    std::optional<fs::path> Xbox360BIN::getFileInfoPath(SaveProject& saveProject) const {
+        return std::nullopt;
     }
 }

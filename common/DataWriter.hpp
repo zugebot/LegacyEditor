@@ -33,7 +33,7 @@ class DataWriter {
     }
     
     void need(std::size_t n) {
-        if (_pos + n > _cap) grow(n);
+        if (_pos + n > _cap) grow(_pos + n);
     }
     
     void needAt(std::size_t off, std::size_t n) {

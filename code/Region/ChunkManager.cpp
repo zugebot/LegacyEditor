@@ -59,6 +59,7 @@ namespace editor {
         // read the chunk
         DataReader reader(buffer.span());
 
+        // FUCK MY LIFE
         chunkData->lastVersion = reader.read<u16>();
         if (chunkData->lastVersion == 0x0A00) { // start of NBT
             chunkData->lastVersion = chunk::eChunkVersion::V_NBT;
@@ -70,7 +71,8 @@ namespace editor {
                 chunk::ChunkVNBT(chunkData).readChunk(reader);
                 break;
             case chunk::eChunkVersion::V_8: 
-            case chunk::eChunkVersion::V_9: 
+            case chunk::eChunkVersion::V_9:
+            case chunk::eChunkVersion::V_10:
             case chunk::eChunkVersion::V_11:
                 chunk::ChunkV11(chunkData).readChunk(reader);
                 break;
@@ -80,19 +82,6 @@ namespace editor {
                 break;
             default:;
         }
-
-
-
-        /*
-        if (chunkData->chunkX == 0 && chunkData->chunkZ == -10) {
-            try {
-                DataWriter::writeFile(R"(C:\Users\jerrin\CLionProjects\LegacyEditor\chunks\0_-10.read)",
-                                      reader.span());
-            } catch (const std::exception& e) {
-
-            }
-        }
-         */
     }
 
 
@@ -116,6 +105,7 @@ namespace editor {
                 break;
             case chunk::eChunkVersion::V_8:
             case chunk::eChunkVersion::V_9:
+            case chunk::eChunkVersion::V_10:
             case chunk::eChunkVersion::V_11:
                 writer.write<u16>(chunkData->lastVersion);
                 chunk::ChunkV11(chunkData).writeChunk(writer);

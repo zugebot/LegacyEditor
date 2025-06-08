@@ -13,8 +13,8 @@ namespace editor {
         fs::path m_filePath;
         lce::CONSOLE m_console = lce::CONSOLE::NONE;
         bool m_isX360Bin = false;
+        bool m_isCompressed = true;
         bool m_newGen = false;
-        bool m_shouldDecompress = true;
 
     public:
         StateSettings() = default;
@@ -32,14 +32,13 @@ namespace editor {
         MU ND fs::path filePath() const { return m_filePath; }
         MU ND bool isXbox360Bin() const { return m_isX360Bin; }
         MU ND bool isNewGen() const { return m_newGen; }
-        MU ND bool shouldDecompress() const { return m_shouldDecompress; }
-
+        MU ND bool isCompressed() const { return m_isCompressed; }
 
         MU void setConsole(const lce::CONSOLE theConsole) { m_console = theConsole; }
         MU void setFilePath(fs::path theFilePath) { m_filePath = std::move(theFilePath); }
         MU void setXbox360Bin(c_bool theBool) { m_isX360Bin = theBool; }
         MU void setNewGen(c_bool theBool) { m_newGen = theBool; }
-        MU void setShouldDecompress(c_bool theBool) { m_shouldDecompress = theBool; }
+        MU void setCompressed(c_bool theBool) { m_isCompressed = theBool; }
 
 
     };

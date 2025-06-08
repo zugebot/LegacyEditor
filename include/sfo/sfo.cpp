@@ -259,14 +259,14 @@ T* cast_malloc(uint32_t size) {
 }
 
 
-std::string SFOManager::getAttribute(const std::string& theKey) const {
+std::optional<std::string> SFOManager::getAttribute(const std::string& theKey) const {
     auto attrs = getAttributes();
     for (const auto& attr : attrs) {
         if (attr.myKey == theKey) {
             return attr.myValue;
         }
     }
-    return "";
+    return std::nullopt;
 }
 
 
@@ -318,7 +318,7 @@ void SFOManager::loadFile() {
         throw std::runtime_error("Could not open file \"" + m_filePath + "\".");
     }
 
-    uint32_t magic;
+    eSFO_MAGIC magic;
     fread(&magic, 4, 1, myFile);
     if (magic == eSFO_MAGIC::PS4_PKG) {
         fseek(myFile, getPS4PkgOffset(), SEEK_SET);

@@ -8,25 +8,23 @@
 
 namespace codec {
 
-    static void RLE_decompress(u8* dataIn, c_u32 sizeIn, u8* dataOut, u32& sizeOut) {
-        // DataManager managerIn(dataIn, sizeIn);
-        // DataManager managerOut(dataOut, sizeOut);
-
-        // dataIn, indexIn, sizeIn
-        // dataOut, indexOut, sizeOut
+    static void RLE_decompress(u8* dataIn, c_u32 sizeIn,
+                               u8* dataOut, u32& sizeOut) {
         u32 indexIn = 0;
         u32 indexOut = 0;
 
         while (indexIn < sizeIn) {
-            if (c_u8 byte1 = dataIn[indexIn++]; byte1 != 255) {
-                dataOut[indexOut++] = byte1;
+            c_u8 first = dataIn[indexIn++];
+            if (first != 255) {
+                dataOut[indexOut++] = first;
+
             } else {
-                c_u8 byte2 = dataIn[indexIn++];
+                c_u32 length = dataIn[indexIn++];
                 u8 value = 255;
-                if (byte2 >= 3) {
+                if (length >= 3) {
                     value = dataIn[indexIn++];
                 }
-                for (int j = 0; j <= static_cast<int>(byte2); j++) {
+                for (u32 j = 0; j <= length; j++) {
                     dataOut[indexOut++] = value;
                 }
             }

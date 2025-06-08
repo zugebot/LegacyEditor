@@ -21,7 +21,8 @@ namespace editor {
             u32 decSize : 29 {0};
             u32 isCompressedZip : 1 {1};
             u32 isCompressedRLE : 1 {1};
-            u32 newSaveFlag : 1 {1};
+            u32 isNewSave : 1 {1};
+
 
             MU ND u32 getTimestamp() const { return timestamp; }
             MU void setTimestamp(c_u32 val) { timestamp = val; }
@@ -35,8 +36,8 @@ namespace editor {
             MU ND u64 isRLECompressed() const { return isCompressedRLE; }
             MU void setRLECompressed(c_u64 val) { isCompressedRLE = val; }
 
-            MU ND u64 getNewSaveFlag() const { return newSaveFlag; }
-            MU void setNewSaveFlag(c_u64 val) { newSaveFlag = val; }
+            MU ND u64 getNewSaveFlag() const { return isNewSave; }
+            MU void setNewSaveFlag(c_u64 val) { isNewSave = val; }
 
             MU ND u64 isZipCompressed() const { return isCompressedZip; }
             MU void setZipCompressed(c_u64 val) { isCompressedZip = val; }
@@ -52,7 +53,7 @@ namespace editor {
             result += "decSize_" + std::to_string(chunkHeader.decSize) + "___";
             result += "isComp_" + std::to_string(chunkHeader.isCompressedZip) + "___";
             result += "rleFlag_" + std::to_string(chunkHeader.isCompressedRLE) + "___";
-            result += "unknown_" + std::to_string(chunkHeader.newSaveFlag);
+            result += "unknown_" + std::to_string(chunkHeader.isNewSave);
             return result;
         }
 

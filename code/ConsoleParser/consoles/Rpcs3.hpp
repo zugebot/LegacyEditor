@@ -24,6 +24,8 @@ namespace editor {
         ND int deflateToSave(SaveProject& saveProject, MU WriteSettings& theSettings) const override;
         ND int deflateListing(const fs::path& gameDataPath, Buffer& inflatedData, MU Buffer& deflatedData) const override;
 
+        ND std::optional<fs::path> getFileInfoPath(SaveProject& saveProject) const override;
+
         int readPARAM_SFO(SaveProject& saveProject);
 
     };

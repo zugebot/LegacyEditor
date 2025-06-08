@@ -28,45 +28,44 @@ namespace editor {
 
 
     int Xbox360DAT::inflateListing(MU SaveProject& saveProject) {
-        Buffer fileData;
-        DataReader reader;
+        Buffer dest;
 
-        try {
-            fileData = DataReader::readFile(m_filePath);
-            reader = DataReader(fileData.span(), Endian::Big);
-        } catch (const std::exception& e) {
-            return printf_err(FILE_ERROR, ERROR_4, m_filePath.string().c_str());
+        if (!saveProject.m_stateSettings.isCompressed()) {
+            dest = readRaw(m_filePath);
+        } else {
+            Buffer src;
+            DataReader reader;
+
+            try {
+                src = DataReader::readFile(m_filePath);
+                reader = DataReader(src.span(), Endian::Big);
+                if (reader.size() < 12) {
+                    return printf_err(FILE_ERROR, ERROR_5);
+                }
+            } catch (const std::exception& e) {
+                return printf_err(FILE_ERROR, ERROR_4, m_filePath.string().c_str());
+            }
+
+            u32 src_size = reader.read<u32>() - 8;
+            reader.read<i32>();
+            u32 file_size = reader.read<u32>();
+
+            if (!dest.allocate(file_size)) {
+                return printf_err(MALLOC_FAILED, ERROR_1, file_size);
+            }
+
+            codec::XmemErr error = codec::XDecompress(
+                    reader.ptr(), src_size, dest.data(), dest.size_ptr());
+            if (error != codec::XmemErr::Ok) {
+                return printf_err(DECOMPRESS, "%s (%s)", ERROR_3, to_string(error));
+            }
+
+            if (dest.empty()) {
+                return printf_err(DECOMPRESS, "%s", ERROR_3);
+            }
         }
 
-        if (!saveProject.m_stateSettings.shouldDecompress()) {
-            int status = FileListing::readListing(saveProject, fileData, m_console);
-            return status;
-        }
-
-        if (reader.size() < 12) {
-            return printf_err(FILE_ERROR, ERROR_5);
-        }
-
-        u32 src_size = reader.read<u32>() - 8;
-        reader.read<i32>();
-        u32 file_size = reader.read<u32>();
-
-        Buffer inflatedData;
-        if (!inflatedData.allocate(file_size)) {
-            return printf_err(MALLOC_FAILED, ERROR_1, file_size);
-        }
-
-        codec::XmemErr error = codec::XDecompress(
-                reader.ptr(), src_size, inflatedData.data(), inflatedData.size_ptr());
-        if (error != codec::XmemErr::Ok) {
-            return printf_err(DECOMPRESS, "%s (%s)", ERROR_3, to_string(error));
-        }
-
-        if (inflatedData.empty()) {
-            return printf_err(DECOMPRESS, "%s", ERROR_3);
-        }
-
-        int status = FileListing::readListing(saveProject, inflatedData, m_console);
+        int status = FileListing::readListing(saveProject, dest, m_console);
         return status;
     }
 
@@ -79,5 +78,11 @@ namespace editor {
 
     int Xbox360DAT::deflateListing(MU const fs::path& gameDataPath, MU Buffer& inflatedData, MU Buffer& deflatedData) const {
         return NOT_IMPLEMENTED;
+    }
+
+
+    std::optional<fs::path> Xbox360DAT::getFileInfoPath(SaveProject& saveProject) const {
+        fs::path folderPath = m_filePath.parent_path();
+        return folderPath / "__thumbnail.png";
     }
 }

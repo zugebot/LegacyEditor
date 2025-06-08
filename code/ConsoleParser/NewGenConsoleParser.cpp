@@ -9,50 +9,31 @@
 namespace editor {
 
     int NewGenConsoleParser::inflateListing(SaveProject& saveProject) {
-        Buffer data;
+        Buffer src;
+        DataReader reader;
 
-        FILE* f_in = fopen(m_filePath.string().c_str(), "rb");
-        if (f_in == nullptr) {
+        try {
+            src = DataReader::readFile(m_filePath);
+            reader = DataReader(src, Endian::Little);
+        } catch (const std::exception& e) {
             return printf_err(FILE_ERROR, ERROR_4, m_filePath.string().c_str());
         }
 
-        fseek(f_in, 0, SEEK_END);
-        u64 input_size = ftell(f_in);
-        fseek(f_in, 0, SEEK_SET);
-        if (input_size < 12) {
-            fclose(f_in);
-            return printf_err(FILE_ERROR, ERROR_5);
-        }
+        u32 final_size = reader.peek_at<u32>(4);
 
-        HeaderUnion headerUnion{};
-        fread(&headerUnion, 1, 12, f_in);
-
-        u32 final_size = headerUnion.getInt2Swap();
-        if (!data.allocate(final_size)) {
-            fclose(f_in);
+        Buffer dest;
+        if (!dest.allocate(final_size)) {
             return printf_err(MALLOC_FAILED, ERROR_1, final_size);
         }
 
-        input_size -= 8;
-        Buffer src;
-        if (!src.allocate(input_size)) {
-            fclose(f_in);
-            return printf_err(MALLOC_FAILED, ERROR_1, input_size);
-        }
-
-        fseek(f_in, 8, SEEK_SET);
-        fread(src.data(), 1, input_size, f_in);
-        fclose(f_in);
-
-        int status = tinf_zlib_uncompress(data.data(), data.size_ptr(), src.data(), input_size);
+        int status = tinf_zlib_uncompress(dest.data(), dest.size_ptr(), src.data() + 8, src.size() - 8);
         if (status != 0) {
             return DECOMPRESS;
         }
 
+        // DataWriter::writeFile("C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\GAMEDATA_WINDURANGO", data.span());
 
-        DataWriter::writeFile("C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\GAMEDATA_WINDURANGO", data.span());
-
-        status = FileListing::readListing(saveProject, data, m_console);
+        status = FileListing::readListing(saveProject, dest, m_console);
         if (status != 0) {
             return -1;
         }
@@ -66,7 +47,6 @@ namespace editor {
 
         return SUCCESS;
     }
-
 
     /**
      * \brief Ps4 / Switch / Xbox1

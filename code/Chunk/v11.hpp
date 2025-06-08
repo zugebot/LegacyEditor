@@ -87,6 +87,7 @@ namespace editor::chunk {
 
 
     /// "Elytra" chunks.
+    /// in-game block order: XZY
     class ChunkV11 : public VChunkBase {
         static constexpr i32 MAX_BLOCKS_SIZE = 64;
         static constexpr i32 GRID_COUNT = 512;
@@ -97,14 +98,14 @@ namespace editor::chunk {
 
         // Read
 
-        void readBlocks(std::span<const u8> dataIn, u8* oldBlockPtr) const;
+        static void readBlocks(std::span<const u8> dataIn, u8* oldBlockPtr) ;
         template<size_t BitsPerBlock>
         MU static bool readGrid(u8 const* gridDataPtr, u8 blockBuffer[MAX_BLOCKS_SIZE]);
 
 
         // Write
 
-        MU void writeBlocks(DataWriter& writer, u8 const* oldBlockPtr) const;
+        MU void writeBlocks(DataWriter& writer, u8 const* oldBlockPtr, bool isBottom) const;
         template<size_t BitsPerBlock>
         void writeGrid(DataWriter& writer, u8FixVec_t& blockVector, u8FixVec_t& blockLocations, u8 blockMap[MAP_SIZE]) const;
 
@@ -112,8 +113,6 @@ namespace editor::chunk {
     public:
         explicit ChunkV11(ChunkData* chunkDataIn) : VChunkBase(chunkDataIn) {}
 
-
-        MU void allocChunk() const override;
         MU void readChunk(DataReader& reader) override;
         MU void writeChunkInternal(DataWriter& writer, bool fastMode) override;
     };

@@ -135,5 +135,11 @@ namespace editor {
     }
 
 
+    std::optional<fs::path> Vita::getFileInfoPath(SaveProject& saveProject) const {
+        fs::path folderPath = m_filePath.parent_path();
+        return folderPath / "THUMBDATA.BIN";
+    }
+
+
 }
 

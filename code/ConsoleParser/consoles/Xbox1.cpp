@@ -69,4 +69,10 @@ namespace editor {
     }
 
 
+    std::optional<fs::path> Xbox1::getFileInfoPath(SaveProject& saveProject) const {
+        fs::path folderPath = m_filePath.parent_path();
+        return folderPath / "THUMB";
+    }
+
+
 }

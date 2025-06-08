@@ -51,14 +51,13 @@ class NBTUtil {
 
 
     MU ND static std::tuple<int, int, int> getPosFromTag(NBTBase& nbt) {
-        // if (!is<NBTCompound>()) return false;
         if (!nbt.hasKeys({"X", "Y", "Z"})) {
             return {0, 0, 0};
         }
         std::tuple<int, int, int> pos = std::make_tuple(
-                nbt.getTag("X")->get<int>(),
-                nbt.getTag("Y")->get<int>(),
-                nbt.getTag("Z")->get<int>()
+                nbt["X"]->get<i32>(),
+                nbt["Y"]->get<i32>(),
+                nbt["Z"]->get<i32>()
         );
         return pos;
     }

@@ -19,7 +19,7 @@
 #include <cstdint>
 
 
-enum eSFO_FMT : uint32_t {
+enum class eSFO_FMT : uint16_t {
     /// utf8 Special Mode, NOT NULL terminated
     UTF8_SPECIAL  = 4,
     /// utf8 char string, NULL terminated
@@ -29,7 +29,9 @@ enum eSFO_FMT : uint32_t {
 };
 
 
-enum eSFO_MAGIC {
+enum class eSFO_MAGIC : uint32_t {
+    /// none
+    NONE = 0,
     /// PS4 PKG file
     PS4_PKG = 1414415231,
     /// Disc param.sfo
@@ -65,7 +67,7 @@ public:
 
     struct index_table_entry {
         uint16_t key_offset;
-        uint16_t param_fmt;
+        eSFO_FMT param_fmt;
         uint32_t param_len;
         uint32_t param_max_len;
         uint32_t data_offset;
@@ -79,7 +81,7 @@ public:
 
     [[maybe_unused]] void editParam(const std::string& theKey, const std::string& value);
 
-    [[nodiscard]] std::string getAttribute(const std::string& theKey) const;
+    [[nodiscard]] std::optional<std::string> getAttribute(const std::string& theKey) const;
 
     [[maybe_unused]] void setMagic(eSFO_MAGIC magic);
 
@@ -95,13 +97,13 @@ private:
     } myKeyTable{}, myDataTable{};
 
     struct header {
-        uint32_t myMagic;
+        eSFO_MAGIC myMagic;
         uint32_t myVersion;
         uint32_t myKeyTableOffset;
         uint32_t myDataTableOffset;
         uint32_t myEntriesCount;
 
-        header() : myMagic(0), myVersion(0), myKeyTableOffset(0), myDataTableOffset(0), myEntriesCount(0) {
+        header() : myMagic(eSFO_MAGIC::NONE), myVersion(0), myKeyTableOffset(0), myDataTableOffset(0), myEntriesCount(0) {
             (void)(myMagic);
             (void)(myVersion);
         }

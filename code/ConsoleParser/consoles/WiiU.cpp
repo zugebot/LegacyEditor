@@ -32,17 +32,17 @@ namespace editor {
 
 
     int WiiU::inflateListing(SaveProject& saveProject) {
-        Buffer fileData;
+        Buffer src;
         DataReader reader;
 
         try {
-            fileData = DataReader::readFile(m_filePath);
-            reader = DataReader(fileData.span(), Endian::Big);
+            src = DataReader::readFile(m_filePath);
+            reader = DataReader(src.span(), Endian::Big);
+            if (reader.size() < 12) {
+                return printf_err(FILE_ERROR, ERROR_5);
+            }
         } catch (const std::exception& e) {
             return printf_err(FILE_ERROR, ERROR_4, m_filePath.string().c_str());
-        }
-        if (reader.size() < 12) {
-            return printf_err(FILE_ERROR, ERROR_5);
         }
 
         Buffer dst;
@@ -123,6 +123,13 @@ namespace editor {
         }
 
         return SUCCESS;
+    }
+
+
+    std::optional<fs::path> WiiU::getFileInfoPath(SaveProject& saveProject) const {
+        fs::path filePath = m_filePath;
+        filePath.replace_extension(".ext");
+        return filePath;
     }
 
 }

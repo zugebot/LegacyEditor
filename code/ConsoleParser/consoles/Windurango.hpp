@@ -25,6 +25,8 @@ namespace editor {
         ND int deflateToSave(SaveProject& saveProject, MU WriteSettings& theSettings) const override;
         ND int deflateListing(MU const fs::path& gameDataPath, MU Buffer& inflatedData, MU Buffer& deflatedData) const override;
 
+        ND std::optional<fs::path> getFileInfoPath(SaveProject& saveProject) const override;
+
         std::vector<fs::path> findExternalFolder(editor::SaveProject &saveProject) override;
         int readExternalFolders(SaveProject& saveProject) override;
 

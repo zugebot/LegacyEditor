@@ -64,8 +64,9 @@ public:
     }
 
     bool allocate(std::size_t n) {
+        if (n == 0) { return false; }
         auto p = std::make_unique<T[]>(n);
-        if (!p) return false;
+        if (!p) { return false; }
         m_data = std::move(p);
         m_size = n;
         return true;

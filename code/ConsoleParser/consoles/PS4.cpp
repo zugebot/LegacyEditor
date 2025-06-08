@@ -66,12 +66,18 @@ namespace editor {
 
         // get the "CUSA00744-240620222358.0"-alike str from the main "param.sfo"
         SFOManager mainSFO(sfoFilePath.string());
-        const std::wstring subtitle = stringToWstring(mainSFO.getAttribute("SUBTITLE"));
+        const std::wstring subtitle = stringToWstring(mainSFO.getAttribute("SUBTITLE").value_or("New World"));
         saveProject.m_displayMetadata.worldName = subtitle;
 
 
-        std::string mainAttr = mainSFO.getAttribute("SAVEDATA_DIRECTORY");
-        auto mainAttrParts = split(mainAttr, '.');
+        std::optional<std::string> mainAttr = mainSFO.getAttribute("SAVEDATA_DIRECTORY");
+
+        // invalid SFO
+        if (!mainAttr) {
+            return {""};
+        }
+
+        auto mainAttrParts = split(mainAttr.value(), '.');
 
         if (mainAttrParts.size() != 2) {
             printf("param.sfo does not seem to be formatted correctly.");
@@ -114,8 +120,16 @@ namespace editor {
 
             // get the "CUSA00744-240620222358.0"-alike str from the temp "param.sfo"
             SFOManager tempSFO(tempSFOFilePath.string());
-            std::string tempAttr = tempSFO.getAttribute("SAVEDATA_DIRECTORY");
-            auto tempAttrParts = split(tempAttr, '.');
+
+
+            std::optional<std::string> tempAttr = tempSFO.getAttribute("SAVEDATA_DIRECTORY");
+
+            // invalid SFO
+            if (!tempAttr) {
+                return {""};
+            }
+
+            auto tempAttrParts = split(tempAttr.value(), '.');
 
             if (tempAttrParts.size() != 2) {
                 continue;
@@ -150,6 +164,12 @@ namespace editor {
 
     int PS4::writeExternalFolders(SaveProject& saveProject, const fs::path& outDirPath) {
         return NOT_IMPLEMENTED;
+    }
+
+
+    std::optional<fs::path> PS4::getFileInfoPath(SaveProject& saveProject) const {
+        fs::path folderPath = m_filePath.parent_path();
+        return folderPath / "THUMB";
     }
 
 

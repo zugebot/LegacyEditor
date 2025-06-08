@@ -25,10 +25,10 @@ namespace editor {
         c_u32 indexOffset = reader.read<u32>();
         u32 fileCount = reader.read<u32>();
         saveProject.setOldestVersion(reader.read<u16>());
-        saveProject.setCurrentVersion(reader.read<u16>());
+        saveProject.setLatestVersion(reader.read<u16>());
 
         u32 FOOTER_ENTRY_SIZE = 144;
-        if (saveProject.currentVersion() <= 1) {
+        if (saveProject.latestVersion() <= 1) {
             FOOTER_ENTRY_SIZE = 136;
             fileCount /= 136;
         }
@@ -44,7 +44,7 @@ namespace editor {
             u32 fileSize = reader.read<u32>();
             c_u32 index = reader.read<u32>();
             u64 timestamp = 0;
-            if (saveProject.currentVersion() > 1) {
+            if (saveProject.latestVersion() > 1) {
                 timestamp = reader.read<u64>();
             }
             totalSize += fileSize;
@@ -84,8 +84,8 @@ namespace editor {
                 lce::FILETYPE::ENTITY_OVERWORLD,
                 lce::FILETYPE::ENTITY_END,
         };
-        u32 FOOTER_ENTRY_SIZE = (saveProject.currentVersion() > 1) ? 144 : 136;
-        u32 MULTIPLIER = (saveProject.currentVersion() > 1) ? 1 : 136;
+        u32 FOOTER_ENTRY_SIZE = (saveProject.latestVersion() > 1) ? 144 : 136;
+        u32 MULTIPLIER = (saveProject.latestVersion() > 1) ? 1 : 136;
 
         auto fileRange = saveProject.view_of(TYPES_TO_WRITE);
         auto consoleOut = writeSettings.getConsole();
@@ -117,7 +117,7 @@ namespace editor {
         writer.write<u32>(fileInfoOffset);
         writer.write<u32>(fileStructs.size() * MULTIPLIER);
         writer.write<u16>(saveProject.oldestVersion());
-        writer.write<u16>(saveProject.currentVersion());
+        writer.write<u16>(saveProject.latestVersion());
 
         // step 4: write each files data
         for (const auto& fileStruct : fileStructs) {
@@ -130,7 +130,7 @@ namespace editor {
             writer.writeWStringFromString(fileIterName, WSTRING_SIZE);
             writer.write<u32>(fileStruct.buffer.size());
             writer.write<u32>(fileStruct.offset);
-            if (saveProject.currentVersion() > 1) {
+            if (saveProject.latestVersion() > 1) {
                 writer.write<u64>(fileStruct.file.m_timestamp);
             }
         }

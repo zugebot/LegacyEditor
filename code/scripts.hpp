@@ -6,6 +6,8 @@
 
 #include "code/Region/Region.hpp"
 
+#include "code/Chunk/helpers/NBTFixer.hpp"
+#include "code/Impl/level.hpp"
 #include "code/SaveFile/SaveProject.hpp"
 #include "code/SaveFile/fileListing.hpp"
 #include "code/SaveFile/writeSettings.hpp"
@@ -30,285 +32,104 @@ namespace std {
 
 namespace editor {
 
-    /*
-    void processRegion(size_t regionIndex, FileListing& fileListing) {
-        const lce::CONSOLE console = fileListing.myReadSettings.console();
-        if (regionIndex >= fileListing.ptrs.old_reg_overworld.size()) { return; }
-
-    // read a region file
-    Region region;
-    region.read(fileListing.ptrs.old_reg_overworld[regionIndex]);
-    for (ChunkManager& chunkManager: region.chunks) {
-        if (chunkManager.size == 0) {
-            continue;
-        }
-
-        chunkManager.ensureDecompress(console);
-        chunkManager.readChunk(console);
-        auto* chunkData = chunkManager.chunkData;
-
-        if (!chunkData->validChunk) {
-            continue;
-        }
-
-        u16 blocks[65536];
-        for (u16 x = 0; x < 16; x++) {
-            for (u16 z = 0; z < 16; z++) {
-                for (u16 y = 0; y < 256; y++) {
-                    u16 block1 = chunkManager.chunkData->getBlock(x, y, z);
-                    u16 data_1 = 0;
-                    c_int offset1 = y + 256 * z + 4096 * x;
-
-                    c_u16 compare1 = (block1 & 0x1FF0) >> 4;
-                    if ((block1 & 0x8000) != 0) { // fix stupid blocks
-                        if (compare1 == 271) {    // sea pickle
-                            block1 = (block1 & 0x9FF7) | 0x08;
-                        }
-                        if (compare1 == 272) { // bubble column
-                            block1 = (block1 & 0x7FFF) | 0b1111;
-                        }
-                    }
-
-                    blocks[offset1] = block1 | data_1;
-
-
-
-                    // block1 = BlockID::AIR_ID;
-                    // if (y == 0) { block1 = BlockID::BEDROCK_ID; }
-                    //
-                    // u32 jumpBL, jumpDA;
-                    //
-                    // if (y == 1) {
-                    //     if (x % 2 != 0 || z % 2 != 0) {
-                    //         if (chunkData->chunkX < -16 || chunkData->chunkX > 16 ||
-                    //             chunkData->chunkZ <   0 || chunkData->chunkZ >  1) {
-                    //             block1 = BlockID::AIR_ID;
-                    //             goto END;
-                    //         }
-                    //         block1 = BlockID::BEDROCK_ID;
-                    //         goto END;
-                    //     }
-                    // }
-                    //
-                    // if (y == 2) {
-                    //     if (chunkData->chunkX < -16 || chunkData->chunkX > 16 ||
-                    //         chunkData->chunkZ <   0 || chunkData->chunkZ >  1) {
-                    //         goto END;
-                    //     }
-                    //
-                    //     if (x % 2 != 0 || z % 2 != 0) {
-                    //         goto END;
-                    //     }
-                    //
-                    //     jumpBL = 8 * (chunkData->chunkX + 16);
-                    //     jumpDA = 8 *  chunkData->chunkZ;
-                    //
-                    //     block1 = (jumpBL + x / 2) << 4;
-                    //     data_1 = jumpDA + z / 2;
-                    //
-                    //     if (block1 > 252 << 4 || block1 == BlockID::BEACON_ID) {
-                    //         block1 = 0;
-                    //         data_1 = 0;
-                    //     }
-                    // }
-
-                END:
-
-                    blocks[offset1] = block1 | data_1;
-
-                }
-            }
-        }
-
-        std::memcpy(&chunkData->newBlocks[0], &blocks[0], 131072);
-        // shuffleArray(&chunkData->newBlocks[0], 65535);
-        // memset(&chunkData->biomes[0], 0x0B, 256);
-        // memset(&chunkData->blockLight[0], 0xFF, 32768);
-        // memset(&chunkData->skyLight[0], 0xFF, 32768);
-        // memset(&chunkData->heightMap[0], 0xFF, 256);
-        chunkData->terrainPopulated = 2046;
-        chunkData->lastUpdate = 100;
-        chunkData->inhabitedTime = 200;
-
-        chunkData->defaultNBT();
-        chunkManager.writeChunk(console);
-        chunkManager.ensureCompressed(console);
-    }
-
-    fileListing.ptrs.old_reg_overworld[regionIndex]->data.deallocate();
-    fileListing.ptrs.old_reg_overworld[regionIndex]->data = region.write(console);
-}
-*/
-
-
-        /**
-     * Removes all blocks in the nether except for netherrack
-     * DO NOT USE THIS IT NEEDS FIXED
-     * @param regionIndex
-     * @param fileListing
-     */
-        /*
-    void removeNetherrack(size_t regionIndex, FileListing& fileListing) {
-        const lce::CONSOLE console = fileListing.myReadSettings.console();
-        if (regionIndex >= fileListing.ptrs.old_reg_nether.size()) { return; }
-
-        // read a region file
-        Region region;
-        region.read(fileListing.ptrs.old_reg_nether[regionIndex]);
-
-        for (ChunkManager& chunkManager: region.chunks) {
-            if (chunkManager.size == 0) {
-                continue;
-            }
-
-            chunkManager.ensureDecompress(console);
-            chunkManager.readChunk(console);
-            auto* chunkData = chunkManager.chunkData;
-
-            if (!chunkData->validChunk) {
-                continue;
-            }
-
-            u16 blocks[65536];
-            for (u16 x = 0; x < 16; x++) {
-                for (u16 z = 0; z < 16; z++) {
-                    for (u16 y = 0; y < 256; y++) {
-                        u16 block1 = chunkManager.chunkData->getBlock(x, y, z);
-                        c_int offset1 = y + 256 * z + 4096 * x;
-
-                        if ((block1 & 0x1FF0) >> 4 != 7) {
-                            block1 = 0;
-                        }
-
-                        blocks[offset1] = block1;
-                    }
-                }
-            }
-
-            std::memcpy(chunkData->newBlocks.data(), &blocks[0], 131072);
-            memset(chunkData->blockLight.data(), 0xFF, 32768);
-            memset(chunkData->skyLight.data(), 0xFF, 32768);
-            chunkData->terrainPopulated = 2046;
-
-            chunkData->defaultNBT();
-            chunkManager.writeChunk(console);
-            chunkManager.ensureCompressed(console);
-        }
-
-        fileListing.ptrs.old_reg_nether[regionIndex]->data.deallocate();
-        fileListing.ptrs.old_reg_nether[regionIndex]->data = region.write(console);
-    }
-      */
-
 
     void convertReadChunkToAquatic(ChunkManager& chunk) {
         chunk::ChunkData* chunkData = chunk.chunkData;
         if (chunkData->lastVersion == 7) {
-            chunk.chunkHeader.setNewSaveFlag(1);
             // fix shit old xbox NBT
-            if (chunkData->entities.get<NBTList>().subType() != eNBT::COMPOUND)
-                chunkData->entities = makeList(eNBT::COMPOUND, {});
+            if (chunkData->entities.subType() != eNBT::COMPOUND)
+                chunkData->entities = NBTList(eNBT::COMPOUND);
 
-            if (chunkData->tileEntities.get<NBTList>().subType() != eNBT::COMPOUND)
-                chunkData->tileEntities = makeList(eNBT::COMPOUND, {});
+            if (chunkData->tileEntities.subType() != eNBT::COMPOUND)
+                chunkData->tileEntities = NBTList(eNBT::COMPOUND);
 
-            if (chunkData->tileTicks.get<NBTList>().subType() != eNBT::COMPOUND)
-                chunkData->tileTicks = makeList(eNBT::COMPOUND, {});
+            if (chunkData->tileTicks.subType() != eNBT::COMPOUND)
+                chunkData->tileTicks = NBTList(eNBT::COMPOUND);
 
-            if (chunkData->chunkHeight == 128) {
-                chunkData->convertNBT128ToAquatic();
-            } else {
-                chunkData->convertNBT256ToAquatic();
-            }
-
-            if (chunkData->terrainPopulated == 1) {
-                chunkData->terrainPopulated = 2046;
-            }
-
-        } else if (chunkData->lastVersion == 10) {
-            chunkData->convertNBT256ToAquatic();
-            chunk.chunkHeader.setNewSaveFlag(1);
-            if (chunkData->terrainPopulated == 1) {
-                chunkData->terrainPopulated = 2046;
+            if (chunkData->terrainPopulatedFlags == 1) {
+                chunkData->terrainPopulatedFlags = 2046;
             }
 
         } else if (chunkData->lastVersion == 8 ||
                    chunkData->lastVersion == 9 ||
+                   chunkData->lastVersion == 10 ||
                    chunkData->lastVersion == 11) {
-            chunk.chunkHeader.setNewSaveFlag(1);
-            chunkData->convertOldToAquatic();
 
         } else if (chunkData->lastVersion == 13) {
-            chunk.chunkHeader.setNewSaveFlag(1);
-            chunkData->convert114ToAquatic();
+
+            for (int i = 0; i < 65536; i++) {
+                c_u16 id1 = chunkData->blocks[i] >> 4 & 1023;
+                if ((id1 > 259 && id1 < 263) || id1 > 318) {
+                    chunkData->blocks[i] = lce::blocks::COBBLESTONE_ID << 4;
+                }
+                continue;
+                c_u16 id2 = chunkData->submerged[i] >> 4 & 1023;
+                if (id2 > 250) {
+                    chunkData->submerged[i] = lce::blocks::COBBLESTONE_ID << 4;
+                }
+            }
 
         }
-        /*
-        else if (chunkManager.chunkData->lastVersion != 12) {
-            std::cout << "[?] Chunk with version " << chunkManager.chunkData->lastVersion << "\n";
-        }
-         */
+
+        chunk.chunkHeader.setNewSaveFlag(1);
+        chunkData->lastVersion = 12;
     }
 
 
 
     void convertReadChunkToElytra(ChunkManager& chunk) {
-        chunk::ChunkData* chunkData = chunk.chunkData;
+        auto chunkData = chunk.chunkData;
         if (chunkData->lastVersion == 7) {
-            chunk.chunkHeader.setNewSaveFlag(1);
-            // fix shit old xbox NBT
-            // if (chunkData->entities.get<NBTList>().subType() != eNBT::COMPOUND)
-            //     chunkData->entities = makeList(eNBT::COMPOUND, {});
-            //
-            // if (chunkData->tileEntities.get<NBTList>().subType() != eNBT::COMPOUND)
-            //     chunkData->tileEntities = makeList(eNBT::COMPOUND, {});
-
-            // if (chunkData->tileTicks.get<NBTList>().subType() != eNBT::COMPOUND)
-            //     chunkData->tileTicks = makeList(eNBT::COMPOUND, {});
-
-            // if (chunkData->chunkHeight == 128) {
-            //     chunkData->convertNBT128ToAquatic();
-            // } else {
-            //     chunkData->convertNBT256ToAquatic();
-            // }
-
-            // if (chunkData->terrainPopulated == 1) {
-            //     chunkData->terrainPopulated = 2046;
-            // }
-
-        } else if (chunkData->lastVersion == 10) {
-            // chunkData->convertNBT256ToAquatic();
-            // chunk.chunkHeader.setNewSaveFlag(1);
-            // if (chunkData->terrainPopulated == 1) {
-            //     chunkData->terrainPopulated = 2046;
-            // }
 
         } else if (chunkData->lastVersion == 8 ||
                    chunkData->lastVersion == 9 ||
+                   chunkData->lastVersion == 10 ||
                    chunkData->lastVersion == 11) {
-            // chunk.chunkHeader.setNewSaveFlag(1);
+
 
         }
-        else if (chunkData->lastVersion == 12) {
-            chunkData->convertAquaticToElytra();
-        } else if (chunkData->lastVersion == 13) {
-            // chunk.chunkHeader.setNewSaveFlag(1);
-            // chunkData->convert114ToAquatic();
+        else if (chunkData->lastVersion == 12 ||
+                 chunkData->lastVersion == 13) {
+            for (int i = 0; i < 65536; i++) {
+                u16 block = chunkData->blocks[i];
+                if (((block & 0x1FF0) >> 4) > 255) {
+                    block = lce::blocks::COBBLESTONE_ID << 4;
+                }
+
+                chunkData->blocks[i] = block;
+            }
 
         }
-        /*
-        else if (chunkManager.chunkData->lastVersion != 12) {
-            std::cout << "[?] Chunk with version " << chunkManager.chunkData->lastVersion << "\n";
-        }
-         */
+
+
+        chunk.chunkHeader.setNewSaveFlag(0);
+        chunkData->lastVersion = 10;
     }
 
 
 
 
 
-    void convertChunksToAquatic(LCEFile& file,
+    void convertReadChunkToElytra(LCEFile& file,
                                 const lce::CONSOLE inConsole, const lce::CONSOLE outConsole) {
+        Region region;
+        region.read(&file);
+
+        for (int i = 0; i < 1024; i++) {
+            ChunkManager& chunkManager = region.m_chunks[i];
+            chunkManager.readChunk(inConsole);
+            if (!chunkManager.chunkData->validChunk) continue;
+            convertReadChunkToElytra(chunkManager);
+            chunkManager.writeChunk(outConsole);
+        }
+
+        file.setBuffer(region.write(outConsole));
+        file.m_console = outConsole;
+    }
+
+
+    void convertReadChunkToAquatic(LCEFile& file,
+                                  const lce::CONSOLE inConsole, const lce::CONSOLE outConsole) {
         Region region;
         region.read(&file);
 
@@ -398,12 +219,12 @@ namespace editor {
                         convertReadChunkToAquatic(chunk);
 
                         // move entities from the chunk, into the ``entityList``
-                        if (!chunk.chunkData->entities.get<NBTList>().empty()) {
+                        if (!chunk.chunkData->entities.empty()) {
                             entityList.emplace_back(
                                 Coordinate{chunk.chunkData->chunkX, chunk.chunkData->chunkZ},
-                                    makeCompound( { {"", chunk.chunkData->entities} } )
+                                    makeCompound( { {"", makeList(chunk.chunkData->entities) } } )
                             );
-                            chunk.chunkData->entities = NBTBase();
+                            chunk.chunkData->entities = NBTList(eNBT::COMPOUND);
                         }
 
 
@@ -504,6 +325,8 @@ namespace editor {
         dimensions.emplace_back(ft::NEW_REGION_END,       ft::OLD_REGION_END,       ft::ENTITY_END,       Map{});
 
 
+        saveProject.removeFileTypes({lce::FILETYPE::NEW_REGION_NETHER, lce::FILETYPE::NEW_REGION_NETHER});
+
         for (auto& [newFmt, oldFmt, entityFmt, regionMap] : dimensions) {
 
             // (1) read entities file
@@ -517,9 +340,7 @@ namespace editor {
                 for (int i = 0; i < entityCount; i++) {
                     int chunkX = entityReader.read<i32>();
                     int chunkZ = entityReader.read<i32>();
-                    NBTBase nbt;
-                    entityReader.skip(3);
-                    nbt.read(entityReader);
+                    NBTBase nbt = NBTBase::read(entityReader);
                     entityMap.emplace(Coordinate(chunkX, chunkZ), std::move(nbt));
                 }
             }
@@ -600,18 +421,26 @@ namespace editor {
                                 bigRegion.z() * 32 + dz
                         };
 
+
                         chunk.readChunk(saveProject.m_stateSettings.console());
                         if (!chunk.chunkData->validChunk) continue;
-                        convertReadChunkToAquatic(chunk);
+                        // convertReadChunkToAquatic(chunk);
+                        convertReadChunkToElytra(chunk);
 
                         auto entityIt = entityMap.extract(realChunkCoord);
                         if (!entityIt.empty()) {
                             if (chunk.chunkData->validChunk) {
-                                NBTBase nbt = std::move(entityIt.mapped().get<NBTCompound>().extract("Entities")
-                                                                .value_or(makeList(eNBT::COMPOUND)));
-                                chunk.chunkData->entities = std::move(nbt);
+
+                                NBTBase& nbtRoot = entityIt.mapped();
+                                if (nbtRoot("")) { nbtRoot = nbtRoot[""]; }
+
+                                NBTList& entityList = nbtRoot.ensureList("Entities", eNBT::COMPOUND);
+                                chunk.chunkData->entities = std::move(entityList);
                             }
                         }
+
+                        NBTFixer::fixEntities(chunk.chunkData);
+                        NBTFixer::fixTileEntities(chunk.chunkData);
 
                         chunk.writeChunk(writeSettings.getConsole());
 
@@ -654,18 +483,13 @@ namespace editor {
             }
         }
 
+        saveProject.m_stateSettings.setNewGen(false);
         saveProject.addFiles(std::move(convertedFiles));
     }
 
 
     MU void convertRegions(SaveProject& saveProject, lce::CONSOLE consoleOut) {
-        static const std::set<lce::FILETYPE> regionTypes = {
-                lce::FILETYPE::OLD_REGION_NETHER,
-                lce::FILETYPE::OLD_REGION_OVERWORLD,
-                lce::FILETYPE::OLD_REGION_END
-        };
-
-        for (LCEFile& file : saveProject.view_of(regionTypes)) {
+        for (LCEFile& file : saveProject.view_of(lce::FILETYPE::OLD_REGION_ANY)) {
             Region region;
             region.read(&file);
             region.convertChunks(consoleOut);
@@ -721,59 +545,55 @@ namespace editor {
     void convert(SaveProject& saveProject, WriteSettings& writeSettings) {
         StateSettings& stateSettings = saveProject.m_stateSettings;
 
-
-        static const std::set<lce::FILETYPE> kOldGenRegions = {
-                lce::FILETYPE::OLD_REGION_OVERWORLD,
-                lce::FILETYPE::OLD_REGION_NETHER,
-                lce::FILETYPE::OLD_REGION_END
-        };
-        static const std::set<lce::FILETYPE> kNewGenRegions = {
-                lce::FILETYPE::NEW_REGION_OVERWORLD,
-                lce::FILETYPE::NEW_REGION_NETHER,
-                lce::FILETYPE::NEW_REGION_END
-        };
-        static const std::set<lce::FILETYPE> kEntities = {
-                lce::FILETYPE::ENTITY_OVERWORLD,
-                lce::FILETYPE::ENTITY_NETHER,
-                lce::FILETYPE::ENTITY_END
-        };
-
         auto consoleIn = stateSettings.console();
         auto consoleOut = writeSettings.getConsole();
+
+        // saveProject.removeFileTypes(SaveProject::s_OLD_REGION_ANY);
 
         // old gen -> old gen
         if (!lce::isConsoleNewGen(consoleIn) && !lce::isConsoleNewGen(consoleOut)) {
             std::cout << "[-] rewriting all region chunks to adjust endian, this may take a minute.\n";
-            for (LCEFile& file : saveProject.view_of(kOldGenRegions)) {
-                editor::convertChunksToAquatic(file, consoleIn, consoleOut);
+            for (LCEFile& file : saveProject.view_of(lce::FILETYPE::OLD_REGION_ANY)) {
+                editor::convertReadChunkToElytra(file, consoleIn, consoleOut);
             }
+
+            // auto files = saveProject.collectFiles(lce::FILETYPE::LEVEL);
+
+            if (auto levelFileOpt1 = saveProject.findFile(lce::FILETYPE::LEVEL);
+                levelFileOpt1.has_value()) {
+                LCEFile& levelFile = levelFileOpt1.value().get();
+                editor::Level level;
+                level.read(levelFile);
+                // level.m_generatorName = "buffet";
+                // level.m_RandomSeed = -101;
+                level.write(levelFile, TU46);
+            }
+
 
             // new gen -> old gen
         } else if (lce::isConsoleNewGen(consoleIn) && !lce::isConsoleNewGen(consoleOut)) {
             std::cout << "[-] re-writing/ordering all region chunks, this may take a minute.\n";
             std::cout << std::flush;
-            convertNewGenChunksToOldGen(saveProject, writeSettings);
-            std::set<lce::FILETYPE> levelSet = {lce::FILETYPE::LEVEL};
-            for (auto& level : saveProject.view_of(levelSet)) {
-                Buffer levelBuffer = level.getBuffer();
-                DataReader reader(levelBuffer);
-                NBTBase nbt;
-                nbt.read(reader);
-                if (!nbt.hasKey("Data")) return;
-                auto nbtData = nbt["Data"];
-                int xzSize = nbtData->value<i32>("XZSize").value_or(54);
-                if (xzSize != 54) {
-                    nbtData["HellScale"] = makeInt(3);
-                    nbtData["XZSize"] = makeInt(54);
-                    nbtData["StrongholdX"] = makeInt(0);
-                    nbtData["StrongholdZ"] = makeInt(0);
-                    nbtData["StrongholdEndPortalX"] = makeInt(0);
-                    nbtData["StrongholdEndPortalZ"] = makeInt(0);
+
+            if (auto levelFileOpt2 = saveProject.findFile(lce::FILETYPE::LEVEL);
+                levelFileOpt2.has_value()) {
+                LCEFile& levelFile = levelFileOpt2.value().get();
+
+                editor::Level level;
+                level.read(levelFile);
+                if (level.m_XZSize && level.m_XZSize != 54) {
+                    level.m_DataVersion = 922;
+                    level.m_HellScale = 3;
+                    level.m_XZSize = 54;
+                    level.m_StrongholdX = 0;
+                    level.m_StrongholdZ = 0;
+                    level.m_StrongholdEndPortalX = 0;
+                    level.m_StrongholdEndPortalZ = 0;
+                    level.m_hasStrongholdEndPortal = 0;
                 }
-                DataWriter writer;
-                nbt.write(writer);
-                level.setBuffer(std::move(writer.take()));
+                level.write(levelFile, TU46);
             }
+            convertNewGenChunksToOldGen(saveProject, writeSettings);
         } else {
             convertRegions(saveProject, consoleOut);
         }

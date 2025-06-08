@@ -69,4 +69,11 @@ namespace editor {
     }
 
 
+    std::optional<fs::path> Switch::getFileInfoPath(SaveProject& saveProject) const {
+        fs::path filePath = m_filePath;
+        filePath.replace_extension(".ext");
+        return filePath;
+    }
+
+
 }

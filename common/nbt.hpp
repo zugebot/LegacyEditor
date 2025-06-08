@@ -25,29 +25,34 @@ enum class eNBT : uint8_t {
     PRIMITIVE = 99
 };
 
-static std::string NBTTypeToName(eNBT theType) {
-    switch (theType) {
-        case eNBT::NONE: return "NBT_NONE";
-        case eNBT::UINT8: return "NBT_UINT8";
-        case eNBT::INT16: return "NBT_INT16";
-        case eNBT::INT32: return "NBT_INT32";
-        case eNBT::INT64: return "NBT_INT64";
-        case eNBT::FLOAT: return "NBT_FLOAT";
-        case eNBT::DOUBLE: return "NBT_DOUBLE";
-        case eNBT::BYTE_ARRAY: return "TAG_BYTE_ARRAY";
-        case eNBT::STRING: return "TAG_STRING";
-        case eNBT::LIST: return "TAG_LIST";
-        case eNBT::COMPOUND: return "TAG_COMPOUND";
-        case eNBT::INT_ARRAY: return "TAG_INT_ARRAY";
-        case eNBT::LONG_ARRAY: return "TAG_LONG_ARRAY";
-        case eNBT::PRIMITIVE: return "TAG_PRIMITIVE";
-        default: return "UNKNOWN";
+
+inline const char* to_string(eNBT type) {
+    switch (type) {
+        case eNBT::NONE:        return "NONE";
+        case eNBT::UINT8:       return "UINT8";
+        case eNBT::INT16:       return "INT16";
+        case eNBT::INT32:       return "INT32";
+        case eNBT::INT64:       return "INT64";
+        case eNBT::FLOAT:       return "FLOAT";
+        case eNBT::DOUBLE:      return "DOUBLE";
+        case eNBT::BYTE_ARRAY:  return "BYTE_ARRAY";
+        case eNBT::STRING:      return "STRING";
+        case eNBT::LIST:        return "LIST";
+        case eNBT::COMPOUND:    return "COMPOUND";
+        case eNBT::INT_ARRAY:   return "INT_ARRAY";
+        case eNBT::LONG_ARRAY:  return "LONG_ARRAY";
+        case eNBT::PRIMITIVE:   return "PRIMITIVE";
+        default:                return "UNKNOWN";
     }
 }
+
+
+
 
 // ----------------------------------------
 // Type Aliases
 // ----------------------------------------
+
 
 class NBTBase;
 
@@ -55,31 +60,29 @@ class NBTList {
     eNBT m_subType = eNBT::NONE;
     std::vector<NBTBase> m_elements;
 public:
+    using       iterator = std::vector<NBTBase>::iterator;
+    using const_iterator = std::vector<NBTBase>::const_iterator;
 
     NBTList();
     explicit NBTList(eNBT expectedType);
     NBTList(eNBT expectedType, std::initializer_list<NBTBase> list);
-    
-    MU ND eNBT subType() const { return m_subType; }
-    
-    NBTBase& operator[](size_t index);
-    const NBTBase& operator[](size_t index) const;
-    
-    ND size_t size() const;
-    ND bool empty() const;
-    MU void clear();
 
+    ND size_t      size() const;
+    ND bool        empty() const;
+    MU void        clear();
+    NBTBase&       operator[](size_t index);
+    const NBTBase& operator[](size_t index) const;
     void push_back(NBTBase val);
 
     void reserve(size_t n);
 
-    auto begin() { return m_elements.begin(); }
-    auto end() { return m_elements.end(); }
-    ND auto begin() const { return m_elements.begin(); }
-    ND auto end() const { return m_elements.end(); }
+       iterator       begin()       { return m_elements.begin(); }
+       iterator       end()         { return m_elements.end(); }
+    ND const_iterator begin() const { return m_elements.begin(); }
+    ND const_iterator end()   const { return m_elements.end(); }
 
-    std::vector<NBTBase>& data() { return m_elements; }
-    ND const std::vector<NBTBase>& data() const { return m_elements; }
+    // additional
+    MU ND eNBT subType() const { return m_subType; }
 };
 
 
@@ -113,8 +116,8 @@ private:
 public:
     explicit NBTCompound(size_type initialBuckets = 8);
 
-    [[nodiscard]] bool   empty() const noexcept { return _size == 0; }
-    [[nodiscard]] size_type size() const noexcept { return _size;  }
+    ND bool   empty() const noexcept { return _size == 0; }
+    ND size_type size() const noexcept { return _size;  }
 
     template <typename T>
     std::optional<T> value(const std::string& key) const;
@@ -129,9 +132,21 @@ public:
     NBTBase&       at(const std::string& k);
     ND const NBTBase& at(const std::string& k) const;
 
+    template <typename T>
+    MU ND T getOr(std::string_view key, T def) {
+        return this->value<T>(std::string(key)).value_or(def);
+    }
+
+    template <typename T>
+    ND T getOr(std::string_view key, T def) const {
+        return value<T>(std::string(key)).value_or(def);
+    }
+
     void insert(const std::string& k, const NBTBase& v);
 
     NBTBase& operator[](const std::string& k);
+
+    const NBTBase& operator()(const std::string& k) const noexcept;
 
 
     void clear();
@@ -191,16 +206,23 @@ class NBTBase {
     eNBT m_type = eNBT::NONE;
     NBTValue m_value;
 
+    static NBTBase&  ensureCompound(NBTBase& self) {
+        if (self.m_type != eNBT::COMPOUND)
+            self = {eNBT::COMPOUND,   NBTCompound() };
+        return self;
+    }
+
 public:
     NBTBase() = default;
     NBTBase(eNBT type, NBTValue val) : m_type(type), m_value(std::move(val)) {}
 
     ND NBTBase copy() const;
-    ND bool equals(const NBTBase& other) const;
     MU void merge(const NBTBase& other);
 
-    void read(DataReader& reader);
-    void readFile(const std::string& path);
+    ND static NBTBase read(DataReader& reader);
+    ND static NBTBase readInternal(DataReader& reader, eNBT type);
+
+    NBTBase readFile(const std::string& path);
 
     void write(DataWriter& writer, bool skipEndTag = false) const;
     void writeFile(const std::string& path) const;
@@ -214,11 +236,16 @@ public:
     T& get() { return std::get<T>(m_value); }
 
     template<typename T>
-    const T& get() const { return std::get<T>(m_value); }
+    ND const T& get() const { return std::get<T>(m_value); }
 
     template <typename T>
     MU ND T getOr(std::string_view key, T def) {
         return this->value<T>(std::string(key)).value_or(def);
+    }
+
+    template <typename T>
+    ND T getOr(std::string_view key, T def) const {
+        return value<T>(std::string(key)).value_or(def);
     }
 
     template <typename T>
@@ -229,9 +256,17 @@ public:
     }
 
     template <typename T>
+    ND T getOr(std::string_view k1, std::string_view k2, T def) const {
+        if (auto v = value<T>(std::string(k1))) return *v;
+        if (auto v = value<T>(std::string(k2))) return *v;
+        return def;
+    }
+
+    template <typename T>
     std::optional<T> value(const std::string& key) const;
 
-    void print() const { printHelper(0, ""); }
+    void print(int depth = 0, const std::string& theKey = "") const;
+    ND std::string to_string_shallow() const;
 
     MU ND bool hasKey(const std::string& key) const;
     MU ND bool hasKey(const std::string& key, eNBT nbtType);
@@ -245,130 +280,90 @@ public:
         return std::get<NBTCompound>(m_value).extract(key);
     }
 
-    class SafeProxy {
-        const NBTBase* m_ptr;
-
-    public:
-        constexpr explicit SafeProxy(const NBTBase* ptr) : m_ptr(ptr) {}
-
-        SafeProxy operator[](const std::string& key) const {
-            if (!m_ptr || !m_ptr->is<NBTCompound>()) return SafeProxy(nullptr);
-            return SafeProxy(m_ptr->getTag(key));
+    NBTList& ensureList(const std::string& key, eNBT subType) {
+        NBTBase& tag = (*this)[key];
+        if (!tag.is<NBTList>() ||
+            (tag.get<NBTList>().subType() != subType)) {
+            tag = {eNBT::LIST, NBTList(subType)};
         }
-
-        const NBTBase* operator->() const {
-            static const NBTBase dummy;
-            return m_ptr ? m_ptr : &dummy;
-        }
-
-        constexpr explicit operator const NBTBase*() const { return m_ptr; }
-        constexpr explicit operator bool() const { return m_ptr != nullptr; }
-    };
-
-    SafeProxy operator[](const std::string& key) const {
-        if (!is<NBTCompound>()) return SafeProxy(nullptr);
-        return SafeProxy(getTag(key));
+        return tag.get<NBTList>();
     }
 
-    class MutableSafeProxy {
-        NBTBase* m_ptr;
-
-    public:
-        constexpr explicit MutableSafeProxy(NBTBase* ptr) : m_ptr(ptr) {}
-
-        MutableSafeProxy operator[](const std::string& key) const {
-            if (!m_ptr)
-                return MutableSafeProxy(nullptr);
-
-            if (!m_ptr->is<NBTCompound>()) {
-                NBTCompound compound;
-                *m_ptr = {eNBT::COMPOUND, std::move(compound) };
-            }
-
-            auto& compound = m_ptr->get<NBTCompound>();
-            return MutableSafeProxy(&compound[key]);
-        }
-
-
-        NBTBase* operator->() const {
-            static NBTBase dummy;
-            return m_ptr ? m_ptr : &dummy;
-        }
-
-        MutableSafeProxy& operator=(const NBTBase& rhs) {
-            if (m_ptr) *m_ptr = rhs;
-            return *this;
-        }
-        MutableSafeProxy& operator=(NBTBase&& rhs) {
-            if (m_ptr) *m_ptr = std::move(rhs);
-            return *this;
-        }
-
-        constexpr explicit operator NBTBase*()  const { return m_ptr; }
-        constexpr explicit operator bool()      const { return m_ptr != nullptr; }
-    };
-
-    MutableSafeProxy operator[](const std::string& key) {
-        if (!is<NBTCompound>()) {
-            *this = {eNBT::COMPOUND, NBTCompound() };
-        }
-
-        auto& compound = get<NBTCompound>();
-
-        if (!compound.contains(key)) {
-            compound.insert(key, {eNBT::COMPOUND, NBTCompound() });
-        }
-        return MutableSafeProxy(&compound[key]);
+    NBTBase& operator[](const std::string& key) {
+        if (this->m_type != eNBT::COMPOUND)
+            *this = {eNBT::COMPOUND,   NBTCompound() };
+        auto& selfCmp = std::get<NBTCompound>(m_value);
+        return selfCmp[key];
     }
 
+    NBTBase &operator[](const std::string &key, NBTBase def) {
+        if (m_type != eNBT::COMPOUND)
+            *this = {eNBT::COMPOUND,   NBTCompound() };
+        auto &cmp = std::get<NBTCompound>(m_value);
 
-private:
-    void readInternal(DataReader& reader);
-    void writeInternal(DataWriter& writer, bool skipEndTag) const;
+        if (!cmp.contains(key))
+            cmp.insert(key, def);
 
-    void printHelper(int depth = 0, const std::string& theKey = "") const;
+        return cmp[key];
+    }
+
+    const NBTBase& operator()(const std::string& key) const noexcept {
+        static const NBTBase g_nullTag;
+        if (this->m_type != eNBT::COMPOUND) return g_nullTag;
+        if (auto p = std::get<NBTCompound>(m_value).find(key)) return *p;
+        return g_nullTag;
+    }
+
+    ND bool equals(const NBTBase& other) const;
+    bool operator==(const NBTBase& other) const {
+        return equals(other);
+    }
+
+    bool operator!=(const NBTBase& other) const {
+        return !(*this == other);
+    }
+
+    explicit operator bool() const noexcept {
+        return m_type != eNBT::NONE;
+    }
+
 
     MU ND const NBTBase* getTag(const std::string& key) const;
-    MU NBTBase* getTag(const std::string& key);
+
+private:
+    void writeInternal(DataWriter& writer, bool skipEndTag) const;
+
 };
 
 // ----------------------------------------
 // Factory Helpers
 // ----------------------------------------
 
-inline NBTBase makeByte(uint8_t v)                     { return {eNBT::UINT8, v }; }
-inline NBTBase makeShort(int16_t v)                   { return {eNBT::INT16, v }; }
-inline NBTBase makeInt(int32_t v)                     { return {eNBT::INT32, v }; }
-inline NBTBase makeLong(int64_t v)                    { return {eNBT::INT64, v }; }
-inline NBTBase makeFloat(float v)                     { return {eNBT::FLOAT, v }; }
-inline NBTBase makeDouble(double v)                   { return {eNBT::DOUBLE, v }; }
-inline NBTBase makeString(std::string v)              { return {eNBT::STRING, std::move(v) }; }
-inline NBTBase makeByteArray(NBTByteArray v)          { return {eNBT::BYTE_ARRAY, std::move(v) }; }
-inline NBTBase makeIntArray(NBTIntArray v)            { return {eNBT::INT_ARRAY, std::move(v) }; }
-inline NBTBase makeLongArray(NBTLongArray v)          { return {eNBT::LONG_ARRAY, std::move(v) }; }
-inline NBTBase makeList(NBTList v)                    { return {eNBT::LIST, std::move(v) }; }
-inline NBTBase makeCompound(NBTCompound v)            { return {eNBT::COMPOUND, std::move(v) }; }
+inline NBTBase makeByte(uint8_t v)            { return {eNBT::UINT8,  v }; }
+inline NBTBase makeShort(int16_t v)           { return {eNBT::INT16,  v }; }
+inline NBTBase makeInt(int32_t v)             { return {eNBT::INT32,  v }; }
+inline NBTBase makeLong(int64_t v)            { return {eNBT::INT64,  v }; }
+inline NBTBase makeFloat(float v)             { return {eNBT::FLOAT,  v }; }
+inline NBTBase makeDouble(double v)           { return {eNBT::DOUBLE, v }; }
+inline NBTBase makeString(const char* s)      { return { eNBT::STRING,    std::string(s) }; }
+inline NBTBase makeString(std::string_view v) { return {eNBT::STRING,     std::string(v) }; }
+inline NBTBase makeString(std::string v)      { return {eNBT::STRING,     std::move(v) }; }
+inline NBTBase makeByteArray(NBTByteArray v)  { return {eNBT::BYTE_ARRAY, std::move(v) }; }
+inline NBTBase makeIntArray(NBTIntArray v)    { return {eNBT::INT_ARRAY,  std::move(v) }; }
+inline NBTBase makeLongArray(NBTLongArray v)  { return {eNBT::LONG_ARRAY, std::move(v) }; }
+inline NBTBase makeList(eNBT subType)         { return {eNBT::LIST,       NBTList(subType) }; }
+inline NBTBase makeList(NBTList v)            { return {eNBT::LIST,       std::move(v) }; }
+inline NBTBase makeCompound()                 { return {eNBT::COMPOUND,   NBTCompound() }; }
+inline NBTBase makeCompound(NBTCompound v)    { return {eNBT::COMPOUND,   std::move(v) }; }
 
 
-inline NBTBase makeList(eNBT expectedType) {
-    NBTList result(expectedType, {});
-    return {eNBT::LIST, std::move(result) };
+inline NBTBase makeList(eNBT subType, std::initializer_list<NBTBase> list) {
+    return {eNBT::LIST, NBTList(subType, list) };
 }
 
-
-inline NBTBase makeList(eNBT expectedType, std::initializer_list<NBTBase> list) {
-    NBTList result(expectedType, list);
-    return {eNBT::LIST, std::move(result) };
-}
-
-MU inline NBTBase makeCompound(std::initializer_list<std::pair<std::string, NBTBase>> list) {
+inline NBTBase makeCompound(std::initializer_list<std::pair<std::string, NBTBase>> list) {
     NBTCompound compound;
     for (auto&& [key, val] : list)
         compound[key] = val;
-    return {eNBT::COMPOUND, std::move(compound) };
-}
-
-MU inline NBTBase makeCompound() {
-    NBTCompound compound;
     return {eNBT::COMPOUND, std::move(compound) };
 }

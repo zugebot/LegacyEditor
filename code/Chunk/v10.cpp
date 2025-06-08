@@ -1,73 +1,91 @@
 #include "v10.hpp"
 
+#include "code/Chunk/helpers/helpers.hpp"
 #include "common/nbt.hpp"
 
 
 namespace editor::chunk {
 
-    void ChunkVNBT::allocChunk() const {
-        chunkData->oldBlocks = u8_vec(65536);
-        chunkData->blockData = u8_vec(32768);
-        chunkData->heightMap = u8_vec(256);
-        chunkData->biomes = u8_vec(256);
-        chunkData->skyLight = u8_vec(32768);
-        chunkData->blockLight = u8_vec(32768);
 
-    }
-
-    // TODO: This can definitely be made much faster if you could somehow replace
-    // TODO: The pointer a vector points to... I will look that up later.
-
-    // TODO: add cases for when tags are not found
     void ChunkVNBT::readChunk(DataReader& reader) {
-        allocChunk();
+        chunkData->intel.wasNBTChunk = true;
 
-        NBTBase root = makeCompound({});
-        root.read(reader);
-        const auto& level = root[""]["Level"];
-        if (!level || !level->is<NBTCompound>()) return;
+        NBTBase root = NBTBase::read(reader);
 
-        chunkData->chunkX = level->getOr<i32>("xPos", 0);
-        chunkData->chunkZ = level->getOr<i32>("zPos", 0);
-        chunkData->lastUpdate = level->getOr<i64>("LastUpdate", 0);
+        auto& level = root[""]["Level"];
+        if (!level.is<NBTCompound>()) return;
 
-        chunkData->terrainPopulated = level->getOr<u8>(
+        chunkData->chunkX = level.getOr<i32>("xPos", 0);
+        chunkData->chunkZ = level.getOr<i32>("zPos", 0);
+        chunkData->lastUpdate = level.getOr<i64>("LastUpdate", 0);
+
+
+        chunkData->intel.hasTerraFlagVariant = level.hasKey("TerrainPopulatedFlags");
+        chunkData->terrainPopulatedFlags = level.getOr<u8>(
                 "TerrainPopulated", "TerrainPopulatedFlags", 0);
 
 
+        auto blocks = level.extract("Blocks");
+        auto data = level.extract("Data");
 
-        if (auto blocks = level->extract("Blocks")) {
-            chunkData->oldBlocks = std::move(blocks->get<NBTByteArray>());
-            if (chunkData->oldBlocks.size() == 32768) {
-                chunkData->chunkHeight = 128;
+        if (!blocks || !data) {
+            std::cerr << "issue reading NBT Chunk\n";
+            exit(-1);
+        }
+
+        u8_vec oldBlocks = std::move(blocks->get<NBTByteArray>());
+        u8_vec blockData = std::move(data->get<NBTByteArray>());
+        if (oldBlocks.size() == 32768) {
+            chunkData->chunkHeight = 128;
+        }
+        chunkData->blocks = u16_vec(65536);
+        for (i32 z = 0; z < 16; z++) {
+            for (i32 x = 0; x < 16; x++) {
+                for (i32 y = 0; y < chunkData->chunkHeight; y++) {
+                    int in = toIndex<yXZy>(x, y, z);
+                    int out = toIndex<CANONICAL_BLOCK_ORDER>(x, y, z);
+                    chunkData->blocks[out] = oldBlocks[in] << 4 | getNibble(blockData, in);
+                }
             }
-        } else {
-
         }
 
-        if (auto data = level->extract("Data")) {
-            chunkData->blockData = std::move(data->get<NBTByteArray>());
-        }
-        if (auto heightMap = level->extract("HeightMap")) {
+
+        chunkData->heightMap = u8_vec(256);
+        if (auto heightMap = level.extract("HeightMap")) {
             chunkData->heightMap = std::move(heightMap->get<NBTByteArray>());
         }
-        if (auto biomes = level->extract("Biomes")) {
+
+        chunkData->biomes = u8_vec(256);
+        if (auto biomes = level.extract("Biomes")) {
+            chunkData->intel.hasBiomes = true;
             chunkData->biomes = std::move(biomes->get<NBTByteArray>());
-        }
-        if (auto skylight = level->extract("SkyLight")) {
-            memcpy(chunkData->skyLight.data(),
-                   skylight->get<NBTByteArray>().data(),
-                   skylight->get<NBTByteArray>().size());
-        }
-        if (auto blockLight = level->extract("BlockLight")) {
-            memcpy(chunkData->blockLight.data(),
-                   blockLight->get<NBTByteArray>().data(),
-                   blockLight->get<NBTByteArray>().size());
+        } else {
+            chunkData->intel.hasBiomes = false;
         }
 
-        chunkData->entities = level->extract("Entities").value_or(makeList(eNBT::COMPOUND));
-        chunkData->tileEntities = level->extract("TileEntities").value_or(makeList(eNBT::COMPOUND));
-        chunkData->tileTicks = level->extract("TileTicks").value_or(makeList(eNBT::COMPOUND));
+
+        chunkData->skyLight = u8_vec(32768);
+        chunkData->blockLight = u8_vec(32768);
+        auto skyLight = level.extract("SkyLight")->get<NBTByteArray>();
+        auto blockLight = level.extract("BlockLight")->get<NBTByteArray>();
+        for (i32 z = 0; z < 16; z++) {
+            for (i32 x = 0; x < 16; x++) {
+                for (i32 y = 0; y < chunkData->chunkHeight; y++) {
+                    int in = toIndex<yXZy>(x, y, z);
+                    int out = toIndex<CANONICAL_LIGHT_ORDER>(x, y, z);
+                    setNibble(chunkData->skyLight, out, getNibble(skyLight, in));
+                    setNibble(chunkData->blockLight, out, getNibble(blockLight, in));
+                }
+            }
+        }
+        if (chunkData->chunkHeight == 128) {
+            memset(chunkData->skyLight.data() + 16384, 0xFF, 16384);
+        }
+
+
+        chunkData->entities = level.extract("Entities").value_or(makeList(eNBT::COMPOUND)).get<NBTList>();
+        chunkData->tileEntities = level.extract("TileEntities").value_or(makeList(eNBT::COMPOUND)).get<NBTList>();
+        chunkData->tileTicks = level.extract("TileTicks").value_or(makeList(eNBT::COMPOUND)).get<NBTList>();
 
         chunkData->validChunk = true;
 
@@ -80,60 +98,69 @@ namespace editor::chunk {
         level["xPos"] = makeInt(chunkData->chunkX);
         level["zPos"] = makeInt(chunkData->chunkZ);
         level["LastUpdate"] = makeLong(chunkData->lastUpdate);
-        level["TerrainPopulated"] = makeByte(chunkData->terrainPopulated);
+        level["TerrainPopulated"] = makeByte(chunkData->terrainPopulatedFlags);
 
-        if (!chunkData->oldBlocks.empty()) {
-            int size = (chunkData->chunkHeight * 16 * 16);
-            // std::cout << "oldBlocks: " << size << "\n";
-            level["Blocks"] = makeByteArray(NBTByteArray(
-                    chunkData->oldBlocks.begin(),
-                    chunkData->oldBlocks.begin() + size));
+        // convert blocks
+        auto oldBlocks = u8_vec(65536);
+        auto blockData = u8_vec(32768);
+        for (i32 z = 0; z < 16; z++) {
+            for (i32 x = 0; x < 16; x++) {
+                for (i32 y = 0; y < chunkData->chunkHeight; y++) {
+                    int in = toIndex<CANONICAL_BLOCK_ORDER>(x, y, z);
+                    int out = toIndex<yXZy>(x, y, z);
+                    u16 block = chunkData->blocks[in];
+                    oldBlocks[out] = (block >> 4) & 255;
+                    setNibble(blockData, out, block & 15);
+                }
+            }
         }
+        level["Blocks"] = makeByteArray(NBTByteArray(
+                oldBlocks.begin(),
+                oldBlocks.begin() + 16 * chunkData->chunkHeight * 16));
+        level["Data"] = makeByteArray(blockData);
 
 
-        if (!chunkData->blockData.empty()) {
-            // std::cout << "blockData: " << chunkData->blockData.size() << "\n";
-            level["Data"] = makeByteArray(chunkData->blockData);
-        }
 
         if (!chunkData->heightMap.empty()) {
-            // std::cout << "heightMap: " << chunkData->heightMap.size() << "\n";
             level["HeightMap"] = makeByteArray(chunkData->heightMap);
         }
 
         if (!chunkData->biomes.empty()) {
-            // std::cout << "biomes: " << chunkData->biomes.size() << "\n";
             level["Biomes"] = makeByteArray(chunkData->biomes);
         }
 
-        if (!chunkData->skyLight.empty()) {
-            int size = (chunkData->chunkHeight * 16 * 16 / 2);
-            // std::cout << "skyLight: " << size << "\n";
 
+
+        auto skyLight = u8_vec(32768);
+        auto blockLight = u8_vec(32768);
+        for (i32 z = 0; z < 16; z++) {
+            for (i32 x = 0; x < 16; x++) {
+                for (i32 y = 0; y < chunkData->chunkHeight; y++) {
+                    int in = toIndex<CANONICAL_LIGHT_ORDER>(x, y, z);
+                    int out = toIndex<yXZy>(x, y, z);
+                    setNibble(skyLight, out, getNibble(chunkData->skyLight, in));
+                    setNibble(blockLight, out, getNibble(chunkData->blockLight, in));
+                }
+            }
+        }
+        if (!skyLight.empty()) {
+            int size = (chunkData->chunkHeight * 16 * 16 / 2);
             level["SkyLight"] = makeByteArray(NBTByteArray(
-                    chunkData->skyLight.begin(),
-                    chunkData->skyLight.begin() + size));
+                    skyLight.begin(), skyLight.begin() + size));
         }
 
-        if (!chunkData->blockLight.empty()) {
+        if (!blockLight.empty()) {
             int size = (chunkData->chunkHeight * 16 * 16 / 2);
-            // std::cout << "blockLight: " << size << "\n";
             level["BlockLight"] = makeByteArray(NBTByteArray(
-                    chunkData->blockLight.begin(),
-                    chunkData->blockLight.begin() + size));
+                    blockLight.begin(), blockLight.begin() + size));
         }
 
-        if (chunkData->entities.is<NBTList>()) {
-            level["Entities"] = chunkData->entities;
-        }
 
-        if (chunkData->tileEntities.is<NBTList>()) {
-            level["TileEntities"] = chunkData->tileEntities;
-        }
 
-        if (chunkData->tileTicks.is<NBTList>()) {
-            level["TileTicks"] = chunkData->tileTicks;
-        }
+        level["Entities"] = makeList(chunkData->entities);
+        level["TileEntities"] = makeList(chunkData->tileEntities);
+        level["TileTicks"] = makeList(chunkData->tileTicks);
+
 
         NBTCompound root;
         root[""]["Level"] = makeCompound(std::move(level));

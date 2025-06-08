@@ -1,7 +1,7 @@
 #pragma once
 
-#include "code/Chunk/chunkData.hpp"
 #include "vBase.hpp"
+#include "code/Chunk/chunkData.hpp"
 
 
 namespace editor::chunk {
@@ -11,7 +11,6 @@ namespace editor::chunk {
     public:
         explicit ChunkVNBT(ChunkData* chunkDataIn) : VChunkBase(chunkDataIn) {}
 
-        MU void allocChunk() const override;
         MU void readChunk(DataReader& reader) override;
         MU void writeChunkInternal(DataWriter& writer, bool fastMode) override;
     };

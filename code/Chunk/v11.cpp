@@ -1,21 +1,11 @@
 #include "v11.hpp"
 
 #include "code/Chunk/chunkData.hpp"
-#include "code/Chunk/helpers.hpp"
+#include "code/Chunk/helpers/helpers.hpp"
 #include "common/nbt.hpp"
 
 
 namespace editor::chunk {
-
-
-    void ChunkV11::allocChunk() const {
-        chunkData->oldBlocks = u8_vec(65536);
-        chunkData->blockData = u8_vec(32768);
-        chunkData->skyLight = u8_vec(32768);
-        chunkData->blockLight = u8_vec(32768);
-        chunkData->heightMap = u8_vec(256);
-        chunkData->biomes = u8_vec(256);
-    }
 
 
     // #####################################################
@@ -24,7 +14,6 @@ namespace editor::chunk {
 
 
     void ChunkV11::readChunk(DataReader& reader) {
-        allocChunk();
 
         chunkData->chunkX = reader.read<i32>();
         chunkData->chunkZ = reader.read<i32>();
@@ -35,18 +24,43 @@ namespace editor::chunk {
             chunkData->inhabitedTime = reader.read<i64>();
         }
 
+        auto oldBlocks = u8_vec(65536);
+        auto blockData = u8_vec(32768);
+        chunkData->skyLight = u8_vec(32768);
+        chunkData->blockLight = u8_vec(32768);
+
         c_auto dataArray = fetchSections<8, true>(chunkData, reader);
-        readBlocks(dataArray[0], &chunkData->oldBlocks[0]);
-        readBlocks(dataArray[1], &chunkData->oldBlocks[32768]);
-        readSection(dataArray[2], &chunkData->blockData[0]);
-        readSection(dataArray[3], &chunkData->blockData[16384]);
+        readBlocks(dataArray[0], &oldBlocks[0]);
+        readBlocks(dataArray[1], &oldBlocks[32768]);
+        readSection(dataArray[2], &blockData[0]);
+        readSection(dataArray[3], &blockData[16384]);
         readSection(dataArray[4], &chunkData->skyLight[0]);
         readSection(dataArray[5], &chunkData->skyLight[16384]);
         readSection(dataArray[6], &chunkData->blockLight[0]);
         readSection(dataArray[7], &chunkData->blockLight[16384]);
 
+        chunkData->chunkHeight = 256;
+        chunkData->blocks = u16_vec(65536);
+        // for (i32 z = 0; z < 16; z++) {
+        //     for (i32 x = 0; x < 16; x++) {
+        //         for (i32 y = 0; y < chunkData->chunkHeight; y++) {
+        //             int in = toIndex<BLOCK_ORDER>(x, y, z);
+        //             int out = toIndex<CANONICAL_BLOCK_ORDER>(x, y, z);
+        //             chunkData->blocks[out] = oldBlocks[in] << 4 | getNibble(blockData, in);;
+        //         }
+        //     }
+        // }
+
+        for (i32 i = 0; i < 65536; i++) {
+            chunkData->blocks[i] = ((u16)oldBlocks[i]) << 4 | ((u16)getNibble(blockData, i));
+        }
+
+        chunkData->heightMap = u8_vec(256);
         reader.readBytes(256, chunkData->heightMap.data());
-        chunkData->terrainPopulated = reader.read<i16>();
+
+        chunkData->terrainPopulatedFlags = reader.read<i16>();
+
+        chunkData->biomes = u8_vec(256);
         reader.readBytes(256, chunkData->biomes.data());
 
         this->readNBT(reader);
@@ -55,7 +69,7 @@ namespace editor::chunk {
     }
 
 
-    void ChunkV11::readBlocks(std::span<const u8> dataIn, u8* oldBlockPtr) const {
+    void ChunkV11::readBlocks(std::span<const u8> dataIn, u8* oldBlockPtr) {
         c_u32 blockLength = dataIn.size() - GRID_COUNT * 2;
         if (blockLength > 65536) { return; } // checks for underflow
 
@@ -67,7 +81,7 @@ namespace editor::chunk {
         for (i32 gridZ = 0; gridZ < 4; gridZ++) {
         for (i32 gridX = 0; gridX < 4; gridX++) {
         for (i32 gridY = 0; gridY < 32; gridY++) {
-            int gridOffset = toIndex<BLOCK_ORDER>(gridX * 4, gridY * 4, gridZ * 4);
+            int gridOffset = toIndex<CANONICAL_BLOCK_ORDER>(gridX * 4, gridY * 4, gridZ * 4);
 
             Grid grid(
                     gridHeader[gridIndex * 2],
@@ -96,7 +110,7 @@ namespace editor::chunk {
             for (int z = 0; z < 4; z++) {
                 for (int x = 0; x < 4; x++) {
                     for (int y = 0; y < 4; y++) {
-                        c_int blockOffset = gridOffset + toIndex<BLOCK_ORDER>(x, y, z);
+                        c_int blockOffset = gridOffset + toIndex<CANONICAL_BLOCK_ORDER>(x, y, z);
                         oldBlockPtr[blockOffset] = blockBuffer[readOffset++];
                     }
                 }
@@ -148,35 +162,45 @@ namespace editor::chunk {
             writer.write<i64>(chunkData->inhabitedTime);
         }
 
-        writeBlocks(writer, &chunkData->oldBlocks[0]);
-        writeBlocks(writer, &chunkData->oldBlocks[32768]);
+        // fix blocks and data
+        auto oldBlocks = u8_vec(65536);
+        auto blockData = u8_vec(32768);
+        // for (i32 z = 0; z < 16; z++) {
+        //     for (i32 x = 0; x < 16; x++) {
+        //         for (i32 y = 0; y < chunkData->chunkHeight; y++) {
+        //             int in = toIndex<CANONICAL_BLOCK_ORDER>(x, y, z);
+        //             int out = toIndex<BLOCK_ORDER>(x, y, z);
+        //             u16 block = chunkData->blocks[in];
+        //             oldBlocks[out] = (block >> 4) & 255;
+        //             setNibble(blockData, out, block & 15);
+        //         }
+        //     }
+        // }
 
-        writeSection(writer, &chunkData->blockData[0], !fastMode, false);
-        writeSection(writer, &chunkData->blockData[16384], true, false);
+        for (i32 i = 0; i < 65536; i++) {
+            u16 block = chunkData->blocks[i];
+            oldBlocks[i] = (block >> 4) & 255;
+            setNibble(blockData, i, block & 15);
+        }
+
+        writeBlocks(writer, &oldBlocks[0], true);
+        writeBlocks(writer, &oldBlocks[32768], false);
+        writeSection(writer, &blockData[0], !fastMode, false);
+        writeSection(writer, &blockData[16384], true, false);
         writeSection(writer, &chunkData->skyLight[0], !fastMode, true);
         writeSection(writer, &chunkData->skyLight[16384], true, true);
         writeSection(writer, &chunkData->blockLight[0], !fastMode, true);
         writeSection(writer, &chunkData->blockLight[16384], true, true);
 
         writer.writeBytes(chunkData->heightMap.data(), 256);
-        writer.write<i16>(chunkData->terrainPopulated);
+        writer.write<i16>(chunkData->terrainPopulatedFlags);
         writer.writeBytes(chunkData->biomes.data(), 256);
 
-        NBTBase nbt = makeCompound();
-        if (!chunkData->entities.get<NBTList>().empty()) {
-            nbt["Entities"] = chunkData->entities;
-        }
-        nbt["TileEntities"] = chunkData->tileEntities;
-        nbt["TileTicks"] = chunkData->tileTicks;
-
-        NBTBase nbtRoot = makeCompound({
-                {"", nbt}
-        });
-        nbtRoot.write(writer, true);
+        this->writeNBT(writer);
     }
 
 
-    MU void ChunkV11::writeBlocks(DataWriter& writer, u8 const* oldBlockPtr) const {
+    MU void ChunkV11::writeBlocks(DataWriter& writer, u8 const* oldBlockPtr, bool isBottom) const {
         static constexpr u32 GRID_HEADER_SIZE = 2 * GRID_COUNT;
 
         u32 H_BEGIN = writer.tell();
@@ -194,7 +218,7 @@ namespace editor::chunk {
         for (i32 gridZ = 0; gridZ < 4; gridZ++) {
         for (i32 gridX = 0; gridX < 4; gridX++) {
         for (i32 gridY = 0; gridY < 32; gridY++) {
-            c_u32 blockOffset = toIndex<BLOCK_ORDER>(gridX * 4, gridY * 4, gridZ * 4);
+            c_u32 blockOffset = toIndex<CANONICAL_BLOCK_ORDER>(gridX * 4, gridY * 4, gridZ * 4);
 
             blockVec.set_size(0);
             blockLoc.set_size(0);
@@ -202,7 +226,7 @@ namespace editor::chunk {
             for (i32 blockZ = 0; blockZ < 4; blockZ++) {
             for (i32 blockX = 0; blockX < 4; blockX++) {
             for (i32 blockY = 0; blockY < 4; blockY++) {
-                c_u32 blockIndex = blockOffset + toIndex<BLOCK_ORDER>(blockX, blockY, blockZ);
+                c_u32 blockIndex = blockOffset + toIndex<CANONICAL_BLOCK_ORDER>(blockX, blockY, blockZ);
                 c_u8 block = oldBlockPtr[blockIndex];
                 if (blockMap[block]) {
                     blockLoc.push_back(blockMap[block] - 1);
@@ -217,7 +241,7 @@ namespace editor::chunk {
 
             const size_t n = blockVec.current_size();
             MU V11GridFormat gridFormat;
-            if (oldBlockPtr == this->chunkData->oldBlocks.data()) {
+            if (true || isBottom) {
                 gridFormat = V11_4_BIT;
             } else {
                 gridFormat = static_cast<V11GridFormat>(n == 1 ? V11_0_BIT
@@ -234,7 +258,7 @@ namespace editor::chunk {
                 case V11_2_BIT: writeGrid<2>(writer, blockVec, blockLoc, blockMap); break;
                 case V11_3_BIT: writeGrid<3>(writer, blockVec, blockLoc, blockMap); break;
                 case V11_4_BIT: {
-                    for (size_t i = 0; i < GRID_COUNT; i++)
+                    for (size_t i = 0; i < MAX_BLOCKS_SIZE; i++)
                         writer.write<u8>(blockVec[blockLoc[i]]);
                     for (c_u16 block : blockVec)
                         blockMap[block] = 0;

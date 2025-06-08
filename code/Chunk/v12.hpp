@@ -42,7 +42,6 @@ namespace editor::chunk {
         static constexpr u32 SECTION_HEADER_SIZE = 50;
         static constexpr int GRID_SIZE = 128;
 
-        static constexpr eBlockOrder BLOCK_ORDER = eBlockOrder::yXZy;
         // Read Section
 
         static void setBlocks(u16_vec& writeVec, c_u8* grid, MU int gridOffset) ;
@@ -69,8 +68,6 @@ namespace editor::chunk {
     public:
         explicit ChunkV12(ChunkData* chunkDataIn) : VChunkBase(chunkDataIn) {}
 
-
-        MU void allocChunk() const override;
         MU void readChunk(DataReader& reader) override;
         MU void writeChunkInternal(DataWriter& writer, bool fastMode) override;
 

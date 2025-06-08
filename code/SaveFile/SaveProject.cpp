@@ -5,6 +5,26 @@
 
 namespace editor {
 
+
+    const std::set<lce::FILETYPE> SaveProject::s_OLD_REGION_ANY = {
+            lce::FILETYPE::OLD_REGION_NETHER,
+            lce::FILETYPE::OLD_REGION_OVERWORLD,
+            lce::FILETYPE::OLD_REGION_END
+    };
+
+    const std::set<lce::FILETYPE> SaveProject::s_NEW_REGION_ANY = {
+            lce::FILETYPE::OLD_REGION_NETHER,
+            lce::FILETYPE::OLD_REGION_OVERWORLD,
+            lce::FILETYPE::OLD_REGION_END
+    };
+
+    const std::set<lce::FILETYPE> SaveProject::s_ENTITY_ANY = {
+            lce::FILETYPE::OLD_REGION_NETHER,
+            lce::FILETYPE::OLD_REGION_OVERWORLD,
+            lce::FILETYPE::OLD_REGION_END
+    };
+
+
     MU std::list<LCEFile> SaveProject::collectFiles(lce::FILETYPE fileType) {
         std::list<LCEFile> collectedFiles;
 
@@ -105,7 +125,7 @@ namespace editor {
         printf("\n** Savefile Details **\n");
         printf("1. Filename: %s\n", m_stateSettings.filePath().string().c_str());
         printf("2. Oldest  Version: %d\n", oldestVersion());
-        printf("3. Current Version: %d\n", currentVersion());
+        printf("3. Current Version: %d\n", latestVersion());
         printf("4. Total  File Count: %zu\n", m_allFiles.size());
         printf("5. Player File Count: %zu\n", countFiles(lce::FILETYPE::PLAYER));
         printf("6. Map    File Count: %zu\n", countFiles(lce::FILETYPE::MAP));

@@ -9,6 +9,16 @@ namespace editor {
 
     class SaveProject {
     public:
+        static const std::set<lce::FILETYPE> s_OLD_REGION_ANY;
+
+        static const std::set<lce::FILETYPE> s_NEW_REGION_ANY;
+
+        static const std::set<lce::FILETYPE> s_ENTITY_ANY;
+
+
+
+
+
         fs::path m_tempFolder;
 
         DisplayMetadata m_displayMetadata;
@@ -16,7 +26,7 @@ namespace editor {
 
         std::list<LCEFile> m_allFiles;
         i32 m_oldestVersion{};
-        i32 m_currentVersion{};
+        i32 m_latestVersion{};
 
         // move to state settings grr
         i32 m_isNewGen = false;
@@ -24,11 +34,11 @@ namespace editor {
         MU void setOldestVersion(i32 theVersion) { m_oldestVersion = theVersion; }
         MU ND i32 oldestVersion() const { return m_oldestVersion; }
 
-        MU void setCurrentVersion(i32 theVersion) { m_currentVersion = theVersion; }
-        MU ND i32 currentVersion() const { return m_currentVersion; }
+        MU void setLatestVersion(i32 theVersion) { m_latestVersion = theVersion; }
+        MU ND i32 latestVersion() const { return m_latestVersion; }
 
-        void setNewGen(bool isNewGen) { m_isNewGen = isNewGen; }
-        bool isNewGen() const { return m_isNewGen; }
+        MU void setNewGen(bool isNewGen) { m_isNewGen = isNewGen; }
+        MU ND bool isNewGen() const { return m_isNewGen; }
 
 
 
@@ -44,12 +54,6 @@ namespace editor {
         static lce::CONSOLE detectConsole(const fs::path& savePath);
 
 
-
-
-
-
-
-
         ND size_t size() const { return m_allFiles.size(); }
 
 
@@ -62,42 +66,58 @@ namespace editor {
 
         auto begin()             { return m_allFiles.begin(); }
         auto end()               { return m_allFiles.end();   }
-        MU ND auto begin()   const     { return m_allFiles.begin(); }
-        MU ND auto end()     const     { return m_allFiles.end();   }
+        MU ND auto begin() const { return m_allFiles.begin(); }
+        MU ND auto end()   const { return m_allFiles.end();   }
+
+
+    private:
+        template<class Pred>
+        auto as_view(Pred&& p) {
+            using std::views::filter;
+            return m_allFiles | filter(std::forward<Pred>(p));
+        }
+
+        template<class Pred>
+        auto as_view(Pred&& p) const {
+            using std::views::filter;
+            return m_allFiles | filter(std::forward<Pred>(p));
+        }
+
+    public:
 
         template<class SetT>
-        auto view_of(const SetT& keepTypes) {
-            using std::views::filter;
-            return m_allFiles | filter([&keepTypes](const LCEFile& f) {
-                       return keepTypes.contains(f.m_fileType);
-                   });
+        auto view_of(const SetT& keep) {
+            return as_view([&keep](const LCEFile& f) { return keep.contains(f.m_fileType); });
         }
+
         template<class SetT>
-        ND auto view_of(const SetT& keepTypes) const {
-            using std::views::filter;
-            return m_allFiles | filter([&keepTypes](const LCEFile& f) {
-                       return keepTypes.contains(f.m_fileType);
-                   });
+        ND auto view_of(const SetT& keep) const {
+            return as_view([&keep](const LCEFile& f) { return keep.contains(f.m_fileType); });
         }
 
-        auto view_of(std::initializer_list<lce::FILETYPE> iList) {
-            static_assert(std::is_same_v<lce::FILETYPE, lce::FILETYPE>, "This version is for FILETYPE only.");
-            std::shared_ptr<std::set<lce::FILETYPE>> keys = std::make_shared<std::set<lce::FILETYPE>>(iList);
-            using std::views::filter;
+        auto view_of(lce::FILETYPE type) {
+            // I know this leaks but who cares
+            const std::set<lce::FILETYPE>& ref =
+                    (type == lce::FILETYPE::OLD_REGION_ANY) ? s_OLD_REGION_ANY :
+                    (type == lce::FILETYPE::NEW_REGION_ANY) ? s_NEW_REGION_ANY :
+                    (type == lce::FILETYPE::ENTITY_ANY    ) ? s_ENTITY_ANY     :
+                    *(new std::set<lce::FILETYPE>{type});
 
-            return m_allFiles | filter([keys](const LCEFile& f) {
-                       return keys->contains(f.m_fileType);
-                   });
+            return view_of(ref);
         }
 
-        ND auto view_of(std::initializer_list<lce::FILETYPE> iList) const {
-            std::shared_ptr<std::set<lce::FILETYPE>> keys = std::make_shared<std::set<lce::FILETYPE>>(iList);
-            using std::views::filter;
+        ND auto view_of(lce::FILETYPE type) const { return const_cast<SaveProject*>(this)->view_of(type); }
 
-            return m_allFiles | filter([keys](const LCEFile& f) {
-                       return keys->contains(f.m_fileType);
-                   });
+        auto view_of(std::initializer_list<lce::FILETYPE> list) {
+            auto keys = std::make_shared<std::set<lce::FILETYPE>>(list);
+            return as_view([keys](const LCEFile& f) { return keys->contains(f.m_fileType); });
         }
+
+        ND auto view_of(std::initializer_list<lce::FILETYPE> list) const {
+            auto keys = std::make_shared<std::set<lce::FILETYPE>>(list);
+            return as_view([keys](const LCEFile& f) { return keys->contains(f.m_fileType); });
+        }
+
 
         std::optional<std::reference_wrapper<LCEFile>>
         findFile(lce::FILETYPE want) {
@@ -120,6 +140,7 @@ namespace editor {
                     m_allFiles,
                     [t](auto const& f) { return f.m_fileType == t; });
         }
+
         void removeFileTypes(const std::set<lce::FILETYPE>& typesToRemove);
         MU void addFiles(std::list<LCEFile>&& filesIn);
         MU std::list<LCEFile> collectFiles(lce::FILETYPE fileType);
