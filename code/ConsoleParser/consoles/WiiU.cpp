@@ -4,7 +4,7 @@
 #include "include/tinf/tinf.h"
 
 #include "common/utils.hpp"
-#include "common/DataWriter.hpp"
+#include "common/data/DataWriter.hpp"
 #include "common/fmt.hpp"
 
 #include "code/SaveFile/stateSettings.hpp"

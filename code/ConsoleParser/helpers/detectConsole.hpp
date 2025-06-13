@@ -1,13 +1,13 @@
 #pragma once
 
-#include "include/ghc/fs_std.hpp"
+#include "common/data/ghc/fs_std.hpp"
 #include "include/lce/processor.hpp"
 
 #include "code/ConsoleParser/headerUnion.hpp"
 #include "code/SaveFile/stateSettings.hpp"
 
+#include "../../../common/data/buffer.hpp"
 #include "common/error_status.hpp"
-#include "common/buffer.hpp"
 #include "lce/enums.hpp"
 
 

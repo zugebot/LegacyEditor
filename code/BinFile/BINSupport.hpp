@@ -3,8 +3,8 @@
 #include <chrono>
 #include <optional>
 
-#include "common/buffer.hpp"
-#include "common/dataReader.hpp"
+#include "../../common/data/DataReader.hpp"
+#include "../../common/data/buffer.hpp"
 
 
 namespace editor {

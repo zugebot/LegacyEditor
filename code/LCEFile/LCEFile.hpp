@@ -5,9 +5,9 @@
 #include "include/lce/enums.hpp"
 #include "include/lce/processor.hpp"
 
+#include "../../common/data/buffer.hpp"
 #include "common/error_status.hpp"
 #include "common/nbt.hpp"
-#include "common/buffer.hpp"
 
 namespace editor {
 

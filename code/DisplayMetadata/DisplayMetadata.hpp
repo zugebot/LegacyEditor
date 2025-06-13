@@ -3,11 +3,11 @@
 #include "include/lce/processor.hpp"
 #include "include/lce/enums.hpp"
 
-#include "include/ghc/fs_std.hpp"
+#include "common/data/ghc/fs_std.hpp"
 
-#include "common/buffer.hpp"
-#include "common/DataReader.hpp"
-#include "common/DataWriter.hpp"
+#include "../../common/data/DataReader.hpp"
+#include "../../common/data/DataWriter.hpp"
+#include "../../common/data/buffer.hpp"
 #include "include/lce/include/picture.hpp"
 
 

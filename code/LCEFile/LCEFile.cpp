@@ -1,6 +1,7 @@
 #include "LCEFile.hpp"
 
 #include "common/nbt.hpp"
+#include "common/utils.hpp"
 
 
 namespace editor {

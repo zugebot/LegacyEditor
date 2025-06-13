@@ -4,8 +4,8 @@
 
 #include "common/error_status.hpp"
 
+#include "../../common/data/buffer.hpp"
 #include "code/Chunk/chunkData.hpp"
-#include "common/buffer.hpp"
 
 
 namespace editor {

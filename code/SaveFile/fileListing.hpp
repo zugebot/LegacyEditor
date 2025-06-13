@@ -3,7 +3,7 @@
 #include <ranges>
 
 #include "include/lce/processor.hpp"
-#include "include/ghc/fs_std.hpp"
+#include "common/data/ghc/fs_std.hpp"
 
 #include "code/LCEFile/LCEFile.hpp"
 #include "common/error_status.hpp"

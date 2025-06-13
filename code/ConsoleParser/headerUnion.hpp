@@ -1,7 +1,7 @@
 #pragma once
 
 #include "include/lce/processor.hpp"
-#include "common/utils.hpp"
+#include "common/data/buffer.hpp"
 
 namespace editor {
     /**

@@ -13,7 +13,7 @@ i32 DataReader::readInt24() {
 }
 
 
-Buffer DataReader::readBuffer(c_u32 length) {
+Buffer DataReader::readBuffer(const uint32_t length) {
     Buffer buffer(length);
     std::memcpy(buffer.data(), _ptr, length);
     skip(length);
@@ -21,20 +21,20 @@ Buffer DataReader::readBuffer(c_u32 length) {
 }
 
 
-void DataReader::readBytes(c_u32 length, u8* dataIn) {
+void DataReader::readBytes(const uint32_t length, uint8_t* dataIn) {
     std::memcpy(dataIn, _ptr, length);
     skip(length);
 }
 
 
-std::span<const u8> DataReader::readSpan(u32 length) {
-    std::span<const u8> _span = {_ptr, length};
+std::span<const uint8_t> DataReader::readSpan(const uint32_t length) {
+    const std::span _span = {_ptr, length};
     skip(length);
-    return _span;
+    return std::move(_span);
 }
 
 
-std::string DataReader::readString(c_u32 length) {
+std::string DataReader::readString(const uint32_t length) {
     const char* start = reinterpret_cast<const char*>(_ptr);
     // Look for a NUL in the next `length` bytes (nullptr if none found).
     const char* nul = static_cast<const char*>(std::memchr(start, 0, length));
@@ -45,10 +45,10 @@ std::string DataReader::readString(c_u32 length) {
 }
 
 
-MU std::wstring DataReader::readWString(c_u32 length) {
+[[maybe_unused]] std::wstring DataReader::readWString(const uint32_t length) {
     std::wstring returnString;
-    for (u32 i = 0; i < length; i++) {
-        if (c_auto c = static_cast<wchar_t>(this->read<u16>()); c != 0) {
+    for (uint32_t i = 0; i < length; i++) {
+        if (const auto c = static_cast<wchar_t>(this->read<uint16_t>()); c != 0) {
             returnString += c;
         }
     }
@@ -56,20 +56,20 @@ MU std::wstring DataReader::readWString(c_u32 length) {
 }
 
 
-std::string DataReader::readWAsString(c_u32 length) {
-    auto* const letters = new u8[length + 1];
+std::string DataReader::readWAsString(const uint32_t length) {
+    auto* const letters = new uint8_t[length + 1];
     letters[length] = 0;
 
-    u32 iter;
+    uint32_t iter;
     for (iter = 0; iter < length; iter++) {
         if (_end == Endian::Native) {
-            letters[iter] = read<u8>();
+            letters[iter] = read<uint8_t>();
             skip<1>();
         } else {
             skip<1>();
-            letters[iter] = read<u8>();
+            letters[iter] = read<uint8_t>();
         }
-        if (constexpr u8 empty = 0; letters[iter] == empty) {
+        if (constexpr uint8_t empty = 0; letters[iter] == empty) {
             skip(2 * (length - iter - 1));
             break;
         }
@@ -81,10 +81,10 @@ std::string DataReader::readWAsString(c_u32 length) {
 }
 
 
-MU std::string DataReader::readNullTerminatedString() {
+[[maybe_unused]] std::string DataReader::readNullTerminatedString() {
     std::string returnString;
-    u8 nextChar;
-    while ((nextChar = read<u8>()) != 0) {
+    uint8_t nextChar;
+    while ((nextChar = read<uint8_t>()) != 0) {
         returnString += static_cast<char>(nextChar);
     }
     return returnString;
@@ -94,7 +94,7 @@ MU std::string DataReader::readNullTerminatedString() {
 std::wstring DataReader::readNullTerminatedWString() {
     std::wstring returnString;
     wchar_t nextChar;
-    while ((nextChar = read<u16>()) != 0) {
+    while ((nextChar = read<uint16_t>()) != 0) {
         returnString += nextChar;
     }
     return returnString;
@@ -104,13 +104,12 @@ std::wstring DataReader::readNullTerminatedWString() {
  * Only used by nintendo switch edition...
  * @return
  */
+// TODO: sizeof(wchar_t) is 2 on Windows (correct impl), but on every other system it's 4?
 std::wstring DataReader::readNullTerminatedWWWString() {
     std::wstring returnString;
-    wchar_t nextChar1;
-    wchar_t nextChar2;
     while (true) {
-        nextChar1 = read<u16>();
-        nextChar2 = read<u16>();
+        const wchar_t nextChar1 = read<uint16_t>();
+        const wchar_t nextChar2 = read<uint16_t>();
         if (nextChar1 == 0 && nextChar2 == 0) {
             break;
         }

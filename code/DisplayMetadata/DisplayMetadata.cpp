@@ -3,7 +3,7 @@
 
 #include "include/png/crc.hpp"
 
-#include "common/DataWriter.hpp"
+#include "common/data/DataWriter.hpp"
 
 #include "common/error_status.hpp"
 #include "common/utils.hpp"

@@ -5,8 +5,8 @@
 #include "code/LCEFile/LCEFile.hpp"
 #include "common/error_status.hpp"
 
-#include "common/DataReader.hpp"
-#include "common/DataWriter.hpp"
+#include "common/data/DataReader.hpp"
+#include "common/data/DataWriter.hpp"
 #include "common/RLE/rle_nsxps4.hpp"
 
 

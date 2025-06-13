@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "include/ghc/fs_std.hpp"
+#include "common/data/ghc/fs_std.hpp"
 #include "include/nlohmann/json.hpp"
 #include "include/lce/processor.hpp"
 
@@ -128,9 +128,11 @@ int main(int argc, char* argv[]) {
         try {
             in >> jsonConfig;
         } catch (const std::exception& e) {
+            jsonConfig = nlohmann::json::object();
             log(eLog::error, "Error reading conversion.json: {}\n", e.what());
         }
     } else {
+        jsonConfig = nlohmann::json::object();
         log(eLog::warning, "No conversion.json found. Using default paths.\n");
     }
 

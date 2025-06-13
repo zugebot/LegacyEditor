@@ -2,7 +2,7 @@
 
 #include "lce/processor.hpp"
 
-#include "include/ghc/fs_std.hpp"
+#include "common/data/ghc/fs_std.hpp"
 
 
 #ifdef UNIT_TESTS

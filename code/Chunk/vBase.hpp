@@ -2,9 +2,9 @@
 
 #pragma once
 
+#include "../../common/data/DataReader.hpp"
+#include "../../common/data/DataWriter.hpp"
 #include "code/Chunk/chunkData.hpp"
-#include "common/DataReader.hpp"
-#include "common/DataWriter.hpp"
 
 namespace editor::chunk {
 

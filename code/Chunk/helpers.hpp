@@ -2,8 +2,8 @@
 
 #include "include/lce/processor.hpp"
 
+#include "../../common/data/DataReader.hpp"
 #include "bitChecking.hpp"
-#include "common/DataReader.hpp"
 
 
 namespace editor::chunk {

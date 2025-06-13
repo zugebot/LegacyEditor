@@ -2,10 +2,11 @@
 
 #include "lce/processor.hpp"
 
-#include "code/SaveFile/stateSettings.hpp"
 #include "code/SaveFile/SaveProject.hpp"
 #include "code/SaveFile/fileListing.hpp"
+#include "code/SaveFile/stateSettings.hpp"
 #include "code/SaveFile/writeSettings.hpp"
+#include "common/utils.hpp"
 
 
 namespace editor {

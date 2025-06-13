@@ -2,9 +2,9 @@
 
 #include "include/lce/processor.hpp"
 
+#include "../data/DataReader.hpp"
+#include "../data/DataWriter.hpp"
 #include "include/lzx/lzx.h"
-#include "common/DataReader.hpp"
-#include "common/DataWriter.hpp"
 
 // https://github.com/matchaxnb/wimlib/blob/master/src/lzx-compress.c
 

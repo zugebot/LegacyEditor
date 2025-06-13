@@ -14,22 +14,6 @@ std::wstring stringToWstring(const std::string& str);
 std::string wStringToString(const std::wstring& wstr);
 
 
-namespace detail {
-    template<std::integral T>
-    constexpr T maybe_bswap(T v, Endian from, Endian to) {
-        if constexpr (sizeof(T) == 1) return v;
-        return (from == to) ? v : std::byteswap(v);
-    }
-
-    template<std::integral T>
-    constexpr T maybe_bswap(T v, Endian to) {
-        if constexpr (sizeof(T) == 1) return v;
-        return (Endian::Native == to) ? v : std::byteswap(v);
-    }
-
-}
-
-
 static int16_t extractMapNumber(const std::string& str) {
     static const std::string start = "map_";
     static const std::string end = ".dat";

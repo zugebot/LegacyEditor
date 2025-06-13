@@ -1,8 +1,8 @@
 #pragma once
 
-#include "common/DataReader.hpp"
-#include "common/buffer.hpp"
-#include "include/ghc/fs_std.hpp"
+#include "../../common/data/DataReader.hpp"
+#include "../../common/data/buffer.hpp"
+#include "common/data/ghc/fs_std.hpp"
 
 
 struct CacheEntry {

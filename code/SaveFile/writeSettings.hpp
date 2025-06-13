@@ -1,6 +1,6 @@
 #pragma once
 
-#include "include/ghc/fs_std.hpp"
+#include "common/data/ghc/fs_std.hpp"
 
 #include "include/lce/enums.hpp"
 #include "include/lce/processor.hpp"

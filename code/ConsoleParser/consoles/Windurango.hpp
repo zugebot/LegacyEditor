@@ -2,7 +2,7 @@
 
 #include "code/ConsoleParser/ConsoleParser.hpp"
 #include "code/ConsoleParser/NewGenConsoleParser.hpp"
-#include "include/ghc/fs_std.hpp"
+#include "common/data/ghc/fs_std.hpp"
 
 
 namespace editor {

@@ -2,8 +2,8 @@
 
 #include "include/lce/processor.hpp"
 
-#include "common/DataReader.hpp"
-#include "common/DataWriter.hpp"
+#include "../data/DataReader.hpp"
+#include "../data/DataWriter.hpp"
 
 
 namespace codec {
