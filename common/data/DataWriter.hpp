@@ -1,5 +1,7 @@
 #pragma once
 
+#include <fstream>
+#include <enums.hpp>
 #include "buffer.hpp"
 
 
