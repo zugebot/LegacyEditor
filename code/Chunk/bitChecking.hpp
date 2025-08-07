@@ -84,7 +84,7 @@ namespace editor::chunk {
 #if HAS_AVX2
         return _is_all_val_128_avx2<0x00>(p);
 #else
-        return is_all_val_128_scalar<0x00>(p);
+        return _is_all_val_128_scalar<0x00>(p);
 #endif
     }
 
@@ -94,7 +94,7 @@ namespace editor::chunk {
 #if HAS_AVX2
         return _is_all_val_128_avx2<0xFF>(p);
 #else
-        return is_all_val_128_scalar<0xFF>(p);
+        return _is_all_val_128_scalar<0xFF>(p);
 #endif
     }
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <include/lce/processor.hpp>
 #include "data/DataReader.hpp"
 #include "data/DataWriter.hpp"
 

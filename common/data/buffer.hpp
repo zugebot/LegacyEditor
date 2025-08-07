@@ -3,6 +3,7 @@
 #include <bit>
 #include <concepts>
 #include <cstdint>
+#include <span>
 
 #include "common/data/ghc/fs_std.hpp"
 

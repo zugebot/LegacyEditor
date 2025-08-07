@@ -3,6 +3,7 @@
 #include <chrono>
 #include <optional>
 
+#include <processor.hpp>
 #include "../../common/data/DataReader.hpp"
 #include "../../common/data/buffer.hpp"
 
