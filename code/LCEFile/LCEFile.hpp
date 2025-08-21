@@ -14,8 +14,10 @@ namespace editor {
 
     class LCEFile {
         NBTCompound m_nbt;
-        fs::path m_folderPath;
+        fs::path m_origFolderPath;
+        fs::path m_tempFolderPath;
         fs::path m_fileName;
+        bool m_tampered = false;
 
     public:
         lce::CONSOLE m_console = lce::CONSOLE::NONE;
@@ -25,25 +27,39 @@ namespace editor {
         explicit
         LCEFile(const lce::CONSOLE consoleIn) : m_console(consoleIn) {}
 
-        LCEFile(lce::CONSOLE consoleIn, c_u64 timestampIn,
-                fs::path folderPathIn, const std::string& fileNameIn) :
+        LCEFile(lce::CONSOLE consoleIn,
+                c_u64 timestampIn,
+                fs::path origFolderPathIn,
+                fs::path tempFolderPathIn,
+                const std::string& fileNameIn) :
               m_timestamp(timestampIn),
               m_console(consoleIn),
-              m_folderPath(std::move(folderPathIn)),
+              m_origFolderPath(std::move(origFolderPathIn)),
+              m_tempFolderPath(std::move(tempFolderPathIn)),
               m_fileName(fileNameIn) {
             initialize(fileNameIn);
         }
 
         ND fs::path path() const {
-            return m_folderPath / m_fileName;
+            if (m_tampered) {
+                return m_tempFolderPath / m_fileName;
+            } else {
+                return m_origFolderPath / m_fileName;
+            }
         }
 
         MU ND Buffer getBuffer() const {
             return DataReader::readFile(path());
         }
 
-        MU void setBuffer(Buffer buffer) const {
+        MU void setBuffer(Buffer buffer) {
+            m_tampered = true;
             DataWriter::writeFile(path(), buffer.span());
+            m_timestamp = std::time(nullptr);
+        }
+
+        MU void setTempFolderPath(fs::path pathIn) {
+            m_tempFolderPath = pathIn;
         }
 
         u64 detectSize() const {
@@ -81,7 +97,7 @@ namespace editor {
         MU ND fs::path getFileName() const;
 
         void initialize(const std::string& fileNameIn);
-        ND std::string constructFileName(lce::CONSOLE console) const;
+        ND std::string constructFileName() const;
 
         MU void setRegionX(i16 regionX);
         MU ND i16 getRegionX() const;

@@ -15,6 +15,7 @@ enum STATUS : int8_t {
     INVALID_CONSOLE = -6,
     INVALID_ARGUMENT = -7,
     NOT_IMPLEMENTED = -8,
+    ALREADY_WRITTEN = -9
 };
 
 

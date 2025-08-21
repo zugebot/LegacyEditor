@@ -5,7 +5,7 @@
 #include "include/lce/processor.hpp"
 
 #include "/LegacyEditor/unit_tests.hpp"
-#include "code/DisplayMetadata/DisplayMetadata.hpp"
+#include "code/Impl/DisplayMetadata.hpp"
 #include "code/include.hpp"
 #include "utils/timer.hpp"
 

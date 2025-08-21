@@ -4,7 +4,7 @@
 #include "../../common/data/DataWriter.hpp"
 
 #include "SaveLayout.hpp"
-#include "headerUnion.hpp"
+#include "code/ConsoleParser/helpers/headerUnion.hpp"
 
 namespace editor {
     class SaveProject;
@@ -24,11 +24,12 @@ namespace editor {
         virtual void supplyRequiredDefaults(SaveProject& saveProject) const = 0;
 
     protected:
+        static Buffer readRaw(fs::path& inFilePath);
 
         ND virtual int inflateListing(SaveProject& saveProject) = 0;
         ND virtual int deflateListing(const fs::path& gameDataPath, Buffer& inflatedData, Buffer& deflatedData) const = 0;
 
-
+        ND virtual std::optional<fs::path> getFileInfoPath(SaveProject& saveProject) const = 0;
         void readFileInfo(SaveProject& saveProject) const;
         static void defaultFileInfo(SaveProject& saveProject);
     };

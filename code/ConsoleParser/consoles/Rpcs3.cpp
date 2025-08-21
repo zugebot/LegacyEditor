@@ -30,33 +30,10 @@ namespace editor {
 
 
     int RPCS3::inflateListing(SaveProject& saveProject) {
-        Buffer data;
 
-        FILE *f_in = fopen(m_filePath.string().c_str(), "rb");
-        if (f_in == nullptr) {
-            return printf_err(FILE_ERROR, ERROR_4, m_filePath.string().c_str());
-        }
+        Buffer dest = readRaw(m_filePath);
 
-        fseek(f_in, 0, SEEK_END);
-        c_u64 input_size = ftell(f_in);
-        fseek(f_in, 0, SEEK_SET);
-        if (input_size < 12) {
-            fclose(f_in);
-            return printf_err(FILE_ERROR, ERROR_5);
-        }
-        HeaderUnion headerUnion{};
-        fread(&headerUnion, 1, 12, f_in);
-
-        if(!data.allocate(input_size)) {
-            fclose(f_in);
-            return printf_err(MALLOC_FAILED, ERROR_1, input_size);
-        }
-
-        fseek(f_in, 0, SEEK_SET);
-        fread(data.data(), 1, data.size(), f_in);
-        fclose(f_in);
-
-        int status = FileListing::readListing(saveProject, data, m_console);
+        int status = FileListing::readListing(saveProject, dest, m_console);
         if (status != 0) {
             return -1;
         }
@@ -73,7 +50,7 @@ namespace editor {
 
         // TODO: make it cache the ACCOUNT_ID for later converting
         SFOManager mainSFO(sfoFilePath.string());
-        const std::wstring subtitle = stringToWstring(mainSFO.getAttribute("SUB_TITLE"));
+        const std::wstring subtitle = stringToWstring(mainSFO.getStringAttribute("SUB_TITLE").value_or("New World"));
         saveProject.m_displayMetadata.worldName = subtitle;
 
         return SUCCESS;
@@ -136,7 +113,7 @@ namespace editor {
         c_u32 crc1 = crc(deflatedData.data(), deflatedData.size());
         c_u32 crc2 = crc(fileInfoData.data(), fileInfoData.size());
 
-        DataWriter managerMETADATA(256);
+        DataWriter managerMETADATA(256, Endian::Big);
         managerMETADATA.write<u32>(3);
         managerMETADATA.write<u32>(deflatedData.size());
         managerMETADATA.write<u32>(fileInfoData.size());
@@ -196,5 +173,11 @@ namespace editor {
         }
 
         return SUCCESS;
+    }
+
+
+    std::optional<fs::path> RPCS3::getFileInfoPath(SaveProject& saveProject) const {
+        fs::path folderPath = m_filePath.parent_path();
+        return folderPath / "THUMB";
     }
 }

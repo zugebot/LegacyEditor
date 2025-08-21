@@ -7,6 +7,8 @@
 
 #include "code/ConsoleParser/productcodes.hpp"
 
+#include "code/convert/Schematic.hpp"
+
 
 namespace editor {
 
@@ -20,78 +22,71 @@ namespace editor {
      * etc.
      */
     class MU WriteSettings {
-        lce::CONSOLE m_console;
         fs::path m_inFolderPath;
         fs::path m_outFilePath;
 
-
     public:
+        std::string m_fileNameOut;
         ProductCodes m_productCodes;
+        sch::Schematic m_schematic;
+        fs::path m_paramSfoToReplace;
 
-        bool shouldRemovePlayers = true;
-
-        bool shouldRemoveDataMapping = true;
-
-        bool shouldRemoveMaps = true;
-
-        bool shouldRemoveStructures = true;
-
-        bool shouldRemoveRegionsOverworld = false;
-
-        bool shouldRemoveRegionsNether = false;
-
-        bool shouldRemoveRegionsEnd = false;
-
-        bool shouldRemoveEntities = true;
+        bool removePlayers = true;
+        bool removeDataMapping = true;
+        bool removeMaps = true;
+        bool removeStructures = true;
+        bool removeRegionsOverworld = false;
+        bool removeRegionsNether = false;
+        bool removeRegionsEnd = false;
+        bool removeEntities = true;
 
 
-        WriteSettings() : m_console(lce::CONSOLE::NONE) {}
+        WriteSettings() = delete;
 
-        MU explicit WriteSettings(lce::CONSOLE theConsole)
-            : m_console(theConsole) {}
+        MU explicit WriteSettings(sch::Schematic sch, lce::CONSOLE theConsole = lce::CONSOLE::NONE)
+            : m_schematic(sch) {
+            m_schematic.setConsole(theConsole);
+        }
 
-        MU WriteSettings(const lce::CONSOLE theConsole, fs::path theFilePath)
-            : m_console(theConsole), m_inFolderPath(std::move(theFilePath)) {}
+        MU WriteSettings(sch::Schematic sch, const lce::CONSOLE theConsole, fs::path theFilePath)
+            : m_schematic(sch), m_inFolderPath(std::move(theFilePath)) {
+            m_schematic.setConsole(theConsole);
+        }
         
         
-        MU WriteSettings(const lce::CONSOLE theConsole, const ePS3ProductCode thePCode, fs::path theFilePath)
-            : m_console(theConsole), m_inFolderPath(std::move(theFilePath)) {
+        MU WriteSettings(sch::Schematic sch, const lce::CONSOLE theConsole, const ePS3ProductCode thePCode, fs::path theFilePath)
+            : m_schematic(sch), m_inFolderPath(std::move(theFilePath)) {
             m_productCodes.setPS3(thePCode);
+            m_schematic.setConsole(theConsole);
         }
         
-        MU WriteSettings(const lce::CONSOLE theConsole, const eVITAProductCode thePCode, fs::path theFilePath)
-            : m_console(theConsole), m_inFolderPath(std::move(theFilePath)) {
+        MU WriteSettings(sch::Schematic sch, const lce::CONSOLE theConsole, const eVITAProductCode thePCode, fs::path theFilePath)
+            : m_schematic(sch), m_inFolderPath(std::move(theFilePath)) {
             m_productCodes.setVITA(thePCode);
+            m_schematic.setConsole(theConsole);
         }
         
-        MU WriteSettings(const lce::CONSOLE theConsole, const ePS4ProductCode thePCode, fs::path theFilePath)
-            : m_console(theConsole), m_inFolderPath(std::move(theFilePath)) {
+        MU WriteSettings(sch::Schematic sch, const lce::CONSOLE theConsole, const ePS4ProductCode thePCode, fs::path theFilePath)
+            : m_schematic(sch), m_inFolderPath(std::move(theFilePath)) {
             m_productCodes.setPS4(thePCode);
+            m_schematic.setConsole(theConsole);
         }
-        
-        MU ND lce::CONSOLE getConsole() const { return m_console; }
 
         MU ND fs::path getInFolderPath() const { return m_inFolderPath; }
 
         MU ND fs::path getOutFilePath() const { return m_outFilePath; }
 
-        MU void setConsole(const lce::CONSOLE console) { m_console = console; }
-
         MU void setInFolderPath(const fs::path& theFolderPath) { m_inFolderPath = theFolderPath; }
 
         MU void setOutFilePath(const fs::path& theOutFilePath) { m_outFilePath = theOutFilePath; }
 
+        MU void setSfoPath(const fs::path& sfo) { m_paramSfoToReplace = sfo; }
+
         MU ND bool areSettingsValid() const {
-            if (m_console == lce::CONSOLE::PS3 && !m_productCodes.isVarSetPS3()) return false;
-            if (m_console == lce::CONSOLE::PS4 && !m_productCodes.isVarSetPS4()) return false;
-            if (m_console == lce::CONSOLE::VITA && !m_productCodes.isVarSetVITA()) return false;
+            if (m_schematic.save_console == lce::CONSOLE::PS3 && !m_productCodes.isVarSetPS3()) return false;
+            if (m_schematic.save_console == lce::CONSOLE::PS4 && !m_productCodes.isVarSetPS4()) return false;
+            if (m_schematic.save_console == lce::CONSOLE::VITA && !m_productCodes.isVarSetVITA()) return false;
             return true;
         }
     };
-
-
-
-
 }
-
-

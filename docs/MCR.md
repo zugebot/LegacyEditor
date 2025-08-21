@@ -1,4 +1,4 @@
-# **__1. ChunkManager Index `[0x0000..0x0FFF]`__**  
+# **__1. ChunkHandle Index `[0x0000..0x0FFF]`__**  
 • The first 0x1000 bytes of a `.mcr` file is dedicated to 1024 (32x32) chunk indicies, despite the fact that only 27x27 chunks are used. They are in order of XZ index. Each 4 bytes represents a chunk offset like so:  
 ```cs
 00 00 02 01
@@ -7,9 +7,9 @@ Offset   Length
 ```  
 • The offset and length can be multiplied by 0x1000 to get the actual values. if a chunk offset has all zeros, that means the chunk does not exist.  
 • The offset points to a position in the mcr where the chunk's data is stored. The length specifies how many `0x1000` newBlocks the compressed chunk data takes up.  
-# __**2. ChunkManager Timestamps `[0x1000..0x1FFF]`**__  
+# __**2. ChunkHandle Timestamps `[0x1000..0x1FFF]`**__  
 • The next 0x1000 bytes are supposedly (according to miku) timestamps of the chunks, for some reason. Maybe it was the timestamp of when the chunk was last edited? I'm not sure.  
-# __**3. ChunkManager Data `[0x2000..]`**__  
+# __**3. ChunkHandle Data `[0x2000..]`**__  
 • The rest of the `.mcr` file is dedicated to storing the actual chunk's data. The size of the chunk data is shown in the chunk index, multiplied by **0x1000**, so if the length is 03, **0x3000** bytes are reserved for the chunk data. Missing chunks are not stored here. You can tell where a chunk's data starts if it has the bytes `C0` or `80` at the beginning.   
 
 __A chunk's data is stored like so:__  

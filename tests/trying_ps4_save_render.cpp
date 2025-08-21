@@ -6,7 +6,7 @@
 #include "include/lce/registry/blockRegistry.hpp"
 #include "include/lce/registry/textureRegistry.hpp"
 
-#include "code/DisplayMetadata/DisplayMetadata.hpp"
+#include "code/Impl/DisplayMetadata.hpp"
 #include "code/include.hpp"
 #include "unit_tests.hpp"
 #include "utils/timer.hpp"
@@ -93,7 +93,7 @@ int main() {
 
             for (int xIter = 0; xIter < 16; xIter++) {
                 for (int yIter = 0; yIter < CHUNK_HEIGHT; yIter++) {
-                    u16 block_id = editor::chunk::getBlock(chunk.chunkData, xIter, yIter, zIter) >> 4;
+                    u16 block_id = editor::getBlock(chunk.chunkData, xIter, yIter, zIter) >> 4;
                     Picture const* block_texture = textures.getBlockFromID(block_id);
                     if (block_texture != nullptr) {
                         const int xPix = xIter * 16;

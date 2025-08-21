@@ -37,7 +37,12 @@ class LCEFilePrinter:
     def to_string(self):
         try:
             name = _fs_path_to_string(self.val['m_fileName'])
-            folder = _fs_path_to_string(self.val['m_folderPath'])
+            useTemp = bool(self.val['m_tampered'])
+            if useTemp:
+                folder = _fs_path_to_string(self.val['m_tempFolderPath'])
+            else:
+                folder = _fs_path_to_string(self.val['m_origFolderPath'])
+
             console = str(self.val['m_console']).replace("lce::CONSOLE::", "")
             base_dir = os.getcwd()
 
@@ -65,7 +70,7 @@ class LCEFilePrinter:
 
 
 
-class ChunkManagerPrinter:
+class ChunkHandleManager:
     """Pretty‑printer for editor::LCEFile (non‑pointer)."""
     def __init__(self, val: gdb.Value):
         self.val = val
@@ -73,12 +78,21 @@ class ChunkManagerPrinter:
     # summary line
     def to_string(self):
 
-        size   = int(self.val['buffer']['m_size'])
+
+
+
+
+
+
+
+        size = int(self.val['buffer']['m_size'])
         if size == 0:
-            return f"{{size={size}}}"
+            return f"{{null}}"
         else:
-            chunk_x = int(self.val['chunkData']['chunkX'])
-            chunk_z = int(self.val['chunkData']['chunkZ'])
+
+            data = self.val['data'].cast(gdb.lookup_type("editor::ChunkData").pointer())
+            chunk_x = int(data['chunkX'])
+            chunk_z = int(data['chunkZ'])
             return f"{{size={size}, pos=({chunk_x}, {chunk_z})}}"
 
 
@@ -101,8 +115,8 @@ def lookup(val):
         tag = val.type.unqualified().strip_typedefs().name
         if tag == 'editor::LCEFile':
             return LCEFilePrinter(val)
-        if tag == 'editor::ChunkManager':
-            return ChunkManagerPrinter(val)
+        if tag == 'editor::ChunkHandle':
+            return ChunkHandleManager(val)
     except gdb.error:
         pass
     return None

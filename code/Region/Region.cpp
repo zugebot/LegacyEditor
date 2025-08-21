@@ -20,65 +20,64 @@ namespace {
 namespace editor {
 
 
-    MU ND bool Region::extractChunk(i32 x, i32 z, ChunkManager& out) {
+    MU ND bool Region::extractChunk(i32 x, i32 z, ChunkHandle& out) {
         if (!inRange(x, z, m_regScale)) return false;
 
-        ChunkManager* src = getChunk(x, z);
+        ChunkHandle* src = getChunk(x, z);
         if (!src || src->buffer.empty()) return false;
 
         out = std::move(*src);
-        *src = ChunkManager{};
+        *src = ChunkHandle{};
+
+        if (!out.buffer.empty()) {
+            m_chunkCount--;
+        }
+
         return true;
     }
 
-    MU ND bool Region::insertChunk(i32 x, i32 z, ChunkManager&& in) {
+    MU ND bool Region::insertChunk(i32 x, i32 z, ChunkHandle&& in) {
         if (!inRange(x, z, m_regScale)) return false;
-        ChunkManager* dst = getChunk(x, z);
+        ChunkHandle* dst = getChunk(x, z);
         if (!dst) return false;
+
+        if (dst->buffer.empty()) {
+            if (!in.buffer.empty()) {
+                m_chunkCount++;
+            }
+        }
 
         *dst = std::move(in); // move into the region
         return true;
     }
 
 
+
     bool Region::moveChunkTo(Region& dst,
-                                    i32 x, i32 z,
-                                    i32 dx, i32 dz) {
+                             i32 x, i32 z,
+                             i32 dx, i32 dz) {
         if (dx == -1) dx = x;
         if (dz == -1) dz = z;
 
         if (!inRange(x, z, m_regScale)) return false;
         if (!inRange(dx, dz, dst.m_regScale)) return false;
 
-        ChunkManager chunk;
+        ChunkHandle chunk;
         if (!extractChunk(x, z, chunk)) return false;
 
         return dst.insertChunk(dx, dz, std::move(chunk));
     }
 
 
-    void Region::convertChunks(lce::CONSOLE consoleIn) {
-        MU int index = 0;
-        for (auto& chunk: m_chunks) {
-            if (chunk.buffer.empty()) continue;
-
-            chunk.ensureDecompress(m_console);
-            chunk.ensureCompressed(consoleIn);
-
-            index++;
-        }
-    }
-
-
-    MU ChunkManager* Region::getChunk(c_int xIn, c_int zIn) {
+    MU ChunkHandle* Region::getChunk(c_int xIn, c_int zIn) {
         c_u32 index = xIn + zIn * m_regScale;
         if (index > CHUNK_COUNT) { return nullptr; }
-        return &m_chunks[index];
+        return &m_handles[index];
     }
 
 
-    MU ChunkManager* Region::getNonEmptyChunk() {
-        for (auto& chunk: m_chunks) {
+    MU ChunkHandle* Region::getNonEmptyChunk() {
+        for (auto& chunk: m_handles) {
             if (!chunk.buffer.empty()) {
                 return &chunk;
             }
@@ -98,21 +97,14 @@ namespace editor {
      * @param fileIn
      */
     int Region::read(const LCEFile* fileIn) {
-
+        m_console = fileIn->m_console;
+        m_chunkCount = 0;
         Buffer buffer = fileIn->getBuffer();
 
         // new gen stuff
         if (fileIn->isTinyRegionType()) {
-            DataReader reader(buffer.data(), buffer.size(), Endian::Little);
-            if (reader.size() == 0) { return SUCCESS; }
-
-            c_u32 fileSize = reader.read<u32>();
-            Buffer decomp(fileSize);
-            codec::RLE_NSX_OR_PS4_DECOMPRESS(reader.ptr(), reader.size() - 4,
-                                             decomp.data(), decomp.size());
-            buffer = std::move(decomp);
+            buffer = std::move(codec::RLE_NSXPS4_DECOMPRESS(buffer));
         }
-
 
         if (buffer.empty()) {
             return SUCCESS;
@@ -146,19 +138,20 @@ namespace editor {
             locations[chunkIndex] = val >> 8;
             if (sectors[chunkIndex] == 0) { continue; }
             c_u32 timestamp = reader.peek_at<u32>(0x1000 + chunkIndex * 4);
-            m_chunks[chunkIndex].chunkHeader.setTimestamp(timestamp);
+            m_handles[chunkIndex].header.setTimestamp(timestamp);
 
             // bound check
             if (locations[chunkIndex] + sectors[chunkIndex] > totalSectors) {
                 printf("[%u] chunk sector[%u, %u] end goes outside file...\n",
                        totalSectors, locations[chunkIndex], sectors[chunkIndex]);
-                throw std::runtime_error("Region::read error\n");
+                continue;
             }
 
             // read chunk
-            ChunkManager& chunk = m_chunks[chunkIndex];
+            ChunkHandle& chunk = m_handles[chunkIndex];
             reader.seek(SECTOR_BYTES * locations[chunkIndex]);
             chunk.read(reader, m_console);
+            m_chunkCount++;
         }
         return SUCCESS;
     }
@@ -175,7 +168,9 @@ namespace editor {
      * @param consoleIn
      * @return
      */
-    Buffer Region::write(const lce::CONSOLE consoleIn) {
+    Buffer Region::write(WriteSettings& settings) {
+        lce::CONSOLE consoleIn = settings.m_schematic.save_console;
+
         std::vector<u8> sectors;
         std::vector<u32> locations;
         sectors.resize(CHUNK_COUNT);
@@ -188,9 +183,8 @@ namespace editor {
         for (u32 x = 0; x < 32; x++) {
             for (u32 z = 0; z < 32; z++) {
                 u32 chunkIndex = z * 32 + x;
-                if (ChunkManager& chunk = m_chunks[chunkIndex]; !chunk.buffer.empty()) {
-                    chunk.writeChunk(consoleIn);
-                    chunk.ensureCompressed(consoleIn);
+                if (ChunkHandle& chunk = m_handles[chunkIndex]; !chunk.buffer.empty()) {
+                    chunk.encodeChunk(settings);
                     sectors[chunkIndex] = (chunk.buffer.size() + CHUNK_HEADER_SIZE) / SECTOR_BYTES + 1;
                     locations[chunkIndex] = total_sectors;
                     total_sectors += sectors[chunkIndex];
@@ -207,20 +201,22 @@ namespace editor {
 
         u32 largestOffset = 0;
         writer.skip<0x2000>();
+        int chunksWritten = 0;
         for (u32 x = 0; x < 32 - 2 + 2; x++) {
             for (u32 z = 0; z < 32; z++) {
                 u32 chunkIndex = z * 32 + x;
 
-                u32 chunk_header = sectors[chunkIndex] | locations[chunkIndex] << 8;
+                u32 chunk_header = locations[chunkIndex] << 8 | sectors[chunkIndex];
                 writer.writeAtOffset<u32>(0x0 + chunkIndex * 4, chunk_header);
 
-                u32 chunk_timestamp = m_chunks[chunkIndex].chunkHeader.getTimestamp();
+                u32 chunk_timestamp = m_handles[chunkIndex].header.getTimestamp();
                 writer.writeAtOffset<u32>(0x1000 + chunkIndex * 4, chunk_timestamp);
 
                 if (sectors[chunkIndex] != 0) {
-                    ChunkManager& chunk = m_chunks[chunkIndex];
+                    ChunkHandle& chunk = m_handles[chunkIndex];
                     writer.seek(locations[chunkIndex] * SECTOR_BYTES);
                     chunk.write(writer, consoleIn);
+                    chunksWritten++;
 
                     if (writer.tell() > largestOffset) {
                         largestOffset = writer.tell();
@@ -229,8 +225,15 @@ namespace editor {
             }
         }
         writer.seek(largestOffset);
-        Buffer dataOut = writer.take();
+        Buffer buffer = writer.take();
 
-        return dataOut;
+
+        if (lce::isConsoleNewGen(consoleIn)) {
+            Buffer res = codec::RLE_NSXPS4_COMPRESS(buffer);
+            buffer = std::move(res);
+        }
+
+
+        return buffer;
     }
 } // namespace editor

@@ -8,7 +8,7 @@
    |-----------------------------------------------
 +00|00 0C 00 00 00 01 00 00 00 05 00 00 00 00 00 00
    |^^^^^ ^^^^^^^^^^^ ^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^
-   |Ver.  ChunkManager X-Pos ChunkManager Z-Pos LastUpdate...
+   |Ver.  ChunkHandle X-Pos ChunkHandle Z-Pos LastUpdate...
 +10|00 00 00 00 00 00 00 00 00 00 ?? ?? ?? ?? ?? ??
    |^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^
    |...   InhabitedTime

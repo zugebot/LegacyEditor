@@ -1,14 +1,15 @@
 #pragma once
 
-#include "common/data/ghc/fs_std.hpp"
+#include "include/ghc/fs_std.hpp"
 #include "include/lce/processor.hpp"
 
-#include "code/ConsoleParser/headerUnion.hpp"
 #include "code/SaveFile/stateSettings.hpp"
+#include "headerUnion.hpp"
 
-#include "../../../common/data/buffer.hpp"
+#include "common/buffer.hpp"
 #include "common/error_status.hpp"
 #include "lce/enums.hpp"
+#include "sfo/sfo.hpp"
 
 
 namespace editor {
@@ -71,11 +72,23 @@ namespace editor {
             // This is here as a gag, but it will work!
             stateSettings.setConsole(lce::CONSOLE::XBOX360);
             stateSettings.setXbox360Bin(false);
-            stateSettings.setShouldDecompress(false);
+            stateSettings.setCompressed(false);
         } else if (headerUnion.getInt2() < 1000) { // uncompressed PS3 / RPCS3
-            /// otherwise if (int2) > 100 then it is a random file
-            /// because likely ps3 won't have more than 100 files
-            stateSettings.setConsole(lce::CONSOLE::RPCS3);
+            if (fs::path sfoPath = inFilePath.parent_path() / "param.sfo";
+                fs::exists(sfoPath)) {
+                SFOManager mainSFO(sfoPath.string());
+                auto testAttr = mainSFO.getAttribute("RPCS3_BLIST");
+                if (testAttr) {
+                    stateSettings.setConsole(lce::CONSOLE::RPCS3);
+                } else {
+                    stateSettings.setConsole(lce::CONSOLE::PS3);
+                    stateSettings.setCompressed(false);
+                }
+            } else {
+                // fallback, because RPCS3 saves are easier to use than PS3, could be config?
+                stateSettings.setConsole(lce::CONSOLE::RPCS3);
+            }
+
         } else {
             return printf_err(INVALID_SAVE, ERROR_3);
         }
@@ -88,6 +101,9 @@ namespace editor {
             } else if (fs::path temp = inFilePath;
                 fs::exists(temp.replace_extension(".sub"))) {
                 stateSettings.setConsole(lce::CONSOLE::SWITCH);
+            }
+            if (fs::exists(stateSettings.filePath().parent_path() / "wd_displayname.txt")) {
+                stateSettings.setConsole(lce::CONSOLE::WINDURANGO);
             }
         }
     

@@ -34,46 +34,37 @@ namespace editor {
     /// TODO: figure out if this comment is actually important or not
     /// TODO: check from regionFile chunk what console it is if uncompressed
     int PS3::inflateListing(SaveProject& saveProject) {
-        Buffer data;
+        Buffer dest;
 
-        FILE *f_in = fopen(m_filePath.string().c_str(), "rb");
-        if (f_in == nullptr) {
-            return printf_err(FILE_ERROR, ERROR_4, m_filePath.string().c_str());
+
+        if (!saveProject.m_stateSettings.isCompressed()) {
+            dest = readRaw(m_filePath);
+        } else {
+            Buffer src;
+            DataReader reader;
+            try {
+                src = DataReader::readFile(m_filePath);
+                reader = DataReader(src.span(), Endian::Big);
+                if (reader.size() < 12) {
+                    return printf_err(FILE_ERROR, ERROR_5);
+                }
+            } catch (const std::exception& e) {
+                return printf_err(FILE_ERROR, ERROR_4, m_filePath.string().c_str());
+            }
+
+            if (u32 dst_size = reader.read<u64>();
+                    !dest.allocate(dst_size)) {
+                return printf_err(MALLOC_FAILED, ERROR_1, dst_size);
+            }
+
+            tinf_uncompress(dest.data(), dest.size_ptr(), src.data(), src.size());
+            if (dest.empty()) {
+                return printf_err(DECOMPRESS, "%s", ERROR_3);
+            }
         }
 
-        fseek(f_in, 0, SEEK_END);
-        u64 input_size = ftell(f_in);
-        fseek(f_in, 0, SEEK_SET);
-        if (input_size < 12) {
-            fclose(f_in);
-            return printf_err(FILE_ERROR, ERROR_5);
-        }
-        HeaderUnion headerUnion{};
-        fread(&headerUnion, 1, 12, f_in);
 
-        u32 final_size = headerUnion.getDestSize();
-        if(!data.allocate(final_size)) {
-            fclose(f_in);
-            return printf_err(MALLOC_FAILED, ERROR_1, final_size);
-        }
-
-        input_size -= 12;
-        Buffer src;
-        if(!src.allocate(input_size)) {
-            fclose(f_in);
-            return printf_err(MALLOC_FAILED, ERROR_1, input_size);
-        }
-
-        fseek(f_in, 12, SEEK_SET);
-        fread(src.data(), 1, src.size(), f_in);
-        fclose(f_in);
-
-        tinf_uncompress(data.data(), &final_size, src.data(), src.size());
-        if (final_size == 0) {
-            return printf_err(DECOMPRESS, "%s", ERROR_3);
-        }
-
-        int status = FileListing::readListing(saveProject, data, m_console);
+        int status = FileListing::readListing(saveProject, dest, m_console);
         if (status != 0) {
             return -1;
         }
@@ -90,7 +81,8 @@ namespace editor {
 
         // TODO: make it cache the ACCOUNT_ID for later converting
         SFOManager mainSFO(sfoFilePath.string());
-        const std::wstring subtitle = stringToWstring(mainSFO.getAttribute("SUB_TITLE"));
+        std::string subTitle = mainSFO.getStringAttribute("SUB_TITLE").value_or("New World");
+        const std::wstring subtitle = stringToWstring(subTitle);
         saveProject.m_displayMetadata.worldName = subtitle;
 
         return SUCCESS;
@@ -153,7 +145,7 @@ namespace editor {
         fs::path metadataPath = rootPath / "METADATA";
         c_u32 crc1 = crc(deflatedData.data(), deflatedData.size());
         c_u32 crc2 = crc(fileInfoData.data(), fileInfoData.size());
-        DataWriter managerMETADATA(256);
+        DataWriter managerMETADATA(256, Endian::Big);
         managerMETADATA.write<u32>(3);
         managerMETADATA.write<u32>(deflatedData.size());
         managerMETADATA.write<u32>(fileInfoData.size());
@@ -201,8 +193,12 @@ namespace editor {
         MU uLong deflatedSize = compressBound(static_cast<uLong>(inflatedData.size()));
 
 
-
-
         return NOT_IMPLEMENTED;
+    }
+
+
+    std::optional<fs::path> PS3::getFileInfoPath(SaveProject& saveProject) const {
+        fs::path folderPath = m_filePath.parent_path();
+        return folderPath / "THUMB";
     }
 }

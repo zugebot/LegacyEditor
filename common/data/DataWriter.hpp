@@ -1,8 +1,14 @@
 #pragma once
 
+#include <bit>
 #include <fstream>
 #include <enums.hpp>
+
 #include "buffer.hpp"
+#include "utils.hpp"
+
+#include "include/lce/processor.hpp"
+#include "include/ghc/fs_std.hpp"
 
 
 class DataWriter {
@@ -16,22 +22,27 @@ class DataWriter {
     bool _external = false;
 
     void grow(const std::size_t minExtra) {
+    void grow(std::size_t requiredSize) {
         if (_external)
             throw std::length_error("DataWriter overflow (external buffer)");
+
         std::size_t newCap = _cap ? _cap * 2 : 256;
         while (newCap < _pos + minExtra) newCap *= 2;
         auto newBuf = std::unique_ptr<uint8_t[], void(*)(uint8_t*)>(new uint8_t[newCap], kDeleteArr);
+        while (newCap < requiredSize) newCap *= 2;
+
+        auto newBuf = std::unique_ptr<u8[], void(*)(u8*)>(new u8[newCap], kDeleteArr);
         if (_buf) std::memcpy(newBuf.get(), _buf.get(), _pos);
         _buf = std::move(newBuf);
         _cap = newCap;
     }
     
-    void need(const std::size_t n) {
-        if (_pos + n > _cap) grow(n);
+    void need(std::size_t n) {
+        if (_pos + n > _cap) grow(_pos + n);
     }
     
-    void needAt(const std::size_t off, const std::size_t n) {
-        if (off + n > _cap) grow(off + n - _cap);
+    void needAt(std::size_t off, std::size_t n) {
+        if (off + n > _cap) grow(off + n);
     }
 
 public:
@@ -51,6 +62,7 @@ public:
     {}
 
     void setEndian(const Endian e) { _end = e; }
+    Endian getEndian() { return _end; }
 
     // navigation ----------------------------------------------------
 
@@ -76,6 +88,16 @@ public:
     Buffer take();
 
     // primitive write ----------------------------------------------
+
+
+    // TODO: inline this piece of garbage
+    void writeSwitchU64(u64 v) {
+        v = detail::maybe_bswap(v, Endian::Native, _end);
+        u32* ptr = reinterpret_cast<u32*>(&v);
+        write<u32>(ptr[1]);
+        write<u32>(ptr[0]);
+    }
+
 
     template<typename T>
         requires(std::integral<T> || std::floating_point<T>)
@@ -132,13 +154,13 @@ public:
     }
 
     void writeUTF16(const std::wstring& w, const std::size_t max) {
-        const uint32_t wStrSizeMin = std::min(w.size(), max);
-        for (uint32_t i = 0; i < max && i < wStrSizeMin; ++i) {
+        const uint32_t wstr_size_min = std::min(w.size(), max);
+        for (uint32_t i = 0; i < max && i < wstr_size_min; ++i) {
             write<uint16_t>(w[i]);
         }
         // hack, write null char if there is space, and fill rest of space with null as well
-        if (wStrSizeMin < max) {
-            const uint32_t count = max - wStrSizeMin;
+        if (wstr_size_min < max) {
+            const uint32_t count = max - wstr_size_min;
             for (uint32_t i = 0; i < count; i++) {
                 write<uint16_t>(0);
             }
@@ -147,14 +169,16 @@ public:
 
     // Switch/WiiU "WWW" string (char + null char)
     void writeWWWString(const std::wstring& w, const std::size_t max) {
-        const uint32_t wStrSizeMin = std::min(w.size(), max);
-        for (std::size_t i = 0; i < max && i < wStrSizeMin; ++i) {
+        const uint32_t wstr_size_min = std::min(w.size(), max);
+        for (std::size_t i = 0; i < max && i < wstr_size_min; ++i) {
             write<uint16_t>(w[i]);
             write<uint16_t>(0);
         }
-        // hack, write null char if there is space
-        if (wStrSizeMin < max) {
-            write<uint32_t>(0);
+        // fill rest of space with null
+        if (wstr_size_min < max) {
+            for (int i = 0; i < max - wstr_size_min; i++) {
+                write<uint32_t>(0); // null char
+            }
         }
     }
 
@@ -179,10 +203,11 @@ public:
 
     // file I/O ------------------------------------------------------
 
-    void save(const std::filesystem::path& p) const {
+    void save(const fs::path& p) const {
         std::ofstream os(p, std::ios::binary);
         if (!os) throw std::runtime_error("create failed " + p.string());
         os.write(reinterpret_cast<const char*>(_buf.get()), static_cast<std::streamsize>(_pos));
+        os.close();
     }
 
 
@@ -191,6 +216,7 @@ public:
         std::ofstream out(p, std::ios::binary);
         if (!out) throw std::runtime_error("create failed " + p.string());
         out.write(reinterpret_cast<const char*>(bytes.data()), static_cast<uint32_t>(bytes.size()));
+        out.close();
     }
 };
 

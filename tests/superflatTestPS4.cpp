@@ -6,7 +6,7 @@
 #include "include/lce/registry/blockRegistry.hpp"
 #include "include/lce/registry/textureRegistry.hpp"
 
-#include "code/DisplayMetadata/DisplayMetadata.hpp"
+#include "code/Impl/DisplayMetadata.hpp"
 #include "code/include.hpp"
 #include "unit_tests.hpp"
 #include "utils/timer.hpp"

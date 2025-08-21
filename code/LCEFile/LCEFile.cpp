@@ -8,6 +8,10 @@ namespace editor {
 
 
     void LCEFile::initialize(const std::string& fileNameIn) {
+        if (m_timestamp == 0) {
+            m_timestamp = std::time(nullptr);
+        }
+
         if (fileNameIn.ends_with(".mcr")) {
             if (fileNameIn.starts_with("DIM-1")) {
                 setType(lce::FILETYPE::OLD_REGION_NETHER);
@@ -24,7 +28,8 @@ namespace editor {
             static constexpr lce::FILETYPE REGION_DIMENSIONS[3] = {
                     lce::FILETYPE::NEW_REGION_OVERWORLD,
                     lce::FILETYPE::NEW_REGION_NETHER,
-                    lce::FILETYPE::NEW_REGION_END};
+                    lce::FILETYPE::NEW_REGION_END,
+            };
             if (c_auto dimChar = static_cast<char>(static_cast<int>(fileNameIn.at(12)) - 48);
                 dimChar < 0 || dimChar > 2) {
                 m_fileType = lce::FILETYPE::NONE;
@@ -76,7 +81,7 @@ namespace editor {
     }
 
 
-    std::string LCEFile::constructFileName(MU lce::CONSOLE theConsole) const {
+    std::string LCEFile::constructFileName() const {
         static std::unordered_map<lce::FILETYPE, std::string> FileTypeNames{
                 {lce::FILETYPE::VILLAGE, "data/villages.dat"},
                 {lce::FILETYPE::DATA_MAPPING, "data/largeMapDataMappings.dat"},
@@ -132,12 +137,26 @@ namespace editor {
             case lce::FILETYPE::NEW_REGION_NETHER:
             case lce::FILETYPE::NEW_REGION_OVERWORLD:
             case lce::FILETYPE::NEW_REGION_END: {
-                char dimChar =
-                        m_fileType == lce::FILETYPE::NEW_REGION_NETHER ? '1' :
-                        m_fileType == lce::FILETYPE::NEW_REGION_END    ? '2' : '0';
+                char dimChar;
+                switch (m_fileType) {
+                    default: // will never default
+                    case lce::FILETYPE::NEW_REGION_OVERWORLD:
+                        dimChar = '0';
+                        break;
+                    case lce::FILETYPE::NEW_REGION_NETHER:
+                        dimChar = '1';
+                        break;
+                    case lce::FILETYPE::NEW_REGION_END:
+                        dimChar = '2';
+                        break;
+                }
+
                 auto byteToHex = [](i32 v) -> std::string {
                     std::ostringstream os;
-                    os << std::uppercase << std::hex << std::setw(2) << std::setfill('0')
+                    os << std::hex
+                       << std::nouppercase
+                       << std::setw(2)
+                       << std::setfill('0')
                        << (v & 0xFF);
                     return os.str();
                 };
@@ -148,6 +167,10 @@ namespace editor {
                 name += byteToHex(getRegionZ());
                 break;
             }
+            case lce::FILETYPE::OLD_REGION_ANY:
+            case lce::FILETYPE::NEW_REGION_ANY:
+            case lce::FILETYPE::ENTITY_ANY:
+                break;
         }
         return name;
     }
@@ -158,7 +181,7 @@ namespace editor {
             .append("type='")
             .append(fileTypeToString(m_fileType))
             .append("', name='")
-            .append(constructFileName(lce::CONSOLE::WIIU))
+            .append(constructFileName())
             .append("']");
         return str;
     }

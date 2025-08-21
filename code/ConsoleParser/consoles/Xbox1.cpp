@@ -63,9 +63,15 @@ namespace editor {
     }
 
 
-    int Xbox1::writeExternalFolders(SaveProject& saveProject, const fs::path& outDirPath) {
+    int Xbox1::writeExternalFolders(SaveProject& saveProject, WriteSettings& theSettings) const {
         printf("FileListing::writeExternalFolder: not implemented!");
         return NOT_IMPLEMENTED;
+    }
+
+
+    std::optional<fs::path> Xbox1::getFileInfoPath(SaveProject& saveProject) const {
+        fs::path folderPath = m_filePath.parent_path();
+        return folderPath / "THUMB";
     }
 
 

@@ -53,7 +53,7 @@ int main() {
                 setBlock(chunk->chunkData, xIter, 64, zIter, lce::blocks::GOLD_BLOCK_ID, 0, false);
 
                 for (int yIter = 0; yIter < CHUNK_HEIGHT; yIter++) {
-                    u16 block_id = editor::chunk::getBlock(chunk->chunkData, xIter, yIter, zIter) >> 4;
+                    u16 block_id = editor::getBlock(chunk->chunkData, xIter, yIter, zIter) >> 4;
                     Picture const* block_texture = textures.getBlockFromID(block_id);
                     if (block_texture != nullptr) {
                         c_int xPix = xIter * 16;

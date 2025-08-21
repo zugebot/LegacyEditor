@@ -83,8 +83,14 @@ namespace editor {
     }
 
 
-    int Windurango::writeExternalFolders(SaveProject& saveProject, const fs::path& outDirPath) {
+    int Windurango::writeExternalFolders(SaveProject& saveProject, WriteSettings& theSettings) const {
         printf("FileListing::writeExternalFolder: not implemented!");
         return NOT_IMPLEMENTED;
+    }
+
+
+    std::optional<fs::path> Windurango::getFileInfoPath(SaveProject& saveProject) const {
+        fs::path folderPath = m_filePath.parent_path();
+        return folderPath / "THUMB";
     }
 }
