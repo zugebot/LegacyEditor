@@ -1,0 +1,28 @@
+#include <winver.h>
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION     1,0,0,0
+ PRODUCTVERSION  1,0,0,0
+ FILEFLAGSMASK   0x3fL
+ FILEFLAGS       0
+ FILEOS          0x40004L
+ FILETYPE        0x1L
+ FILESUBTYPE     0x0L
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904B0"
+    BEGIN
+      VALUE "CompanyName",      "jerrinth\0"
+      VALUE "FileDescription",  "LegacyEditor\0"
+      VALUE "FileVersion",      "1.0.0\0"
+      VALUE "InternalName",     "LegacyEditor\0"
+      VALUE "OriginalFilename", "LegacyEditor.exe\0"
+      VALUE "ProductName",      "LegacyEditor\0"
+      VALUE "ProductVersion",   "1.0.0\0"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x0409, 1200
+  END
+END

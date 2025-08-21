@@ -1,13 +1,13 @@
 
 #include "include/lce/processor.hpp"
 
-#include "code/Chunk/v11.hpp"
+#include "code/Chunk/formats/chunkFormatGridPaletted.hpp"
 
 
 int main(int argc, char* argv[]) {
 
-    editor::chunk::ChunkData chunkData;
-    editor::chunk::ChunkV11 chunkV11(&chunkData);
+    editorChunkData chunkData;
+    editor::ChunkFormatGridPaletted chunkV11(&chunkData);
 
     std::string path = "E:\\Xbox360\\Minecraft-Xbox360-Worlds\\TU68 1.12.1944.0\\chunk\\";
     Buffer buffer = DataReader::readFile(path + "decompressed.chunk");

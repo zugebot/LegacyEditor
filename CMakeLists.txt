@@ -1,11 +1,31 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.29.6)
 
-# Pick Ninja
+# Prefer Ninja if not specified
 if (NOT CMAKE_GENERATOR)
     set(CMAKE_GENERATOR "Ninja" CACHE INTERNAL "" FORCE)
 endif()
 
-# Compiler cache
+# Project wide settings
+project(LegacyEditor LANGUAGES C CXX)
+
+set(CMAKE_C_STANDARD            17)
+set(CMAKE_CXX_STANDARD          23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS       OFF)
+
+unset(INCLUDE_OPENSSL CACHE)
+unset(LC_BUILD_EXECUTABLES CACHE)
+unset(USE_LLD_LINKING CACHE)
+unset(STATIC_GNU_RUNTIME CACHE)
+
+option(INCLUDE_OPENSSL "include openssl" OFF)
+option(STATIC_GNU_RUNTIME "Statically link libstdc++/libgcc on MinGW/Clang" ON)
+option(LC_BUILD_EXECUTABLES "Build LegacyEditor standalone executable" ON)
+option(USE_LLD_LINKING "fortnite" OFF)
+
+# -------------------------------
+# C/C++ cache (ccache/sccache)
+# -------------------------------
 find_program(CCACHE_PROGRAM ccache)
 find_program(SCCACHE_PROGRAM sccache)
 if (CCACHE_PROGRAM)
@@ -18,17 +38,53 @@ elseif (SCCACHE_PROGRAM)
     set(CMAKE_CXX_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}")
 endif()
 
-# Fast linker
-find_program(LLD_EXE ld.lld
-        PATHS
-        "C:/msys64/mingw64/bin"
-        NO_DEFAULT_PATH
-)
-if (LLD_EXE)
-    set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_CXX_COMPILER> -fuse-ld=lld <CMAKE_CXX_LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
-    message(STATUS "✔ Forcing lld linker via -fuse-ld=lld (${LLD_EXE})")
-else()
-    message(WARNING "✘ lld not found, default linker will be used")
+
+# -------------------------------
+# Windows resource (version info)
+# -------------------------------
+if (WIN32)
+    enable_language(RC)
+    set(LE_VERSION_RC "${CMAKE_SOURCE_DIR}/res/version.rc")
+endif()
+
+
+# -------------------------------
+# Build flags
+# -------------------------------
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build")
+
+# Release opts (keep reasonable)
+set(CMAKE_C_FLAGS_RELEASE   "-O3 -DNDEBUG" CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG" CACHE STRING "" FORCE)
+
+
+# Prefer using the default link rule; only *add* options (don’t override CMAKE_CXX_LINK_EXECUTABLE)
+# If you really want lld, add it as a link option instead of overriding the whole rule.
+if (WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    find_program(LLD_EXE ld.lld
+            PATHS
+            "C:/msys64/mingw64/bin"
+            NO_DEFAULT_PATH
+    )
+    if (LLD_EXE AND USE_LLD_LINKING)
+        message(STATUS "✔ Using lld via -fuse-ld=lld (${LLD_EXE})")
+        add_link_options(-fuse-ld=lld)
+    endif()
+
+    # Hardened PE flags on MinGW/Clang
+    add_link_options(-Wl,--dynamicbase -Wl,--nxcompat -Wl,--high-entropy-va)
+
+    if (STATIC_GNU_RUNTIME)
+        message(WARNING "Linking libstdc++/libgcc statically (can increase AV false-positives).")
+        add_link_options(-static-libgcc -static-libstdc++)
+    endif()
+endif()
+
+if (MSVC)
+    add_link_options($<$<CONFIG:Release>:/INCREMENTAL:NO> /DYNAMICBASE /NXCOMPAT /MANIFEST:EMBED)
+    if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+        add_link_options(/CETCOMPAT)
+    endif()
 endif()
 
 
@@ -40,59 +96,28 @@ if (CMAKE_GENERATOR STREQUAL "Unix Makefiles")
     set_property(GLOBAL PROPERTY JOB_POOLS compile_pool=${NPROC})
 endif()
 
-# Project wide settings
-project(LegacyEditor LANGUAGES C CXX)
 
-set(CMAKE_C_STANDARD            17)
-set(CMAKE_CXX_STANDARD          23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS       OFF)
-
-
-# Better optimization in Release, bake in STD libraries as well
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG" CACHE STRING "Flags for Release" FORCE)
-set(CMAKE_C_FLAGS_RELEASE   "-O3 -DNDEBUG" CACHE STRING "Flags for Release" FORCE)
-if(MSVC)
-    foreach(flag_var CMAKE_C_FLAGS_RELEASE CMAKE_CXX_FLAGS_RELEASE)
-        string(REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
-    endforeach()
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -static-libgcc -static-libstdc++")
-endif()
-
-
-# set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type")
-# set(CMAKE_CXX_FLAGS_DEBUG "-g1")
-
-# Where final binaries go
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build")
-
-# Add lce subdirectory
-add_subdirectory(include/lce)
-
-# Asset Copy
+# -------------------------------
+# Assets
+# -------------------------------
 set(LCEDIT_ASSETS_SOURCE_DIR "${CMAKE_SOURCE_DIR}/assets")
 set(LCEDIT_ASSETS_DEST_DIR   "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/assets/LegacyEditor")
-
 add_custom_target(copy_assets ALL
         COMMAND ${CMAKE_COMMAND} -E make_directory "${LCEDIT_ASSETS_DEST_DIR}"
         COMMAND ${CMAKE_COMMAND} -E copy_directory "${LCEDIT_ASSETS_SOURCE_DIR}" "${LCEDIT_ASSETS_DEST_DIR}"
         COMMENT "Copying assets → ${LCEDIT_ASSETS_DEST_DIR}"
 )
 
-# directories to include
+
+# -------------------------------
+# Include dirs & defines
+# -------------------------------
 include_directories(${CMAKE_SOURCE_DIR}/)
 include_directories(${CMAKE_SOURCE_DIR}/include/)
-
-# compiler screaming
-add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
+add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
 
 
-
-unset(INCLUDE_OPENSSL CACHE)
-option(INCLUDE_OPENSSL "include openssl" OFF)
-if(LC_BUILD_EXECUTABLES)
+if(INCLUDE_OPENSSL)
     set(OPENSSL_ROOT_DIR       "C:/msys64/mingw64")
     set(OPENSSL_INCLUDE_DIR    "C:/msys64/mingw64/include")
     set(OPENSSL_CRYPTO_LIBRARY "C:/msys64/mingw64/lib/libcrypto.a")
@@ -100,9 +125,9 @@ if(LC_BUILD_EXECUTABLES)
 endif()
 
 
-
-
-# Glob all sources
+# -------------------------------
+# Sources
+# -------------------------------
 file(GLOB_RECURSE LEGACY_EDITOR_SOURCES
         "${CMAKE_SOURCE_DIR}/code/*.cpp"
         "${CMAKE_SOURCE_DIR}/code/*.hpp"
@@ -114,12 +139,18 @@ file(GLOB_RECURSE LEGACY_EDITOR_SOURCES
         "${CMAKE_SOURCE_DIR}/include/*.h"
 )
 
-# Add executables directly without static lib
+
+# Bring in lce
+add_subdirectory(include/lce)
 set(ALL_SOURCES ${LEGACY_EDITOR_SOURCES} ${LCE_SOURCES})
+
 
 # Apply to each executable
 function(add_cli NAME SRC)
     add_executable(${NAME} "${SRC}" ${ALL_SOURCES})
+    if (WIN32 AND DEFINED LE_VERSION_RC AND EXISTS "${LE_VERSION_RC}")
+        target_sources(${NAME} PRIVATE "${LE_VERSION_RC}")
+    endif()
     target_include_directories(${NAME} PRIVATE ${LCE_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR})
     target_compile_options(${NAME} PRIVATE ${LCE_COMPILE_OPTIONS})
     target_compile_definitions(${NAME} PRIVATE ${LCE_COMPILE_DEFINITIONS})
@@ -136,15 +167,27 @@ function(add_cli NAME SRC)
             COMMAND ${CMAKE_COMMAND} -E copy_directory "${LCE_ASSETS_SOURCE_DIR}" "${LCE_ASSETS_DEST_DIR}"
             COMMENT "Copying lce assets → ${LCE_ASSETS_DEST_DIR}"
     )
+    if (MINGW AND STATIC_GNU_RUNTIME)
+        target_link_options(${NAME} PRIVATE -static-libgcc -static-libstdc++)
+        # Map pthreads correctly (MinGW uses winpthread)
+        find_package(Threads)
+        if (Threads_FOUND)
+            target_link_libraries(${NAME} PRIVATE Threads::Threads)
+        endif()
+        # OPTIONAL: also static winpthread (needs mingw-w64-x86_64-winpthreads-static installed)
+        # target_link_options(${NAME} PRIVATE -Wl,-Bstatic -lwinpthread -Wl,-Bdynamic)
+    endif()
 endfunction()
 
 
-unset(LC_BUILD_EXECUTABLES CACHE)
-option(LC_BUILD_EXECUTABLES "Build LegacyEditor standalone executable" ON)
 if(LC_BUILD_EXECUTABLES)
-    add_cli(BatchConverter  tests/batch_convert.cpp)
-    add_cli(BatchVersioner  tests/batch_versioner.cpp)
-    add_cli(GetPS3SecureID  tests/getPS3SecureID.cpp)
-    add_cli(ChunkV11Testing tests/get_chunkV11_working.cpp)
-    add_cli(TestGRF         tests/testGRF.cpp)
+    add_cli(BatchConverter        tests/batch_convert.cpp)
+    add_cli(BatchVersioner        tests/batch_versioner.cpp)
+    add_cli(GetPS3SecureID        tests/getPS3SecureID.cpp)
+    add_cli(ChunkV11Testing       tests/get_chunkV11_working.cpp)
+    add_cli(TestGRF               tests/testGRF.cpp)
+    add_cli(BruteForceCRC         tests/crc_bruteforcer.cpp)
+    add_cli(RleNSXPS4Decompress   tests/rleNSXPS4_decompress.cpp)
+    add_cli(ensureEntitiesCorrect tests/ensureEntitiesReadWriteSame.cpp)
+    add_cli(SFOPlayground         tests/write_sfo_from_scratch.cpp)
 endif()

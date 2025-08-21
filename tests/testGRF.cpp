@@ -8,10 +8,10 @@
 #include "common/fmt.hpp"
 #include "common/timer.hpp"
 
-#include "code/scripts.hpp"
+#include "code/convert/convertWorld.hpp"
 #include "code/include.hpp"
 
-#include "code/DisplayMetadata/CacheBinManager.hpp"
+#include "code/Impl/CacheBinManager.hpp"
 
 
 #include "include/grf/grfReader.hpp"
@@ -189,12 +189,12 @@ int main(int argc, char* argv[]) {
                 log(eLog::input, "Using auto output: console=\"{}\"\n", consoleToStr(consoleOutput));
             }
 
-            writeSettings.shouldRemoveMaps = outputConfig["variables"].value("removeMaps", true);
-            writeSettings.shouldRemovePlayers = outputConfig["variables"].value("removePlayers", true);
-            writeSettings.shouldRemoveStructures = outputConfig["variables"].value("removeStructures", true);
-            writeSettings.shouldRemoveRegionsOverworld = outputConfig["variables"].value("removeRegionsOverworld", false);
-            writeSettings.shouldRemoveRegionsNether = outputConfig["variables"].value("removeRegionsNether", false);
-            writeSettings.shouldRemoveRegionsEnd = outputConfig["variables"].value("removeRegionsEnd", false);
+            writeSettings.removeMaps = outputConfig["variables"].value("removeMaps", true);
+            writeSettings.removePlayers = outputConfig["variables"].value("removePlayers", true);
+            writeSettings.removeStructures = outputConfig["variables"].value("removeStructures", true);
+            writeSettings.removeRegionsOverworld = outputConfig["variables"].value("removeRegionsOverworld", false);
+            writeSettings.removeRegionsNether = outputConfig["variables"].value("removeRegionsNether", false);
+            writeSettings.removeRegionsEnd = outputConfig["variables"].value("removeRegionsEnd", false);
 
 
             if (consoleOutput == lce::CONSOLE::RPCS3 || consoleOutput == lce::CONSOLE::PS3) {
@@ -219,22 +219,22 @@ int main(int argc, char* argv[]) {
 
             log(eLog::input,
                 "Using auto output: removeMaps=\"{}\"\n",
-                writeSettings.shouldRemoveMaps ? "true" : "false");
+                writeSettings.removeMaps ? "true" : "false");
             log(eLog::input,
                 "Using auto output: removePlayers=\"{}\"\n",
-                writeSettings.shouldRemovePlayers ? "true" : "false");
+                writeSettings.removePlayers ? "true" : "false");
             log(eLog::input,
                 "Using auto output: removeStructures=\"{}\"\n",
-                writeSettings.shouldRemoveStructures ? "true" : "false");
+                writeSettings.removeStructures ? "true" : "false");
             log(eLog::input,
                 "Using auto output: removeRegionsOverworld=\"{}\"\n",
-                writeSettings.shouldRemoveRegionsOverworld ? "true" : "false");
+                writeSettings.removeRegionsOverworld ? "true" : "false");
             log(eLog::input,
                 "Using auto output: removeRegionsNether=\"{}\"\n",
-                writeSettings.shouldRemoveRegionsNether ? "true" : "false");
+                writeSettings.removeRegionsNether ? "true" : "false");
             log(eLog::input,
                 "Using auto output: removeRegionsEnd=\"{}\"\n",
-                writeSettings.shouldRemoveRegionsEnd ? "true" : "false");
+                writeSettings.removeRegionsEnd ? "true" : "false");
 
         } else {
             exit(-1);

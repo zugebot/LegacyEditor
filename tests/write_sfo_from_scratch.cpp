@@ -1,16 +1,16 @@
 
 #include "include/lce/processor.hpp"
-
-#include "code/include.hpp"
-#include "unit_tests.hpp"
+#include "include/ghc/fs_std.hpp"
 #include "include/sfo/sfo.hpp"
 
 
-int main() {
-    PREPARE_UNIT_TESTS();
+std::string EXE_CURRENT_PATH;
+
+int main(int argc, char* argv[]) {
+    EXE_CURRENT_PATH = fs::path(argv[0]).parent_path().string();
 
     // fs::path sfo1Path = R"(C:\Users\jerrin\CLionProjects\LegacyEditor\tests\RPCS3\NPUB31419--240424132851\PARAM.SFO)";
-    fs::path sfo1Path = R"(C:\Users\jerrin\CLionProjects\LegacyEditor\tests\PS4\folder\00000008\savedata0\sce_sys\param.sfo)";
+    fs::path sfo1Path = R"(C:\Users\jerrin\CLionProjects\LegacyEditor\savefiles\PS4\jerrins_and_tiaras\PS4-CUSA00744-2CUSA00744-210322225338.0\savedata0\sce_sys\param.sfo)";
 
     SFOManager sfo1(sfo1Path.string());
 
@@ -21,10 +21,8 @@ int main() {
 
     std::cout << "\n\n";
 
-    fs::path sfo2Path = R"(C:\Users\jerrin\CLionProjects\LegacyEditor\tests\PS4\folder\00000007\savedata0\sce_sys\param.sfo)";
-
+    fs::path sfo2Path = R"(C:\Users\jerrin\CLionProjects\LegacyEditor\savefiles\PS3\TU6 Generation\NPUB31419--200322134139\PARAM.SFO)";
     SFOManager sfo2(sfo2Path.string());
-
     auto attrs2 = sfo2.getAttributes();
     for (auto& attr : attrs2) {
         std::cout << attr.toString() << std::endl;

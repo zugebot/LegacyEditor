@@ -1,0 +1,266 @@
+#include "chunkHandle.hpp"
+
+#include "include/lce/processor.hpp"
+
+#include "include/tinf/tinf.h"
+#include "include/zlib-1.2.12/zlib.h"
+#include "common/codec/XDecompress.hpp"
+#include "common/rle/rle.hpp"
+
+#include "code/SaveFile/writeSettings.hpp"
+
+#include "code/chunk/formats/chunkFormatNBT.hpp"
+#include "code/chunk/formats/chunkFormatGridPaletted.hpp"
+#include "code/chunk/formats/chunkFormatGridPalettedSubmerged.hpp"
+
+
+// TODO: WHATEVER I DID, IT'S NO LONGER CONVERTING CHUNKS, FAILING SILENTLY
+
+
+namespace editor {
+
+
+    void ChunkHandle::unpackSizeFlags(c_u32 word) {
+        header.setRle(word >> 31);
+        header.setNewSave((word >> 30) & 1);
+        *buffer.size_ptr() = word & 0x0FFFFFFF;
+    }
+
+
+    u32 ChunkHandle::packSizeFlags() const {
+        u32 word = buffer.size();
+        if (header.rle())     { word |= 0x8000'0000u; }
+        if (header.newSave()) { word |= 0x4000'0000u; }
+        return word;
+    }
+
+
+    int ChunkHandle::read(DataReader& rdr, lce::CONSOLE c) {
+
+        unpackSizeFlags(rdr.read<u32>());
+
+        if (!buffer.allocate(buffer.size(), true))
+            return STATUS::MALLOC_FAILED;
+
+        if (c == lce::CONSOLE::PS3 || c == lce::CONSOLE::RPCS3) {
+            header.setDecSize(rdr.read<u32>());
+            header.setRLESize(rdr.read<u32>());
+        } else {
+            u32 sz = rdr.read<u32>();
+            header.setDecSize(sz);
+            header.setRLESize(sz);
+        }
+
+        std::memcpy(buffer.data(), rdr.ptr(), buffer.size());
+
+        header.markWritten();
+        header.markDirty(false);
+        return SUCCESS;
+    }
+
+
+    int ChunkHandle::write(DataWriter& wtr, lce::CONSOLE c) {
+
+        wtr.write<u32>(packSizeFlags());
+
+        if (c == lce::CONSOLE::PS3 || c == lce::CONSOLE::RPCS3) {
+            wtr.write<u32>(header.getDecSize());
+            wtr.write<u32>(header.getRLESize());
+        } else {
+            wtr.write<u32>(header.getDecSize());
+        }
+        wtr.writeBytes(buffer.data(), buffer.size());
+
+        header.markWritten();
+        header.markDirty(false);
+        return SUCCESS;
+    }
+
+
+    MU int ChunkHandle::decodeChunk(MU lce::CONSOLE c) {
+
+        if (!header.written())
+            return STATUS::ALREADY_WRITTEN;
+
+        Buffer decZip;
+        decZip.allocate(
+                header.rle() ? header.getRLESize() : header.getDecSize()
+        );
+        if (decZip.empty())
+            return SUCCESS;
+
+        switch (c) {
+            case lce::CONSOLE::XBOX360: {
+                codec::XmemErr err = codec::XDecompress(
+                        decZip.data(), decZip.size_ptr(),
+                        buffer.data(), buffer.size());
+                if (err != codec::XmemErr::Ok)
+                    return STATUS::DECOMPRESS;
+                break;
+            }
+            case lce::CONSOLE::RPCS3:
+            case lce::CONSOLE::PS3: {
+                int result = tinf_uncompress(
+                        decZip.data(), decZip.size_ptr(),
+                        buffer.data(), buffer.size());
+                if (result != SUCCESS)
+                    return STATUS::DECOMPRESS;
+                break;
+            }
+            case lce::CONSOLE::SWITCH:
+            case lce::CONSOLE::WIIU:
+            case lce::CONSOLE::VITA:
+            case lce::CONSOLE::PS4:
+            case lce::CONSOLE::XBOX1:
+            case lce::CONSOLE::WINDURANGO: {
+                int result = tinf_zlib_uncompress(
+                        decZip.data(), decZip.size_ptr(),
+                        buffer.data(), buffer.size());
+                if (result != SUCCESS)
+                    return STATUS::DECOMPRESS;
+                break;
+            }
+            default:
+                break;
+        }
+
+        if (header.rle() == true) {
+            buffer.clear();
+            buffer.allocate(header.getDecSize());
+            codec::RLE_decompress(
+                    buffer.data(), buffer.size_ptr(),
+                    decZip.data(), decZip.size());
+            header.setRle(false);
+            decZip.clear();
+        } else {
+            buffer = std::move(decZip);
+        }
+
+        // read the chunk
+        DataReader reader(buffer.span(), Endian::Big);
+
+        if (reader.peek() == 0x0A) { // start of NBT
+            data->lastVersion = eChunkVersion::V_NBT;
+            ChunkFormatNBT::readChunk(data.get(), reader);
+
+        } else {
+            data->lastVersion = reader.read<u16>();
+            switch(data->lastVersion) {
+                case eChunkVersion::V_8:
+                case eChunkVersion::V_9:
+                case eChunkVersion::V_10:
+                case eChunkVersion::V_11:
+                    ChunkFormatGridPaletted::readChunk(data.get(), reader);
+                    break;
+                case eChunkVersion::V_12:
+                case eChunkVersion::V_13:
+                    ChunkFormatGridPalettedSubmerged::readChunk(data.get(), reader);
+                    break;
+                default:;
+            }
+        }
+
+        header.markDirty();
+        header.clearWritten();
+        return SUCCESS;
+    }
+
+
+    MU int ChunkHandle::encodeChunk(WriteSettings& settings) {
+        if (settings.m_schematic.save_console == lce::CONSOLE::NONE)
+            return STATUS::INVALID_CONSOLE;
+
+        if (header.written())
+            return STATUS::ALREADY_WRITTEN;
+
+        if (buffer.empty())
+            return STATUS::SUCCESS;
+
+        // Buffer outBuffer;
+        // outBuffer.allocate(CHUNK_BUFFER_SIZE);
+        // #ifndef DONT_MEMSET0
+        // memset(outBuffer.data, 0, CHUNK_BUFFER_SIZE);
+        // #endif
+
+        DataWriter wtr(256, Endian::Big);
+
+        switch (settings.m_schematic.chunk_lastVersion) {
+            case eChunkVersion::V_NBT:
+                ChunkFormatNBT::writeChunk(data.get(), settings, wtr);
+                break;
+            case eChunkVersion::V_8:
+            case eChunkVersion::V_9:
+            case eChunkVersion::V_10:
+            case eChunkVersion::V_11:
+                wtr.write<u16>(settings.m_schematic.chunk_lastVersion);
+                ChunkFormatGridPaletted::writeChunk(data.get(), settings, wtr);
+                break;
+            case eChunkVersion::V_12:
+            case eChunkVersion::V_13:
+                data->lastVersion = 12;
+                wtr.write<u16>(settings.m_schematic.chunk_lastVersion);
+                ChunkFormatGridPalettedSubmerged::writeChunk(data.get(), settings, wtr);
+                break;
+            default:
+                break;
+        }
+
+        buffer = std::move(wtr.take());
+        header.setDecSize(buffer.size());
+
+        if (!header.rle()) {
+            Buffer rleBuffer;
+            rleBuffer.allocate(buffer.size());
+            codec::RLE_compress(rleBuffer.data(), rleBuffer.size_ptr(),
+                                buffer.data(), buffer.size());
+            buffer = std::move(rleBuffer);
+
+            header.setRLESize(buffer.size());
+            header.setRle(true);
+        }
+
+        switch (settings.m_schematic.save_console) {
+            case lce::CONSOLE::XBOX360:
+                return STATUS::NOT_IMPLEMENTED;
+            case lce::CONSOLE::PS3:
+            case lce::CONSOLE::RPCS3: {
+                Buffer compressed((u32)(float(buffer.size()) * 1.25F));
+                int status = compress(compressed.data(), (uLongf*) compressed.size_ptr(),
+                                  buffer.data(), buffer.size());
+                buffer.clear();
+                if (status)
+                    return STATUS::COMPRESS;
+                // copy it over, and remove ZLIB header
+                buffer = Buffer(compressed.size() - 2);
+                std::memcpy(buffer.data(), compressed.data() + 2, buffer.size());
+                // zero out ending integrity check, as the console does
+                // std::memset(data + comp_size - 6, 0, 4);
+                break;
+            }
+
+            case lce::CONSOLE::SWITCH:
+            case lce::CONSOLE::PS4:
+            case lce::CONSOLE::WIIU:
+            case lce::CONSOLE::VITA:
+            case lce::CONSOLE::XBOX1:
+            case lce::CONSOLE::WINDURANGO: {
+                Buffer compressed((u32)(float(buffer.size()) * 1.25F));
+                int status = compress(compressed.data(), (uLongf*) compressed.size_ptr(),
+                                  buffer.data(), buffer.size());
+                buffer.clear();
+                if (status)
+                    return STATUS::COMPRESS;
+                buffer = std::move(compressed);
+                break;
+            }
+            default:
+                break;
+        }
+
+        header.markDirty(false);
+        header.markWritten();
+
+        return SUCCESS;
+    }
+
+}

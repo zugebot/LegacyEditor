@@ -85,6 +85,7 @@ namespace editor {
                     saveProject.m_stateSettings.console(),
                     timestamp,
                     inDirPath,
+                    "",
                     fileNameStr
                     );
         }

@@ -54,8 +54,8 @@ namespace editor {
                 return printf_err(MALLOC_FAILED, ERROR_1, file_size);
             }
 
-            codec::XmemErr error = codec::XDecompress(
-                    reader.ptr(), src_size, dest.data(), dest.size_ptr());
+            codec::XmemErr error = codec::XDecompress(dest.data(), dest.size_ptr(),
+                                                      reader.ptr(), src_size);
             if (error != codec::XmemErr::Ok) {
                 return printf_err(DECOMPRESS, "%s (%s)", ERROR_3, to_string(error));
             }

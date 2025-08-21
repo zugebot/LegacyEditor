@@ -2,7 +2,8 @@
 
 #include "include/lce/processor.hpp"
 
-#include "code/Region/ChunkManager.hpp"
+#include "code/SaveFile/writeSettings.hpp"
+#include "code/chunk/chunkHandle.hpp"
 
 
 namespace editor {
@@ -19,7 +20,10 @@ namespace editor {
         static constexpr u32 CHUNK_HEADER_SIZE = 12;
 
     public:
-        std::vector<ChunkManager> m_chunks;
+
+        std::vector<ChunkHandle> m_handles;
+        i32 m_chunkCount;
+
         lce::CONSOLE m_console;
         i32 m_regX;
         i32 m_regZ;
@@ -29,13 +33,15 @@ namespace editor {
         /// CONSTRUCTORS
 
         Region()
-            : m_console(lce::CONSOLE::NONE), m_regX(0), m_regZ(0), m_regScale(32) {
-            m_chunks.resize(1024);
+            : m_console(lce::CONSOLE::NONE), m_regX(0), m_regZ(0),
+              m_chunkCount(0), m_regScale(32) {
+            m_handles.resize(1024);
         }
 
         Region(i32 regX, i32 regZ, lce::CONSOLE console = lce::CONSOLE::NONE)
-            : m_console(console), m_regX(regX), m_regZ(regZ), m_regScale(32) {
-            m_chunks.resize(1024);
+            : m_console(console), m_regX(regX), m_regZ(regZ),
+              m_chunkCount(0), m_regScale(32) {
+            m_handles.resize(1024);
         }
 
         ~Region() = default;
@@ -45,27 +51,21 @@ namespace editor {
 
         /// FUNCTIONS
 
-        MU ChunkManager* getChunk(int xIn, int zIn);
-        MU ChunkManager* getNonEmptyChunk();
+        MU ChunkHandle* getChunk(int xIn, int zIn);
+        MU ChunkHandle* getNonEmptyChunk();
 
-        bool extractChunk(i32 x, i32 z, ChunkManager& out);
+        bool extractChunk(i32 x, i32 z, ChunkHandle& out);
 
         /// Insert `in` at (x,z), replacing any existing chunk there.
         /// `in` is left empty (moved-from). Returns false on invalid coords.
-        bool insertChunk(i32 x, i32 z, ChunkManager&& in);
+        bool insertChunk(i32 x, i32 z, ChunkHandle&& in);
 
         bool moveChunkTo(Region& dst, i32 x, i32 z, i32 dx = -1, i32 dz = -1);
-
-
-
-
-
-        MU void convertChunks(lce::CONSOLE consoleIn);
 
         /// READ AND WRITE
 
         int read(const LCEFile* fileIn);
-        Buffer write(lce::CONSOLE consoleIn);
+        Buffer write(WriteSettings& settings);
 
     };
 

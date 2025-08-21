@@ -13,7 +13,7 @@ NBTList::NBTList(eNBT expectedType, std::initializer_list<NBTBase> list) {
         if (item.getType() != expectedType) {
             continue;
         }
-        push_back(item);
+        push_back(item.copy());
     }
 }
 
@@ -97,7 +97,7 @@ NBTBase NBTBase::readInternal(DataReader& reader, eNBT type) {
                 NBTBase element(subType, {});
                 list.push_back(readInternal(reader, subType));
             }
-            return makeList(list);
+            return makeList(std::move(list));
         }
         case eNBT::COMPOUND: {
             NBTCompound compound;
@@ -110,7 +110,7 @@ NBTBase NBTBase::readInternal(DataReader& reader, eNBT type) {
                 NBTBase subTag = readInternal(reader, subType);
                 compound.insert(key, subTag);
             }
-            return makeCompound(compound);
+            return makeCompound(std::move(compound));
         }
         case eNBT::INT_ARRAY: {
             i32 size = reader.read<i32>();
@@ -130,7 +130,7 @@ NBTBase NBTBase::readInternal(DataReader& reader, eNBT type) {
 
 
 void NBTBase::write(DataWriter& writer, bool skipEndTag) const {
-    writeInternal(writer, skipEndTag);
+    writeInternal(writer, skipEndTag, 0);
 }
 
 
@@ -144,7 +144,7 @@ MU void NBTBase::writeFile(const std::string &path) const {
 }
 
 
-void NBTBase::writeInternal(DataWriter& writer, bool skipEndTag) const {
+void NBTBase::writeInternal(DataWriter& writer, bool skipEndTag, int depth) const {
     switch (m_type) {
         case eNBT::UINT8: writer.write<u8>(get<u8>()); break;
         case eNBT::INT16: writer.write<u16>(get<i16>()); break;
@@ -166,7 +166,7 @@ void NBTBase::writeInternal(DataWriter& writer, bool skipEndTag) const {
             const auto& list = get<NBTList>();
             writer.write<u8>(static_cast<u8>(list.empty() ? eNBT::NONE : list.subType()));
             writer.write<u32>(static_cast<i32>(list.size()));
-            for (const auto& item : list) item.writeInternal(writer, false);
+            for (const auto& item : list) item.writeInternal(writer, false, depth + 1);
             break;
         }
         case eNBT::COMPOUND: {
@@ -174,9 +174,10 @@ void NBTBase::writeInternal(DataWriter& writer, bool skipEndTag) const {
             for (const auto& [key, val] : compound) {
                 writer.write<u8>(static_cast<u8>(val.m_type));
                 writer.writeStringLengthPrefixed(key);
-                val.writeInternal(writer, false);
+                val.writeInternal(writer, false, depth + 1);
             }
-            if (!skipEndTag) {
+            // TODO: does NBT specifically not write the end tag for the ""-root?
+            if (skipEndTag || depth != 0) {
                 writer.write<u8>(static_cast<u8>(eNBT::NONE));
             }
             break;
@@ -507,6 +508,36 @@ const NBTBase& NBTCompound::operator()(const std::string& k) const noexcept {
 }
 
 
+NBTCompound NBTCompound::copy() const {
+    /* 1.  Allocate the new object with the same bucket count so the   *
+     *     hash distribution is identical.                            */
+    NBTCompound out{_buckets.size()};
+
+    /* 2.  Straight-copy the simple POD members. */
+    out._size     = _size;
+    out._max_load = _max_load;
+
+    /* 3.  Copy keys 1-for-1.  They are plain std::string, so a normal
+           vector copy (or assignment) is fine.                       */
+    out._keys = _keys;
+
+    /* 4.  Deep-copy each value.  We rely on NBTBase::copy() so that
+           nested structures are duplicated, not merely referenced.   */
+    out._values.reserve(_values.size());
+    for (auto const& v : _values)
+        out._values.emplace_back(v.copy());
+
+    /* 5.  Re-create bucket chains that map hash-bucket → indices.    */
+    for (size_type idx = 0; idx < out._keys.size(); ++idx)
+    {
+        auto bi = std::hash<std::string>{}(out._keys[idx]) % out._buckets.size();
+        out._buckets[bi].push_back(idx);
+    }
+
+    return out;
+}
+
+
 void NBTCompound::insert(const std::string &k, const NBTBase &v) {
     if (k == "minecraft:item_frame") {
         volatile int x = 0;
@@ -514,14 +545,14 @@ void NBTCompound::insert(const std::string &k, const NBTBase &v) {
     auto bi = _bucket_for(k);
     for (auto idx : _buckets[bi]) {
         if (_keys[idx] == k) {
-            _values[idx] = v;
+            _values[idx] = v.copy();
             return;
         }
     }
 
     size_type newIndex = _values.size();
     _keys.push_back(k);
-    _values.push_back(v);
+    _values.push_back(v.copy());
     _buckets[bi].push_back(newIndex);
     ++_size;
     _maybe_rehash();
@@ -616,8 +647,9 @@ std::optional<NBTBase> NBTCompound::extract(const std::string& k) {
 
 template<typename T>
 std::optional<T> NBTCompound::value(const std::string& key) const {
-    if (const NBTBase* t = find(key); t && t->is<T>())
+    if (const NBTBase* t = find(key); t && t->is<T>()) {
         return t->get<T>();
+    }
     return std::nullopt;
 }
 

@@ -1,11 +1,13 @@
 #pragma once
 
-#include "code/Region/ChunkManager.hpp"
 #include "code/Region/Region.hpp"
 #include "code/SaveFile/SaveProject.hpp"
+#include "code/chunk/chunkHandle.hpp"
 
 
 namespace editor::summary {
+
+
     struct SaveSummary {
         fs::path m_savegamePath;
         NBTCompound m_summary = NBTCompound();
@@ -25,7 +27,7 @@ namespace editor::summary {
     }
 
 
-    MU SaveSummary createSummary(const fs::path& savegamePath) {
+    MU SaveSummary createSummary(lce::CONSOLE console, const fs::path& savegamePath) {
         SaveSummary retSummary;
         retSummary.m_savegamePath = savegamePath;
 
@@ -34,25 +36,40 @@ namespace editor::summary {
             return {};
         }
 
-        editor::ChunkManager* chunk = nullptr;
+        editor::ChunkHandle* chunk = nullptr;
         editor::Region regionManager;
 
-        for (auto& regionFile : saveProject.view_of(lce::FILETYPE::OLD_REGION_ANY)) {
-            regionManager.read(&regionFile);
-            chunk = regionManager.getNonEmptyChunk();
-            if (chunk != nullptr) { break; }
-        }
 
+        auto findFirstValidChunk = [&](lce::FILETYPE regionType)
+                -> editor::ChunkHandle* {
+            for (auto& regionFile : saveProject.view_of(regionType)) {
+                regionManager.read(&regionFile);
+                for (auto& handle : regionManager.m_handles) {
+                    if (handle.buffer.empty())
+                        continue;
+                    handle.decodeChunk(lce::CONSOLE::SWITCH);
+                    if (handle.data->lastVersion != 0) {
+                        return &handle;
+                    }
+                }
+            }
+            return nullptr;
+        };
+
+        chunk = findFirstValidChunk(lce::FILETYPE::OLD_REGION_ANY);
         if (chunk == nullptr) {
-            return {};
+            chunk = findFirstValidChunk(lce::FILETYPE::NEW_REGION_ANY);
+            if (chunk == nullptr) {
+                return {};
+            }
         }
 
-        c_bool chunkIsZIP = chunk->chunkHeader.isZipCompressed();
-        c_bool chunkIsRLE = chunk->chunkHeader.isRLECompressed();
-        c_bool chunkIsNEW = chunk->chunkHeader.getNewSaveFlag();
 
-        chunk->readChunk(lce::CONSOLE::XBOX360);
-        editor::chunk::ChunkData* chunkData = chunk->chunkData;
+        c_bool chunkIsRLE = chunk->header.isRLE;
+        c_bool chunkIsNEW = chunk->header.isNewSave;
+
+        // chunk->decodeChunk(lce::CONSOLE::SWITCH);
+        auto* chunkData = chunk->data.get();
 
         // eBlockOrder blockOrder = guessOrder<u16, 16>(chunkData->blocks, chunkData->heightMap);
 
@@ -62,20 +79,33 @@ namespace editor::summary {
             DataReader reader(buffer);
 
             NBTCompound summary;
-            summary.insert("_TU", makeString(""));
+
+            switch (console) {
+                case (lce::CONSOLE::XBOX360): {
+                    summary.insert("_TU", makeString(""));
+                    break;
+                }
+                case (lce::CONSOLE::WIIU): {
+                    summary.insert("_BUILD", makeString(""));
+                    break;
+                }
+                default:
+                    break;
+            }
+
             summary.insert("_SP_Oldest", makeInt(saveProject.oldestVersion()));
             summary.insert("_SP_Latest", makeInt(saveProject.latestVersion()));
+            summary.insert("_SP_EXTRADATA", makeString(saveProject.m_displayMetadata.extraData));
             summary.insert("_C_Version", makeInt(chunkData->lastVersion));
             summary.insert("_C_Height", makeInt(chunkData->chunkHeight));
-            summary.insert("_C_isZIP", makeByte(chunkIsZIP));
             summary.insert("_C_isRLE", makeByte(chunkIsRLE));
             summary.insert("_C_isNEW", makeByte(chunkIsNEW));
 
-            if (chunk->chunkData->intel.wasNBTChunk) {
-                if (!chunk->chunkData->intel.hasBiomes) {
+            if (chunk->data->intel.wasNBTChunk) {
+                if (!chunk->data->intel.hasBiomes) {
                     summary.insert("_C_MissingBiomes", makeByte(1));
                 }
-                if (chunk->chunkData->intel.hasTerraFlagVariant) {
+                if (chunk->data->intel.hasTerraFlagVariant) {
                     summary.insert("_C_NBTTerraFlagVariant", makeByte(1));
                 } else {
                     summary.insert("_C_NBTTerraFlagVariant", makeByte(0));
@@ -85,7 +115,7 @@ namespace editor::summary {
 
             NBTBase nbt = NBTBase::read(reader);
             auto level = nbt[""]["Data"];
-            retSummary.m_level = level->get<NBTCompound>();
+            retSummary.m_level = level.get<NBTCompound>();
         }
 
         retSummary.m_isValid = true;

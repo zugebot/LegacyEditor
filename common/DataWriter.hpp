@@ -57,6 +57,7 @@ public:
     {}
 
     void setEndian(Endian e) { _end = e; }
+    Endian getEndian() { return _end; }
 
     // navigation ----------------------------------------------------
 
@@ -82,6 +83,16 @@ public:
     Buffer take();
 
     // primitive write ----------------------------------------------
+
+
+    // TODO: inline this piece of garbage
+    void writeSwitchU64(u64 v) {
+        v = detail::maybe_bswap(v, Endian::Native, _end);
+        u32* ptr = reinterpret_cast<u32*>(&v);
+        write<u32>(ptr[1]);
+        write<u32>(ptr[0]);
+    }
+
 
     template<typename T>
         requires(std::integral<T> || std::floating_point<T>)
@@ -158,9 +169,11 @@ public:
             write<u16>(w[i]);
             write<u16>(0);
         }
-        // hack, write null char if there is space
+        // fill rest of space with null
         if (wstr_size_min < max) {
-            write<u32>(0);
+            for (int i = 0; i < max - wstr_size_min; i++) {
+                write<u32>(0); // null char
+            }
         }
     }
 
@@ -185,18 +198,20 @@ public:
 
     // file I/O ------------------------------------------------------
 
-    void save(const std::filesystem::path& p) const {
+    void save(const fs::path& p) const {
         std::ofstream os(p, std::ios::binary);
-        if (!os) throw std::runtime_error("create failed " + p.string());
+        if (!os.is_open()) throw std::runtime_error("create failed " + p.string());
         os.write((const char*) _buf.get(), static_cast<std::streamsize>(_pos));
+        os.close();
     }
 
 
-    static void writeFile(const std::filesystem::path& p,
+    static void writeFile(const fs::path& p,
                           std::span<c_u8> bytes) {
         std::ofstream out(p, std::ios::binary);
-        if (!out) throw std::runtime_error("create failed " + p.string());
+        if (!out.is_open()) throw std::runtime_error("create failed " + p.string());
         out.write(reinterpret_cast<const char*>(bytes.data()), (u32)bytes.size());
+        out.close();
     }
 };
 

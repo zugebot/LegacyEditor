@@ -148,6 +148,7 @@ public:
 
     const NBTBase& operator()(const std::string& k) const noexcept;
 
+    ND NBTCompound copy() const;
 
     void clear();
 
@@ -215,6 +216,43 @@ class NBTBase {
 public:
     NBTBase() = default;
     NBTBase(eNBT type, NBTValue val) : m_type(type), m_value(std::move(val)) {}
+
+    NBTBase(const NBTBase& other)
+        : m_type(other.m_type),
+          m_value(other.m_value)
+    {}
+
+    NBTBase(NBTBase&& other) noexcept
+        : m_type(other.m_type),       // steal
+          m_value(std::move(other.m_value))
+    {
+        other.m_type  = eNBT::NONE;   // reset source
+        other.m_value = {};           // monostate
+    }
+
+    NBTBase& operator=(const NBTBase& other) {
+        if (this != &other) {
+            m_type  = other.m_type;
+            m_value = other.m_value;
+        }
+        return *this;
+    }
+
+    NBTBase& operator=(NBTBase&& other) noexcept {
+        if (this == &other)
+            return *this;
+
+        eNBT      newType  = other.m_type;
+        NBTValue  newValue = std::move(other.m_value);
+
+        other.m_type  = eNBT::NONE;
+        other.m_value.emplace<std::monostate>();
+
+        m_type  = newType;
+        m_value = std::move(newValue);
+
+        return *this;
+    }
 
     ND NBTBase copy() const;
     MU void merge(const NBTBase& other);
@@ -331,7 +369,7 @@ public:
     MU ND const NBTBase* getTag(const std::string& key) const;
 
 private:
-    void writeInternal(DataWriter& writer, bool skipEndTag) const;
+    void writeInternal(DataWriter& writer, bool skipEndTag, int depth) const;
 
 };
 
@@ -339,22 +377,26 @@ private:
 // Factory Helpers
 // ----------------------------------------
 
-inline NBTBase makeByte(uint8_t v)            { return {eNBT::UINT8,  v }; }
-inline NBTBase makeShort(int16_t v)           { return {eNBT::INT16,  v }; }
-inline NBTBase makeInt(int32_t v)             { return {eNBT::INT32,  v }; }
-inline NBTBase makeLong(int64_t v)            { return {eNBT::INT64,  v }; }
-inline NBTBase makeFloat(float v)             { return {eNBT::FLOAT,  v }; }
-inline NBTBase makeDouble(double v)           { return {eNBT::DOUBLE, v }; }
-inline NBTBase makeString(const char* s)      { return { eNBT::STRING,    std::string(s) }; }
-inline NBTBase makeString(std::string_view v) { return {eNBT::STRING,     std::string(v) }; }
-inline NBTBase makeString(std::string v)      { return {eNBT::STRING,     std::move(v) }; }
-inline NBTBase makeByteArray(NBTByteArray v)  { return {eNBT::BYTE_ARRAY, std::move(v) }; }
-inline NBTBase makeIntArray(NBTIntArray v)    { return {eNBT::INT_ARRAY,  std::move(v) }; }
-inline NBTBase makeLongArray(NBTLongArray v)  { return {eNBT::LONG_ARRAY, std::move(v) }; }
-inline NBTBase makeList(eNBT subType)         { return {eNBT::LIST,       NBTList(subType) }; }
-inline NBTBase makeList(NBTList v)            { return {eNBT::LIST,       std::move(v) }; }
-inline NBTBase makeCompound()                 { return {eNBT::COMPOUND,   NBTCompound() }; }
-inline NBTBase makeCompound(NBTCompound v)    { return {eNBT::COMPOUND,   std::move(v) }; }
+template<typename T> requires (std::is_enum_v<T> || std::is_integral_v<T>)
+inline NBTBase makeByte(T v)                  { return {eNBT::UINT8,       static_cast<uint8_t>(v) }; }
+template<typename T> requires (std::is_enum_v<T> || std::is_integral_v<T>)
+inline NBTBase makeShort(T v)                 { return {eNBT::INT16,       static_cast<int16_t>(v) }; }
+template<typename T> requires (std::is_enum_v<T> || std::is_integral_v<T>)
+inline NBTBase makeInt(T v)                   { return { eNBT::INT32,      static_cast<int32_t>(v)}; }
+template<typename T> requires (std::is_enum_v<T> || std::is_integral_v<T>)
+inline NBTBase makeLong(T v)                  { return { eNBT::INT64,      static_cast<int64_t>(v) }; }
+inline NBTBase makeFloat(float v)             { return { eNBT::FLOAT,      v }; }
+inline NBTBase makeDouble(double v)           { return { eNBT::DOUBLE,     v }; }
+inline NBTBase makeString(const char* s)      { return { eNBT::STRING,     std::string(s) }; }
+inline NBTBase makeString(std::string_view v) { return { eNBT::STRING,     std::string(v) }; }
+inline NBTBase makeString(std::string v)      { return { eNBT::STRING,     std::move(v) }; }
+inline NBTBase makeByteArray(NBTByteArray v)  { return { eNBT::BYTE_ARRAY, std::move(v) }; }
+inline NBTBase makeIntArray(NBTIntArray v)    { return { eNBT::INT_ARRAY,  std::move(v) }; }
+inline NBTBase makeLongArray(NBTLongArray v)  { return { eNBT::LONG_ARRAY, std::move(v) }; }
+inline NBTBase makeList(eNBT subType)         { return { eNBT::LIST,       NBTList(subType) }; }
+inline NBTBase makeList(NBTList v)            { return { eNBT::LIST,       std::move(v) }; }
+inline NBTBase makeCompound()                 { return { eNBT::COMPOUND,   NBTCompound() }; }
+inline NBTBase makeCompound(NBTCompound v)    { return { eNBT::COMPOUND,   std::move(v) }; }
 
 
 inline NBTBase makeList(eNBT subType, std::initializer_list<NBTBase> list) {
@@ -364,6 +406,6 @@ inline NBTBase makeList(eNBT subType, std::initializer_list<NBTBase> list) {
 inline NBTBase makeCompound(std::initializer_list<std::pair<std::string, NBTBase>> list) {
     NBTCompound compound;
     for (auto&& [key, val] : list)
-        compound[key] = val;
+        compound[key] = val.copy();
     return {eNBT::COMPOUND, std::move(compound) };
 }

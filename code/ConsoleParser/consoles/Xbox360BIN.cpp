@@ -1,6 +1,6 @@
 #include "Xbox360BIN.hpp"
 
-#include "code/BinFile/BINSupport.hpp"
+#include "common/binfile/BINSupport.hpp"
 #include "common/codec/XDecompress.hpp"
 #include "common/utils.hpp"
 
@@ -72,8 +72,8 @@ namespace editor {
         }
 
         codec::XmemErr err = codec::XDecompress(
-                reader.ptr(), srcSize,
-                dest.data(), dest.size_ptr());
+                dest.data(), dest.size_ptr(),
+                reader.ptr(), srcSize);
         if (err != codec::XmemErr::Ok) {
             return DECOMPRESS;
         }

@@ -122,8 +122,8 @@ private:
             buf = DecompressStream(compSpan, rleCompressedSize);
             if (console == lce::CONSOLE::PS3 || hdr.Level >= CompressionLevel::CompressedRle) {
                 Buffer bufOut(decompressedSize);
-                codec::RLE_decompress(buf.data(), rleCompressedSize,
-                                      bufOut.data(), bufOut.size_ref());
+                codec::RLE_decompress(
+                        bufOut.data(), bufOut.size_ref(), buf.data(), rleCompressedSize);
                 buf = std::move(bufOut);
             }
         } else {
@@ -203,8 +203,8 @@ inline Buffer GameRuleFileReader::DecompressStream(std::span<const u8> src, u32 
         }
         case CompressionType::XMem: {
             Buffer dest(expectedSize);
-            auto res = codec::XDecompress(src.data(), src.size(),
-                                          dest.data(), dest.size_ptr());
+            auto res = codec::XDecompress(
+                    dest.data(), dest.size_ptr(), src.data(), src.size());
             if (res != codec::XmemErr::Ok) {
                 return {};
             }
