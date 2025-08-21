@@ -15,12 +15,7 @@ namespace editor {
 
         DataReader reader(bufferIn.data(), bufferIn.size(), getConsoleEndian(consoleIn));
 
-        fs::path outputPath = fs::path("temp") / getCurrentDateTimeString();
-        if (!outputPath.empty() && !fs::exists(outputPath)) {
-            fs::create_directories(outputPath);
-        }
-        saveProject.m_tempFolder = outputPath;
-
+        // DataWriter::writeFile("listingIn.dat", bufferIn.span());
 
         c_u32 indexOffset = reader.read<u32>();
         u32 fileCount = reader.read<u32>();
@@ -39,7 +34,18 @@ namespace editor {
         for (u32 fileIndex = 0; fileIndex < fileCount; fileIndex++) {
 
             reader.seek(indexOffset + fileIndex * FOOTER_ENTRY_SIZE);
+
             std::string fileName = reader.readWAsString(WSTRING_SIZE);
+
+            std::string parsedFileName;
+            for (int i = 0; i < fileName.size(); i++) {
+                char ch = *(fileName.data() + i);
+                if (ch == '\001') {
+                    i += 2;
+                }
+                parsedFileName += ch;
+            }
+            fileName = parsedFileName;
 
             u32 fileSize = reader.read<u32>();
             c_u32 index = reader.read<u32>();
@@ -51,7 +57,7 @@ namespace editor {
 
             reader.seek(index);
 
-            fs::path filePath = outputPath / fileName;
+            fs::path filePath = saveProject.m_tempFolder / fileName;
             if (fs::path folderPath = filePath.parent_path();
                 !folderPath.empty() && !fs::exists(folderPath)) {
                 fs::create_directories(folderPath);
@@ -59,7 +65,9 @@ namespace editor {
             auto readSpan = reader.readSpan(fileSize);
             DataWriter::writeFile(filePath, readSpan);
 
-            saveProject.m_allFiles.emplace_back(consoleIn, timestamp, outputPath, fileName);
+            saveProject.m_allFiles.emplace_back(consoleIn, timestamp,
+                                                saveProject.m_tempFolder,
+                                                saveProject.m_tempFolder, fileName);
         }
 
         return SUCCESS;
@@ -88,7 +96,7 @@ namespace editor {
         u32 MULTIPLIER = (saveProject.latestVersion() > 1) ? 1 : 136;
 
         auto fileRange = saveProject.view_of(TYPES_TO_WRITE);
-        auto consoleOut = writeSettings.getConsole();
+        auto consoleOut = writeSettings.m_schematic.save_console;
 
         // step 1: get the file count and size of all sub-files
         struct FileStruct {
@@ -111,7 +119,7 @@ namespace editor {
 
         // step 2: find total binary size and create its data buffer
         c_u32 totalFileSize = fileInfoOffset + FOOTER_ENTRY_SIZE * fileStructs.size();
-        DataWriter writer(totalFileSize, getConsoleEndian(consoleOut));
+        DataWriter writer(totalFileSize, lce::getConsoleEndian(consoleOut));
 
         // step 3: write header
         writer.write<u32>(fileInfoOffset);
@@ -126,14 +134,18 @@ namespace editor {
 
         // step 5: write file metadata
         for (const auto& fileStruct : fileStructs) {
-            std::string fileIterName = fileStruct.file.constructFileName(consoleOut);
+            std::string fileIterName = fileStruct.file.constructFileName();
+
             writer.writeWStringFromString(fileIterName, WSTRING_SIZE);
+
             writer.write<u32>(fileStruct.buffer.size());
             writer.write<u32>(fileStruct.offset);
             if (saveProject.latestVersion() > 1) {
                 writer.write<u64>(fileStruct.file.m_timestamp);
             }
         }
+
+        // DataWriter::writeFile("listingOut.dat", writer.span());
 
         return writer.take();
     }

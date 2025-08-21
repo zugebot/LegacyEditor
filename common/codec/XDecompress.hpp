@@ -50,7 +50,7 @@ namespace codec {
     };
 
 
-    ND static XmemErr XDecompress(const u8* dataIn, u32 sizeIn, u8* dataOut, u32* sizeOut) {
+    ND static XmemErr XDecompress(u8* dataOut, u32* sizeOut, const u8* dataIn, u32 sizeIn) {
         static constexpr int32_t CHUNK_SIZE = 0x8000;
 
         DataReader reader(dataIn, sizeIn);

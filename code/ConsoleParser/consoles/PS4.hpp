@@ -17,7 +17,7 @@ namespace editor {
         PS4() { m_console = lce::CONSOLE::PS4; }
         ~PS4() override = default;
 
-        ND SaveLayout discoverSaveLayout(MU const fs::path& rootFolder) override;
+        ND SaveLayout discoverSaveLayout(MU const fs::path& rootFolder) override { return {}; }
         void supplyRequiredDefaults(MU SaveProject& saveProject) const override {}
 
         ND int inflateFromLayout(SaveProject& saveProject, const fs::path& theFilePath) override;
@@ -29,7 +29,7 @@ namespace editor {
         std::vector<fs::path> findExternalFolder(SaveProject& saveProject) override;
         int readExternalFolders(SaveProject& saveProject) override;
         
-        MU int writeExternalFolders(SaveProject& saveProject, const fs::path& outDirPath) override;
+        MU int writeExternalFolders(SaveProject& saveProject, WriteSettings& theSettings) const override;
     };
 }
 

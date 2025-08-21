@@ -81,7 +81,8 @@ namespace editor {
 
         // TODO: make it cache the ACCOUNT_ID for later converting
         SFOManager mainSFO(sfoFilePath.string());
-        const std::wstring subtitle = stringToWstring(mainSFO.getAttribute("SUB_TITLE").value_or("New World"));
+        std::string subTitle = mainSFO.getStringAttribute("SUB_TITLE").value_or("New World");
+        const std::wstring subtitle = stringToWstring(subTitle);
         saveProject.m_displayMetadata.worldName = subtitle;
 
         return SUCCESS;
@@ -144,7 +145,7 @@ namespace editor {
         fs::path metadataPath = rootPath / "METADATA";
         c_u32 crc1 = crc(deflatedData.data(), deflatedData.size());
         c_u32 crc2 = crc(fileInfoData.data(), fileInfoData.size());
-        DataWriter managerMETADATA(256);
+        DataWriter managerMETADATA(256, Endian::Big);
         managerMETADATA.write<u32>(3);
         managerMETADATA.write<u32>(deflatedData.size());
         managerMETADATA.write<u32>(fileInfoData.size());

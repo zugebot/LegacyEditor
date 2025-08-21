@@ -57,18 +57,32 @@ MU std::wstring DataReader::readWString(c_u32 length) {
 
 
 std::string DataReader::readWAsString(c_u32 length) {
+    const wchar_t* wstrPtr = reinterpret_cast<const wchar_t*>(_ptr);
+    std::wstring fileName2(wstrPtr, length);
+
     auto* const letters = new u8[length + 1];
+    memset(letters, 0, length + 1);
+
     letters[length] = 0;
 
     u32 iter;
     for (iter = 0; iter < length; iter++) {
+        u8 ch;
         if (_end == Endian::Native) {
-            letters[iter] = read<u8>();
+            ch = read<u8>();
             skip<1>();
         } else {
             skip<1>();
-            letters[iter] = read<u8>();
+            ch = read<u8>();
         }
+
+        if (ch == '\001') {
+            skip<4>();
+            continue;
+        }
+
+        letters[iter] = ch;
+
         if (constexpr u8 empty = 0; letters[iter] == empty) {
             skip(2 * (length - iter - 1));
             break;

@@ -17,11 +17,19 @@ namespace editor {
 
         virtual std::vector<fs::path> findExternalFolder(SaveProject& saveProject) = 0;
         virtual int readExternalFolders(SaveProject& saveProject) = 0;
-
-        virtual int writeExternalFolders(SaveProject& saveProject, const fs::path& outDirPath) = 0;
-
-
         static int readExternalFolder(SaveProject& saveProject, const fs::path& inDirPath);
+
+        virtual int deflateToSave(MU SaveProject& saveProject, MU WriteSettings& theSettings) const override {
+            return -1;
+        }
+        virtual int deflateListing(const fs::path& gameDataPath, Buffer& inflatedData, Buffer& deflatedData) {
+            return -1;
+        }
+        virtual int writeExternalFolders(SaveProject& saveProject, WriteSettings& theSettings) const {
+            return -1;
+        }
+
+
 
 
     };

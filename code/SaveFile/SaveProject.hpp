@@ -2,12 +2,14 @@
 
 #include "code/ConsoleParser/helpers/detectConsole.hpp"
 #include "code/ConsoleParser/helpers/makeParserForConsole.hpp"
-#include "code/DisplayMetadata/DisplayMetadata.hpp"
+#include "code/Impl/DisplayMetadata.hpp"
 #include "code/SaveFile/fileListing.hpp"
 
 namespace editor {
 
     class SaveProject {
+        static fs::path s_TEMP_FOLDER_BASE;
+
     public:
         static const std::set<lce::FILETYPE> s_OLD_REGION_ANY;
 
@@ -16,8 +18,11 @@ namespace editor {
         static const std::set<lce::FILETYPE> s_ENTITY_ANY;
 
 
-
-
+        SaveProject() {
+            if (s_TEMP_FOLDER_BASE == fs::path()) {
+                s_TEMP_FOLDER_BASE = fs::temp_directory_path() / "lcedit";
+            }
+        }
 
         fs::path m_tempFolder;
 
@@ -45,6 +50,7 @@ namespace editor {
 
         int read(const fs::path& theFilePath);
         int write(WriteSettings& theWriteSettings);
+        int cleanup() const;
 
 
         MU void printDetails() const;

@@ -4,9 +4,7 @@
 #include "code/ConsoleParser/NewGenConsoleParser.hpp"
 #include "include/ghc/fs_std.hpp"
 
-
 namespace editor {
-
     class FileListing;
     class SaveProject;
 
@@ -28,6 +26,6 @@ namespace editor {
         std::vector<fs::path> findExternalFolder(editor::SaveProject &saveProject) override;
         int readExternalFolders(SaveProject& saveProject) override;
 
-        MU int writeExternalFolders(SaveProject& saveProject, const fs::path& outDirPath) override;
+        MU int writeExternalFolders(SaveProject& saveProject, WriteSettings& theSettings) const override;
     };
 }

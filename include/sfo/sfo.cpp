@@ -4,7 +4,54 @@
 #include <cstdio>
 #include <cstdlib>
 #include <stdexcept>
+#include <optional>
+#include <sstream>
+#include <cctype>
 
+
+std::string hexDumpToString(const std::vector<std::uint8_t>& data)
+{
+    constexpr std::size_t bytes_per_line = 16;
+    constexpr std::size_t group_size     = 4;
+
+    std::vector<std::string> lines;
+
+    for (std::size_t i = 0; i < data.size(); i += bytes_per_line)
+    {
+        std::ostringstream line;
+        line << "| ";
+
+        for (std::size_t j = 0; j < bytes_per_line; ++j)
+        {
+            if (i + j < data.size())
+                line << std::uppercase << std::hex
+                     << std::setw(2) << std::setfill('0')
+                     << static_cast<int>(data[i + j]);
+            else
+                line << "  ";
+
+            /*  add spacing only when another byte follows  */
+            if (j + 1 < bytes_per_line)                      // not the last byte
+            {
+                line << ((j + 1) % group_size == 0 ? "   "
+                                                   : " ");
+            }
+        }
+
+        line << " |";
+        lines.emplace_back(line.str());
+    }
+
+    std::size_t width = lines.empty() ? 4 : lines.front().size();
+    std::string border = "+" + std::string(width - 2, '-') + "+";
+
+    std::ostringstream out;
+    out << border << '\n';
+    for (auto const& l : lines) out << l << '\n';
+    out << border;
+
+    return out.str();
+}
 
 
 SFOManager::SFOManager(std::string theFilePath)
@@ -32,22 +79,25 @@ std::vector<SFOManager::Attribute> SFOManager::getAttributes() const {
     std::vector<Attribute> attributes;
     for (uint32_t i = 0; i < myHeader.myEntriesCount; i++) {
         Attribute attr;
+        attr.myFmt = myEntries[i].param_fmt;
         attr.myKey = &myKeyTable.content[myEntries[i].key_offset];
 
         auto entry = myEntries[i];
         switch (entry.param_fmt) {
-            // TODO: this needs to be re-thought out for ps4 "FORMAT"
-            case eSFO_FMT::UTF8_SPECIAL:
+            case eSFO_FMT::UTF8_SPECIAL: {
+                const auto* ptr = reinterpret_cast<const uint8_t*>(&myDataTable.content[entry.data_offset]);
+                attr.myValue = std::vector<uint8_t>(ptr, ptr + entry.param_len);
+                break;
+            }
             case eSFO_FMT::UTF8_NORMAL: {
                 const char* ptr = &myDataTable.content[entry.data_offset];
-                const uint32_t include_null = entry.param_fmt == eSFO_FMT::UTF8_NORMAL;
-                attr.myValue = std::string(ptr, entry.param_len - include_null);
-                // attr.myValue = "\"" + attr.myValue + "\"";
+                attr.myValue = std::string(ptr);
                 break;
             }
             case eSFO_FMT::INT: {
-                auto* integer = (uint32_t*)&myDataTable.content[entry.data_offset];
-                attr.myValue = std::to_string(*integer);
+                uint32_t value;
+                std::memcpy(&value, &myDataTable.content[entry.data_offset], sizeof value);
+                attr.myValue = static_cast<int>(value);
                 break;
             }
         }
@@ -71,15 +121,18 @@ T* cast_malloc(uint32_t size) {
 }
 
 
-[[maybe_unused]] void SFOManager::addParam(const eSFO_FMT& theType, const std::string& theKey, const std::string& value) {
+[[maybe_unused]] void SFOManager::addParam(const eSFO_FMT& theType,
+                                           const std::string& theKey,
+                                           const std::string& value) {
     index_table_entry newEntry = {};
     uint32_t newIndex = 0;
 
-    // Get new entry's .param_len and .param_max_len
+    // ---- Compute param sizes ----
     if (theType == eSFO_FMT::UTF8_NORMAL || theType == eSFO_FMT::UTF8_SPECIAL) {
-        newEntry.param_fmt = theType;
+        newEntry.param_fmt    = theType;
         newEntry.param_max_len = getReservedStringLen(theKey);
-        newEntry.param_len = value.length() + (theType == eSFO_FMT::UTF8_NORMAL);
+        newEntry.param_len     = static_cast<uint32_t>(value.length())
+                             + (theType == eSFO_FMT::UTF8_NORMAL); // +1 for NUL in NORMAL
         if (newEntry.param_max_len < newEntry.param_len) {
             newEntry.param_max_len = newEntry.param_len;
             // 4-byte alignment
@@ -88,71 +141,107 @@ T* cast_malloc(uint32_t size) {
             }
         }
     } else {
-        newEntry.param_fmt = eSFO_FMT::INT;
-        newEntry.param_len = 4;
+        newEntry.param_fmt    = eSFO_FMT::INT;
+        newEntry.param_len    = 4;
         newEntry.param_max_len = 4;
     }
 
-    // Get new entry's index and offsets
-    for (uint32_t i = 0; i < myHeader.myEntriesCount; i++) {
-        int32_t result = theKey.compare(&myKeyTable.content[myEntries[i].key_offset]);
-        if (result == 0) { // Parameter already exists
+    // ---- Choose insertion position (lexicographic vs append) ----
+    if (m_lexicographic) {
+        // Original behavior: keep keys sorted by name
+        for (uint32_t i = 0; i < myHeader.myEntriesCount; i++) {
+            int32_t result = theKey.compare(&myKeyTable.content[myEntries[i].key_offset]);
+            if (result == 0) {
+                throw std::runtime_error("Could not add \"" + theKey + "\": parameter already exists.");
+            } else if (result < 0) {
+                newIndex = i;
+                newEntry.key_offset  = myEntries[i].key_offset;
+                newEntry.data_offset = myEntries[i].data_offset;
+                break;
+            } else if (i == myHeader.myEntriesCount - 1) {
+                newIndex = i + 1;
+                newEntry.key_offset  = myEntries[i].key_offset
+                                      + std::strlen(&myKeyTable.content[myEntries[i].key_offset]) + 1;
+                newEntry.data_offset = myEntries[i].data_offset + myEntries[i].param_max_len;
+                break;
+            }
+        }
+    } else {
+        // Append behavior: maintain call order AND avoid inserting after padding.
+        if (getIndex(theKey) != -1) {
             throw std::runtime_error("Could not add \"" + theKey + "\": parameter already exists.");
-        } else if (result < 0) {
-            newIndex = i;
-            newEntry.key_offset = myEntries[i].key_offset;
-            newEntry.data_offset = myEntries[i].data_offset;
-            break;
-        } else if (i == myHeader.myEntriesCount - 1) {
-            newIndex = i + 1;
-            newEntry.key_offset = myEntries[i].key_offset + strlen(&myKeyTable.content[myEntries[i].key_offset]) + 1;
-            newEntry.data_offset = myEntries[i].data_offset + myEntries[i].param_max_len;
-            break;
+        }
+        newIndex = myHeader.myEntriesCount;
+
+        // Determine logical end of key strings:
+        // strip all trailing zeros; if any keys exist, keep exactly one NUL.
+        uint32_t insert_at = myKeyTable.size;
+        while (insert_at > 0 && myKeyTable.content[insert_at - 1] == '\0') {
+            --insert_at;                    // remove all trailing padding zeros
+        }
+        if (insert_at > 0) { ++insert_at; } // leave exactly one NUL after last key
+
+        newEntry.key_offset = insert_at;
+
+        // Data is appended after the last entry's reserved space.
+        if (myHeader.myEntriesCount == 0) {
+            newEntry.data_offset = 0;
+        } else {
+            const auto& last = myEntries[myHeader.myEntriesCount - 1];
+            newEntry.data_offset = last.data_offset + last.param_max_len;
         }
     }
 
-    // Make room for the new index table entry by moving the old ones
+    // ---- Grow index table and make room if needed ----
     myHeader.myEntriesCount++;
     const uint32_t newSize = INDEX_TABLE_ENTRY_SIZE * myHeader.myEntriesCount;
     myEntries = cast_realloc<index_table_entry>(myEntries, newSize);
+
+    // If inserting in the middle (lexicographic path), shift tail down.
+    // If appending, this loop is a no-op because newIndex == (count-1).
     for (uint32_t i = myHeader.myEntriesCount - 1; i > newIndex; i--) {
         myEntries[i] = myEntries[i - 1];
-        myEntries[i].key_offset += theKey.length() + 1;
+        myEntries[i].key_offset  += static_cast<uint16_t>(theKey.length() + 1);
         myEntries[i].data_offset += newEntry.param_max_len;
     }
 
-    // Insert new index table entry
+    // Place new entry
     std::memcpy(&myEntries[newIndex], &newEntry, sizeof(index_table_entry));
 
-    // Resize key table
-    myKeyTable.size += theKey.length() + 1;
+    // ---- Grow key table and insert key bytes ----
+    const auto key_bytes = static_cast<uint32_t>(theKey.length() + 1);
+    const uint32_t old_key_table_size = myKeyTable.size;
+    myKeyTable.size += key_bytes;
     myKeyTable.content = cast_realloc<char>(myKeyTable.content, myKeyTable.size);
-    // Move higher indexed keys to make room for new key
+
+    // Move higher-indexed key bytes up to make room at key_offset
     for (uint32_t i = myKeyTable.size - 1; i > newEntry.key_offset + theKey.length(); i--) {
-        myKeyTable.content[i] = myKeyTable.content[i - theKey.length() - 1];
+        myKeyTable.content[i] = myKeyTable.content[i - key_bytes];
     }
-    // Insert new key
-    std::memcpy(&myKeyTable.content[newEntry.key_offset], theKey.c_str(), theKey.length() + 1);
+    // Copy new key (with its terminating NUL)
+    std::memcpy(&myKeyTable.content[newEntry.key_offset], theKey.c_str(), key_bytes);
+
+    // Re-pad the key table (adds exactly one trailing NUL and aligns to 4)
     padTable(&myKeyTable);
 
-    // Resize data table
+    // ---- Grow data table and write value ----
     expandDataTable(newEntry.data_offset, newEntry.param_max_len);
 
-    // Insert new data
     char* ptr = &myDataTable.content[myEntries[newIndex].data_offset];
     if (theType == eSFO_FMT::UTF8_NORMAL) {
-        memset(ptr, 0, newEntry.param_len); // Overwrite whole space with zeros first
-        std::memcpy(ptr, value.c_str(), value.length() + 1); // Then copy new value
-
-    } if (theType == eSFO_FMT::UTF8_SPECIAL) {
-        memset(ptr, 0, newEntry.param_len); // Overwrite whole space with zeros first
-        std::memcpy(ptr, value.c_str(), value.length()); // Then copy new value
-
+        std::memset(ptr, 0, newEntry.param_len);                 // zero the used length
+        std::memcpy(ptr, value.c_str(), value.length() + 1);     // include NUL
+    }
+    if (theType == eSFO_FMT::UTF8_SPECIAL) {
+        std::memset(ptr, 0, newEntry.param_len);                 // zero the used length
+        std::memcpy(ptr, value.data(), value.length());          // binary-safe, no NUL
     } else if (theType == eSFO_FMT::INT) {
-        uint32_t new_value = strtoul(value.c_str(), nullptr, 0);
+        auto new_value = static_cast<uint32_t>(std::strtoul(value.c_str(), nullptr, 0));
         std::memcpy(ptr, &new_value, 4);
     }
 }
+
+
 
 
 [[maybe_unused]] void SFOManager::deleteParam(const std::string& theKey) {
@@ -259,14 +348,36 @@ T* cast_malloc(uint32_t size) {
 }
 
 
-std::optional<std::string> SFOManager::getAttribute(const std::string& theKey) const {
+std::optional<SFOManager::Attribute> SFOManager::getAttribute(const std::string& theKey) const {
     auto attrs = getAttributes();
     for (const auto& attr : attrs) {
         if (attr.myKey == theKey) {
-            return attr.myValue;
+            return attr;
         }
     }
     return std::nullopt;
+}
+
+
+std::optional<std::string> SFOManager::getStringAttribute(const std::string& theKey) const {
+    auto attr = getAttribute(theKey);
+    if (!attr.has_value()) return std::nullopt;
+
+    return std::get<std::string>(attr->myValue);
+}
+
+std::optional<int> SFOManager::getIntAttribute(const std::string& theKey) const {
+    auto attr = getAttribute(theKey);
+    if (!attr.has_value()) return std::nullopt;
+
+    return std::get<int>(attr->myValue);
+}
+
+std::optional<std::vector<uint8_t>> SFOManager::getRawAttribute(const std::string& theKey) const {
+    auto attr = getAttribute(theKey);
+    if (!attr.has_value()) return std::nullopt;
+
+    return std::get<std::vector<uint8_t>>(attr->myValue);
 }
 
 
@@ -433,12 +544,16 @@ uint32_t SFOManager::getTableSize() const {
 
 uint32_t SFOManager::getReservedStringLen(const std::string& theKey) {
     int len = 0;
-    if (theKey == "CATEGORY" || theKey == "FORMAT") {
+    if (theKey == "CATEGORY" ||
+        theKey == "FORMAT") {
         len = 4;
     } else if (theKey == "APP_VER" ||
                theKey == "CONTENT_VER" ||
                theKey == "VERSION" ||
-               theKey == "SAVEDATA_LIST_PARAM") {
+               // TODO: is this really size 8 on ps3, but is an INT on ps4?
+               theKey == "SAVEDATA_LIST_PARAM" ||
+               theKey == "ACCOUNT_ID" ||
+               theKey == "SAVEDATA_BLOCKS") {
         len = 8;
     } else if (theKey == "INSTALL_DIR_SAVEDATA" ||
                theKey == "TITLE_ID" ||
@@ -484,9 +599,11 @@ uint32_t SFOManager::getReservedStringLen(const std::string& theKey) {
                theKey == "TITLE_23" || theKey == "TITLE_24" ||
                theKey == "TITLE_25" || theKey == "TITLE_26" ||
                theKey == "TITLE_27" || theKey == "TITLE_28" ||
-               theKey == "TITLE_29" || theKey == "SUB_TITLE") {
+               theKey == "TITLE_29" || theKey == "MAINTITLE" ||
+               theKey == "SUB_TITLE" || theKey == "SUBTITLE") {
         len = 128;
-    } else if (theKey == "PUBTOOLINFO" || theKey == "PS3_TITLE_ID_LIST_FOR_BOOT" ||
+    } else if (theKey == "PUBTOOLINFO" ||
+               theKey == "PS3_TITLE_ID_LIST_FOR_BOOT" ||
                theKey == "SAVE_DATA_TRANSFER_TITLE_ID_LIST_1" ||
                theKey == "SAVE_DATA_TRANSFER_TITLE_ID_LIST_2" ||
                theKey == "SAVE_DATA_TRANSFER_TITLE_ID_LIST_3" ||
@@ -495,7 +612,8 @@ uint32_t SFOManager::getReservedStringLen(const std::string& theKey) {
                theKey == "SAVE_DATA_TRANSFER_TITLE_ID_LIST_6" ||
                theKey == "SAVE_DATA_TRANSFER_TITLE_ID_LIST_7") {
         len = 512;
-    } else if (theKey == "PARAMS" || theKey == "DETAIL") {
+    } else if (theKey == "PARAMS" ||
+               theKey == "DETAIL") {
         len = 1024;
     }
     return len;
@@ -503,6 +621,8 @@ uint32_t SFOManager::getReservedStringLen(const std::string& theKey) {
 
 
 void SFOManager::expandDataTable(uint32_t theOffset, uint32_t theAdditionalSize) {
+    if (theAdditionalSize == 0) return;
+
     myDataTable.size += theAdditionalSize;
     myDataTable.content = cast_realloc<char>(myDataTable.content, myDataTable.size);
     // Move higher indexed data to make room for new data

@@ -14,9 +14,12 @@
 */
 #pragma once
 
+#include <cstdint>
+#include <iomanip>
 #include <string>
 #include <vector>
-#include <cstdint>
+#include <variant>
+
 
 
 enum class eSFO_FMT : uint16_t {
@@ -41,26 +44,38 @@ enum class eSFO_MAGIC : uint32_t {
 };
 
 
+extern std::string hexDumpToString(std::vector<std::uint8_t> const& data);
+
+
 class SFOManager {
 public:
     explicit SFOManager(std::string theFilePath);
 
     SFOManager();
 
-
     ~SFOManager() {
         cleanExit();
     }
 
-    class Attribute {
-    public:
-        std::string myKey;
-        std::string myValue;
+    using AttributeValue_t = std::variant<std::string, int, std::vector<uint8_t>>;
 
-        [[maybe_unused]] [[nodiscard]] std::string toString() const {
-            return myKey + ": " + myValue;
+    struct Attribute {
+        eSFO_FMT         myFmt{};
+        std::string      myKey;
+        AttributeValue_t myValue;
+
+        [[nodiscard]] std::string toString() const {
+            using enum eSFO_FMT;
+            switch (myFmt) {
+                case UTF8_NORMAL:
+                    return myKey + ": " + std::get<std::string>(myValue);
+                case INT:
+                    return myKey + ": " + std::to_string(std::get<int>(myValue));
+                case UTF8_SPECIAL:
+                    return myKey + ":\n" + hexDumpToString(std::get<std::vector<uint8_t>>(myValue));
+            }
+            return {};
         }
-
     };
 
     [[nodiscard]] std::vector<Attribute> getAttributes() const;
@@ -81,15 +96,24 @@ public:
 
     [[maybe_unused]] void editParam(const std::string& theKey, const std::string& value);
 
-    [[nodiscard]] std::optional<std::string> getAttribute(const std::string& theKey) const;
+    [[nodiscard]] std::optional<Attribute> getAttribute(const std::string& theKey) const;
+
+    [[nodiscard]] std::optional<std::string> getStringAttribute(const std::string& theKey) const;
+
+    [[nodiscard]] std::optional<int> getIntAttribute(const std::string& theKey) const;
+
+    [[nodiscard]] std::optional<std::vector<uint8_t>> getRawAttribute(const std::string& theKey) const;
 
     [[maybe_unused]] void setMagic(eSFO_MAGIC magic);
 
     [[maybe_unused]] void saveToFile(const std::string& outputPath);
 
+    void setLexicographic(bool enabled) { m_lexicographic = enabled; }
+
 private:
     std::string m_filePath;
     FILE* myFile;
+    bool m_lexicographic = true;
     struct index_table_entry* myEntries;
     struct table {
         unsigned int size;

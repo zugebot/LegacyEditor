@@ -76,7 +76,7 @@ namespace editor {
     }
 
 
-    int Windurango::writeExternalFolders(SaveProject& saveProject, const fs::path& outDirPath) {
+    int Windurango::writeExternalFolders(SaveProject& saveProject, WriteSettings& theSettings) const {
         printf("FileListing::writeExternalFolder: not implemented!");
         return NOT_IMPLEMENTED;
     }

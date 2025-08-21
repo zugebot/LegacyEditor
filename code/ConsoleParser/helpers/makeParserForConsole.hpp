@@ -4,8 +4,8 @@
 #include "include/lce/processor.hpp"
 
 #include "code/ConsoleParser/ConsoleParser.hpp"
-#include "code/ConsoleParser/headerUnion.hpp"
 #include "code/SaveFile/stateSettings.hpp"
+#include "headerUnion.hpp"
 
 #include "common/error_status.hpp"
 #include "lce/enums.hpp"

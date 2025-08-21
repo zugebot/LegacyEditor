@@ -36,33 +36,49 @@ namespace editor {
         DataReader reader;
 
         try {
-            src = DataReader::readFile(m_filePath);
+            src    = DataReader::readFile(m_filePath);
             reader = DataReader(src.span(), Endian::Big);
             if (reader.size() < 12) {
                 return printf_err(FILE_ERROR, ERROR_5);
             }
         } catch (const std::exception& e) {
-            return printf_err(FILE_ERROR, ERROR_4, m_filePath.string().c_str());
+            return printf_err(FILE_ERROR, ERROR_4,
+                              m_filePath.string().c_str());
+        }
+
+        reader.read<u32>();
+        u32   dst_size = reader.read<u32>();
+        size_t fileSize = reader.size();
+
+        bool isOldFormat = (fileSize == dst_size + 8);
+
+        size_t compLen = fileSize - 8;
+        if (isOldFormat) {
+            // scans for the first 0 after the zlib payload
+            auto* data = reader.data() + 8;
+            auto* ptr  = data + compLen;
+            while (ptr > data && *(--ptr) == 0) {}
+            compLen = static_cast<size_t>(ptr - data) + 1;
         }
 
         Buffer dst;
-        if(u32 dst_size = reader.read<u64>();
-            !dst.allocate(dst_size)) {
+        if (!dst.allocate(dst_size)) {
             return printf_err(MALLOC_FAILED, ERROR_1, dst_size);
         }
 
-        int status = tinf_zlib_uncompress(dst.data(), dst.size_ptr(),
-                                          reader.data() + 8, reader.size() - 8);
-        if (status != 0) {
+        unsigned int outLen = dst.size();
+        int status = tinf_zlib_uncompress(
+                dst.data(),
+                &outLen,
+                reader.data() + 8,
+                static_cast<unsigned int>(compLen)
+        );
+        if (status != TINF_OK) {
             return DECOMPRESS;
         }
 
         status = FileListing::readListing(saveProject, dst, m_console);
-        if (status != 0) {
-            return -1;
-        }
-
-        return SUCCESS;
+        return status == 0 ? SUCCESS : -1;
     }
 
 
@@ -72,7 +88,8 @@ namespace editor {
         const fs::path rootPath = theSettings.getInFolderPath();
 
         // GAMEDATA
-        fs::path gameDataPath = rootPath / getCurrentDateTimeString();
+        theSettings.m_fileNameOut = getCurrentDateTimeString();
+        fs::path gameDataPath = rootPath / theSettings.m_fileNameOut;
         Buffer inflatedData = FileListing::writeListing(saveProject, theSettings);
 
         Buffer deflatedData;
