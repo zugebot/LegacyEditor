@@ -4,8 +4,8 @@
 #include "code/Chunk/helpers/NBTFixer.hpp"
 
 #include "code/SaveFile/writeSettings.hpp"
-#include "common/DataReader.hpp"
-#include "common/DataWriter.hpp"
+#include "common/data/DataReader.hpp"
+#include "common/data/DataWriter.hpp"
 
 
 namespace editor {

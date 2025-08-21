@@ -8,7 +8,7 @@
 // —————————————————————————————————————————————————————————————————————————
 #include <zlib.h>
 
-#include "common/buffer.hpp" // your Buffer class (assumes Buffer(u32) allocates a data() block)
+#include "common/data/buffer.hpp" // your Buffer class (assumes Buffer(u32) allocates a data() block)
 #include "tinf/tinf.h"
 #include <span>
 #include <stdexcept>

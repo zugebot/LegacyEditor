@@ -3,8 +3,8 @@
 #include <filesystem>
 #include <vector>
 
-#include "common/buffer.hpp"
-#include "common/DataReader.hpp"
+#include "common/data/buffer.hpp"
+#include "common/data/DataReader.hpp"
 
 #include "common/codec/XDecompress.hpp"
 

@@ -2,7 +2,7 @@
 
 #include "include/lce/enums.hpp"
 #include "common/error_status.hpp"
-#include "common/buffer.hpp"
+#include "common/data/buffer.hpp"
 
 #include "chunkData.hpp"
 

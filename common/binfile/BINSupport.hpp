@@ -3,9 +3,9 @@
 #include <chrono>
 #include <optional>
 
-#include <processor.hpp>
-#include "common/DataReader.hpp"
-#include "common/buffer.hpp"
+#include "include/lce/processor.hpp"
+#include "common/data/DataReader.hpp"
+#include "common/data/buffer.hpp"
 
 
 namespace editor {

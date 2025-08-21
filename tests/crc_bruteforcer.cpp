@@ -1,7 +1,7 @@
 
 #include <iostream>
 
-#include "include/ghc/fs_std.hpp"
+#include "common/data/ghc/fs_std.hpp"
 #include "include/lce/processor.hpp"
 
 #include "common/windows/force_utf8.hpp"

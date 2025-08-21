@@ -77,11 +77,14 @@ public:
         m_size = 0;
     }
 
-    bool allocate(const std::size_t n) {
+    bool allocate(std::size_t n, bool fillZero = false) {
+        if (n == 0) { return false; }
         auto p = std::make_unique<T[]>(n);
-        if (!p) return false;
+        if (!p) { return false; }
         m_data = std::move(p);
         m_size = n;
+        if (fillZero)
+            std::memset(m_data.get(), 0, m_size);
         return true;
     }
 

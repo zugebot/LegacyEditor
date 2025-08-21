@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "include/ghc/fs_std.hpp"
+#include "common/data/ghc/fs_std.hpp"
 #include "include/lce/processor.hpp"
 #include "include/nlohmann/json.hpp"
 
@@ -32,7 +32,8 @@ inline void consumeEnter(const char* prompt = nullptr) {
     }
 
     // Now actually wait for the user to press Enter.
-    std::cin.get();
+    volatile auto var = std::cin.get();
+    std::cout << var;
 }
 
 std::string EXE_CURRENT_PATH;
@@ -307,7 +308,8 @@ int main(int argc, char* argv[]) {
             }
         } else if (consoleOutput == lce::CONSOLE::PS4) {
 
-            std::cout << "do you want to convert to shadPs4? (y/n)\n";
+
+            log(eLog::input, "\ndo you want to convert to shadPs4? (y/n)");
             std::string userInput2;
             std::cin >> userInput2;
             if (userInput2 == "y") {
@@ -315,15 +317,14 @@ int main(int argc, char* argv[]) {
             }
             std::cout << "\n";
 
-
-            std::cout << "You must provide the file path to a PARAM.SFO file that comes from a save file,\n"
+            log(eLog::input, "You must provide the file path to a PARAM.SFO file that comes from a save file,\n"
                          "from BOTH the same console AND account. You can find it any \"sce_sys\" folder.\n"
                          "Please enter the full path to that file here. I am lazy and DO NOT have code that\n"
                          "checks that the file path is valid OR that the file itself is valid. Don't put \" in it.\n"
                          "Example:\n"
                          "C:\\Users\\jerrin\\jerrins_and_tiaras\\PS4-CUSA00744-1CUSA00744-210322225338.1\\savedata0\\sce_sys\\param.sfo\n"
                          "\n"
-                         "Path: ";
+                         "Path: ");
 
             std::string userInput;
             std::cin >> userInput;
@@ -477,8 +478,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << "\n";
-    log(eLog::input, "Press ENTER to exit...\n");
-    std::cin.clear();
-    consumeEnter();
+    log(eLog::input, "Press Ctrl + C to exit...\n");
+    int x; std::cin >> x;
     return 0;
 }

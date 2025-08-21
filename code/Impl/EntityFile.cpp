@@ -1,7 +1,7 @@
 #include "EntityFile.hpp"
 
-#include "common/DataReader.hpp"
-#include "common/DataWriter.hpp"
+#include "common/data/DataReader.hpp"
+#include "common/data/DataWriter.hpp"
 
 namespace editor {
 

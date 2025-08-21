@@ -2,13 +2,11 @@
 
 #include <bit>
 #include <fstream>
-#include <enums.hpp>
 
 #include "buffer.hpp"
-#include "utils.hpp"
 
 #include "include/lce/processor.hpp"
-#include "include/ghc/fs_std.hpp"
+#include "common/data/ghc/fs_std.hpp"
 
 
 class DataWriter {
@@ -21,14 +19,11 @@ class DataWriter {
     Endian _end = Endian::Big;
     bool _external = false;
 
-    void grow(const std::size_t minExtra) {
     void grow(std::size_t requiredSize) {
         if (_external)
             throw std::length_error("DataWriter overflow (external buffer)");
 
         std::size_t newCap = _cap ? _cap * 2 : 256;
-        while (newCap < _pos + minExtra) newCap *= 2;
-        auto newBuf = std::unique_ptr<uint8_t[], void(*)(uint8_t*)>(new uint8_t[newCap], kDeleteArr);
         while (newCap < requiredSize) newCap *= 2;
 
         auto newBuf = std::unique_ptr<u8[], void(*)(u8*)>(new u8[newCap], kDeleteArr);

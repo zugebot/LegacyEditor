@@ -26,22 +26,24 @@ It helps me develop faster 🙂
 | \>\> **RPCS3 Emulator**      | ✔️               | ✔️                                       |
 | **Xbox One**                 | ❌                | ❌                                        |
 | \>\> **Windurango Emulator** | ✔️               | ❌                                        |
-| **Switch**                   | ✔️               | ❌                                        |
+| **Switch**                   | ✔️               | ✔️                                       |
 | **PS4**                      | ✔️               | ❌                                        |
+| \>\> **ShadPS4 Emulator**    | ✔️               | ✔️                                       |
 
 ## Versions Support
 
-| Version           | Reading From  | Writing To  |
-|-------------------|---------------|-------------|
-| Pre-Release       | ✅             | ❌           |
-| Pistons           | ✅             | ❌           |
-| Generation        | ✅             | ❌           |
-| Adventure         | ✅             | ❌           |
-| Horse             | ✅             | ❌           |
-| Bountiful         | ✅             | ❌           |
-| Elytra            | ✅             | ❌           |
-| Aquatic           | ✅             | ✅           |
-| Village & Pillage | ✅             | ❌           |
+| Version           | Reading From | Writing To |
+|-------------------|--------------|------------|
+| Pre-Release       | ✅            | ❌          |
+| Pistons           | ✅            | ❌          |
+| Generation        | ✅            | ❌          |
+| Adventure         | ✅            | ❌          |
+| Potions           | ✅            | ✅          |
+| Horse             | ✅            | ❌          |
+| Bountiful         | ✅            | ❌          |
+| Elytra            | ✅            | ✅          |
+| Aquatic           | ✅            | ✅          |
+| Village & Pillage | ✅            | ❌          |
 
 More coming soon!
 
@@ -85,6 +87,6 @@ For unit testing, edit the folder locations in `code/unit_tests.cpp` to the dire
 
 ## License
 
-Please refer to [`LICENSE.md`](LICENSE.md) for detailed information on the licensing of this code and its usage permissions.
+Please refer to [`LICENSE.md`](LICENSE.md) for information on the licensing of this code and its usage permissions.
 
 ---

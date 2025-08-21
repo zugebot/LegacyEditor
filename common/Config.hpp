@@ -2,7 +2,7 @@
 
 
 #include "fmt.hpp"
-#include "include/ghc/fs_std.hpp"
+#include "common/data/ghc/fs_std.hpp"
 #include "nlohmann/json.hpp"
 #include <fstream>
 
@@ -100,9 +100,6 @@ public:
                 conversionInput.autoPath[k] = applyShorteners(path);
             }
         }
-
-        std::cout << "PS4 CODE: " << output.value("autoPs4ProductCode", "") << "\n";
-        std::cout << std::flush;
 
         // Load output section
         conversionOutput.autoOutput        = output.value("autoOutput", false);
