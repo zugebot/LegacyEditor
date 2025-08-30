@@ -102,8 +102,7 @@ namespace editor {
 
         MU ND bool areSettingsValid() const {
             if (m_schematic.save_console == lce::CONSOLE::PS3 && !m_productCodes.isVarSetPS3()) return false;
-            if ((m_schematic.save_console == lce::CONSOLE::PS4 ||
-                 m_schematic.save_console == lce::CONSOLE::SHADPS4) && !m_productCodes.isVarSetPS4()) return false;
+            if (m_schematic.save_console == lce::CONSOLE::PS4 && !m_productCodes.isVarSetPS4()) return false;
             if (m_schematic.save_console == lce::CONSOLE::VITA && !m_productCodes.isVarSetVITA()) return false;
             return true;
         }

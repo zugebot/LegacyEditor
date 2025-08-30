@@ -5,53 +5,8 @@
 #include <cstdlib>
 #include <stdexcept>
 #include <optional>
-#include <sstream>
-#include <cctype>
 
-
-std::string hexDumpToString(const std::vector<std::uint8_t>& data)
-{
-    constexpr std::size_t bytes_per_line = 16;
-    constexpr std::size_t group_size     = 4;
-
-    std::vector<std::string> lines;
-
-    for (std::size_t i = 0; i < data.size(); i += bytes_per_line)
-    {
-        std::ostringstream line;
-        line << "| ";
-
-        for (std::size_t j = 0; j < bytes_per_line; ++j)
-        {
-            if (i + j < data.size())
-                line << std::uppercase << std::hex
-                     << std::setw(2) << std::setfill('0')
-                     << static_cast<int>(data[i + j]);
-            else
-                line << "  ";
-
-            /*  add spacing only when another byte follows  */
-            if (j + 1 < bytes_per_line)                      // not the last byte
-            {
-                line << ((j + 1) % group_size == 0 ? "   "
-                                                   : " ");
-            }
-        }
-
-        line << " |";
-        lines.emplace_back(line.str());
-    }
-
-    std::size_t width = lines.empty() ? 4 : lines.front().size();
-    std::string border = "+" + std::string(width - 2, '-') + "+";
-
-    std::ostringstream out;
-    out << border << '\n';
-    for (auto const& l : lines) out << l << '\n';
-    out << border;
-
-    return out.str();
-}
+#include "sfoHelper.hpp"
 
 
 SFOManager::SFOManager(std::string theFilePath)
@@ -104,6 +59,20 @@ std::vector<SFOManager::Attribute> SFOManager::getAttributes() const {
         attributes.push_back(attr);
     }
     return attributes;
+}
+
+
+std::string SFOManager::Attribute::toString() const {
+    using enum eSFO_FMT;
+    switch (myFmt) {
+        case UTF8_NORMAL:
+            return myKey + ": " + std::get<std::string>(myValue);
+        case INT:
+            return myKey + ": " + std::to_string(std::get<int>(myValue));
+        case UTF8_SPECIAL:
+            return myKey + ":\n" + hexDumpToString(std::get<std::vector<uint8_t>>(myValue));
+    }
+    return {};
 }
 
 

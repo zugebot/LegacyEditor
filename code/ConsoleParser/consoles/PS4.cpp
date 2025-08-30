@@ -16,6 +16,42 @@
 
 namespace editor {
 
+    static constexpr unsigned char CUSA00744_keystone[96] = {
+            0x6B, 0x65, 0x79, 0x73, 0x74, 0x6F, 0x6E, 0x65, 0x02, 0x00, 0x01, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5C, 0x8D, 0x01, 0x55,
+            0xD5, 0x42, 0xB0, 0x36, 0xD8, 0xF8, 0x45, 0x9A, 0x32, 0x9E, 0x1C, 0xC5,
+            0xAC, 0x06, 0x22, 0x79, 0xAF, 0xBE, 0xA2, 0x96, 0x8C, 0xDE, 0x53, 0x84,
+            0x03, 0x41, 0x33, 0xC2, 0xD1, 0xDC, 0x9E, 0xBE, 0x43, 0xEB, 0x9C, 0x56,
+            0x37, 0xB1, 0x21, 0x90, 0xEE, 0xE6, 0xD6, 0x77, 0x1D, 0x53, 0xFF, 0x0B,
+            0xDC, 0x13, 0x86, 0x88, 0x52, 0xA2, 0x73, 0xCA, 0xFB, 0x11, 0xB0, 0x41,
+    };
+
+
+    static constexpr unsigned char CUSA00265_keystone[96] = {
+            0x6B, 0x65, 0x79, 0x73, 0x74, 0x6F, 0x6E, 0x65, 0x02, 0x00, 0x01, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x29, 0x4A, 0x5E, 0xD0,
+            0x6D, 0xB1, 0x70, 0x61, 0x8F, 0x2E, 0xED, 0x8C, 0x42, 0x4B, 0x9D, 0x82,
+            0x88, 0x79, 0xC0, 0x80, 0xCC, 0x66, 0xFB, 0xC4, 0x86, 0x4F, 0x69, 0xE9,
+            0x74, 0xDE, 0xB8, 0x56, 0xFA, 0x0D, 0x0C, 0x2E, 0xBD, 0x6A, 0x00, 0x80,
+            0x63, 0x71, 0x3D, 0xE8, 0x81, 0x0D, 0x7E, 0x10, 0xB7, 0x32, 0x14, 0x3B,
+            0x91, 0xCD, 0x2E, 0x4F, 0xEA, 0x2D, 0x20, 0x53, 0x10, 0x6E, 0xB7, 0x5D,
+    };
+
+
+    // unknown
+    static constexpr unsigned char CUSA00283_keystone[96] = {
+            0x6B, 0x65, 0x79, 0x73, 0x74, 0x6F, 0x6E, 0x65, 0x02, 0x00, 0x01, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    };
+
 
     int PS4::inflateFromLayout(SaveProject& saveProject, const fs::path& theFilePath) {
         m_filePath = theFilePath;
@@ -160,6 +196,11 @@ namespace editor {
     }
 
 
+
+
+
+
+
     int PS4::readExternalFolders(SaveProject& saveProject) {
         auto folders = findExternalFolder(saveProject);
         int status;
@@ -175,124 +216,142 @@ namespace editor {
     }
 
 
+    static void writeIcon0Png(SaveProject& saveProject,
+                              const fs::path& folder_sce_sys,
+                              const fs::path& fileInfoPath) {
+        fs::path icon0png = folder_sce_sys / "icon0.png";
+
+        if (saveProject.m_displayMetadata.icon0png.m_data == nullptr) {
+            Picture fileInfoPng;
+            fileInfoPng.loadFromFile(fileInfoPath.string().c_str());
+            saveProject.m_displayMetadata.icon0png.allocate(228, 128, 3);
+            saveProject.m_displayMetadata.icon0png.fillColor(0, 0, 0);
+            saveProject.m_displayMetadata.icon0png.placeAndStretchSubImage(&fileInfoPng, 0, 0, 228, 128);
+        }
+        saveProject.m_displayMetadata.icon0png.saveWithName(icon0png.string());
+    }
+
+    static void writeKeystone(const fs::path& folder_sce_sys, const std::string& pc) {
+        fs::path keystonePath = folder_sce_sys / "keystone";
+        const u8* chosenKeystone = nullptr;
+
+        if (pc == "CUSA00744") { chosenKeystone = &CUSA00744_keystone[0]; }
+        if (pc == "CUSA00265") { chosenKeystone = &CUSA00265_keystone[0]; }
+        if (pc == "CUSA00283") { chosenKeystone = &CUSA00283_keystone[0]; }
+
+        if (!chosenKeystone) {
+            cmn::log(cmn::eLog::error, "\"{}\" is not a valid PS4 Product Code", pc);
+            return;
+        }
+
+        DataWriter writer((u8*)chosenKeystone, 96);
+        writer.save(keystonePath);
+    }
+
+    static void writeSceIcon0png1(const fs::path& folder_sce_sys) {
+        fs::path sce_icon0png1Path = folder_sce_sys / "sce_icon0png1";
+        Buffer sce_icon0png1Buf(116736);
+        DataWriter::writeFile(sce_icon0png1Path, sce_icon0png1Buf.span());
+    }
+
+    static void writeParamSfo(SaveProject& saveProject,
+                              const fs::path& folder_sce_sys,
+                              const std::string& pc,
+                              const std::string& folderN,
+                              WriteSettings& theSettings) {
+        fs::path sfoPath = folder_sce_sys / "param.sfo";
+
+        SFOManager other(theSettings.m_paramSfoToReplace.string());
+        SFOManager sfo;
+        sfo.setMagic(eSFO_MAGIC::PS3_HDD);
+
+        if (false /*|| saveProject.m_stateSettings.console() == lce::CONSOLE::SHADPS4*/) {
+            // Simplified SFO for SHADPS4?
+            sfo.setLexicographic(false);
+            std::string data(8, '\0');
+            sfo.addParam(eSFO_FMT::UTF8_SPECIAL, "ACCOUNT_ID", data);
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "MAINTITLE", "Minecraft: PlayStation®4 Edition");
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SUBTITLE", wStringToString(saveProject.m_displayMetadata.worldName));
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "DETAIL", "");
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SAVEDATA_DIRECTORY", folderN);
+            sfo.addParam(eSFO_FMT::INT, "SAVEDATA_LIST_PARAM", "0");
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "TITLE_ID", pc);
+            std::string savedata_blocks("\x00\x02\x00\x00\x00\x00\x00\x00", 8);
+            sfo.addParam(eSFO_FMT::UTF8_SPECIAL, "SAVEDATA_BLOCKS", savedata_blocks);
+        } else {
+            // Regular PS4 flow
+            auto accountAttr = other.getAttribute("ACCOUNT_ID");
+            if (!accountAttr) throw std::runtime_error("Input param.sfo missing ACCOUNT_ID");
+            sfo.addParam(eSFO_FMT::UTF8_SPECIAL, "ACCOUNT_ID", accountAttr->toString());
+
+            sfo.addParam(eSFO_FMT::INT, "ATTRIBUTE", "0");
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "CATEGORY", "sd");
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "DETAIL", "");
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "FORMAT", "obs");
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "MAINTITLE", "Minecraft: PlayStation®4 Edition");
+
+            auto paramsAttr = other.getAttribute("PARAMS");
+            if (!paramsAttr) throw std::runtime_error("Input param.sfo missing PARAMS");
+
+            auto array = std::get<std::vector<uint8_t>>(paramsAttr->myValue);
+            DataReader reader(array.data(), array.size(), Endian::Little);
+
+            std::vector<uint8_t> params(1024);
+            DataWriter writer(params.data(), params.size(), Endian::Little);
+
+            // Get current UNIX time
+            auto now = std::chrono::system_clock::now();
+            u32 lastModifiedTime = std::chrono::duration_cast<std::chrono::seconds>(
+                                           now.time_since_epoch()).count();
+
+            u32 flagUnknown1 = 0x0A; // observed range 0x2–0xA
+
+            writer.write<u32>(0); reader.skip(4);
+            writer.writeBytes(reader.ptr(), 4); reader.skip(4);
+            writer.writeBytes(reader.ptr(), 32); reader.skip(32);
+
+            writer.write<u32>(1); reader.skip(4);
+            writer.writeBytes((c_u8*)pc.data(), pc.size()); writer.skip(16 - pc.size()); reader.skip(16);
+            writer.writeBytes((c_u8*)pc.data(), pc.size()); writer.skip(16 - pc.size()); reader.skip(16);
+
+            writer.write<u32>(reader.read<u32>() + 1);  // modificationCount
+            writer.skip(12); reader.skip(12);
+
+            writer.write<u32>(flagUnknown1); reader.skip(4);
+            writer.write<u32>(reader.read<u32>()); // creationTime
+
+            writer.write<u32>(0); reader.skip(4);
+            writer.write<u32>(lastModifiedTime); reader.skip(4);
+
+            std::string params_str((const char*)params.data(), params.size());
+            sfo.addParam(eSFO_FMT::UTF8_SPECIAL, "PARAMS", params_str);
+
+            std::string savedata_blocks("\x00\x02\x00\x00\x00\x00\x00\x00", 8);
+            sfo.addParam(eSFO_FMT::UTF8_SPECIAL, "SAVEDATA_BLOCKS", savedata_blocks);
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SAVEDATA_DIRECTORY", folderN);
+            sfo.addParam(eSFO_FMT::INT, "SAVEDATA_LIST_PARAM", "0");
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SUBTITLE", wStringToString(saveProject.m_displayMetadata.worldName));
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL, "TITLE_ID", pc);
+        }
+
+        sfo.saveToFile(sfoPath.string());
+    }
+
     static void placeSceSysFiles(SaveProject& saveProject,
                                  const fs::path& root,
-                                 const std::string& productCode,
+                                 const std::string& pc,
                                  const std::string& folderN,
+                                 const fs::path& fileInfoPath,
                                  WriteSettings& theSettings) {
-
-        // create "sce_sys" folder
         fs::path folder_sce_sys = root / "sce_sys";
         fs::create_directories(folder_sce_sys);
 
-        // create "icon0.png" file
-        Buffer buf;
-        fs::path icon0png = folder_sce_sys / "icon0.png";
-        DataWriter::writeFile(icon0png, buf.span());
-
-        // R"(C:\Users\jerrin\AppData\Roaming\shadPS4\savedata\1\WORKING\CUSA00265-250816190340.0\sce_sys\param.sfo)";
-        fs::path otherPath = theSettings.m_paramSfoToReplace;
-        SFOManager other(otherPath.string());
-
-        // create "param.sfo" file
-        SFOManager sfo;
-        fs::path sfoPath = folder_sce_sys / "param.sfo";
-
-
-        if (true || saveProject.m_stateSettings.console() == lce::CONSOLE::SHADPS4) {
-            sfo.setLexicographic(false);
-
-            std::string data(8, '\0');
-            sfo.addParam(eSFO_FMT::UTF8_SPECIAL, "ACCOUNT_ID", data);
-            sfo.addParam(eSFO_FMT::UTF8_NORMAL,  "MAINTITLE",           "Minecraft: PlayStation®4 Edition");
-            sfo.addParam(eSFO_FMT::UTF8_NORMAL,  "SUBTITLE",            wStringToString(saveProject.m_displayMetadata.worldName));
-            sfo.addParam(eSFO_FMT::UTF8_NORMAL,  "DETAIL",              "\0");
-
-            sfo.addParam(eSFO_FMT::UTF8_NORMAL,  "SAVEDATA_DIRECTORY",  folderN);
-            sfo.addParam(eSFO_FMT::INT,          "SAVEDATA_LIST_PARAM", "0");
-            sfo.addParam(eSFO_FMT::UTF8_NORMAL,  "TITLE_ID",            productCode);
-
-            std::string savedata_blocks("\x00\x02\x00\x00\x00\x00\x00\x00", 8);
-            sfo.addParam(eSFO_FMT::UTF8_SPECIAL, "SAVEDATA_BLOCKS",     savedata_blocks);
-
-        } else {
-            {
-                auto attr = other.getAttribute("ACCOUNT_ID");
-                if (!attr.has_value()) throw std::runtime_error("input param.sfo does not have attribute \"ACCOUNT_ID\"");
-
-                auto account_id = attr.value().toString();
-                sfo.addParam(eSFO_FMT::UTF8_SPECIAL, "ACCOUNT_ID", account_id);
-            }
-            sfo.addParam(eSFO_FMT::INT,          "ATTRIBUTE",           "0");
-            sfo.addParam(eSFO_FMT::UTF8_NORMAL,  "CATEGORY",            "sd");
-            sfo.addParam(eSFO_FMT::UTF8_NORMAL,  "DETAIL",              "\0"); // TODO: is this correct?
-            sfo.addParam(eSFO_FMT::UTF8_NORMAL,  "FORMAT",              "obs");
-            sfo.addParam(eSFO_FMT::UTF8_NORMAL,  "MAINTITLE",           "Minecraft: PlayStation®4 Edition");
-            {
-                auto attr = other.getAttribute("PARAMS");
-                if (!attr.has_value()) throw std::runtime_error("input param.sfo does not have attribute \"PARAMS\"");
-
-                auto array = std::get<std::vector<uint8_t>>(attr.value().myValue);
-                auto reader = DataReader(array.data(), array.size(), Endian::Little);
-
-                std::vector<uint8_t> params(1024);
-                DataWriter writer(params.data(), params.size(), Endian::Little);
-
-                int modificationCount = 0;
-                u32 creationTime = 0;
-                u32 lastModifiedTime = 0;
-
-                // TODO: I think the endianness of this is Big, not Little
-                writer.write<u32>(0);
-                reader.skip(4);
-                writer.writeBytes(reader.ptr(), 8);
-                reader.skip(8);
-                writer.writeBytes(reader.ptr(), 32);
-                reader.skip(32);
-                writer.write<u32>(1);
-                reader.skip(4);
-
-                writer.writeBytes(reinterpret_cast<c_u8*>(productCode.data()), productCode.size() + 1);
-                writer.skip(16 - productCode.size() + 1);
-                reader.skip(16);
-                writer.write<u32>(0);
-                reader.skip(4);
-                writer.writeBytes(reinterpret_cast<c_u8*>(productCode.data()), productCode.size() + 1);
-                writer.skip(16 - productCode.size() + 1);
-                reader.skip(16);
-
-                writer.write<u32>(0);
-                reader.skip(4);
-                writer.write<u32>(modificationCount);
-                reader.skip(4);
-                writer.writePad(18, 0);
-                reader.skip(18);
-                writer.write<u32>(reader.read<u32>());
-                writer.write<u32>(creationTime);
-                reader.skip(4);
-                writer.write<u32>(0);
-                reader.skip(4);
-                writer.write<u32>(lastModifiedTime);
-                reader.skip(4);
-
-                std::string params_str(reinterpret_cast<const char*>(params.data()), params.size());
-                sfo.addParam(eSFO_FMT::UTF8_SPECIAL, "PARAMS", params_str);
-
-                std::string savedata_blocks("\x00\x02\x00\x00\x00\x00\x00\x00", 8);
-                sfo.addParam(eSFO_FMT::UTF8_SPECIAL, "SAVEDATA_BLOCKS",     savedata_blocks);
-
-                sfo.addParam(eSFO_FMT::UTF8_NORMAL,  "SAVEDATA_DIRECTORY",  folderN);
-                sfo.addParam(eSFO_FMT::INT,          "SAVEDATA_LIST_PARAM", "0");
-                sfo.addParam(eSFO_FMT::UTF8_NORMAL,  "SUBTITLE",            wStringToString(saveProject.m_displayMetadata.worldName));
-                sfo.addParam(eSFO_FMT::UTF8_NORMAL,  "TITLE_ID",            productCode);
-            }
-        }
-
-
-
-        sfo.setMagic(eSFO_MAGIC::PS3_HDD);
-        sfo.saveToFile(sfoPath.string());
+        writeIcon0Png(saveProject, folder_sce_sys, fileInfoPath);
+        writeKeystone(folder_sce_sys, pc);
+        writeSceIcon0png1(folder_sce_sys);
+        writeParamSfo(saveProject, folder_sce_sys, pc, folderN, theSettings);
     }
+
 
 
     int PS4::deflateToSave(MU SaveProject& saveProject, MU WriteSettings& theSettings) const {
@@ -315,14 +374,14 @@ namespace editor {
 
         const fs::path root = theSettings.getInFolderPath();
 
+        fs::path fileInfoPath;
+
         // folder0
         {
+            // FOLDER CREATION
             auto folder0Name = makePS4Folder(0);
             auto folder0 = root / folder0Name;
             fs::create_directories(folder0);
-
-            placeSceSysFiles(saveProject, folder0, strPCode, folder0Name, theSettings);
-
 
             // GAMEDATA
             theSettings.m_fileNameOut = "GAMEDATA";
@@ -334,9 +393,8 @@ namespace editor {
             theSettings.setOutFilePath(gameDataPath);
             cmn::log(cmn::eLog::info, "Savefile size: {}\n", deflatedData.size());
 
-
             // FILE INFO
-            fs::path fileInfoPath = folder0 / "THUMB";
+            fileInfoPath = folder0 / "THUMB";
             Buffer fileInfoData = saveProject.m_displayMetadata.write(m_console);
             try {
                 DataWriter::writeFile(fileInfoPath, fileInfoData.span());
@@ -344,15 +402,16 @@ namespace editor {
                 return printf_err(-1, "failed to write fileInfo to \"%s\"\n",
                                   fileInfoPath.string().c_str());
             }
+
+            // SCE_SYS_FILES
+            placeSceSysFiles(saveProject, folder0, strPCode, folder0Name, fileInfoPath, theSettings);
         }
-
-
 
 
         // folders 1-N
         {
+            // SPLIT SAVES INTO BUCKETS
             static constexpr u32 BYTES_PER_SAVE = 62'914'560;
-
             std::vector<std::vector<LCEFile*>> splitSavesPtrVec;
             splitSavesPtrVec.emplace_back();
 
@@ -374,7 +433,7 @@ namespace editor {
                 auto folderNName = makePS4Folder(folderNum);
                 auto folderN = root / folderNName;
                 fs::create_directories(folderN);
-                placeSceSysFiles(saveProject, folderN, strPCode, folderNName, theSettings);
+                placeSceSysFiles(saveProject, folderN, strPCode, folderNName, fileInfoPath, theSettings);
 
                 for (LCEFile* region : splitSaveVec) {
                     const fs::path oldPath = region->path();
