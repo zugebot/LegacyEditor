@@ -70,64 +70,91 @@ namespace editor {
             return {""};
         }
 
-        // go from "root/00000001/savedata0" to "root"
-        const fs::path toCheckDirPath = mainDirPath.parent_path().parent_path();
         // the vector of directories to add regions from
         std::vector<fs::path> directoriesToReturn{};
-        // checks each folder in "root"
-        for (c_auto &entry: fs::directory_iterator(toCheckDirPath)) {
-            // skip entries that are not directories
-            if (!fs::is_directory(entry.status())) {
-                continue;
+
+
+        // it goes "{ROOT}/PS4-CUSA#####-#CUSA#####-#########/savedata0/FILES"
+        // all initial folders sit inside the "{ROOT}" folder
+        if (mainDirPath.parent_path().filename() == "savedata0") {
+
+            // go from "root/00000001/savedata0" to "root"
+            const fs::path toCheckDirPath = mainDirPath.parent_path().parent_path();
+            // checks each folder in "root"
+            for (c_auto &entry: fs::directory_iterator(toCheckDirPath)) {
+                fs::path tempCheckDirPath = entry.path() / "savedata0";
+
+                // find valid paths
+                // this might not be necessary
+                {
+                    if (!fs::is_directory(entry.status())) { continue; } // skip entries that are not directories
+                    if (mainDirPath.parent_path() == entry.path()) { continue; } // skips checking the input folder
+                    if (entry.path().filename().string().contains("OPTIONS")) { continue; }
+                    if (entry.path().filename().string().contains("CACHE")) { continue; }
+                    if (!fs::exists(tempCheckDirPath)) { continue; }
+                }
+
+
+                // fetch info from param.sfo
+                {
+                    fs::path tempSFOFilePath = entry.path() / "savedata0" / "sce_sys" / "param.sfo";
+                    if (!fs::exists(tempSFOFilePath)) { continue; }
+                    // get the "CUSA00744-240620222358.0"-alike str from the temp "param.sfo"
+                    SFOManager tempSFO(tempSFOFilePath.string());
+                    std::optional<std::string> tempAttr = tempSFO.getStringAttribute("SAVEDATA_DIRECTORY");
+                    // invalid SFO
+                    if (!tempAttr) { return {""}; }
+                    auto tempAttrParts = split(tempAttr.value(), '.');
+                    if (tempAttrParts.size() != 2) { continue; }
+                    // skip PS4 worlds that are not the same as the one being looked for
+                    if (mainAttrParts[0] != tempAttrParts[0]) { continue; }
+                }
+
+                directoriesToReturn.push_back(tempCheckDirPath);
             }
 
-            // skips checking the input folder
-            if (mainDirPath.parent_path() == entry.path()) {
-                continue;
+
+        // otherwise, just check every folder right outside
+        } else {
+
+            // go from "root/00000001/savedata0" to "root"
+            const fs::path toCheckDirPath = mainDirPath.parent_path();
+            // checks each folder in "root"
+            for (c_auto &entry: fs::directory_iterator(toCheckDirPath)) {
+                const fs::path& tempCheckDirPath = entry.path();
+
+                // find valid paths
+                // this might not be necessary
+                {
+                    if (!fs::is_directory(entry.status())) { continue; } // skip entries that are not directories
+                    if (mainDirPath == entry.path()) { continue; } // skips checking the input folder
+                    if (entry.path().filename().string().contains("OPTIONS")) { continue; }
+                    if (entry.path().filename().string().contains("CACHE")) { continue; }
+                    if (!fs::exists(tempCheckDirPath)) { continue; }
+                }
+
+
+                // fetch info from param.sfo
+                {
+                    fs::path tempSFOFilePath = entry.path() / "sce_sys" / "param.sfo";
+                    if (!fs::exists(tempSFOFilePath)) { continue; }
+                    // get the "CUSA00744-240620222358.0"-alike str from the temp "param.sfo"
+                    SFOManager tempSFO(tempSFOFilePath.string());
+                    std::optional<std::string> tempAttr = tempSFO.getStringAttribute("SAVEDATA_DIRECTORY");
+                    // invalid SFO
+                    if (!tempAttr) { return {""}; }
+                    auto tempAttrParts = split(tempAttr.value(), '.');
+                    if (tempAttrParts.size() != 2) { continue; }
+                    // skip PS4 worlds that are not the same as the one being looked for
+                    if (mainAttrParts[0] != tempAttrParts[0]) {
+                        continue;
+                    }
+                }
+
+                directoriesToReturn.push_back(tempCheckDirPath);
             }
-
-            if (entry.path().filename().string().contains("OPTIONS")) {
-                continue;
-            }
-
-            if (entry.path().filename().string().contains("CACHE")) {
-                continue;
-            }
-
-            fs::path tempCheckDirPath = entry.path() / "savedata0";
-            if (!fs::exists(tempCheckDirPath)) {
-                continue;
-            }
-
-            fs::path tempSFOFilePath = entry.path() / "savedata0" / "sce_sys" / "param.sfo";
-            if (!fs::exists(tempSFOFilePath)) {
-                continue;
-            }
-
-            // get the "CUSA00744-240620222358.0"-alike str from the temp "param.sfo"
-            SFOManager tempSFO(tempSFOFilePath.string());
-
-
-            std::optional<std::string> tempAttr = tempSFO.getStringAttribute("SAVEDATA_DIRECTORY");
-
-            // invalid SFO
-            if (!tempAttr) {
-                return {""};
-            }
-
-            auto tempAttrParts = split(tempAttr.value(), '.');
-
-            if (tempAttrParts.size() != 2) {
-                continue;
-            }
-
-            // skip PS4 worlds that are not the same as the one being looked for
-            if (mainAttrParts[0] != tempAttrParts[0]) {
-                continue;
-            }
-
-            directoriesToReturn.push_back(tempCheckDirPath);
         }
+
 
         return directoriesToReturn;
     }
@@ -172,13 +199,13 @@ namespace editor {
         fs::path sfoPath = folder_sce_sys / "param.sfo";
 
 
-        if (saveProject.m_stateSettings.isShadPs4()) {
+        if (true || saveProject.m_stateSettings.console() == lce::CONSOLE::SHADPS4) {
             sfo.setLexicographic(false);
 
             std::string data(8, '\0');
             sfo.addParam(eSFO_FMT::UTF8_SPECIAL, "ACCOUNT_ID", data);
             sfo.addParam(eSFO_FMT::UTF8_NORMAL,  "MAINTITLE",           "Minecraft: PlayStation®4 Edition");
-            sfo.addParam(eSFO_FMT::UTF8_NORMAL,  "SUBTITLE",            "Tutorial"); // wStringToString(saveProject.m_displayMetadata.worldName));
+            sfo.addParam(eSFO_FMT::UTF8_NORMAL,  "SUBTITLE",            wStringToString(saveProject.m_displayMetadata.worldName));
             sfo.addParam(eSFO_FMT::UTF8_NORMAL,  "DETAIL",              "\0");
 
             sfo.addParam(eSFO_FMT::UTF8_NORMAL,  "SAVEDATA_DIRECTORY",  folderN);

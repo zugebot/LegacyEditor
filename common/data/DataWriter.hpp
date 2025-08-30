@@ -27,6 +27,10 @@ class DataWriter {
         while (newCap < requiredSize) newCap *= 2;
 
         auto newBuf = std::unique_ptr<u8[], void(*)(u8*)>(new u8[newCap], kDeleteArr);
+#ifdef MEMSET_ZERO
+        std::memset(newBuf.get(), 0, newCap);
+#endif
+
         if (_buf) std::memcpy(newBuf.get(), _buf.get(), _pos);
         _buf = std::move(newBuf);
         _cap = newCap;
@@ -199,8 +203,11 @@ public:
     // file I/O ------------------------------------------------------
 
     void save(const fs::path& p) const {
-        std::ofstream os(p, std::ios::binary);
-        if (!os) throw std::runtime_error("create failed " + p.string());
+        fs::path path = p;
+        path.make_preferred();
+
+        std::ofstream os(path, std::ios::binary);
+        if (!os) throw std::runtime_error("create failed " + path.string());
         os.write(reinterpret_cast<const char*>(_buf.get()), static_cast<std::streamsize>(_pos));
         os.close();
     }
@@ -208,8 +215,12 @@ public:
 
     static void writeFile(const std::filesystem::path& p,
                           const std::span<const uint8_t> bytes) {
-        std::ofstream out(p, std::ios::binary);
-        if (!out) throw std::runtime_error("create failed " + p.string());
+        fs::path path = p;
+        path.make_preferred();
+        std::filesystem::create_directories(path.parent_path());
+
+        std::ofstream out(path, std::ios::binary);
+        if (!out) throw std::runtime_error("create failed " + path.string());
         out.write(reinterpret_cast<const char*>(bytes.data()), static_cast<uint32_t>(bytes.size()));
         out.close();
     }

@@ -58,8 +58,9 @@ namespace editor {
             for (const auto& [code, info] : enumToInfo) {
                 if (code != EnumType::NONE) {
                     std::cout << "  [" << index << "] " << info.name
+                              << " | " << info.storageType
                               << " | " << info.region
-                              << " | " << info.storageType << "\n";
+                              << "\n";
                     ++index;
                 }
             }

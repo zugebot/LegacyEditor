@@ -40,36 +40,54 @@ namespace editor {
         bool removeRegionsEnd = false;
         bool removeEntities = true;
 
-
         WriteSettings() = delete;
 
-        MU explicit WriteSettings(sch::Schematic sch, lce::CONSOLE theConsole = lce::CONSOLE::NONE)
+        MU explicit WriteSettings(const sch::Schematic& sch,
+                                  lce::CONSOLE theConsole = lce::CONSOLE::NONE)
             : m_schematic(sch) {
             m_schematic.setConsole(theConsole);
         }
 
-        MU WriteSettings(sch::Schematic sch, const lce::CONSOLE theConsole, fs::path theFilePath)
+        MU WriteSettings(const sch::Schematic& sch,
+                         const lce::CONSOLE theConsole,
+                         fs::path theFilePath)
             : m_schematic(sch), m_inFolderPath(std::move(theFilePath)) {
             m_schematic.setConsole(theConsole);
         }
         
         
-        MU WriteSettings(sch::Schematic sch, const lce::CONSOLE theConsole, const ePS3ProductCode thePCode, fs::path theFilePath)
+        MU WriteSettings(const sch::Schematic& sch,
+                         const lce::CONSOLE theConsole,
+                         const ePS3ProductCode thePCode,
+                         fs::path theFilePath)
             : m_schematic(sch), m_inFolderPath(std::move(theFilePath)) {
             m_productCodes.setPS3(thePCode);
             m_schematic.setConsole(theConsole);
         }
         
-        MU WriteSettings(sch::Schematic sch, const lce::CONSOLE theConsole, const eVITAProductCode thePCode, fs::path theFilePath)
+        MU WriteSettings(const sch::Schematic& sch,
+                         const lce::CONSOLE theConsole,
+                         const eVITAProductCode thePCode,
+                         fs::path theFilePath)
             : m_schematic(sch), m_inFolderPath(std::move(theFilePath)) {
             m_productCodes.setVITA(thePCode);
             m_schematic.setConsole(theConsole);
         }
         
-        MU WriteSettings(sch::Schematic sch, const lce::CONSOLE theConsole, const ePS4ProductCode thePCode, fs::path theFilePath)
+        MU WriteSettings(const sch::Schematic& sch,
+                         const lce::CONSOLE theConsole,
+                         const ePS4ProductCode thePCode,
+                         fs::path theFilePath)
             : m_schematic(sch), m_inFolderPath(std::move(theFilePath)) {
             m_productCodes.setPS4(thePCode);
             m_schematic.setConsole(theConsole);
+        }
+
+        MU void setSchema(const sch::Schematic& sch) {
+            using S = sch::Schematic;
+            S tmp(sch);
+            m_schematic.~S();
+            new (&m_schematic) S(tmp);
         }
 
         MU ND fs::path getInFolderPath() const { return m_inFolderPath; }
@@ -84,7 +102,8 @@ namespace editor {
 
         MU ND bool areSettingsValid() const {
             if (m_schematic.save_console == lce::CONSOLE::PS3 && !m_productCodes.isVarSetPS3()) return false;
-            if (m_schematic.save_console == lce::CONSOLE::PS4 && !m_productCodes.isVarSetPS4()) return false;
+            if ((m_schematic.save_console == lce::CONSOLE::PS4 ||
+                 m_schematic.save_console == lce::CONSOLE::SHADPS4) && !m_productCodes.isVarSetPS4()) return false;
             if (m_schematic.save_console == lce::CONSOLE::VITA && !m_productCodes.isVarSetVITA()) return false;
             return true;
         }

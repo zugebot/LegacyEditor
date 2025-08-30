@@ -77,6 +77,12 @@ public:
         m_size = 0;
     }
 
+    bool isAllZeros() const {
+        for (size_t i = 0; i < m_size; ++i)
+            if (m_data[i] != 0) return false;
+        return true;
+    }
+
     bool allocate(std::size_t n, bool fillZero = false) {
         if (n == 0) { return false; }
         auto p = std::make_unique<T[]>(n);
@@ -85,6 +91,9 @@ public:
         m_size = n;
         if (fillZero)
             std::memset(m_data.get(), 0, m_size);
+#ifdef MEMSET_ZERO
+        std::memset(m_data.get(), 0, m_size);
+#endif
         return true;
     }
 

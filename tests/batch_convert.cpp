@@ -2,7 +2,6 @@
 
 #include "common/data/ghc/fs_std.hpp"
 #include "include/lce/processor.hpp"
-#include "include/nlohmann/json.hpp"
 
 #include "common/fmt.hpp"
 #include "common/timer.hpp"
@@ -10,33 +9,31 @@
 
 #include "code/convert/convertWorld.hpp"
 #include "code/include.hpp"
+#include "common/Config.hpp"
 
 #include "code/Impl/CacheBinManager.hpp"
-#include "common/Config.hpp"
 #include "tinf/tinf.h"
 #include "zlib-1.2.12/zlib.h"
 
-#include <windows.h>
 
 
+std::string EXE_CURRENT_PATH;
 using namespace cmn;
 
 
 inline void consumeEnter(const char* prompt = nullptr) {
-    if (prompt) std::cout << prompt;
+    if (prompt) { std::cout << prompt << std::flush; }
     std::cin.clear();
 
-    // If there is already a newline sitting in the buffer from a prior `>>`, eat it.
-    if (std::cin.rdbuf()->in_avail() > 0) {
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    // If a newline is already buffered from a previous '>>', eat it.
+    if (std::cin.peek() == '\n') {
+        std::cin.get();
     }
 
-    // Now actually wait for the user to press Enter.
-    volatile auto var = std::cin.get();
-    std::cout << var;
+    // Now wait for exactly one Enter press.
+    (void)std::cin.get(); // discard char; do NOT print it
 }
 
-std::string EXE_CURRENT_PATH;
 
 
 static int getNumberFromUser(const std::string& prompt, int min, int max) {
@@ -52,8 +49,19 @@ static int getNumberFromUser(const std::string& prompt, int min, int max) {
 }
 
 
+void handleRemovalOption(const std::string& prompt, bool& setting) {
+    log(eLog::input, "{} (y/n): ", prompt);
+    char choice = 'y';
+    std::cin >> choice;
+    consumeEnter();
+    setting = (choice == 'y' || choice == 'Y');
+}
+
+
+
 template<typename EnumType>
-EnumType selectProductCode(const editor::EnumMapper<EnumType>& mapper, const std::string& consoleName) {
+EnumType selectProductCode(const editor::EnumMapper<EnumType>& mapper,
+                           const std::string& consoleName) {
     log("Select a \"{}\" product code:\n", consoleName);
     mapper.printOptions();
     int choice = getNumberFromUser("Enter index: ", 1,
@@ -70,33 +78,67 @@ EnumType selectProductCode(const editor::EnumMapper<EnumType>& mapper, const std
 }
 
 
-void handleRemovalOption(const std::string& prompt, bool& setting) {
-    log(eLog::input, "{} (y/n): ", prompt);
-    char choice = 'y';
-    std::cin >> choice;
-    consumeEnter();
-    setting = (choice == 'y' || choice == 'Y');
+static lce::CONSOLE selectOutputConsoleInteractive()
+{
+    struct Option {
+        lce::CONSOLE id;
+        const char*  label;  // nice display name
+        const char*  hint;   // optional note
+    };
+
+    // Keep this list in sync with “Supports writing …”
+    static const Option kWritableOptions[] = {
+            { lce::CONSOLE::RPCS3,   "Rpcs3",     nullptr },
+            { lce::CONSOLE::VITA,    "PS Vita",   nullptr },
+            { lce::CONSOLE::SHADPS4, "ShadPs4",   nullptr },
+            { lce::CONSOLE::WIIU,    "WiiU/Cemu", nullptr },
+            { lce::CONSOLE::SWITCH,  "Switch",    nullptr },
+            // If/when native PS4 write is supported, uncomment this:
+            // { lce::CONSOLE::PS4,      "PS4",       "Native PS4 format"   },
+    };
+
+    log("Select a target console (supported for writing):\n");
+    for (int i = 0; i < static_cast<int>(std::size(kWritableOptions)); ++i) {
+        const auto& o = kWritableOptions[i];
+        std::cout << "  [" << (i + 1) << "] " << o.label;
+                  // << " (" << lce::consoleToStr(o.id) << ')';
+        if (o.hint) std::cout << " - " << o.hint;
+        std::cout << "\n";
+    }
+    std::cout << std::flush;
+
+    const int choice = getNumberFromUser("Enter index: ", 1,
+                                         static_cast<int>(std::size(kWritableOptions)));
+
+    const auto picked = kWritableOptions[choice - 1];
+    log(eLog::success, "Selected: {}\n\n", picked.label);
+    return picked.id;
 }
 
 
 static const editor::sch::Schematic& selectSchemaVersionInteractive() {
     struct Opt {
-        const char* label;
         const editor::sch::Schematic* schema;
+        const char* label;
     };
     static const Opt opts[] = {
-            {"AquaticTU69",  &editor::sch::AquaticTU69},
-            {"Potions",      &editor::sch::Potions},
-            {"ElytraLatest", &editor::sch::ElytraLatest},
+            {&editor::sch::Potions,      "(TU12)"},
+            {&editor::sch::ElytraLatest, "(TU68)"},
+            {&editor::sch::AquaticTU69,  "(TU69)"},
     };
 
-    log(eLog::input, "Select a schema version:\n");
+    log("Select a schema version:\n");
     for (int i = 0; i < static_cast<int>(std::size(opts)); ++i) {
-        std::cout << "  [" << (i + 1) << "] " << opts[i].label << "\n";
+        std::cout << "  [" << (i + 1) << "] " <<
+                opts[i].label << ", " <<
+                opts[i].schema->display_name << "\n";
     }
     std::cout << std::flush;
 
     int choice = getNumberFromUser("Enter index: ", 1, static_cast<int>(std::size(opts)));
+
+    log(eLog::success, "Selected: {}\n\n", opts[choice - 1].schema->display_name);
+
     return *opts[choice - 1].schema;
 }
 
@@ -216,12 +258,15 @@ int main(int argc, char* argv[]) {
     }
      */
 
+    std::cout << "\n";
     log(eLog::detail,
-        "Find the project here! https://github.com/zugebot/LegacyEditor\n\n");
+        "Find the project here! https://github.com/zugebot/LegacyEditor\n");
     log(eLog::detail,
-        "Supports reading  [ Xbox360, PS3, RPCS3, PSVITA, PS4, WiiU/Cemu, Switch, Windurango ]\n");
+        "Version: 1.3.1\n");
     log(eLog::detail,
-        "Supports writing  [ -------  ---  RPCS3, PSVITA, +/-  WiiU/Cemu  Switch, ---------- ]\n\n");
+        "Supports reading  [ Xbox360, PS3, RPCS3, PSVITA, PS4, ShadPs4, WiiU/Cemu, Switch, Windurango ]\n");
+    log(eLog::detail,
+        "Supports writing  [ -------  ---  RPCS3, PSVITA, ---, ShadPs4, WiiU/Cemu  Switch, ---------- ]\n\n");
 
     ConverterConfig config;
     config.read("conversion.json");
@@ -229,7 +274,7 @@ int main(int argc, char* argv[]) {
     std::vector<std::string> saveFileArgs;
 
     if (config.conversionInput.autoInput) {
-        log(eLog::input, "Reading auto input from \"configuration.json\"\n");
+        log("Reading auto input from \"configuration.json\"\n");
         const auto& key = config.conversionInput.autoKey;
         auto it = config.conversionInput.autoPath.find(key);
         if (it == config.conversionInput.autoPath.end()) {
@@ -254,40 +299,27 @@ int main(int argc, char* argv[]) {
     }
 
     lce::CONSOLE consoleOutput;
+    std::reference_wrapper<const editor::sch::Schematic>
+            chosenSchema = std::cref(editor::sch::AquaticTU69);
+    editor::WriteSettings writeSettings(chosenSchema);
 
 
-    const editor::sch::Schematic* chosenSchema = &editor::sch::AquaticTU69;
 
     if (config.conversionOutput.autoOutput) {
+
+        // schema
         log(eLog::input, "Using default schema (AquaticTU69) from config.\n");
-    } else {
-        chosenSchema = &selectSchemaVersionInteractive();
-        log(eLog::success, "Schema selected.\n");
-    }
 
-    editor::WriteSettings writeSettings(*chosenSchema);
-    bool isShadPs4 = false;
-
-
-    if (config.conversionOutput.autoOutput) {
+        // console
         consoleOutput = lce::strToConsole(config.conversionOutput.autoConsole);
         if (consoleOutput == lce::CONSOLE::NONE) {
             log(eLog::error, "Invalid conversionOutput.autoConsole\n");
             return -1;
         }
-
         log(eLog::input, "Using auto output: console = \"{}\"\n", config.conversionOutput.autoConsole);
 
-        const auto& vars = config.conversionOutput.variables;
-        writeSettings.removePlayers = vars.removePlayers;
-        writeSettings.removeMaps = vars.removeMaps;
-        writeSettings.removeStructures = vars.removeStructures;
-        writeSettings.removeRegionsOverworld = vars.removeRegionsOverworld;
-        writeSettings.removeRegionsNether = vars.removeRegionsNether;
-        writeSettings.removeRegionsEnd = vars.removeRegionsEnd;
-        writeSettings.removeEntities = vars.removeEntitiesDat;
 
-
+        // console specific questions
         if (consoleOutput == lce::CONSOLE::RPCS3 || consoleOutput == lce::CONSOLE::PS3) {
             const std::string optStr = config.conversionOutput.autoPs3ProductCode;
             const auto optEnum = editor::PS3Mapper.fromString(optStr);
@@ -296,7 +328,9 @@ int main(int argc, char* argv[]) {
                 log(eLog::input, "Using auto output: PS3 P.C.=\"{}\"\n", optStr);
             } else {
                 log(eLog::error, "Invalid input \"conversionOutput.autoPs3ProductCode\"\n");
+                return -1;
             }
+
         } else if (consoleOutput == lce::CONSOLE::VITA) {
             const std::string optStr = config.conversionOutput.autoPsVProductCode;
             const auto optEnum = editor::VITAMapper.fromString(optStr);
@@ -305,32 +339,17 @@ int main(int argc, char* argv[]) {
                 log(eLog::input, "Using auto output: PsVita P.C.=\"{}\"\n", optStr);
             } else {
                 log(eLog::error, "Invalid input \"conversionOutput.autoPsVProductCode\"\n");
+                return -1;
             }
-        } else if (consoleOutput == lce::CONSOLE::PS4) {
+        } else if (consoleOutput == lce::CONSOLE::PS4 ||
+                   consoleOutput == lce::CONSOLE::SHADPS4) {
 
-
-            log(eLog::input, "\ndo you want to convert to shadPs4? (y/n)");
-            std::string userInput2;
-            std::cin >> userInput2;
-            if (userInput2 == "y") {
-                isShadPs4 = true;
+            // might be important to ensure it's a valid param.sfo
+            writeSettings.m_paramSfoToReplace = config.conversionInput.autoSampleParamSFO;
+            if (writeSettings.m_paramSfoToReplace.empty()) {
+                log(eLog::error, "Invalid input \"conversionOutput.autoSampleParamSFO\"\n");
+                return -1;
             }
-            std::cout << "\n";
-
-            log(eLog::input, "You must provide the file path to a PARAM.SFO file that comes from a save file,\n"
-                         "from BOTH the same console AND account. You can find it any \"sce_sys\" folder.\n"
-                         "Please enter the full path to that file here. I am lazy and DO NOT have code that\n"
-                         "checks that the file path is valid OR that the file itself is valid. Don't put \" in it.\n"
-                         "Example:\n"
-                         "C:\\Users\\jerrin\\jerrins_and_tiaras\\PS4-CUSA00744-1CUSA00744-210322225338.1\\savedata0\\sce_sys\\param.sfo\n"
-                         "\n"
-                         "Path: ");
-
-            std::string userInput;
-            std::cin >> userInput;
-
-            writeSettings.m_paramSfoToReplace = userInput;
-
 
             const std::string optStr = config.conversionOutput.autoPs4ProductCode;
             const auto optEnum = editor::PS4Mapper.fromString(optStr);
@@ -344,39 +363,85 @@ int main(int argc, char* argv[]) {
 
         }
 
+        // assign variables
+        const auto& vars = config.conversionOutput.variables;
+        writeSettings.removePlayers = vars.removePlayers;
+        writeSettings.removeMaps = vars.removeMaps;
+        writeSettings.removeStructures = vars.removeStructures;
+        writeSettings.removeRegionsOverworld = vars.removeRegionsOverworld;
+        writeSettings.removeRegionsNether = vars.removeRegionsNether;
+        writeSettings.removeRegionsEnd = vars.removeRegionsEnd;
+        writeSettings.removeEntities = vars.removeEntitiesDat;
 
+    // user input
     } else {
 
-        log(eLog::input, "Saves Detected:\n");
+        // saves detected
+        log("Saves Detected:\n");
         int count = 0;
         for (const auto& arg: saveFileArgs) {
             count++;
             auto consoleDetected = editor::SaveProject::detectConsole(arg);
-            std::cout << "[" << count << "] [" + lce::consoleToStr(consoleDetected) << "] "
+            std::cout << "  [" << count << ", " + lce::consoleToStr(consoleDetected) << "] "
                       << arg << "\n";
         }
-        std::cout << "\n"
-                  << std::flush;
+        std::cout << "\n" << std::flush;
 
-        log(eLog::input, "Name the console you want your saves converted to: ");
-        std::string userInput;
-        std::cin >> userInput;
-        consumeEnter();
-        consoleOutput = lce::strToConsole(userInput);
-        if (consoleOutput == lce::CONSOLE::NONE) {
-            log(eLog::error, "Invalid console name, exiting\n");
-            consumeEnter();
-            return -1;
-        }
+        // console
+        consoleOutput = selectOutputConsoleInteractive();
 
+        // schema
+        chosenSchema = selectSchemaVersionInteractive();
+
+
+        writeSettings.setSchema(chosenSchema);
+
+        // console specific questions
         if (consoleOutput == lce::CONSOLE::RPCS3 || consoleOutput == lce::CONSOLE::PS3) {
             editor::ePS3ProductCode code = selectProductCode(editor::PS3Mapper, "PS3");
             writeSettings.m_productCodes.setPS3(code);
+
         } else if (consoleOutput == lce::CONSOLE::VITA) {
             auto code = selectProductCode(editor::VITAMapper, "VITA");
             writeSettings.m_productCodes.setVITA(code);
+
+        } else if (consoleOutput == lce::CONSOLE::PS4 ||
+                   consoleOutput == lce::CONSOLE::SHADPS4) {
+            editor::ePS4ProductCode code = selectProductCode(editor::PS4Mapper, "PS4");
+            writeSettings.m_productCodes.setPS4(code);
+
+            std::cout << "\n";
+            log("You must provide the file path to a PARAM.SFO file that comes from a save file,\n"
+                "    from BOTH the same console AND account. You can find it any \"sce_sys\" folder.\n"
+                "    Please enter the full path to that file here. Don't put \" in it.\n");
+            log("Example:\n"
+                "C:\\Users\\jerrin\\jerrins_and_tiaras\\PS4-CUSA00744-1CUSA00744-210322225338.1\\savedata0\\sce_sys\\param.sfo\n"
+                "\n");
+            log(eLog::input, "Path: ");
+
+            std::string paramPath;
+            std::cin >> paramPath;
+            std::cout << "\n";
+
+            // remove spaces and " from path
+            if (auto first = paramPath.find_first_not_of(" \""); first != std::string::npos) {
+                paramPath.erase(0, first);
+                paramPath.erase(paramPath.find_last_not_of(" \"") + 1);
+            } else {
+                paramPath.clear();
+            }
+
+            if (!fs::exists(paramPath)) {
+                log(eLog::error, "File does not exist: \n{}\n", fs::path(paramPath).make_preferred().string());
+                return -1;
+            }
+
+            writeSettings.m_paramSfoToReplace = paramPath;
+
         }
 
+        // assign variables
+        log("Some conversion questions:\n");
         handleRemovalOption("Do you want to remove all [map (item)] data   ", writeSettings.removeMaps);
         handleRemovalOption("Do you want to remove all [player    ] data   ", writeSettings.removePlayers);
         handleRemovalOption("Do you want to remove all [structure ] data   ", writeSettings.removeStructures);
@@ -395,9 +460,6 @@ int main(int argc, char* argv[]) {
     writeSettings.setInFolderPath(outputPath);
 
 
-    // editor::SaveProject toSteal;
-    // toSteal.read(R"(E:\Emulators\cemu_1.27.1\mlc01\usr\save\00050000\101dbe00\user\80000001\all_loot_chests)");
-
 
     // iterate over all the files they gave
     for (const auto& arg: saveFileArgs) {
@@ -414,16 +476,21 @@ int main(int argc, char* argv[]) {
         Timer readTimer;
         editor::SaveProject saveProject;
 
-        // TODO: really shit fucking garbage bad code
-        saveProject.m_stateSettings.setShadPS4(isShadPs4);
-
         if (saveProject.read(filePath.string()) != 0) {
             log(eLog::error, "Failed to load file: {}\n", filePath.make_preferred().string());
             continue;
         }
         log(eLog::time, "Time to load: {} sec\n", readTimer.getSeconds());
 
-        // (void) saveProject.dumpToFolder("");
+        // saveProject.printDetails();
+
+        (void) saveProject.dumpToFolder("before_ps4");
+
+        std::set<lce::FILETYPE> items = {lce::FILETYPE::ENTITY_OVERWORLD};
+        for (auto file : saveProject.view_of(items)) {
+            Buffer buf = file.getBuffer();
+            DataWriter::writeFile("C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\out\\entities_working.dat", buf.span());
+        }
 
 
         const int statusProcess = editor::preprocess(saveProject, saveProject.m_stateSettings, writeSettings);
@@ -438,9 +505,15 @@ int main(int argc, char* argv[]) {
 
         editor::convert(saveProject, writeSettings);
 
+        for (auto file : saveProject.view_of(items)) {
+            Buffer buf = file.getBuffer();
+            DataWriter::writeFile("C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\out\\entities_broken.dat", buf.span());
+        }
+
 
         
         saveProject.m_displayMetadata.extraData = "0000000"; // "78000A8"; // 125829288;
+        saveProject.m_displayMetadata.worldName = L"Entities?";
 
         std::cout << consoleToStr(saveProject.m_stateSettings.console()) << std::endl;
         (void) saveProject.dumpToFolder("");

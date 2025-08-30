@@ -194,6 +194,16 @@ namespace editor {
         }
 
         saveProject.addFiles(std::move(convertedFiles));
+
+        // remove region files we created that are completely empty
+        // for (auto it = saveProject.m_allFiles.begin(); it != saveProject.m_allFiles.end(); ) {
+        //     const bool kill = it->isTinyRegionType() && it->detectSize() == 4;
+        //     if (kill) {
+        //         it = saveProject.m_allFiles.erase(it);
+        //     } else {
+        //         ++it;
+        //     }
+        // }
     }
 
 
@@ -232,10 +242,14 @@ namespace editor {
             if (auto listFiles = saveProject.findFile(entityFmt); listFiles.has_value()) {
                 const LCEFile& entityFile = listFiles->get();
 
-                // ⬇️  grab the list from the helper
+                // grab the list from the helper
                 auto entities = editor::EntityFile::readEntityList(entityFile);
                 for (auto& [coord, nbt] : entities)
                     entityMap.emplace(coord, std::move(nbt));
+
+                // remove file from the save file
+                std::set<lce::FILETYPE> toRemove = { entityFmt };
+                saveProject.removeFileTypes(toRemove);
             }
 
             // (2) build regions
@@ -320,15 +334,27 @@ namespace editor {
                         settings.m_schematic.func_chunk_convert(handle, settings);
 
                         auto entityIt = entityMap.extract(realChunkCoord);
-                        if (!entityIt.empty()) {
-                            if (data->validChunk) {
+                        if (data->validChunk && !entityIt.empty()) {
 
-                                NBTBase& nbtRoot = entityIt.mapped();
+                            NBTBase& nbtRoot = entityIt.mapped();
+
+                            // this is a failsafe I think,
+                            // there shouldn't be a circumstance where this ever runs
+                            if EXPECT_FALSE(nbtRoot.getType() == eNBT::COMPOUND) {
                                 if (nbtRoot("")) { nbtRoot = std::move(nbtRoot[""]); }
-
                                 NBTList& entityList = nbtRoot.ensureList("Entities", eNBT::COMPOUND);
                                 data->entities = std::move(entityList);
                             }
+
+                            // expected case
+                            if (nbtRoot.getType() == eNBT::LIST) {
+                                if (!nbtRoot.is<NBTList>() ||  // ensure subtype is eNBT::COMPOUND
+                                    (nbtRoot.get<NBTList>().subType() != eNBT::COMPOUND)) {
+                                    nbtRoot = {eNBT::LIST, NBTList(eNBT::COMPOUND)};
+                                }
+                                data->entities = std::move(nbtRoot.get<NBTList>());
+                            }
+
                         }
 
                         NBTFixer::fixEntities(data);

@@ -26,26 +26,6 @@ namespace editor {
         auto filePath = getFileInfoPath(saveProject);
         fs::path cachePathVita = m_filePath.parent_path().parent_path() / "CACHE.BIN";
 
-        // if (filePath.has_value() && fs::exists(filePath.value())) {
-
-        //     if (m_console == lce::CONSOLE::VITA && fs::exists(cachePathVita)) {
-        //         std::string folderName = m_filePath.parent_path().filename().string();
-        //         saveProject.m_displayMetadata.readCacheFile(cachePathVita, folderName);
-
-        //     } else {
-        //         Buffer buffer = DataReader::readFile(filePath.value());
-        //         saveProject.m_displayMetadata.read(buffer, m_console);
-        //     }
-        // } else {
-        //     if (saveProject.m_stateSettings.isXbox360Bin()) {
-
-        //     } else {
-        //         printf("[!] DisplayMetadata file not found, setting defaulted data.\n");
-        //         defaultFileInfo(saveProject);
-        //     }
-        // }
-
-
         if (filePath.has_value() && fs::exists(filePath.value())) {
             Buffer buffer = DataReader::readFile(filePath.value());
             saveProject.m_displayMetadata.read(buffer, m_console);
@@ -58,6 +38,14 @@ namespace editor {
             defaultFileInfo(saveProject);
         } else {
             printf("[!] DisplayMetadata file not found, setting defaulted data.\n");
+            defaultFileInfo(saveProject);
+        }
+
+        if (saveProject.m_displayMetadata.thumbnail.empty()) {
+            printf("[!] DisplayMetadata file found but is empty, setting defaulted data.\n");
+            defaultFileInfo(saveProject);
+        } else if (saveProject.m_displayMetadata.thumbnail.isAllZeros()) {
+            printf("[!] DisplayMetadata file found but is null data, setting defaulted data.\n");
             defaultFileInfo(saveProject);
         }
     }

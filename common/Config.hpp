@@ -24,6 +24,7 @@ public:
     struct {
         bool autoInput;
         std::string autoKey;
+        std::string autoSampleParamSFO;
         std::map<std::string, std::string> autoShortener;
         std::map<std::string, std::string> autoPath;
     } conversionInput;
@@ -70,8 +71,9 @@ public:
         const auto& output = jsonConfig["conversionOutput"];
 
         // Load input section
-        conversionInput.autoInput = input.value("autoInput", false);
-        conversionInput.autoKey   = input.value("autoKey", "");
+        conversionInput.autoInput          = input.value("autoInput", false);
+        conversionInput.autoKey            = input.value("autoKey", "");
+        conversionInput.autoSampleParamSFO = input.value("autoSampleParamSFO", "");
 
         // Load autoShortener
         if (input.contains("autoShortener")) {
@@ -136,6 +138,7 @@ public:
         jsonConfig["conversionInput"] = {
                 {"autoInput", true},
                 {"autoKey", "pirates"},
+                {"autoSampleParamSFO", ""},
                 {"autoShortener", nlohmann::json::object()},
                 {"autoPath", nlohmann::json::object()}
         };
@@ -147,13 +150,13 @@ public:
                 {"autoPs3ProductCode", "NPUB31419"},
                 {"autoPs4ProductCode", "CUSA00744"},
                 {"variables", {
-                                      {"removePlayers", true},
-                                      {"removeMaps", true},
-                                      {"removeStructures", true},
-                                      {"removeRegionsOverworld", false},
-                                      {"removeRegionsNether", true},
-                                      {"removeRegionsEnd", true},
-                                      {"removeEntitiesDat", true}
+                                 {"removePlayers", true},
+                                 {"removeMaps", true},
+                                 {"removeStructures", true},
+                                 {"removeRegionsOverworld", false},
+                                 {"removeRegionsNether", true},
+                                 {"removeRegionsEnd", true},
+                                 {"removeEntitiesDat", true}
                               }},
                 {"path", {
                                  {"xbox360", {{"useDefaultPath", true}, {"conversionPath", ""}}},
@@ -161,6 +164,7 @@ public:
                                  {"rpcs3",   {{"useDefaultPath", true}, {"conversionPath", ""}}},
                                  {"vita",    {{"useDefaultPath", true}, {"conversionPath", ""}}},
                                  {"ps4",     {{"useDefaultPath", true}, {"conversionPath", ""}}},
+                                 {"shadps4", {{"useDefaultPath", true}, {"conversionPath", ""}}},
                                  {"wiiu",    {{"useDefaultPath", false}, {"conversionPath", "{cemu_ely_}"}}},
                                  {"switch",  {{"useDefaultPath", false}, {"conversionPath", "{yuzu}"}}}
                          }}

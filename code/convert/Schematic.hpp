@@ -1,6 +1,8 @@
 #pragma once
 
 
+#include <utility>
+
 #include "lce/processor.hpp"
 
 #include "code/Impl/levelFile.hpp"
@@ -31,6 +33,7 @@ namespace editor::sch {
 
     class Schematic {
     public:
+        std::string_view           display_name;
         lce::CONSOLE               save_console;
         TU                         save_tu;
         const i32                  fileListing_oldestVersion;
@@ -45,6 +48,7 @@ namespace editor::sch {
 
 
         constexpr Schematic(
+                std::string_view display_name,
                 lce::CONSOLE console,
                 TU tu,
                 i32 i1,
@@ -56,7 +60,8 @@ namespace editor::sch {
                 eIsMissingBiomes i7,
                 ChunkConverterFn i9)
 
-            : save_console(console),
+            : display_name(std::move(display_name)),
+              save_console(console),
               save_tu(tu),
               fileListing_oldestVersion(i1),
               fileListing_latestVersion(i2),
@@ -78,6 +83,7 @@ namespace editor::sch {
 
 
     MU static constexpr Schematic Potions = Schematic(
+            "Potions",
             lce::CONSOLE::NONE,
             TU12,
             6,
@@ -93,6 +99,7 @@ namespace editor::sch {
 
 
     MU static constexpr Schematic ElytraLatest = Schematic(
+            "Elytra Latest",
             lce::CONSOLE::NONE,
             TU68,
             10,
@@ -108,6 +115,7 @@ namespace editor::sch {
 
 
     MU static constexpr Schematic AquaticTU69 = Schematic(
+            "AquaticTU69",
             lce::CONSOLE::NONE,
             TU69,
             12,
