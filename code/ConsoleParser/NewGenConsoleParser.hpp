@@ -19,7 +19,7 @@ namespace editor {
         virtual int readExternalFolders(SaveProject& saveProject) = 0;
         static int readExternalFolder(SaveProject& saveProject, const fs::path& inDirPath);
 
-        virtual int deflateToSave(MU SaveProject& saveProject, MU WriteSettings& theSettings) const override {
+        int deflateToSave(MU SaveProject& saveProject, MU WriteSettings& theSettings) const override {
             return -1;
         }
         virtual int deflateListing(const fs::path& gameDataPath, Buffer& inflatedData, Buffer& deflatedData) {

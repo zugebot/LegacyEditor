@@ -165,6 +165,22 @@ namespace editor {
 
 
     bool DisplayMetadata::readHeader(DataReader& reader, lce::CONSOLE c) {
+
+        if (lce::is_wiiu_family(c)) {
+            if (!reader.canRead(256)) return false;
+            worldName = reader.readNullTerminatedWString();
+            reader.skip(256 - reader.tell());
+
+        } else if (lce::is_switch_family(c)) {
+            if (!reader.canRead(520)) return false;
+            reader.setEndian(Endian::Little);
+            worldName = reader.readNullTerminatedWWWString();
+            reader.skip(512 - reader.tell());
+            MU u64 unixTimeStamp = reader.read<u64>();
+            reader.setEndian(Endian::Big);
+        }
+
+        /*
         switch (c) {
             case lce::CONSOLE::WIIU: {
                 if (!reader.canRead(256)) return false;
@@ -184,6 +200,8 @@ namespace editor {
             default:
                 break;
         }
+         */
+
         return true;
     }
 
@@ -275,6 +293,23 @@ namespace editor {
 
 
     void DisplayMetadata::writeHeader(DataWriter& writer, lce::CONSOLE c) const {
+
+        if (lce::is_wiiu_family(c)) {
+            writer = DataWriter(256, Endian::Big);
+            writer.writeUTF16(worldName, 128);
+
+        } else if (lce::is_switch_family(c)) {
+            auto now = std::chrono::system_clock::now();
+            u64 unix_ts = std::chrono::duration_cast<
+                                  std::chrono::seconds
+                                  >(now.time_since_epoch()).count();
+
+            writer = DataWriter(512 + 8, Endian::Little);
+            writer.writeWWWString(worldName, 128);
+            writer.write<u64>(unix_ts);
+        }
+
+        /*
         switch (c) {
             case lce::CONSOLE::SWITCH: {
                 auto now = std::chrono::system_clock::now();
@@ -296,6 +331,7 @@ namespace editor {
             default:
                 break;
         }
+        */
 
     }
 
@@ -324,12 +360,18 @@ namespace editor {
             nul(); put("4J_EXPLOREDCHUNKS"); nul();
             put(int64ToString(exploredChunks));
         }
-        if (c != lce::CONSOLE::WIIU &&
+
+        if (!lce::is_wiiu_family(c) &&
+            !lce::is_switch_family(c) &&
+            !lce::is_psvita_family(c) &&
+            !lce::is_ps3_family(c) &&
+            !lce::is_ps4_family(c)/*
+            c != lce::CONSOLE::WIIU &&
             c != lce::CONSOLE::SWITCH &&
             c != lce::CONSOLE::PS4 &&
             c != lce::CONSOLE::VITA &&
             c != lce::CONSOLE::PS3 &&
-            c != lce::CONSOLE::RPCS3)
+            c != lce::CONSOLE::RPCS3*/)
         {
             nul(); put("4J_BASESAVENAME"); nul();
             put(wStringToString(worldName));

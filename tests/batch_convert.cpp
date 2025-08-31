@@ -88,10 +88,11 @@ static lce::CONSOLE selectOutputConsoleInteractive()
 
     // Keep this list in sync with “Supports writing …”
     static const Option kWritableOptions[] = {
-            { lce::CONSOLE::RPCS3,   "Rpcs3",     nullptr },
-            { lce::CONSOLE::VITA,    "PS Vita",   nullptr },
-            { lce::CONSOLE::SHADPS4, "ShadPs4",   nullptr },
             { lce::CONSOLE::WIIU,    "WiiU/Cemu", nullptr },
+            { lce::CONSOLE::VITA,    "PS Vita",   nullptr },
+            { lce::CONSOLE::RPCS3,   "Rpcs3",     nullptr },
+            { lce::CONSOLE::PS4,     "Ps4",       nullptr },
+            { lce::CONSOLE::SHADPS4, "ShadPs4",   nullptr },
             { lce::CONSOLE::SWITCH,  "Switch",    nullptr },
             // If/when native PS4 write is supported, uncomment this:
             // { lce::CONSOLE::PS4,      "PS4",       "Native PS4 format"   },
@@ -504,6 +505,8 @@ int main(int argc, char* argv[]) {
         saveProject.printDetails();
 
         editor::convert(saveProject, writeSettings);
+
+        saveProject.printDetails();
 
         for (auto file : saveProject.view_of(items)) {
             Buffer buf = file.getBuffer();

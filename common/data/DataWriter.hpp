@@ -50,7 +50,12 @@ public:
         : _buf(new uint8_t[reserve], [](uint8_t* p){ delete[] p; }),
           _cap(reserve),
           _end(e)
-    {}
+    {
+#ifdef MEMSET_ZERO
+        std::memset((void*) data(), 0, size());
+#endif
+
+    }
 
     DataWriter(uint8_t* extBuf, const std::size_t capacity,
                const Endian e = Endian::Big) noexcept

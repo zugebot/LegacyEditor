@@ -43,6 +43,7 @@ namespace editor {
             case lce::CONSOLE::VITA:
                 return std::make_unique<Vita>();
             case lce::CONSOLE::PS4:
+            case lce::CONSOLE::SHADPS4:
                 return std::make_unique<PS4>();
             case lce::CONSOLE::WIIU:
                 return std::make_unique<WiiU>();

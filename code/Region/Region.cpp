@@ -102,6 +102,7 @@ namespace editor {
         Buffer buffer = fileIn->getBuffer();
 
         // new gen stuff
+        // TODO: the new gen uncompress + decompress are decided based on different inputs...
         if (fileIn->isTinyRegionType()) {
             buffer = std::move(codec::RLE_NSXPS4_DECOMPRESS(buffer));
         }
@@ -194,10 +195,6 @@ namespace editor {
 
         c_u32 data_size = total_sectors * SECTOR_BYTES;
         DataWriter writer(data_size, getConsoleEndian(consoleIn));
-
-#ifndef DONT_MEMSET0
-        std::memset((void*) writer.data(), 0, writer.size());
-#endif
 
         u32 largestOffset = 0;
         writer.skip<0x2000>();

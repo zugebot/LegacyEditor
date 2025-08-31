@@ -15,7 +15,7 @@ public:
     static fs::path CURRENT_PATH;
 
     struct OutPath {
-        bool useDefaultPath{};
+        bool useCustomPath{};
         std::string conversionPath;
     };
 
@@ -124,7 +124,7 @@ public:
         if (output.contains("path")) {
             for (const auto& [console, pathEntry] : output["path"].items()) {
                 ConverterConfig::OutPath outPath;
-                outPath.useDefaultPath = pathEntry.value("useDefaultPath", true);
+                outPath.useCustomPath = pathEntry.value("useCustomPath", false);
                 outPath.conversionPath = applyShorteners(pathEntry.value("conversionPath", ""));
                 conversionOutput.paths[console] = outPath;
             }
@@ -159,12 +159,12 @@ public:
                                  {"removeEntitiesDat", true}
                               }},
                 {"path", {
-                                 {"xbox360", {{"useDefaultPath", true}, {"conversionPath", ""}}},
-                                 {"ps3",     {{"useDefaultPath", true}, {"conversionPath", ""}}},
-                                 {"rpcs3",   {{"useDefaultPath", true}, {"conversionPath", ""}}},
-                                 {"vita",    {{"useDefaultPath", true}, {"conversionPath", ""}}},
-                                 {"ps4",     {{"useDefaultPath", true}, {"conversionPath", ""}}},
-                                 {"shadps4", {{"useDefaultPath", true}, {"conversionPath", ""}}},
+                                 {"xbox360", {{"useDefaultPath", true},  {"conversionPath", ""}}},
+                                 {"ps3",     {{"useDefaultPath", true},  {"conversionPath", ""}}},
+                                 {"rpcs3",   {{"useDefaultPath", true},  {"conversionPath", ""}}},
+                                 {"vita",    {{"useDefaultPath", true},  {"conversionPath", ""}}},
+                                 {"ps4",     {{"useDefaultPath", true},  {"conversionPath", ""}}},
+                                 {"shadps4", {{"useDefaultPath", true},  {"conversionPath", ""}}},
                                  {"wiiu",    {{"useDefaultPath", false}, {"conversionPath", "{cemu_ely_}"}}},
                                  {"switch",  {{"useDefaultPath", false}, {"conversionPath", "{yuzu}"}}}
                          }}
@@ -183,7 +183,7 @@ public:
         auto it = conversionOutput.paths.find(consoleStr);
         if (it != conversionOutput.paths.end()) {
             const OutPath& pathConfig = it->second;
-            if (!pathConfig.useDefaultPath && !pathConfig.conversionPath.empty()) {
+            if (!pathConfig.useCustomPath && !pathConfig.conversionPath.empty()) {
                 return pathConfig.conversionPath;
             }
         }

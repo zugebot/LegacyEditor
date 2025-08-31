@@ -32,6 +32,8 @@ namespace editor {
         HeaderUnion headerUnion{};
         fread(&headerUnion, 1, 12, f_in);
         fclose(f_in);
+
+        bool isNewGen = false;
     
         Buffer data;
         if (headerUnion.getInt1() <= 2) {
@@ -39,15 +41,7 @@ namespace editor {
                 if (headerUnion.getInt2Swap() >= headerUnion.getDestSize()) {
                     stateSettings.setConsole(lce::CONSOLE::WIIU);
                 } else {
-                    const std::string parentDir = stateSettings.filePath().parent_path().filename().string();
-                    stateSettings.setConsole(lce::CONSOLE::SWITCH);
-                    // TODO: this code sucks
-                    if (parentDir == "savedata0") {
-                        stateSettings.setConsole(lce::CONSOLE::PS4);
-                    }
-                    if (fs::exists(stateSettings.filePath().parent_path() / "wd_displayname.txt")) {
-                        stateSettings.setConsole(lce::CONSOLE::WINDURANGO);
-                    }
+                    isNewGen = true;
                 }
             } else {
                 // TODO: change this to write custom checker for FILE_COUNT * 144 == diff. with
@@ -94,14 +88,22 @@ namespace editor {
         }
 
         // Lastly, check for other files existence to differentiate
-        if (stateSettings.console() == lce::CONSOLE::PS4
-            || stateSettings.console() == lce::CONSOLE::SWITCH) {
-            if (fs::exists(inFilePath.parent_path() / "sce_sys" / "param.sfo")) {
-                stateSettings.setConsole(lce::CONSOLE::PS4);
+        // TODO: this does not detect lce::CONSOLE::XBOX1
+        if (isNewGen) {
+            if (fs::path sfoPath = inFilePath.parent_path() / "sce_sys" / "param.sfo"; fs::exists(sfoPath)) {
+
+                SFOManager sfo(sfoPath.string());
+                if (!sfo.getAttribute("PARAMS").has_value()) {
+                    stateSettings.setConsole(lce::CONSOLE::SHADPS4);
+                } else {
+                    stateSettings.setConsole(lce::CONSOLE::PS4);
+                }
+
             } else if (fs::path temp = inFilePath;
                 fs::exists(temp.replace_extension(".sub"))) {
                 stateSettings.setConsole(lce::CONSOLE::SWITCH);
             }
+
             if (fs::exists(stateSettings.filePath().parent_path() / "wd_displayname.txt")) {
                 stateSettings.setConsole(lce::CONSOLE::WINDURANGO);
             }

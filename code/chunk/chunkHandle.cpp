@@ -36,13 +36,16 @@ namespace editor {
 
 
     int ChunkHandle::read(DataReader& rdr, lce::CONSOLE c) {
+        if (lce::is_console_none(c)) {
+            throw std::runtime_error("ChunkHandle::read refuses to take \"lce::CONSOLE::NONE\" as argument");
+        }
 
         unpackSizeFlags(rdr.read<u32>());
 
         if (!buffer.allocate(buffer.size(), true))
             return STATUS::MALLOC_FAILED;
 
-        if (c == lce::CONSOLE::PS3 || c == lce::CONSOLE::RPCS3) {
+        if (lce::is_ps3_family(c)/*c == lce::CONSOLE::PS3 || c == lce::CONSOLE::RPCS3*/) {
             header.setDecSize(rdr.read<u32>());
             header.setRLESize(rdr.read<u32>());
         } else {
@@ -60,10 +63,13 @@ namespace editor {
 
 
     int ChunkHandle::write(DataWriter& wtr, lce::CONSOLE c) {
+        if (lce::is_console_none(c)) {
+            throw std::runtime_error("ChunkHandle::write refuses to take \"lce::CONSOLE::NONE\" as argument");
+        }
 
         wtr.write<u32>(packSizeFlags());
 
-        if (c == lce::CONSOLE::PS3 || c == lce::CONSOLE::RPCS3) {
+        if (lce::is_ps3_family(c)/*c == lce::CONSOLE::PS3 || c == lce::CONSOLE::RPCS3*/) {
             wtr.write<u32>(header.getDecSize());
             wtr.write<u32>(header.getRLESize());
         } else {
@@ -78,6 +84,9 @@ namespace editor {
 
 
     MU int ChunkHandle::decodeChunk(MU lce::CONSOLE c) {
+        if (lce::is_console_none(c)) {
+            throw std::runtime_error("ChunkHandle::decodeChunk refuses to take \"lce::CONSOLE::NONE\" as argument");
+        }
 
         if (!header.written())
             return STATUS::ALREADY_WRITTEN;
@@ -89,6 +98,35 @@ namespace editor {
         if (decZip.empty())
             return SUCCESS;
 
+        if (lce::is_xbox360_family(c)) {
+            codec::XmemErr err = codec::XDecompress(
+                    decZip.data(), decZip.size_ptr(),
+                    buffer.data(), buffer.size());
+            if (err != codec::XmemErr::Ok)
+                return STATUS::DECOMPRESS;
+
+        } else if (lce::is_ps3_family(c)) {
+            int result = tinf_uncompress(
+                    decZip.data(), decZip.size_ptr(),
+                    buffer.data(), buffer.size());
+            if (result != SUCCESS)
+                return STATUS::DECOMPRESS;
+
+        } else if (lce::is_wiiu_family(c) ||
+                   lce::is_psvita_family(c) ||
+                   lce::is_ps4_family(c) ||
+                   lce::is_switch_family(c) ||
+                   lce::is_xbox1_family(c)) {
+            int result = tinf_zlib_uncompress(
+                    decZip.data(), decZip.size_ptr(),
+                    buffer.data(), buffer.size());
+            if (result != SUCCESS)
+                return STATUS::DECOMPRESS;
+        } else {
+            throw std::runtime_error("Chunk uncompress pipeline received unhandled console case!");
+        }
+
+        /*
         switch (c) {
             case lce::CONSOLE::XBOX360: {
                 codec::XmemErr err = codec::XDecompress(
@@ -123,6 +161,7 @@ namespace editor {
             default:
                 break;
         }
+         */
 
         if (header.rle() == true) {
             buffer.clear();
@@ -167,20 +206,14 @@ namespace editor {
 
 
     MU int ChunkHandle::encodeChunk(WriteSettings& settings) {
-        if (settings.m_schematic.save_console == lce::CONSOLE::NONE)
-            return STATUS::INVALID_CONSOLE;
+        if (lce::is_console_none(settings.m_schematic.save_console))
+            throw std::runtime_error("ChunkHandle::encodeChunk refuses to take \"lce::CONSOLE::NONE\" as argument");
 
         if (header.written())
             return STATUS::ALREADY_WRITTEN;
 
         if (buffer.empty())
             return STATUS::SUCCESS;
-
-        // Buffer outBuffer;
-        // outBuffer.allocate(CHUNK_BUFFER_SIZE);
-        // #ifndef DONT_MEMSET0
-        // memset(outBuffer.data, 0, CHUNK_BUFFER_SIZE);
-        // #endif
 
         DataWriter wtr(256, Endian::Big);
 
@@ -219,6 +252,41 @@ namespace editor {
             header.setRle(true);
         }
 
+
+        const auto c = settings.m_schematic.save_console;
+        if (lce::is_xbox360_family(c)) {
+            return STATUS::NOT_IMPLEMENTED;
+
+        } else if (lce::is_ps3_family(c)) {
+            Buffer compressed((u32)(float(buffer.size()) * 1.25F));
+            int status = compress(compressed.data(), (uLongf*) compressed.size_ptr(),
+                                  buffer.data(), buffer.size());
+            buffer.clear();
+            if (status)
+                return STATUS::COMPRESS;
+            // copy it over, and remove ZLIB header
+            buffer = Buffer(compressed.size() - 2);
+            std::memcpy(buffer.data(), compressed.data() + 2, buffer.size());
+            // zero out ending integrity check, as the console does
+            // std::memset(data + comp_size - 6, 0, 4);
+
+        } else if (lce::is_wiiu_family(c) ||
+                   lce::is_psvita_family(c) ||
+                   lce::is_ps4_family(c) ||
+                   lce::is_switch_family(c) ||
+                   lce::is_xbox1_family(c)) {
+            Buffer compressed((u32)(float(buffer.size()) * 1.25F));
+            int status = compress(compressed.data(), (uLongf*) compressed.size_ptr(),
+                                  buffer.data(), buffer.size());
+            buffer.clear();
+            if (status)
+                return STATUS::COMPRESS;
+            buffer = std::move(compressed);
+        } else {
+            throw std::runtime_error("Chunk uncompress pipeline received unhandled console case!");
+        }
+
+        /*
         switch (settings.m_schematic.save_console) {
             case lce::CONSOLE::XBOX360:
                 return STATUS::NOT_IMPLEMENTED;
@@ -256,6 +324,7 @@ namespace editor {
             default:
                 break;
         }
+        */
 
         header.markDirty(false);
         header.markWritten();

@@ -47,7 +47,7 @@ namespace editor::summary {
                 for (auto& handle : regionManager.m_handles) {
                     if (handle.buffer.empty())
                         continue;
-                    handle.decodeChunk(lce::CONSOLE::SWITCH);
+                    handle.decodeChunk(console);
                     if (handle.data->lastVersion != 0) {
                         return &handle;
                     }
@@ -80,17 +80,15 @@ namespace editor::summary {
 
             NBTCompound summary;
 
-            switch (console) {
-                case (lce::CONSOLE::XBOX360): {
-                    summary.insert("_TU", makeString(""));
-                    break;
-                }
-                case (lce::CONSOLE::WIIU): {
-                    summary.insert("_BUILD", makeString(""));
-                    break;
-                }
-                default:
-                    break;
+
+            if (lce::is_xbox360_family(console)) {
+                summary.insert("_TU", makeString(""));
+
+            } else if (lce::is_wiiu_family(console)) {
+                summary.insert("_BUILD", makeString(""));
+
+            } else {
+                throw std::runtime_error("createSummary was not designed to use" + lce::consoleToStr(console));
             }
 
             summary.insert("_SP_Oldest", makeInt(saveProject.oldestVersion()));

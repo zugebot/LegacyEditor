@@ -39,9 +39,8 @@ namespace editor {
         }
 
         saveProject.setNewGen(true);
-        if (fs::path thumb = m_filePath.parent_path() / "THUMB";
-            saveProject.m_stateSettings.console() == lce::CONSOLE::SWITCH
-            && fs::exists(thumb)) {
+        if (lce::is_switch_family(saveProject.m_stateSettings.console())
+            && fs::exists(m_filePath.parent_path() / "THUMB")) {
             saveProject.m_stateSettings.setConsole(lce::CONSOLE::PS4);
         }
 

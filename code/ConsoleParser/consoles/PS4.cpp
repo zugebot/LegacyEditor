@@ -265,7 +265,7 @@ namespace editor {
         SFOManager sfo;
         sfo.setMagic(eSFO_MAGIC::PS3_HDD);
 
-        if (false /*|| saveProject.m_stateSettings.console() == lce::CONSOLE::SHADPS4*/) {
+        if (saveProject.m_stateSettings.console() == lce::CONSOLE::SHADPS4) {
             // Simplified SFO for SHADPS4?
             sfo.setLexicographic(false);
             std::string data(8, '\0');
@@ -278,11 +278,15 @@ namespace editor {
             sfo.addParam(eSFO_FMT::UTF8_NORMAL, "TITLE_ID", pc);
             std::string savedata_blocks("\x00\x02\x00\x00\x00\x00\x00\x00", 8);
             sfo.addParam(eSFO_FMT::UTF8_SPECIAL, "SAVEDATA_BLOCKS", savedata_blocks);
-        } else {
+
+        } else if (saveProject.m_stateSettings.console() == lce::CONSOLE::PS4) {
             // Regular PS4 flow
             auto accountAttr = other.getAttribute("ACCOUNT_ID");
             if (!accountAttr) throw std::runtime_error("Input param.sfo missing ACCOUNT_ID");
-            sfo.addParam(eSFO_FMT::UTF8_SPECIAL, "ACCOUNT_ID", accountAttr->toString());
+            auto accountVal = std::get<std::vector<uint8_t>>(accountAttr.value().myValue);
+            std::string accountIdStr = std::string((char*)accountVal.data(), accountVal.size());
+            std::cout << "AccountID: \"" << accountIdStr << "\" Size: " << accountIdStr.size() << "\n";
+            sfo.addParam(eSFO_FMT::UTF8_SPECIAL, "ACCOUNT_ID", accountIdStr);
 
             sfo.addParam(eSFO_FMT::INT, "ATTRIBUTE", "0");
             sfo.addParam(eSFO_FMT::UTF8_NORMAL, "CATEGORY", "sd");
@@ -332,6 +336,9 @@ namespace editor {
             sfo.addParam(eSFO_FMT::INT, "SAVEDATA_LIST_PARAM", "0");
             sfo.addParam(eSFO_FMT::UTF8_NORMAL, "SUBTITLE", wStringToString(saveProject.m_displayMetadata.worldName));
             sfo.addParam(eSFO_FMT::UTF8_NORMAL, "TITLE_ID", pc);
+        } else {
+            throw std::runtime_error("PS4::writeParamSfo was given lce::CONSOLE::" +
+                                     lce::consoleToStr(saveProject.m_stateSettings.console()));
         }
 
         sfo.saveToFile(sfoPath.string());
@@ -363,12 +370,29 @@ namespace editor {
         // sce_sys/sce_icon0png1
         //      116736 bytes of null
 
+        enum class eFolderType {
+            ShadPS4,
+            DiscordBot,
+            Apollo
+        };
 
-        std::string dateTimeStr = getCurrentDateTimeString();
-        std::string strPCode = PS4Mapper.toString(
-                theSettings.m_productCodes.getPS4());
-        auto makePS4Folder = [&](int digit) {
-            return strPCode + "-" + dateTimeStr + "." + std::to_string(digit);
+
+        std::string dateTimeStr = "250830223719"; // getCurrentDateTimeString();
+        eFolderType folderType = eFolderType::ShadPS4;
+
+
+        std::string strPCode = PS4Mapper.toString(theSettings.m_productCodes.getPS4());
+        auto makePS4Folder = [&](int digit, eFolderType folderType) {
+
+            if (folderType == eFolderType::ShadPS4) {
+                return strPCode + "-" + dateTimeStr + "." + std::to_string(digit);
+
+            } else if (folderType == eFolderType::DiscordBot) {
+                return "PS4-" + strPCode + "-" + strPCode + "-" + dateTimeStr + "." + std::to_string(digit) + "/savedata0";
+
+            } else {
+                return strPCode + "-" + dateTimeStr + "." + std::to_string(digit);
+            }
         };
 
 
@@ -379,7 +403,7 @@ namespace editor {
         // folder0
         {
             // FOLDER CREATION
-            auto folder0Name = makePS4Folder(0);
+            auto folder0Name = makePS4Folder(0, folderType);
             auto folder0 = root / folder0Name;
             fs::create_directories(folder0);
 
@@ -430,7 +454,7 @@ namespace editor {
             // move files to correct folders
             int folderNum = 1;
             for (std::vector<LCEFile*>& splitSaveVec : splitSavesPtrVec) {
-                auto folderNName = makePS4Folder(folderNum);
+                auto folderNName = makePS4Folder(folderNum, folderType);
                 auto folderN = root / folderNName;
                 fs::create_directories(folderN);
                 placeSceSysFiles(saveProject, folderN, strPCode, folderNName, fileInfoPath, theSettings);

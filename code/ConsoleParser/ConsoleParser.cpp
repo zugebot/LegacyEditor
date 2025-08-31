@@ -30,11 +30,11 @@ namespace editor {
             Buffer buffer = DataReader::readFile(filePath.value());
             saveProject.m_displayMetadata.read(buffer, m_console);
 
-        } else if (m_console == lce::CONSOLE::VITA && fs::exists(cachePathVita)) {
+        } else if (lce::is_psvita_family(m_console) && fs::exists(cachePathVita)) {
             std::string folderName = m_filePath.parent_path().filename().string();
             saveProject.m_displayMetadata.readCacheFile(cachePathVita, folderName);
 
-        } else if (m_console == lce::CONSOLE::XBOX360 && !saveProject.m_stateSettings.isXbox360Bin()) {
+        } else if (lce::is_xbox360_family(m_console) && !saveProject.m_stateSettings.isXbox360Bin()) {
             defaultFileInfo(saveProject);
         } else {
             printf("[!] DisplayMetadata file not found, setting defaulted data.\n");
