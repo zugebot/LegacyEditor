@@ -21,28 +21,66 @@ std::string EXE_CURRENT_PATH;
 using namespace cmn;
 
 
+
+static inline std::string_view trim(std::string_view s) {
+    auto b = s.find_first_not_of(" \t\r\n");
+    if (b == std::string_view::npos) return {};
+    auto e = s.find_last_not_of(" \t\r\n");
+    return s.substr(b, e - b + 1);
+}
+
+static bool getline_prompt(std::string& out, const std::string& prompt) {
+    log(eLog::input, "{}", prompt);
+    if (!std::getline(std::cin, out)) {
+        // EOF (Ctrl+Z/Ctrl+D) or stream closed
+        log(eLog::error, "Input aborted.\n");
+        return false;
+    }
+    return true;
+}
+
+static bool parse_int_strict(std::string_view s, int& value) {
+    s = trim(s);
+    if (s.empty()) return false;
+    // from_chars doesn’t skip whitespace; that’s why we trimmed.
+    const char* first = s.data();
+    const char* last  = s.data() + s.size();
+    auto [ptr, ec] = std::from_chars(first, last, value);
+    return (ec == std::errc{} && ptr == last);
+}
+
+static bool parse_yes_no(std::string_view s, bool& out) {
+    s = trim(s);
+    if (s.empty()) return false;
+    // accept y/n/yes/no/1/0/true/false (case-insensitive)
+    std::string tmp(s);
+    std::transform(tmp.begin(), tmp.end(), tmp.begin(), [](unsigned char c){ return std::tolower(c); });
+    if (tmp == "y" || tmp == "yes" || tmp == "1" || tmp == "true") { out = true;  return true; }
+    if (tmp == "n" || tmp == "no"  || tmp == "0" || tmp == "false"){ out = false; return true; }
+    return false;
+}
+
+
 inline void consumeEnter(const char* prompt = nullptr) {
     if (prompt) { std::cout << prompt << std::flush; }
-    std::cin.clear();
-
-    // If a newline is already buffered from a previous '>>', eat it.
-    if (std::cin.peek() == '\n') {
-        std::cin.get();
+    // Eat any leftover chars on the current line, then wait for a fresh Enter.
+    std::string dummy;
+    if (std::cin.peek() != '\n') {
+        std::getline(std::cin, dummy); // finish current line if partial
     }
-
-    // Now wait for exactly one Enter press.
-    (void)std::cin.get(); // discard char; do NOT print it
+    std::getline(std::cin, dummy);     // wait for user to press Enter
 }
 
 
 
+
 static int getNumberFromUser(const std::string& prompt, int min, int max) {
-    int selection;
-    while (true) {
-        log(eLog::input, "{}", prompt);
-        std::cin >> selection;
-        if (selection >= min && selection <= max) {
-            return selection;
+    for (;;) {
+        std::string line;
+        if (!getline_prompt(line, prompt)) std::exit(1);
+        int v = 0;
+        if (parse_int_strict(line, v) && v >= min && v <= max) {
+            return v;
         }
         log(eLog::error, "Invalid selection. Try again.\n");
     }
@@ -50,11 +88,13 @@ static int getNumberFromUser(const std::string& prompt, int min, int max) {
 
 
 void handleRemovalOption(const std::string& prompt, bool& setting) {
-    log(eLog::input, "{} (y/n): ", prompt);
-    char choice = 'y';
-    std::cin >> choice;
-    consumeEnter();
-    setting = (choice == 'y' || choice == 'Y');
+    for (;;) {
+        std::string line;
+        if (!getline_prompt(line, cmn::fmt("{} (y/n): ", prompt))) std::exit(1);
+        bool yn = false;
+        if (parse_yes_no(line, yn)) { setting = yn; return; }
+        log(eLog::error, "Please enter 'y' or 'n'.\n");
+    }
 }
 
 
@@ -411,33 +451,63 @@ int main(int argc, char* argv[]) {
             editor::ePS4ProductCode code = selectProductCode(editor::PS4Mapper, "PS4");
             writeSettings.m_productCodes.setPS4(code);
 
-            std::cout << "\n";
-            log("You must provide the file path to a PARAM.SFO file that comes from a save file,\n"
-                "    from BOTH the same console AND account. You can find it any \"sce_sys\" folder.\n"
-                "    Please enter the full path to that file here. Don't put \" in it.\n");
-            log("Example:\n"
-                "C:\\Users\\jerrin\\jerrins_and_tiaras\\PS4-CUSA00744-1CUSA00744-210322225338.1\\savedata0\\sce_sys\\param.sfo\n"
-                "\n");
-            log(eLog::input, "Path: ");
 
-            std::string paramPath;
-            std::cin >> paramPath;
-            std::cout << "\n";
+            if (consoleOutput == lce::CONSOLE::PS4) {
+                auto readExistingPath = [&](const std::string& prompt) -> std::string {
+                    for (;;) {
+                        std::string pathIn;
+                        if (!getline_prompt(pathIn, prompt)) std::exit(1);
+                        std::string s(trim(pathIn));
+                        // strip paired surrounding quotes if present
+                        if (s.size() >= 2 && s.front() == '"' && s.back() == '"') {
+                            s = s.substr(1, s.size() - 2);
+                        }
+                        // empty path
+                        if (s.empty()) {
+                            log(eLog::error, "Empty path. Try again.\n");
+                            continue;
+                        }
+                        // file does not exist
+                        if (!fs::exists(s)) {
+                            log(eLog::error, "File does not exist:\n{}\n", fs::path(s).make_preferred().string());
+                            continue;
+                        }
+                        // sfo does not have a "PARAMS" attribute
+                        try {
+                            SFOManager sfo(s);
+                            auto attr = sfo.getAttribute("PARAMS");
+                            if (!attr.has_value()) {
+                                log(eLog::error, "File does not contain the \"PARAMS\" attribute:\n{}\n",
+                                    fs::path(s).make_preferred().string());
+                                continue;
+                            }
+                        }
+                        // catch (const SFOManager::parse_error& e) {
+                        //     log(eLog::error, "param.sfo parse error:\n{}\nReason: {}\n",
+                        //         fs::path(s).make_preferred().string(), e.what());
+                        //     continue;
+                        // }
+                        catch (const std::exception& e) { // fallback for anything std::exception-based
+                            log(eLog::error, "Failed to read param.sfo:\n{}\nReason: {}\n",
+                                fs::path(s).make_preferred().string(), e.what());
+                            continue;
+                        }
 
-            // remove spaces and " from path
-            if (auto first = paramPath.find_first_not_of(" \""); first != std::string::npos) {
-                paramPath.erase(0, first);
-                paramPath.erase(paramPath.find_last_not_of(" \"") + 1);
-            } else {
-                paramPath.clear();
+                        return s;
+                    }
+                };
+
+                std::cout << "\n";
+                log("You must provide the file path to a PARAM.SFO file that comes from a save file,\n"
+                    "    from BOTH the same console AND account. You can find it any \"sce_sys\" folder.\n"
+                    "    Please enter the full path to that file here. Don't put \" in it.\n");
+                log("Example:\n"
+                    "C:\\Users\\jerrin\\jerrins_and_tiaras\\PS4-CUSA00744-1CUSA00744-210322225338.1\\savedata0\\sce_sys\\param.sfo\n\n");
+
+                writeSettings.m_paramSfoToReplace = readExistingPath("Path: ");
+                std::cout << "\n";
             }
 
-            if (!fs::exists(paramPath)) {
-                log(eLog::error, "File does not exist: \n{}\n", fs::path(paramPath).make_preferred().string());
-                return -1;
-            }
-
-            writeSettings.m_paramSfoToReplace = paramPath;
 
         }
 
@@ -554,7 +624,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << "\n";
-    log(eLog::input, "Press Ctrl + C to exit...\n");
-    int x; std::cin >> x;
+    log(eLog::input, "Press ENTER to exit.\n");
+    consumeEnter();
     return 0;
 }

@@ -23,6 +23,46 @@ int main(int argc, char* argv[]) {
     enableAnsiColors();
 
 
+
+    fs::path sfoOriginalPath1 = "C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\out\\CUSA00265-250830223719.0\\sce_sys\\keystone";
+    SFOManager sfoOriginal1(sfoOriginalPath1.string());
+
+
+    { // print args of sfoOriginal
+        std::cout << "File Path:" << sfoOriginalPath1 << "\n";
+        auto attrs1 = sfoOriginal1.getAttributes();
+        for (auto& attr: attrs1) {
+            // if (attr.myKey == "PARAMS") continue;
+            std::cout << attr.toString() << std::endl;
+        }
+    }
+
+    std::cout << "\n\n";
+
+    fs::path sfoOriginalPath2 = "C:\\Users\\jerrin\\Desktop\\hysick\\9_6_2025\\PS4_CUSA00265CUSA00265-250906185921.0\\savedata0\\sce_sys\\param.sfo";
+    fs::path sfoOriginalPath3 = "C:\\Users\\jerrin\\Desktop\\hysick\\9_6_2025\\PS4_CUSA00265CUSA00265-250906185921.1\\savedata0\\sce_sys\\param.sfo";
+    SFOManager sfoOriginal2(sfoOriginalPath2.string());
+
+
+    { // print args of sfoOriginal
+        std::cout << "File Path:" << sfoOriginalPath2 << "\n";
+        auto attrs1 = sfoOriginal2.getAttributes();
+        for (auto& attr: attrs1) {
+            // if (attr.myKey == "PARAMS") continue;
+            std::cout << attr.toString() << std::endl;
+        }
+    }
+
+    std::cout << "\n\n";
+
+    printAttributeHexSideBySideColored(sfoOriginal1, sfoOriginal2);
+
+
+    return 0;
+
+
+
+
     fs::path sfoOriginalPath = R"(C:\Users\jerrin\CLionProjects\LegacyEditor\savefiles\PS4\jerrins_and_tiaras\PS4-CUSA00744-2CUSA00744-210322225338.0\savedata0\sce_sys\param.sfo)";
     SFOManager sfoOriginal(sfoOriginalPath.string());
 
@@ -33,7 +73,6 @@ int main(int argc, char* argv[]) {
             std::cout << attr.toString() << std::endl;
         }
     }
-
 
 
 
