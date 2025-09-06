@@ -307,7 +307,7 @@ int main(int argc, char* argv[]) {
     log(eLog::detail,
         "Supports reading  [ Xbox360, PS3, RPCS3, PSVITA, PS4, ShadPs4, WiiU/Cemu, Switch, Windurango ]\n");
     log(eLog::detail,
-        "Supports writing  [ -------  ---  RPCS3, PSVITA, ---, ShadPs4, WiiU/Cemu  Switch, ---------- ]\n\n");
+        "Supports writing  [ -------  ---  RPCS3, PSVITA, PS4, ShadPs4, WiiU/Cemu  Switch, ---------- ]\n\n");
 
     ConverterConfig config;
     config.read("conversion.json");
