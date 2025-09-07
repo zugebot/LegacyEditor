@@ -34,16 +34,16 @@ It helps me develop faster 🙂
 
 | Version           | Reading From | Writing To |
 |-------------------|--------------|------------|
-| Pre-Release       | ✅            | ❌          |
-| Pistons           | ✅            | ❌          |
-| Generation        | ✅            | ❌          |
-| Adventure         | ✅            | ❌          |
-| Potions           | ✅            | ✅          |
-| Horse             | ✅            | ❌          |
-| Bountiful         | ✅            | ❌          |
-| Elytra            | ✅            | ✅          |
-| Aquatic           | ✅            | ✅          |
-| Village & Pillage | ✅            | ❌          |
+| Pre-Release       | ✔️           | ❌          |
+| Pistons           | ✔️           | ❌          |
+| Generation        | ✔️           | ❌          |
+| Adventure         | ✔️           | ❌          |
+| Potions           | ✔️           | ✔️         |
+| Horse             | ✔️           | ❌          |
+| Bountiful         | ✔️           | ❌          |
+| Elytra            | ✔️           | ✔️         |
+| Aquatic           | ✔️           | ✔️         |
+| Village & Pillage | ✔️           | ❌          |
 
 More coming soon!
 

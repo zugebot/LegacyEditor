@@ -32,6 +32,10 @@ namespace codec {
     }
 
 
+    static u32 RLE_safe_compress_size(c_u32 sizeIn) {
+        return sizeIn + ((sizeIn + 1) / 2);
+    }
+
     static void RLE_compress(u8* dataOut, u32* sizeOut, c_u8* dataIn, c_u32 sizeIn) {
         u32 indexOut = 0;
         u32 indexIn = 0;
