@@ -183,7 +183,7 @@ public:
         auto it = conversionOutput.paths.find(consoleStr);
         if (it != conversionOutput.paths.end()) {
             const OutPath& pathConfig = it->second;
-            if (!pathConfig.useCustomPath && !pathConfig.conversionPath.empty()) {
+            if (pathConfig.useCustomPath && !pathConfig.conversionPath.empty()) {
                 return pathConfig.conversionPath;
             }
         }

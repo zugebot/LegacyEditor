@@ -49,6 +49,11 @@ public:
 
    SFOManager();
 
+   void loadFile(std::string theFilePath) {
+       m_filePath = theFilePath;
+       loadFile();
+   }
+
    ~SFOManager() {
        cleanExit();
    }
@@ -119,7 +124,6 @@ private:
    } myHeader;
 
    void loadFile();
-
 
    long int getPS4PkgOffset();
 

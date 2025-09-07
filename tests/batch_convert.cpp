@@ -11,15 +11,8 @@
 #include "code/include.hpp"
 #include "common/Config.hpp"
 
-#include "code/Impl/CacheBinManager.hpp"
-#include "tinf/tinf.h"
-#include "zlib-1.2.12/zlib.h"
-
-
-
 std::string EXE_CURRENT_PATH;
 using namespace cmn;
-
 
 
 static inline std::string_view trim(std::string_view s) {
@@ -44,7 +37,7 @@ static bool parse_int_strict(std::string_view s, int& value) {
     if (s.empty()) return false;
     // from_chars doesn’t skip whitespace; that’s why we trimmed.
     const char* first = s.data();
-    const char* last  = s.data() + s.size();
+    const char* last = s.data() + s.size();
     auto [ptr, ec] = std::from_chars(first, last, value);
     return (ec == std::errc{} && ptr == last);
 }
@@ -54,9 +47,15 @@ static bool parse_yes_no(std::string_view s, bool& out) {
     if (s.empty()) return false;
     // accept y/n/yes/no/1/0/true/false (case-insensitive)
     std::string tmp(s);
-    std::transform(tmp.begin(), tmp.end(), tmp.begin(), [](unsigned char c){ return std::tolower(c); });
-    if (tmp == "y" || tmp == "yes" || tmp == "1" || tmp == "true") { out = true;  return true; }
-    if (tmp == "n" || tmp == "no"  || tmp == "0" || tmp == "false"){ out = false; return true; }
+    std::transform(tmp.begin(), tmp.end(), tmp.begin(), [](unsigned char c) { return std::tolower(c); });
+    if (tmp == "y" || tmp == "yes" || tmp == "1" || tmp == "true") {
+        out = true;
+        return true;
+    }
+    if (tmp == "n" || tmp == "no" || tmp == "0" || tmp == "false") {
+        out = false;
+        return true;
+    }
     return false;
 }
 
@@ -66,12 +65,10 @@ inline void consumeEnter(const char* prompt = nullptr) {
     // Eat any leftover chars on the current line, then wait for a fresh Enter.
     std::string dummy;
     if (std::cin.peek() != '\n') {
-        std::getline(std::cin, dummy); // finish current line if partial
+        std::getline(std::cin, dummy); ///< finish current line if partial
     }
-    std::getline(std::cin, dummy);     // wait for user to press Enter
+    std::getline(std::cin, dummy); ///< wait for user to press Enter
 }
-
-
 
 
 static int getNumberFromUser(const std::string& prompt, int min, int max) {
@@ -92,11 +89,13 @@ void handleRemovalOption(const std::string& prompt, bool& setting) {
         std::string line;
         if (!getline_prompt(line, cmn::fmt("{} (y/n): ", prompt))) std::exit(1);
         bool yn = false;
-        if (parse_yes_no(line, yn)) { setting = yn; return; }
+        if (parse_yes_no(line, yn)) {
+            setting = yn;
+            return;
+        }
         log(eLog::error, "Please enter 'y' or 'n'.\n");
     }
 }
-
 
 
 template<typename EnumType>
@@ -118,31 +117,28 @@ EnumType selectProductCode(const editor::EnumMapper<EnumType>& mapper,
 }
 
 
-static lce::CONSOLE selectOutputConsoleInteractive()
-{
+static lce::CONSOLE selectOutputConsoleInteractive() {
     struct Option {
         lce::CONSOLE id;
-        const char*  label;  // nice display name
-        const char*  hint;   // optional note
+        const char* label; ///< nice display name
+        const char* hint;  ///< optional note
     };
 
     // Keep this list in sync with “Supports writing …”
     static const Option kWritableOptions[] = {
-            { lce::CONSOLE::WIIU,    "WiiU/Cemu", nullptr },
-            { lce::CONSOLE::VITA,    "PS Vita",   nullptr },
-            { lce::CONSOLE::RPCS3,   "Rpcs3",     nullptr },
-            { lce::CONSOLE::PS4,     "Ps4",       nullptr },
-            { lce::CONSOLE::SHADPS4, "ShadPs4",   nullptr },
-            { lce::CONSOLE::SWITCH,  "Switch",    nullptr },
-            // If/when native PS4 write is supported, uncomment this:
-            // { lce::CONSOLE::PS4,      "PS4",       "Native PS4 format"   },
+            {lce::CONSOLE::WIIU, "WiiU/Cemu", nullptr},
+            {lce::CONSOLE::VITA, "PS Vita", nullptr},
+            {lce::CONSOLE::RPCS3, "Rpcs3", nullptr},
+            {lce::CONSOLE::PS4, "Ps4", nullptr},
+            {lce::CONSOLE::SHADPS4, "ShadPs4", nullptr},
+            {lce::CONSOLE::SWITCH, "Switch", nullptr},
     };
 
     log("Select a target console (supported for writing):\n");
     for (int i = 0; i < static_cast<int>(std::size(kWritableOptions)); ++i) {
         const auto& o = kWritableOptions[i];
         std::cout << "  [" << (i + 1) << "] " << o.label;
-                  // << " (" << lce::consoleToStr(o.id) << ')';
+        // << " (" << lce::consoleToStr(o.id) << ')';
         if (o.hint) std::cout << " - " << o.hint;
         std::cout << "\n";
     }
@@ -163,16 +159,14 @@ static const editor::sch::Schematic& selectSchemaVersionInteractive() {
         const char* label;
     };
     static const Opt opts[] = {
-            {&editor::sch::Potions,      "(TU12)"},
+            {&editor::sch::Potions, "(TU12)"},
             {&editor::sch::ElytraLatest, "(TU68)"},
-            {&editor::sch::AquaticTU69,  "(TU69)"},
+            {&editor::sch::AquaticTU69, "(TU69)"},
     };
 
     log("Select a schema version:\n");
     for (int i = 0; i < static_cast<int>(std::size(opts)); ++i) {
-        std::cout << "  [" << (i + 1) << "] " <<
-                opts[i].label << ", " <<
-                opts[i].schema->display_name << "\n";
+        std::cout << "  [" << (i + 1) << "] " << opts[i].label << ", " << opts[i].schema->display_name << "\n";
     }
     std::cout << std::flush;
 
@@ -190,124 +184,22 @@ int main(int argc, char* argv[]) {
     force_utf8_console();
 #endif
 
-    /*
-    std::string m_name = "correct.dat";
-    fs::path m_filePath = R"(C:\Users\jerrin\AppData\Roaming\yuzu\nand\user\save\0000000000000000\D5FA36C00E9BAF9DB378592F82847B9E\01006BD001E06000)";
-
-
-    editor::WriteSettings settings;
-    settings.setInFolderPath(m_filePath);
-
-    editor::SaveProject proj1;
-    proj1.read(m_filePath / m_name);
-    settings.setConsole(lce::CONSOLE::WIIU);
-    proj1.write(settings);
-
-    {
-        std::string fileIn = m_name;
-        Buffer src;
-        DataReader reader;
-
-        try {
-            src = DataReader::readFile(m_filePath / fileIn);
-            reader = DataReader(src, Endian::Little);
-        } catch (const std::exception& e) {
-            return printf_err(FILE_ERROR, ERROR_4, m_filePath.string().c_str());
-        }
-
-        u32 final_size = reader.peek_at<u32>(4);
-
-        Buffer dest;
-        if (!dest.allocate(final_size)) {
-            return printf_err(MALLOC_FAILED, ERROR_1, final_size);
-        }
-
-        int status = tinf_zlib_uncompress(dest.data(), dest.size_ptr(), src.data() + 8, src.size() - 8);
-        if (status != 0) {
-            return DECOMPRESS;
-        }
-        DataWriter::writeFile(m_filePath / (fileIn + "_decomp"), dest.span());
-    }
-
-    Sleep(5000);
-
-    editor::SaveProject proj2;
-    settings.setConsole(lce::CONSOLE::SWITCH);
-    proj2.read(m_filePath / settings.m_fileNameOut);
-    proj2.write(settings);
-
-
-    {
-        std::string fileIn = settings.m_fileNameOut;
-        Buffer src;
-        DataReader reader;
-
-        try {
-            src = DataReader::readFile(m_filePath / fileIn);
-            reader = DataReader(src, Endian::Little);
-        } catch (const std::exception& e) {
-            return printf_err(FILE_ERROR, ERROR_4, m_filePath.string().c_str());
-        }
-
-        u32 final_size = reader.peek_at<u32>(4);
-
-        Buffer dest;
-        if (!dest.allocate(final_size)) {
-            return printf_err(MALLOC_FAILED, ERROR_1, final_size);
-        }
-
-        int status = tinf_zlib_uncompress(dest.data(), dest.size_ptr(), src.data() + 8, src.size() - 8);
-        if (status != 0) {
-            return DECOMPRESS;
-        }
-        DataWriter::writeFile(m_filePath / (fileIn + "_decomp"), dest.span());
-    }*/
-    /*
-    // status = editor::FileListing::readListing(saveProject, dest, m_console);
-    // if (status != 0) {
-    //     return -1;
-    // }
-    // saveProject.setNewGen(true);
-    // if (fs::path thumb = m_filePath.parent_path() / "THUMB";
-    //     saveProject.m_stateSettings.console() == lce::CONSOLE::SWITCH
-    //     && fs::exists(thumb)) {
-    //     saveProject.m_stateSettings.setConsole(lce::CONSOLE::PS4);
-    // }
-
-
-    // return 0;
-
-
-
-    // fs::path cachePath = "E:\\Emulators\\Vita3K\\LOL\\ux0\\user\\00\\savedata\\PCSE00491\\CACHE.bin";
-    // CacheBinManager manager;
-    // manager.load(cachePath);
-    */
-    /*
-    std::string entitiesFile = "C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\dump\\250524034012_ps4__0\\DIM1\\entities.dat";
-    Buffer buffer = DataReader::readFile(entitiesFile);
-    DataReader reader(buffer.span());
-
-    int count = reader.read<i32>();
-    std::vector<NBTList> nbtList(count);
-    for (int i = 0; i < count; i++) {
-        int x = reader.read<i32>();
-        int z = reader.read<i32>();
-        NBTBase nbt = NBTBase::read(reader);
-        nbtList[i] = nbt.get<NBTCompound>().extract("Entities")
-                        .value_or(makeList(eNBT::COMPOUND)).get<NBTList>();
-    }
-     */
-
     std::cout << "\n";
     log(eLog::detail,
         "Find the project here! https://github.com/zugebot/LegacyEditor\n");
     log(eLog::detail,
-        "Version: 1.3.1\n");
+        "If you have any questions, contact \"jerrinth\" on discord.\n");
+    log(eLog::detail,
+        "More information can be found here: jerrin.org/links/lceditdoc/\n");
+
+    log(eLog::detail,
+        "Version: 1.4.0\n");
     log(eLog::detail,
         "Supports reading  [ Xbox360, PS3, RPCS3, PSVITA, PS4, ShadPs4, WiiU/Cemu, Switch, Windurango ]\n");
     log(eLog::detail,
         "Supports writing  [ -------  ---  RPCS3, PSVITA, PS4, ShadPs4, WiiU/Cemu  Switch, ---------- ]\n\n");
+    log(eLog::info,
+        "Note: Saves *MADE* by ShadPS4 are very corrupt, you cannot convert them until that emulator is fixed.\n\n");
 
     ConverterConfig config;
     config.read("conversion.json");
@@ -326,16 +218,37 @@ int main(int argc, char* argv[]) {
 
     } else {
         if (argc < 2) {
-            log(eLog::error, "Must supply at least one save file to convert.\n");
-            log(eLog::info, "Drag & drop the GAMEDATA/SAVEGAME/.dat/.bin on the executable or pass as arguments.\n");
-            log(eLog::info, "More information can be found here: jerrin.org/links/lceditdoc/\n");
-            log(eLog::info, "Or contact \"jerrinth\" on discord.\n");
-            log(eLog::input, "Press ENTER to exit.\n");
-            consumeEnter();
-            return -1;
-        }
-        for (int i = 1; i < argc; i++) {
-            saveFileArgs.emplace_back(argv[i]);
+            log(eLog::info, "You can drag & drop the GAMEDATA/SAVEGAME/.dat/.bin on the executable or pass as arguments.\n");
+
+
+            auto readExistingPath = [&](const std::string& prompt) -> std::string {
+                for (;;) {
+                    std::string pathIn;
+                    if (!getline_prompt(pathIn, prompt)) std::exit(1);
+                    std::string s(trim(pathIn));
+                    // strip paired surrounding quotes if present
+                    if (s.size() >= 2 && s.front() == '"' && s.back() == '"') {
+                        s = s.substr(1, s.size() - 2);
+                    }
+                    // empty path
+                    if (s.empty()) {
+                        log(eLog::error, "Empty path. Try again.\n");
+                        continue;
+                    }
+                    // file does not exist
+                    if (!fs::exists(s)) {
+                        log(eLog::error, "File does not exist:\n{}\n", fs::path(s).make_preferred().string());
+                        continue;
+                    }
+                    return s;
+                }
+            };
+            saveFileArgs.emplace_back(readExistingPath("File Path:"));
+
+        } else {
+            for (int i = 1; i < argc; i++) {
+                saveFileArgs.emplace_back(argv[i]);
+            }
         }
     }
 
@@ -343,7 +256,6 @@ int main(int argc, char* argv[]) {
     std::reference_wrapper<const editor::sch::Schematic>
             chosenSchema = std::cref(editor::sch::AquaticTU69);
     editor::WriteSettings writeSettings(chosenSchema);
-
 
 
     if (config.conversionOutput.autoOutput) {
@@ -388,7 +300,7 @@ int main(int argc, char* argv[]) {
             // might be important to ensure it's a valid param.sfo
             writeSettings.m_paramSfoToReplace = config.conversionInput.autoSampleParamSFO;
             if (writeSettings.m_paramSfoToReplace.empty()) {
-                log(eLog::error, "Invalid input \"conversionOutput.autoSampleParamSFO\"\n");
+                log(eLog::error, "Invalid input \"conversionInput.autoSampleParamSFO\"\n");
                 return -1;
             }
 
@@ -399,9 +311,8 @@ int main(int argc, char* argv[]) {
                 log(eLog::input, "Using auto output: Ps4 P.C.=\"{}\"\n", optStr);
             } else {
                 log(eLog::error, "Invalid input \"conversionOutput.autoPs4ProductCode\"\n");
+                return -1;
             }
-
-
         }
 
         // assign variables
@@ -414,27 +325,43 @@ int main(int argc, char* argv[]) {
         writeSettings.removeRegionsEnd = vars.removeRegionsEnd;
         writeSettings.removeEntities = vars.removeEntitiesDat;
 
-    // user input
+        // user input
     } else {
 
         // saves detected
         log("Saves Detected:\n");
         int count = 0;
-        for (const auto& arg: saveFileArgs) {
-            count++;
-            auto consoleDetected = editor::SaveProject::detectConsole(arg);
-            std::cout << "  [" << count << ", " + lce::consoleToStr(consoleDetected) << "] "
-                      << arg << "\n";
+        for (auto it = saveFileArgs.begin(); it != saveFileArgs.end();) {
+            try {
+                const auto& arg = *it;
+                auto consoleDetected = editor::SaveProject::detectConsole(arg);
+
+                ++count; // count only valid entries we print
+                std::cout << "  [" << count << ", " << lce::consoleToStr(consoleDetected) << "] "
+                          << arg << "\n";
+
+                ++it; // advance normally on success
+            } catch (const std::exception& e) {
+                std::cout << "  [" << count << "] Error: " << e.what() << "\n    (not converting: " << *it << ")\n";
+                it = saveFileArgs.erase(it);
+            }
         }
-        std::cout << "\n" << std::flush;
+        if (saveFileArgs.empty()) {
+            std::cout << "\n";
+            log(eLog::input, "Press ENTER to exit.\n");
+            consumeEnter();
+            return -1;
+        }
+
+
+        std::cout << "\n"
+                  << std::flush;
 
         // console
         consoleOutput = selectOutputConsoleInteractive();
 
         // schema
         chosenSchema = selectSchemaVersionInteractive();
-
-
         writeSettings.setSchema(chosenSchema);
 
         // console specific questions
@@ -507,8 +434,6 @@ int main(int argc, char* argv[]) {
                 writeSettings.m_paramSfoToReplace = readExistingPath("Path: ");
                 std::cout << "\n";
             }
-
-
         }
 
         // assign variables
@@ -529,7 +454,6 @@ int main(int argc, char* argv[]) {
     }
     writeSettings.m_schematic.setConsole(consoleOutput);
     writeSettings.setInFolderPath(outputPath);
-
 
 
     // iterate over all the files they gave
@@ -553,16 +477,9 @@ int main(int argc, char* argv[]) {
         }
         log(eLog::time, "Time to load: {} sec\n", readTimer.getSeconds());
 
-        // saveProject.printDetails();
-
-        (void) saveProject.dumpToFolder("before_ps4");
-
-        std::set<lce::FILETYPE> items = {lce::FILETYPE::ENTITY_OVERWORLD};
-        for (auto file : saveProject.view_of(items)) {
-            Buffer buf = file.getBuffer();
-            DataWriter::writeFile("C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\out\\entities_working.dat", buf.span());
+        if (config.debug) {
+            (void) saveProject.dumpToFolder("before_conversion");
         }
-
 
         const int statusProcess = editor::preprocess(saveProject, saveProject.m_stateSettings, writeSettings);
         if (statusProcess != 0) {
@@ -574,26 +491,22 @@ int main(int argc, char* argv[]) {
 
         saveProject.printDetails();
 
-        editor::convert(saveProject, writeSettings);
 
-        saveProject.printDetails();
-
-        for (auto file : saveProject.view_of(items)) {
-            Buffer buf = file.getBuffer();
-            DataWriter::writeFile("C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\out\\entities_broken.dat", buf.span());
+        try {
+            Timer convertTimer;
+            editor::convert(saveProject, writeSettings);
+            log(eLog::time, "Time to convert: {} sec\n", convertTimer.getSeconds());
+        } catch (std::exception& e) {
+            std::cout << "Error: " << e.what() << "\n";
+            break;
         }
 
-
-        
-        saveProject.m_displayMetadata.extraData = "0000000"; // "78000A8"; // 125829288;
-        saveProject.m_displayMetadata.worldName = L"Entities?";
-
-        std::cout << consoleToStr(saveProject.m_stateSettings.console()) << std::endl;
-        (void) saveProject.dumpToFolder("");
-
-
         saveProject.printDetails();
 
+        if (config.debug) {
+            (void) saveProject.dumpToFolder("after_conversion");
+            saveProject.printDetails();
+        }
 
         Timer writeTimer;
         const int statusOut = saveProject.write(writeSettings);
@@ -605,17 +518,6 @@ int main(int argc, char* argv[]) {
 
         saveProject.cleanup();
 
-
-#ifdef DEBUG
-        std::cout << "[*] level.dat: ";
-        if (auto* level = saveProject.m_fileListing.findFile(lce::FILETYPE::LEVEL))
-            DataWriter::writeFile("C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\orig_level.dat", level.m_data.span());
-        DataReader reader(level.m_data.span());
-        NBTBase nbt = NBTBase::read(reader);
-        nbt.print();
-        nbt.writeFile("C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\level.dat");
-    }
-#endif
 
         std::cout << "\n";
         log(eLog::info, "Conversion Paths:\n");

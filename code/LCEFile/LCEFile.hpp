@@ -29,13 +29,13 @@ namespace editor {
 
         LCEFile(lce::CONSOLE consoleIn,
                 c_u64 timestampIn,
-                fs::path origFolderPathIn,
-                fs::path tempFolderPathIn,
+                const fs::path& origFolderPathIn,
+                const fs::path& tempFolderPathIn,
                 const std::string& fileNameIn) :
               m_timestamp(timestampIn),
               m_console(consoleIn),
-              m_origFolderPath(std::move(origFolderPathIn)),
-              m_tempFolderPath(std::move(tempFolderPathIn)),
+              m_origFolderPath(origFolderPathIn),
+              m_tempFolderPath(tempFolderPathIn),
               m_fileName(fileNameIn) {
             initialize(fileNameIn);
         }

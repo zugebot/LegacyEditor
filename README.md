@@ -27,7 +27,7 @@ It helps me develop faster 🙂
 | **Xbox One**                 | ❌                | ❌                                        |
 | \>\> **Windurango Emulator** | ✔️               | ❌                                        |
 | **Switch**                   | ✔️               | ✔️                                       |
-| **PS4**                      | ✔️               | ❌                                        |
+| **PS4**                      | ✔️               | ✔️                                       |
 | \>\> **ShadPS4 Emulator**    | ✔️               | ✔️                                       |
 
 ## Versions Support

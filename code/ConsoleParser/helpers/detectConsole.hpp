@@ -84,7 +84,7 @@ namespace editor {
             }
 
         } else {
-            return printf_err(INVALID_SAVE, ERROR_3);
+            return INVALID_SAVE; // printf_err(INVALID_SAVE, ERROR_3);
         }
 
         // Lastly, check for other files existence to differentiate

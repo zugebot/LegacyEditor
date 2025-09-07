@@ -37,36 +37,47 @@ namespace editor {
         const fs::path mainDirPath = saveProject.m_stateSettings.filePath().parent_path();
 
 
+        SFOManager mainSFO;
+
         // get sfo data from "root/00000001/savedata0/sce_sys/param.sfo"
-        const fs::path sfoFilePath = mainDirPath / "sce_sys" / "param.sfo";
-        if (!fs::exists(sfoFilePath)) {
-            printf("input folder does not have a sce_sys/param.sfo, returning early");
-            return {""};
+        {
+            const fs::path sfoFilePath = mainDirPath / "sce_sys" / "param.sfo";
+            if (!fs::exists(sfoFilePath)) {
+                printf("input folder does not have a sce_sys/param.sfo, returning early");
+                return {""};
+            }
+            mainSFO.loadFile(sfoFilePath.string());
         }
 
-        const fs::path icon0Path = mainDirPath / "sce_sys" / "icon0.png";
-        if (!saveProject.m_displayMetadata.icon0png.isValid() && fs::exists(icon0Path)) {
-            saveProject.m_displayMetadata.icon0png.loadFromFile(icon0Path.string().c_str());
+        {
+            const fs::path icon0Path = mainDirPath / "sce_sys" / "icon0.png";
+            if (!saveProject.m_displayMetadata.icon0png.isValid() && fs::exists(icon0Path)) {
+                saveProject.m_displayMetadata.icon0png.loadFromFile(icon0Path.string().c_str());
+            }
         }
 
         // get the "CUSA00744-240620222358.0"-alike str from the main "param.sfo"
-        SFOManager mainSFO(sfoFilePath.string());
-        const std::wstring subtitle = stringToWstring(mainSFO.getStringAttribute("SUBTITLE").value_or("New World"));
-        saveProject.m_displayMetadata.worldName = subtitle;
-
-
-        std::optional<std::string> mainAttr = mainSFO.getStringAttribute("SAVEDATA_DIRECTORY");
-
-        // invalid SFO
-        if (!mainAttr) {
-            return {""};
+        {
+            const std::wstring subtitle = stringToWstring(mainSFO.getStringAttribute("SUBTITLE").value_or("New World"));
+            saveProject.m_displayMetadata.worldName = subtitle;
         }
 
-        auto mainAttrParts = split(mainAttr.value(), '.');
 
-        if (mainAttrParts.size() != 2) {
-            printf("param.sfo does not seem to be formatted correctly.");
-            return {""};
+
+        std::vector<std::string> mainAttrParts;
+
+        // invalid SFO
+        {
+            std::optional<std::string> mainAttr = mainSFO.getStringAttribute("SAVEDATA_DIRECTORY");
+            if (!mainAttr) {
+                return {""};
+            } else {
+                mainAttrParts = split(mainAttr.value(), '.');
+                if (mainAttrParts.size() != 2) {
+                    printf("param.sfo does not seem to be formatted correctly.");
+                    return {""};
+                }
+            }
         }
 
         // the vector of directories to add regions from
@@ -75,7 +86,7 @@ namespace editor {
 
         // it goes "{ROOT}/PS4-CUSA#####-#CUSA#####-#########/savedata0/FILES"
         // all initial folders sit inside the "{ROOT}" folder
-        if (mainDirPath.parent_path().filename() == "savedata0") {
+        if (mainDirPath.filename() == "savedata0") {
 
             // go from "root/00000001/savedata0" to "root"
             const fs::path toCheckDirPath = mainDirPath.parent_path().parent_path();
@@ -96,13 +107,22 @@ namespace editor {
 
                 // fetch info from param.sfo
                 {
-                    fs::path tempSFOFilePath = entry.path() / "savedata0" / "sce_sys" / "param.sfo";
-                    if (!fs::exists(tempSFOFilePath)) { continue; }
+                    SFOManager tempSFO;
+                    if (fs::path tempSFOFilePath = entry.path() / "savedata0" / "sce_sys" / "param.sfo";
+                        !fs::exists(tempSFOFilePath)) {
+                        continue;
+                    } else {
+                        tempSFO.loadFile(tempSFOFilePath.string());
+                    }
+
                     // get the "CUSA00744-240620222358.0"-alike str from the temp "param.sfo"
-                    SFOManager tempSFO(tempSFOFilePath.string());
                     std::optional<std::string> tempAttr = tempSFO.getStringAttribute("SAVEDATA_DIRECTORY");
                     // invalid SFO
-                    if (!tempAttr) { return {""}; }
+                    if (!tempAttr) {
+                        cmn::log(cmn::eLog::error, "Skipping folder "
+                            + entry.path().string() + " and returning early, should this be a continue?\n");
+                        return {""};
+                    }
                     auto tempAttrParts = split(tempAttr.value(), '.');
                     if (tempAttrParts.size() != 2) { continue; }
                     // skip PS4 worlds that are not the same as the one being looked for
@@ -157,11 +177,6 @@ namespace editor {
 
         return directoriesToReturn;
     }
-
-
-
-
-
 
 
     int PS4::readExternalFolders(SaveProject& saveProject) {

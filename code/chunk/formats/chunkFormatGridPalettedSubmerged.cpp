@@ -2,6 +2,7 @@
 
 #include "code/Chunk/helpers/helpers.hpp"
 #include "common/fixedVector.hpp"
+#include "common/fmt.hpp"
 #include "common/nbt.hpp"
 
 
@@ -71,6 +72,7 @@ namespace editor {
         u32 CHUNK_HEADER_SIZE = chunkData->lastVersion == eChunkVersion::V_13 ? 28 : 26;
 
         c_u32 maxSectionAddress = reader.read<u16>() << 8;
+        c_u32 jumpWhenFinished = CHUNK_HEADER_SIZE + SECTION_HEADER_SIZE + maxSectionAddress;
 
         u16_vec sectionJumpTable(16);
         for (u32 i = 0; i < 16; i++) {
@@ -115,6 +117,8 @@ namespace editor {
 
                 // ensure not reading past the memory buffer
                 if EXPECT_FALSE (gridPosition + V12_GRID_SIZES[format] >= reader.size() && format != 0) {
+                    cmn::log(cmn::eLog::error, "Tried to read chunk grid past buffer, leaving rest of chunk as air\n");
+                    reader.seek(jumpWhenFinished);
                     return;
                 }
 
@@ -124,6 +128,13 @@ namespace editor {
                 bool success = true;
                 switch(format) {
                     case V12_0_UNO:
+                        for (int i = 0; i < GRID_SIZE; i += 2) {
+                            blockGrid[i] = blockLower;
+                            blockGrid[i + 1] = blockUpper;
+                        }
+                        break;
+                    // TODO: no fucking clue what this is
+                    case V12_0_UNO_SUBMERGED:
                         for (int i = 0; i < GRID_SIZE; i += 2) {
                             blockGrid[i] = blockLower;
                             blockGrid[i + 1] = blockUpper;
@@ -143,10 +154,15 @@ namespace editor {
                         fillAllBlocks<GRID_SIZE>(bufferPtr + 128, sbmrgGrid);
                         break;
                     default:
+                        cmn::log(cmn::eLog::error, "Chunk grid with invalid format: {}\n", format);
+
+                        reader.seek(jumpWhenFinished);
                         return;
                 }
 
                 if EXPECT_FALSE (!success) {
+                    cmn::log(cmn::eLog::error, "GENERIC Writing chunk grid failed, leaving rest of chunk blocks as air\n");
+                    reader.seek(jumpWhenFinished);
                     return;
                 }
 
@@ -157,7 +173,7 @@ namespace editor {
                 }
             }}}
         }
-        reader.seek(CHUNK_HEADER_SIZE + SECTION_HEADER_SIZE + maxSectionAddress);
+        reader.seek(jumpWhenFinished);
     }
 
 

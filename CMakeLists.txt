@@ -21,7 +21,7 @@ unset(STATIC_GNU_RUNTIME CACHE)
 
 add_compile_definitions(MEMSET_ZERO)
 option(INCLUDE_OPENSSL "include openssl" OFF)
-option(STATIC_GNU_RUNTIME "Statically link libstdc++/libgcc on MinGW/Clang" OFF)
+option(STATIC_GNU_RUNTIME "Statically link libstdc++/libgcc on MinGW/Clang" ON)
 option(LC_BUILD_EXECUTABLES "Build LegacyEditor standalone executable" ON)
 option(USE_LLD_LINKING "fortnite" OFF)
 

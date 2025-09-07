@@ -14,6 +14,7 @@ namespace editor {
 
         enum V12_GRID_STATE : u8 {
             V12_0_UNO = 0,
+            V12_0_UNO_SUBMERGED = 1,
             V12_1_BIT = 2,
             V12_1_BIT_SUBMERGED = 3,
             V12_2_BIT = 4,

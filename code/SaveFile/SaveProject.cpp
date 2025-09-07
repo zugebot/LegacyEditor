@@ -214,7 +214,9 @@ namespace editor {
     lce::CONSOLE SaveProject::detectConsole(const fs::path& savePath) {
         StateSettings settings;
         i32 status1 = ::editor::detectConsole(savePath, settings);
-        if (status1 != SUCCESS) {
+        if (status1 == INVALID_SAVE) {
+            throw std::runtime_error("Not a Minecraft savefile. If you believe it to be, then it may still be encrypted if your save is from PS3 / PS4 / PsVita.");
+        } else if (status1 != SUCCESS) {
             return lce::CONSOLE::NONE;
         }
 
@@ -227,9 +229,9 @@ namespace editor {
         // get valid dump path
         fs::path dumpPath;
         {
-            std::string folderName = (getCurrentDateTimeString() + "_" +
-                                      consoleToStr(m_stateSettings.console())) +
-                                      detail;
+            std::string folderName = (detail + "_" +
+                                      consoleToStr(m_stateSettings.console())) + "_" +
+                                      getCurrentDateTimeString();
             int attempt = 0;
             do {
                 std::string tempFolderName = folderName;

@@ -409,11 +409,11 @@ namespace editor {
 
     MU ND int preprocess(SaveProject& saveProject, StateSettings& stateSettings, WriteSettings& theWriteSettings) {
         if (!theWriteSettings.areSettingsValid()) {
-            printf("Write Settings are not valid, exiting\n");
+            printf("[!] Write Settings are not valid, failed to preprocess savefile.\n");
             return STATUS::INVALID_ARGUMENT;
         }
 
-        std::cout << "Preprocessing savefile (removing things lol)" << std::endl;
+        std::cout << "\n[*] Preprocessing savefile:" << std::endl;
 
         // TODO 7/10/25: i don't understand the below todo
         // TODO: create default output file path if not set
@@ -511,12 +511,6 @@ namespace editor {
             }
             lvl.write(file, outConsole, settings.m_schematic.save_tu);
 
-            // Buffer buf(256);
-            // for (int i = 0; i < buf.size(); i++) {
-            //     buf.data()[0] = 255;
-            // }
-            // file.setBuffer(std::move(buf));
-
             file.m_console = outConsole;
         }
 
@@ -537,5 +531,7 @@ namespace editor {
         saveProject.setLatestVersion(settings.m_schematic.fileListing_latestVersion);
         saveProject.setOldestVersion(settings.m_schematic.fileListing_oldestVersion);
         saveProject.m_stateSettings.setConsole(settings.m_schematic.save_console);
+        saveProject.m_displayMetadata.extraData = "0000000"; // "78000A8"; // 125829288;
+        // saveProject.m_displayMetadata.worldName = L"Entities?";
     }
 }

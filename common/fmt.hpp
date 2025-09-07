@@ -15,9 +15,9 @@ namespace cmn {
         using enum eLog;
         switch (t) {
             case info   : return "*";
-            case success: return "✓";
+            case success: return "+";
             case warning: return "!";
-            case error  : return "✗";
+            case error  : return "X";
             case time   : return "T";
             case input  : return "→";
             case output : return "←";

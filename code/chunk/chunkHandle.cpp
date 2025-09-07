@@ -243,7 +243,8 @@ namespace editor {
 
         if (!header.rle()) {
             Buffer rleBuffer;
-            rleBuffer.allocate(buffer.size());
+            c_u32 safe_size = codec::RLE_safe_compress_size(buffer.size());
+            rleBuffer.allocate(safe_size);
             codec::RLE_compress(rleBuffer.data(), rleBuffer.size_ptr(),
                                 buffer.data(), buffer.size());
             buffer = std::move(rleBuffer);
@@ -285,46 +286,6 @@ namespace editor {
         } else {
             throw std::runtime_error("Chunk uncompress pipeline received unhandled console case!");
         }
-
-        /*
-        switch (settings.m_schematic.save_console) {
-            case lce::CONSOLE::XBOX360:
-                return STATUS::NOT_IMPLEMENTED;
-            case lce::CONSOLE::PS3:
-            case lce::CONSOLE::RPCS3: {
-                Buffer compressed((u32)(float(buffer.size()) * 1.25F));
-                int status = compress(compressed.data(), (uLongf*) compressed.size_ptr(),
-                                  buffer.data(), buffer.size());
-                buffer.clear();
-                if (status)
-                    return STATUS::COMPRESS;
-                // copy it over, and remove ZLIB header
-                buffer = Buffer(compressed.size() - 2);
-                std::memcpy(buffer.data(), compressed.data() + 2, buffer.size());
-                // zero out ending integrity check, as the console does
-                // std::memset(data + comp_size - 6, 0, 4);
-                break;
-            }
-
-            case lce::CONSOLE::SWITCH:
-            case lce::CONSOLE::PS4:
-            case lce::CONSOLE::WIIU:
-            case lce::CONSOLE::VITA:
-            case lce::CONSOLE::XBOX1:
-            case lce::CONSOLE::WINDURANGO: {
-                Buffer compressed((u32)(float(buffer.size()) * 1.25F));
-                int status = compress(compressed.data(), (uLongf*) compressed.size_ptr(),
-                                  buffer.data(), buffer.size());
-                buffer.clear();
-                if (status)
-                    return STATUS::COMPRESS;
-                buffer = std::move(compressed);
-                break;
-            }
-            default:
-                break;
-        }
-        */
 
         header.markDirty(false);
         header.markWritten();
