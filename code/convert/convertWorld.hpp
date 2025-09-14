@@ -482,6 +482,24 @@ namespace editor {
     }
 
 
+    u64 computeSizeOnDisk(SaveProject& saveProject) {
+        static const std::set<lce::FILETYPE> regionFileTypes = {
+            lce::FILETYPE::OLD_REGION_NETHER,
+            lce::FILETYPE::OLD_REGION_END,
+            lce::FILETYPE::OLD_REGION_OVERWORLD,
+            lce::FILETYPE::NEW_REGION_NETHER,
+            lce::FILETYPE::NEW_REGION_END,
+            lce::FILETYPE::NEW_REGION_OVERWORLD,
+        };
+
+        u64 sizeOnDisk = 0;
+        for (auto& file : saveProject.view_of(regionFileTypes)) {
+            sizeOnDisk += file.detectSize();
+        }
+        return sizeOnDisk;
+    }
+
+
     void convert(SaveProject& saveProject, WriteSettings& settings) {
         StateSettings& state = saveProject.m_stateSettings;
 
@@ -492,27 +510,6 @@ namespace editor {
         c_bool inOld = !inNew;
         c_bool outNew = lce::isConsoleNewGen(outConsole);
         c_bool outOld = !outNew;
-
-        if (auto levelFileOpt = saveProject.findFile(lce::FILETYPE::LEVEL);
-                levelFileOpt.has_value()) {
-            LCEFile& file = levelFileOpt.value().get();
-            editor::LevelFile lvl;
-            lvl.read(file);
-            if (inOld && outNew) {
-                if (lvl.m_XZSize && lvl.m_XZSize != 54) {
-                    lvl.m_HellScale = 3;
-                    lvl.m_XZSize = 54;
-                    lvl.m_StrongholdX = 0;
-                    lvl.m_StrongholdZ = 0;
-                    lvl.m_hasStrongholdEndPortal = 0;
-                    lvl.m_StrongholdEndPortalX = 0;
-                    lvl.m_StrongholdEndPortalZ = 0;
-                }
-            }
-            lvl.write(file, outConsole, settings.m_schematic.save_tu);
-
-            file.m_console = outConsole;
-        }
 
         if (inOld == outOld) {
             std::cout << "[-] rewriting all region chunks to adjust endian, "
@@ -533,5 +530,32 @@ namespace editor {
         saveProject.m_stateSettings.setConsole(settings.m_schematic.save_console);
         saveProject.m_displayMetadata.extraData = "0000000"; // "78000A8"; // 125829288;
         // saveProject.m_displayMetadata.worldName = L"Entities?";
+
+        if (auto levelFileOpt = saveProject.findFile(lce::FILETYPE::LEVEL);
+            levelFileOpt.has_value()) {
+            LCEFile& file = levelFileOpt.value().get();
+            editor::LevelFile lvl;
+            lvl.read(file);
+            u64 sizeOnDisk = computeSizeOnDisk(saveProject);
+            lvl.m_SizeOnDisk = sizeOnDisk;
+            if (inOld && outNew) {
+                if (lvl.m_XZSize && lvl.m_XZSize != 54) {
+                    lvl.m_HellScale = 3;
+                    lvl.m_XZSize = 54;
+                    lvl.m_StrongholdX = 0;
+                    lvl.m_StrongholdZ = 0;
+                    lvl.m_hasStrongholdEndPortal = 0;
+                    lvl.m_StrongholdEndPortalX = 0;
+                    lvl.m_StrongholdEndPortalZ = 0;
+                }
+            }
+
+            lvl.write(file, outConsole, settings.m_schematic.save_tu);
+
+            file.m_console = outConsole;
+        }
+
+
+
     }
 }

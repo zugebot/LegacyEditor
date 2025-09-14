@@ -1,7 +1,7 @@
 #include "Xbox360BIN.hpp"
+#include "include/xcompress/include/xdecompress.h"
 
 #include "common/binfile/BINSupport.hpp"
-#include "common/codec/XDecompress.hpp"
 #include "common/utils.hpp"
 
 #include "code/SaveFile/stateSettings.hpp"
@@ -71,13 +71,12 @@ namespace editor {
             return MALLOC_FAILED;
         }
 
-        codec::XmemErr err = codec::XDecompress(
+        int error = xdecompress(
                 dest.data(), dest.size_ptr(),
-                reader.ptr(), srcSize);
-        if (err != codec::XmemErr::Ok) {
+                const_cast<u8*>(reader.ptr()), srcSize);
+        if (error) {
             return DECOMPRESS;
         }
-
         int status = FileListing::readListing(saveProject, dest, m_console);
         if (status != 0) {
             return -1;

@@ -6,8 +6,6 @@
 #include "common/data/buffer.hpp"
 #include "common/data/DataReader.hpp"
 
-#include "common/codec/XDecompress.hpp"
-
 #include "grf.hpp"
 #include "crc.hpp"
 
@@ -19,6 +17,7 @@
 
 #include <span>
 #include <stdexcept>
+#include <xdecompress.h>
 #include <zlib.h>
 
 
@@ -123,7 +122,7 @@ private:
             if (console == lce::CONSOLE::PS3 || hdr.Level >= CompressionLevel::CompressedRle) {
                 Buffer bufOut(decompressedSize);
                 codec::RLE_decompress(
-                        bufOut.data(), bufOut.size_ref(), buf.data(), rleCompressedSize);
+                        bufOut.data(), bufOut.size_ptr(), buf.data(), rleCompressedSize);
                 buf = std::move(bufOut);
             }
         } else {
@@ -203,11 +202,13 @@ inline Buffer GameRuleFileReader::DecompressStream(std::span<const u8> src, u32 
         }
         case CompressionType::XMem: {
             Buffer dest(expectedSize);
-            auto res = codec::XDecompress(
-                    dest.data(), dest.size_ptr(), src.data(), src.size());
-            if (res != codec::XmemErr::Ok) {
+
+            int error = xdecompress(
+                    dest.data(), dest.size_ptr(), const_cast<u8*>(src.data()), src.size());
+            if (error) {
                 return {};
             }
+
             return dest;
         }
         default: throw std::runtime_error("Unknown compression type");

@@ -1,7 +1,5 @@
 #include "Xbox360DAT.hpp"
-
-#include "common/codec/XDecompress.hpp"
-#include "common/utils.hpp"
+#include "include/xcompress/include/xdecompress.h"
 
 #include "code/SaveFile/stateSettings.hpp"
 #include "code/SaveFile/SaveProject.hpp"
@@ -54,10 +52,11 @@ namespace editor {
                 return printf_err(MALLOC_FAILED, ERROR_1, file_size);
             }
 
-            codec::XmemErr error = codec::XDecompress(dest.data(), dest.size_ptr(),
-                                                      reader.ptr(), src_size);
-            if (error != codec::XmemErr::Ok) {
-                return printf_err(DECOMPRESS, "%s (%s)", ERROR_3, to_string(error));
+            int error = xdecompress(
+                    dest.data(), dest.size_ptr(),
+                    const_cast<u8*>(reader.ptr()), src_size);
+            if (error) {
+                return printf_err(DECOMPRESS, "%s (%s)", ERROR_3, error);
             }
 
             if (dest.empty()) {

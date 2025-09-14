@@ -1,5 +1,6 @@
 #include "BINSupport.hpp"
 
+#include "common/data/DataWriter.hpp"
 #include "include/lce/processor.hpp"
 
 
@@ -67,7 +68,8 @@ namespace editor {
 
     Buffer StfsPackage::extractFile(StfsFileEntry* entry) {
         if (entry->nameLen == 0) { entry->name = "default"; }
-        std::vector<u8> out2;
+        // std::vector<u8> out2;
+        DataWriter writer;
 
 
         // get the file size that we are extracting
@@ -90,17 +92,15 @@ namespace editor {
             // pick up the change at the beginning, until we hit a hash table
             if ((u32) entry->blocksForFile <= blockCount) {
                 data.readBytes(entry->fileSize, buffer);
-                write(out2, buffer, entry->fileSize);
-                // out.writeBytes(buffer, entry->fileSize);
+                writer.writeBytes(buffer, entry->fileSize);
 
                 // free the temp buffer
                 delete[] buffer;
-                return {};
+                return writer.take();
             } else {
                 c_u32 amount = blockCount << 0xC;
                 data.readBytes(amount, buffer);
-                write(out2, buffer, amount);
-                // out.writeBytes(buffer, amount);
+                writer.writeBytes(buffer, amount);
             }
 
             // extract the blocks in between the tables
@@ -112,8 +112,7 @@ namespace editor {
 
                 // read in the 0xAA blocks between the tables
                 data.readBytes(0xAA000, buffer);
-                write(out2, buffer, 0xAA000);
-                // out.writeBytes(buffer, 0xAA000);
+                writer.writeBytes(buffer, 0xAA000);
 
                 tempSize -= 0xAA000;
                 blockCount += 0xAA;
@@ -127,8 +126,7 @@ namespace editor {
 
                 // read in the extra crap
                 data.readBytes(tempSize, buffer);
-                write(out2, buffer, tempSize);
-                // out.writeBytes(buffer, tempSize);
+                writer.writeBytes(buffer, tempSize);
             }
 
             // free the temp buffer
@@ -147,20 +145,17 @@ namespace editor {
             // read all the full blocks the file allocates
             for (u32 i = 0; i < fullReadCounts; i++) {
                 extractBlock(block, buffer);
-                write(out2, buffer, 0x1000);
+                writer.writeBytes(buffer, 0x1000);
                 block = getBlockHashEntry(block).nextBlock;
             }
 
             // read the remaining data
             if (fileSize != 0) {
                 extractBlock(block, buffer, fileSize);
-                write(out2, buffer, (int) fileSize);
+                writer.writeBytes(buffer, fileSize);
             }
         }
-        Buffer ret;
-        ret.allocate(out2.size());
-        std::memcpy(ret.data(), out2.data(), out2.size());
-        return ret;
+        return writer.take();
     }
 
 
@@ -406,7 +401,7 @@ namespace editor {
 
     void StfsPackage::parse() {
         BINHeader header;
-        if (c_int result = metaData.readHeader(data); !result) {
+        if (c_int result = header.readHeader(data); !result) {
             // free(inputData);
             return; // SaveFileInfo();
         }

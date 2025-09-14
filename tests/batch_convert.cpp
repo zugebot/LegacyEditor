@@ -193,7 +193,7 @@ int main(int argc, char* argv[]) {
         "More information can be found here: jerrin.org/links/lceditdoc/\n");
 
     log(eLog::detail,
-        "Version: 1.4.0\n");
+        "Version: 1.4.1\n");
     log(eLog::detail,
         "Supports reading  [ Xbox360, PS3, RPCS3, PSVITA, PS4, ShadPs4, WiiU/Cemu, Switch, Windurango ]\n");
     log(eLog::detail,
@@ -254,7 +254,7 @@ int main(int argc, char* argv[]) {
 
     lce::CONSOLE consoleOutput;
     std::reference_wrapper<const editor::sch::Schematic>
-            chosenSchema = std::cref(editor::sch::AquaticTU69);
+            chosenSchema = std::cref(editor::sch::ElytraLatest);
     editor::WriteSettings writeSettings(chosenSchema);
 
 

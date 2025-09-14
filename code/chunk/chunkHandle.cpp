@@ -1,11 +1,12 @@
 #include "chunkHandle.hpp"
 
+#include <xdecompress.h>
+
 #include "include/lce/processor.hpp"
 
+#include "common/rle/rle.hpp"
 #include "include/tinf/tinf.h"
 #include "include/zlib-1.2.12/zlib.h"
-#include "common/codec/XDecompress.hpp"
-#include "common/rle/rle.hpp"
 
 #include "code/SaveFile/writeSettings.hpp"
 
@@ -99,11 +100,12 @@ namespace editor {
             return SUCCESS;
 
         if (lce::is_xbox360_family(c)) {
-            codec::XmemErr err = codec::XDecompress(
+            int error = xdecompress(
                     decZip.data(), decZip.size_ptr(),
                     buffer.data(), buffer.size());
-            if (err != codec::XmemErr::Ok)
-                return STATUS::DECOMPRESS;
+            if (error) {
+                return DECOMPRESS;
+            }
 
         } else if (lce::is_ps3_family(c)) {
             int result = tinf_uncompress(
@@ -125,43 +127,6 @@ namespace editor {
         } else {
             throw std::runtime_error("Chunk uncompress pipeline received unhandled console case!");
         }
-
-        /*
-        switch (c) {
-            case lce::CONSOLE::XBOX360: {
-                codec::XmemErr err = codec::XDecompress(
-                        decZip.data(), decZip.size_ptr(),
-                        buffer.data(), buffer.size());
-                if (err != codec::XmemErr::Ok)
-                    return STATUS::DECOMPRESS;
-                break;
-            }
-            case lce::CONSOLE::RPCS3:
-            case lce::CONSOLE::PS3: {
-                int result = tinf_uncompress(
-                        decZip.data(), decZip.size_ptr(),
-                        buffer.data(), buffer.size());
-                if (result != SUCCESS)
-                    return STATUS::DECOMPRESS;
-                break;
-            }
-            case lce::CONSOLE::SWITCH:
-            case lce::CONSOLE::WIIU:
-            case lce::CONSOLE::VITA:
-            case lce::CONSOLE::PS4:
-            case lce::CONSOLE::XBOX1:
-            case lce::CONSOLE::WINDURANGO: {
-                int result = tinf_zlib_uncompress(
-                        decZip.data(), decZip.size_ptr(),
-                        buffer.data(), buffer.size());
-                if (result != SUCCESS)
-                    return STATUS::DECOMPRESS;
-                break;
-            }
-            default:
-                break;
-        }
-         */
 
         if (header.rle() == true) {
             buffer.clear();
