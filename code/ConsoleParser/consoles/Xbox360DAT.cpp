@@ -44,12 +44,21 @@ namespace editor {
                 return printf_err(FILE_ERROR, ERROR_4, m_filePath.string().c_str());
             }
 
-            u32 src_size = reader.read<u32>() - 8;
-            reader.read<i32>();
-            u32 file_size = reader.read<u32>();
+            u32 src_size, dest_size;
 
-            if (!dest.allocate(file_size)) {
-                return printf_err(MALLOC_FAILED, ERROR_1, file_size);
+            if (saveProject.m_stateSettings.isMCS()) {
+                src_size = reader.size() - 8;
+                reader.read<u32>();
+                dest_size = reader.read<u32>();
+            } else {
+                src_size = reader.read<u32>() - 8;
+                reader.read<i32>();
+                dest_size = reader.read<u32>();
+            }
+
+
+            if (!dest.allocate(dest_size)) {
+                return printf_err(MALLOC_FAILED, ERROR_1, dest_size);
             }
 
             int error = xdecompress(

@@ -25,9 +25,9 @@ namespace editor {
         auto* chunkData = handle.data.get();
 
         // Build the one-shot (id,data) -> final (id,data) map for this target TU.
-        // TIP: if you convert many chunks with the same TU, cache this outside the function.
-        const auto finalMap =
-                lce::compat::build_final_map_for_TU(settings.m_schematic.save_tu.value());
+        // TODO: cache result of this
+        const int tu = settings.m_schematic.save_tu.value();
+        const lce::compat::FinalMap& finalMap = lce::compat::final_map(tu);
 
         for (int i = 0; i < 65536; ++i) {
             u16 raw   = chunkData->blocks[i];
@@ -38,7 +38,6 @@ namespace editor {
                 lce::BlockState in{ id, meta };
                 lce::BlockState out = lce::compat::map_state(finalMap, in);
 
-                // If you prefer COBBLESTONE over AIR for "no-rule" cases, uncomment:
                 // if (out == lce::BlocksInit::AIR.getState()) {
                 //     out = { lce::blocks::COBBLESTONE_ID, 0 };
                 // }
@@ -46,8 +45,7 @@ namespace editor {
                 raw = static_cast<u16>((out.getID() << 4) | (out.getDataTag() & 0x0F));
                 chunkData->blocks[i] = raw;
             } else {
-                // ID outside table range — keep as-is (matches previous behavior),
-                // or force a fallback:
+                // ID outside table range — force fallback (cobble)
                 chunkData->blocks[i] = static_cast<u16>(lce::blocks::COBBLESTONE_ID << 4);
             }
         }

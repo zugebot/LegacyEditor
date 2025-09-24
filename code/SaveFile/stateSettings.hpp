@@ -14,6 +14,7 @@ namespace editor {
         lce::CONSOLE m_console = lce::CONSOLE::NONE;
         bool m_isX360Bin = false;
         bool m_isCompressed = true;
+        bool m_isMCS = false;
         bool m_newGen = false;
 
     public:
@@ -24,6 +25,7 @@ namespace editor {
         void reset() {
             m_filePath = "";
             m_isX360Bin = false;
+            m_isMCS = false;
             m_newGen = false;
             m_console = lce::CONSOLE::NONE;
         }
@@ -33,12 +35,15 @@ namespace editor {
         MU ND bool isXbox360Bin() const { return m_isX360Bin; }
         MU ND bool isNewGen() const { return m_newGen; }
         MU ND bool isCompressed() const { return m_isCompressed; }
+        MU ND bool isMCS() const { return m_isMCS; }
+
 
         MU void setConsole(const lce::CONSOLE theConsole) { m_console = theConsole; }
         MU void setFilePath(fs::path theFilePath) { m_filePath = std::move(theFilePath); }
         MU void setXbox360Bin(c_bool theBool) { m_isX360Bin = theBool; }
         MU void setNewGen(c_bool theBool) { m_newGen = theBool; }
         MU void setCompressed(c_bool theBool) { m_isCompressed = theBool; }
+        MU void setMCS(c_bool theBool) { m_isMCS = theBool; }
 
 
     };

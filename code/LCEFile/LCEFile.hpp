@@ -31,13 +31,14 @@ namespace editor {
                 c_u64 timestampIn,
                 const fs::path& origFolderPathIn,
                 const fs::path& tempFolderPathIn,
-                const std::string& fileNameIn) :
+                const std::string& fileNameIn,
+                bool isOldRegion = false) :
               m_timestamp(timestampIn),
               m_console(consoleIn),
               m_origFolderPath(origFolderPathIn),
               m_tempFolderPath(tempFolderPathIn),
               m_fileName(fileNameIn) {
-            initialize(fileNameIn);
+            initialize(fileNameIn, isOldRegion);
         }
 
         ND fs::path path() const {
@@ -96,7 +97,7 @@ namespace editor {
         MU void setFileName(const fs::path& filename);
         MU ND fs::path getFileName() const;
 
-        void initialize(const std::string& fileNameIn);
+        void initialize(const std::string& fileNameIn, bool isOldRegion);
         ND std::string constructFileName() const;
 
         MU void setRegionX(i16 regionX);
@@ -104,6 +105,9 @@ namespace editor {
 
         MU void setRegionZ(i16 regionZ);
         MU ND i16 getRegionZ() const;
+
+        MU void setIsMCSRegion(bool isMCSRegion);
+        MU ND bool isMCSRegion() const;
 
         MU void setMapNumber(i16 mapNumber);
         MU ND i16 getMapNumber() const;

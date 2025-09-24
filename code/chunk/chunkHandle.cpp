@@ -118,6 +118,7 @@ namespace editor {
                    lce::is_psvita_family(c) ||
                    lce::is_ps4_family(c) ||
                    lce::is_switch_family(c) ||
+                   lce::is_newgen_family(c) ||
                    lce::is_xbox1_family(c)) {
             int result = tinf_zlib_uncompress(
                     decZip.data(), decZip.size_ptr(),
@@ -240,6 +241,7 @@ namespace editor {
                    lce::is_psvita_family(c) ||
                    lce::is_ps4_family(c) ||
                    lce::is_switch_family(c) ||
+                   lce::is_newgen_family(c) ||
                    lce::is_xbox1_family(c)) {
             Buffer compressed((u32)(float(buffer.size()) * 1.25F));
             int status = compress(compressed.data(), (uLongf*) compressed.size_ptr(),

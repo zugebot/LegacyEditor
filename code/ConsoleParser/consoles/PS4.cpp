@@ -26,7 +26,10 @@ namespace editor {
         }
 
         readFileInfo(saveProject);
-        readExternalFolders(saveProject);
+
+        if (!saveProject.m_stateSettings.isMCS()) {
+            readExternalFolders(saveProject);
+        }
 
         return SUCCESS;
     }

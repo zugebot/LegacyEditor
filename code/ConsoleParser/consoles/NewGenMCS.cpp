@@ -1,4 +1,4 @@
-#include "WiiU.hpp"
+#include "NewGenMCS.hpp"
 
 #include "include/zlib-1.2.12/zlib.h"
 #include "include/tinf/tinf.h"
@@ -16,7 +16,7 @@
 namespace editor {
 
 
-    int WiiU::inflateFromLayout(SaveProject& saveProject, const fs::path& theFilePath) {
+    int NewGenMCS::inflateFromLayout(SaveProject& saveProject, const fs::path& theFilePath) {
         m_filePath = theFilePath;
 
         int status = inflateListing(saveProject);
@@ -31,7 +31,7 @@ namespace editor {
     }
 
 
-    int WiiU::inflateListing(SaveProject& saveProject) {
+    int NewGenMCS::inflateListing(SaveProject& saveProject) {
         Buffer dst;
 
         if (!saveProject.m_stateSettings.isCompressed()) {
@@ -42,7 +42,7 @@ namespace editor {
 
             try {
                 src = DataReader::readFile(m_filePath);
-                reader = DataReader(src.span(), Endian::Big);
+                reader = DataReader(src.span(), Endian::Little);
                 if (reader.size() < 12) {
                     return printf_err(FILE_ERROR, ERROR_5);
                 }
@@ -53,6 +53,15 @@ namespace editor {
 
             reader.read<u32>();
             u32 dst_size = reader.read<u32>();
+
+            // garbage nonsense
+            if (dst_size > 629'145'600) {
+                saveProject.m_stateSettings.setConsole(lce::CONSOLE::NEWGENMCS_BIG);
+                reader.setEndian(Endian::Big);
+                dst_size = reader.peek_at<u32>(4);
+                reader.seek(8);
+            }
+
             size_t fileSize = reader.size();
 
             bool isOldFormat = (fileSize == dst_size + 8);
@@ -81,12 +90,12 @@ namespace editor {
             }
         }
 
-        int status = FileListing::readListing(saveProject, dst, m_console);
+        int status = FileListing::readListing(saveProject, dst, saveProject.m_stateSettings.console());
         return status == 0 ? SUCCESS : -1;
     }
 
 
-    int WiiU::deflateToSave(SaveProject& saveProject, WriteSettings& theSettings) const {
+    int NewGenMCS::deflateToSave(SaveProject& saveProject, WriteSettings& theSettings) const {
         int status;
 
         const fs::path rootPath = theSettings.getInFolderPath();
@@ -124,7 +133,7 @@ namespace editor {
     }
 
 
-    int WiiU::deflateListing(const fs::path& gameDataPath, Buffer& inflatedData, Buffer& deflatedData) const {
+    int NewGenMCS::deflateListing(const fs::path& gameDataPath, Buffer& inflatedData, Buffer& deflatedData) const {
         deflatedData.allocate(compressBound(inflatedData.size()));
 
         if (compress(deflatedData.data(), reinterpret_cast<uLongf*>(deflatedData.size_ptr()),
@@ -147,10 +156,8 @@ namespace editor {
     }
 
 
-    std::optional<fs::path> WiiU::getFileInfoPath(SaveProject& saveProject) const {
-        fs::path filePath = m_filePath;
-        filePath.replace_extension(".ext");
-        return filePath;
+    std::optional<fs::path> NewGenMCS::getFileInfoPath(SaveProject& saveProject) const {
+        return std::nullopt;
     }
 
 }

@@ -7,18 +7,30 @@
 namespace editor {
 
 
-    void LCEFile::initialize(const std::string& fileNameIn) {
+    void LCEFile::initialize(const std::string& fileNameIn, bool isOldRegion) {
         if (m_timestamp == 0) {
             m_timestamp = std::time(nullptr);
         }
 
         if (fileNameIn.ends_with(".mcr")) {
             if (fileNameIn.starts_with("DIM-1")) {
-                setType(lce::FILETYPE::OLD_REGION_NETHER);
+                if (isOldRegion) {
+                    setType(lce::FILETYPE::OLD_REGION_NETHER);
+                } else {
+                    setType(lce::FILETYPE::NEW_REGION_NETHER);
+                }
             } else if (fileNameIn.starts_with("DIM1")) {
-                setType(lce::FILETYPE::OLD_REGION_END);
+                if (isOldRegion) {
+                    setType(lce::FILETYPE::OLD_REGION_END);
+                } else {
+                    setType(lce::FILETYPE::NEW_REGION_END);
+                }
             } else if (fileNameIn.starts_with("r")) {
-                setType(lce::FILETYPE::OLD_REGION_OVERWORLD);
+                if (isOldRegion) {
+                    setType(lce::FILETYPE::OLD_REGION_OVERWORLD);
+                } else {
+                    setType(lce::FILETYPE::NEW_REGION_OVERWORLD);
+                }
             }
             c_auto [fst, snd] = extractRegionCoords(fileNameIn);
             setRegionX(static_cast<i16>(fst));
@@ -195,6 +207,19 @@ namespace editor {
     MU void LCEFile::setRegionZ(c_i16 regionZ) { setTag("z", regionZ); }
 
     MU ND i16 LCEFile::getRegionZ() const { return getTag("z"); }
+
+    MU void LCEFile::setIsMCSRegion(c_bool isOldRegion) {
+        int val = isOldRegion ? 1 : 0;
+        setTag("oldRegion", val);
+    }
+
+    MU ND bool LCEFile::isMCSRegion() const {
+        int res = getTag("oldRegion");
+        if (res == -1 || res != 1) {
+            return false;
+        }
+        return true;
+    }
 
     MU void LCEFile::setMapNumber(c_i16 mapNumber) { setTag("#", mapNumber); }
 

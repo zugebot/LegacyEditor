@@ -25,7 +25,7 @@ It helps me develop faster 🙂
 | **PS3**                      | ✔️               | ⚠️ *(Partial - cannot resign PARAM.PFD)* |
 | \>\> **RPCS3 Emulator**      | ✔️               | ✔️                                       |
 | **Xbox One**                 | ❌                | ❌                                        |
-| \>\> **Windurango Emulator** | ✔️               | ❌                                        |
+| \>\> **Xbox1 Emulator** | ✔️               | ❌                                        |
 | **Switch**                   | ✔️               | ✔️                                       |
 | **PS4**                      | ✔️               | ✔️                                       |
 | \>\> **ShadPS4 Emulator**    | ✔️               | ✔️                                       |

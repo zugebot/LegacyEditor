@@ -519,7 +519,7 @@ namespace editor {
                          "this may take a minute.\n";
         }
 
-        if (inOld && outOld) convertRegions<false>(saveProject, settings);
+        if      (inOld && outOld) convertRegions<false>(saveProject, settings);
         else if (inNew && outOld) convertRegionsNew2Old(saveProject, settings);
         else if (inOld && outNew) convertRegionsOld2New(saveProject, settings);
         else if (inNew && outNew) convertRegions<true> (saveProject, settings);

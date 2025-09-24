@@ -88,7 +88,7 @@ int tinf_zlib_uncompress(void *dest, unsigned int *destLen,
 	/* -- Check Adler-32 checksum -- */
 
 	if (a32 != tinf_adler32(dst, *destLen)) {
-		return TINF_DATA_ERROR;
+		return TINF_ADLER_ERROR;
 	}
 
 	return TINF_OK;

@@ -508,6 +508,11 @@ int main(int argc, char* argv[]) {
             saveProject.printDetails();
         }
 
+        if (config.conversionInput.autoInput) {
+            std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
+            saveProject.m_displayMetadata.worldName = conv.from_bytes(config.conversionInput.autoKey);
+        }
+
         Timer writeTimer;
         const int statusOut = saveProject.write(writeSettings);
         if (statusOut != 0) {

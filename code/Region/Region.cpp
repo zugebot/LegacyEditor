@@ -103,7 +103,7 @@ namespace editor {
 
         // new gen stuff
         // TODO: the new gen uncompress + decompress are decided based on different inputs...
-        if (fileIn->isTinyRegionType()) {
+        if (fileIn->isTinyRegionType() && fileIn->m_console != lce::CONSOLE::NEWGENMCS && fileIn->m_console != lce::CONSOLE::NEWGENMCS_BIG) {
             buffer = std::move(codec::RLE_NSXPS4_DECOMPRESS(buffer));
         }
 
@@ -225,7 +225,8 @@ namespace editor {
         Buffer buffer = writer.take();
 
 
-        if (lce::isConsoleNewGen(consoleIn)) {
+        // TODO: make this not do this when writing MCS files
+        if (lce::isConsoleNewGen(consoleIn) && settings.m_schematic.save_console != lce::CONSOLE::NEWGENMCS && settings.m_schematic.save_console != lce::CONSOLE::NEWGENMCS_BIG) {
             Buffer res = codec::RLE_NSXPS4_COMPRESS(buffer);
             buffer = std::move(res);
         }

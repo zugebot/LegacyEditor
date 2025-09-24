@@ -65,7 +65,7 @@ public:
         requires(std::integral<T> || std::floating_point<T>)
     T read() {
         if (tell() + sizeof(T) > _buf.size())
-            throw std::out_of_range("DataReader::read past end");
+             throw std::out_of_range("DataReader::read past end");
         if constexpr (std::is_floating_point_v<T>) {
             using I = std::conditional_t<sizeof(T) == 4, uint32_t, uint64_t>;
             return std::bit_cast<T>(read<I>());

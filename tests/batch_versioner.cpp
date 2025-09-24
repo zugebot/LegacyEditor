@@ -129,8 +129,8 @@ int main(MU int argc, char* argv[]) {
         case (lce::CONSOLE::XBOX360): {
             std::sort(versionFiles.begin(), versionFiles.end(),
                       [](const auto& a, const auto& b) {
-                          return editor::parseLabel(std::get<0>(a)) <
-                                 editor::parseLabel(std::get<0>(b)); });
+                          return parseLabel(std::get<0>(a)) <
+                                 parseLabel(std::get<0>(b)); });
             break;
         }
         case (lce::CONSOLE::WIIU): {

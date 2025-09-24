@@ -10,13 +10,13 @@
 #include "common/error_status.hpp"
 #include "lce/enums.hpp"
 
+#include "code/ConsoleParser/consoles/NewGenMCS.hpp"
 #include "code/ConsoleParser/consoles/PS3.hpp"
 #include "code/ConsoleParser/consoles/PS4.hpp"
 #include "code/ConsoleParser/consoles/Rpcs3.hpp"
 #include "code/ConsoleParser/consoles/Switch.hpp"
 #include "code/ConsoleParser/consoles/Vita.hpp"
 #include "code/ConsoleParser/consoles/WiiU.hpp"
-#include "code/ConsoleParser/consoles/Windurango.hpp"
 #include "code/ConsoleParser/consoles/Xbox1.hpp"
 #include "code/ConsoleParser/consoles/Xbox360BIN.hpp"
 #include "code/ConsoleParser/consoles/Xbox360DAT.hpp"
@@ -24,8 +24,13 @@
 namespace editor {
 
 
-    static std::unique_ptr<ConsoleParser> makeParserForConsole(lce::CONSOLE console, bool isXbox360Bin=false) {
+    static std::unique_ptr<ConsoleParser> makeParserForConsole(
+            lce::CONSOLE console,
+            bool isXbox360Bin=false
+    ) {
         switch (console) {
+            case lce::CONSOLE::NEWGENMCS:
+                return std::make_unique<NewGenMCS>();
             case lce::CONSOLE::NONE:
                 return nullptr;
             case lce::CONSOLE::XBOX360:
@@ -34,8 +39,6 @@ namespace editor {
                 } else {
                     return std::make_unique<Xbox360DAT>();
                 }
-            case lce::CONSOLE::XBOX1:
-                return std::make_unique<Xbox1>();
             case lce::CONSOLE::PS3:
                 return std::make_unique<PS3>();
             case lce::CONSOLE::RPCS3:
@@ -50,7 +53,9 @@ namespace editor {
             case lce::CONSOLE::SWITCH:
                 return std::make_unique<Switch>();
             case lce::CONSOLE::WINDURANGO:
-                return std::make_unique<Windurango>();
+                return std::make_unique<Xbox1<true>>();
+            case lce::CONSOLE::XBOX1:
+                return std::make_unique<Xbox1<false>>();
             default:
                 return nullptr;
         }

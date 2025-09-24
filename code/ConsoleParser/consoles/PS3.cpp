@@ -57,7 +57,10 @@ namespace editor {
                 return printf_err(MALLOC_FAILED, ERROR_1, dst_size);
             }
 
-            tinf_uncompress(dest.data(), dest.size_ptr(), src.data(), src.size());
+            int status = tinf_uncompress(dest.data(), dest.size_ptr(), src.data() + 12, src.size() - 12);
+            if (status != 0) {
+                return -1;
+            }
             if (dest.empty()) {
                 return printf_err(DECOMPRESS, "%s", ERROR_3);
             }
@@ -78,6 +81,11 @@ namespace editor {
     int PS3::readParamSfo(SaveProject& saveProject) {
         fs::path sfoFilePath = m_filePath.parent_path();
         sfoFilePath /= "PARAM.SFO";
+
+        if (!fs::exists(sfoFilePath)) {
+            saveProject.m_displayMetadata.worldName = L"New World";
+            return SUCCESS;
+        }
 
         // TODO: make it cache the ACCOUNT_ID for later converting
         SFOManager mainSFO(sfoFilePath.string());

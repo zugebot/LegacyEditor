@@ -26,12 +26,11 @@ namespace editor {
             return printf_err(MALLOC_FAILED, ERROR_1, final_size);
         }
 
-        int status = tinf_zlib_uncompress(dest.data(), dest.size_ptr(), src.data() + 8, src.size() - 8);
+        int status = tinf_zlib_uncompress(dest.data(), dest.size_ptr(),
+                                          src.data() + 8, src.size() - 8);
         if (status != 0) {
             return DECOMPRESS;
         }
-
-        // DataWriter::writeFile("C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\GAMEDATA_WINDURANGO", data.span());
 
         status = FileListing::readListing(saveProject, dest, m_console);
         if (status != 0) {
@@ -53,6 +52,10 @@ namespace editor {
      * \return
      */
     int NewGenConsoleParser::readExternalFolder(SaveProject& saveProject, const fs::path& inDirPath) {
+        if (saveProject.m_stateSettings.isMCS()) {
+            return SUCCESS;
+        }
+
         MU int fileIndex = -1;
         for (c_auto& file: fs::directory_iterator(inDirPath)) {
 

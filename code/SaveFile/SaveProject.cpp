@@ -1,6 +1,7 @@
 #include "SaveProject.hpp"
 
 #include "code/SaveFile/writeSettings.hpp"
+#include "common/fmt.hpp"
 #include "common/utils.hpp"
 
 
@@ -130,20 +131,37 @@ namespace editor {
 
         i32 status1 = ::editor::detectConsole(theFilePath, m_stateSettings);
         if (status1 != SUCCESS) {
-            printf("Failed to find console from %s\n", theFilePath.string().c_str());
+            cmn::log(cmn::eLog::error, "Failed to find console from {}\n", theFilePath.string().c_str());
             return status1;
+        } else {
+            cmn::log(cmn::eLog::success,
+                     "Detected Data: \n"
+                     "[*] Console: {}\n"
+                     "[*] MCS: {}\n"
+                     "[*] X360Bin: {}\n"
+                     "[*] Compressed: {}\n"
+                     "[*] NewGen: {}\n\n",
+                     lce::consoleToStr(m_stateSettings.console()),
+                     m_stateSettings.isMCS(),
+                     m_stateSettings.isXbox360Bin(),
+                     m_stateSettings.isCompressed(),
+                     m_stateSettings.isNewGen()
+            );
         }
 
         // read save file
-        auto it = makeParserForConsole(m_stateSettings.console(), m_stateSettings.isXbox360Bin());
+        auto it = makeParserForConsole(
+                m_stateSettings.console(),
+                m_stateSettings.isXbox360Bin()
+                );
         if (it != nullptr) {
             int status2 = it->inflateFromLayout(*this, m_stateSettings.filePath());
             if (status2 != SUCCESS) {
-                printf("Failed to read save from %s\n", theFilePath.string().c_str());
+                cmn::log(cmn::eLog::error, "Failed to read save from {}\n", theFilePath.string().c_str());
             }
             return status2;
         } else {
-            printf("Failed to read save from %s\n", theFilePath.string().c_str());
+            cmn::log(cmn::eLog::error, "Failed to read save from {}\n", theFilePath.string().c_str());
             return STATUS::INVALID_CONSOLE;
         }
     }

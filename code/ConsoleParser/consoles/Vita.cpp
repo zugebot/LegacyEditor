@@ -34,7 +34,7 @@ namespace editor {
 
         try {
             fileData = DataReader::readFile(m_filePath);
-            reader = DataReader(fileData.span(), Endian::Big);
+            reader = DataReader(fileData.span(), Endian::Little);
             if (reader.size() < 12) {
                 return printf_err(FILE_ERROR, ERROR_5);
             }
@@ -43,7 +43,7 @@ namespace editor {
         }
 
         Buffer dst;
-        if(u64 dst_size = reader.read<u64>();
+        if(u32 dst_size = reader.peek_at<u32>(4);
             !dst.allocate(dst_size)) {
             return printf_err(MALLOC_FAILED, ERROR_1, dst_size);
         }
