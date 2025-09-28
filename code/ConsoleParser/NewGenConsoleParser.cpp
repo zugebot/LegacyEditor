@@ -28,7 +28,7 @@ namespace editor {
 
         int status = tinf_zlib_uncompress(dest.data(), dest.size_ptr(),
                                           src.data() + 8, src.size() - 8);
-        if (status != 0) {
+        if (status != TINF_OK && status != TINF_ADLER_ERROR) {
             return DECOMPRESS;
         }
 

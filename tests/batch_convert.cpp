@@ -117,6 +117,33 @@ EnumType selectProductCode(const editor::EnumMapper<EnumType>& mapper,
 }
 
 
+auto readExistingPath = [](const std::string& prompt) -> std::string {
+    for (;;) {
+        std::string pathIn;
+        if (!getline_prompt(pathIn, prompt)) std::exit(1);
+        std::string s(trim(pathIn));
+        // strip paired surrounding quotes if present
+        if (s.size() >= 2 && s.front() == '"' && s.back() == '"') {
+            s = s.substr(1, s.size() - 2);
+        }
+        if (s == "EXIT" || s == "DONE")
+            return "";
+
+        // empty path
+        if (s.empty()) {
+            log(eLog::error, "Empty path. Try again.\n");
+            continue;
+        }
+        // file does not exist
+        if (!fs::exists(s)) {
+            log(eLog::error, "File does not exist:\n{}\n", fs::path(s).make_preferred().string());
+            continue;
+        }
+        return s;
+    }
+};
+
+
 static lce::CONSOLE selectOutputConsoleInteractive() {
     struct Option {
         lce::CONSOLE id;
@@ -178,6 +205,26 @@ static const editor::sch::Schematic& selectSchemaVersionInteractive() {
 }
 
 
+static const editor::sch::Schematic& selectSchemaVersionAuto(std::string input) {
+    struct Opt {
+        const editor::sch::Schematic* schema;
+        const char* label;
+    };
+    static const Opt opts[] = {
+            {&editor::sch::Potions, "(TU12)"},
+            {&editor::sch::ElytraLatest, "(TU68)"},
+            {&editor::sch::AquaticTU69, "(TU69)"},
+    };
+
+    for (auto opt : opts) {
+        if (opt.schema->display_name == input) {
+            return *opt.schema;
+        }
+    }
+    return *&editor::sch::AquaticTU69;
+}
+
+
 int main(int argc, char* argv[]) {
     EXE_CURRENT_PATH = fs::path(argv[0]).parent_path().string();
 #ifdef _WIN32
@@ -219,31 +266,9 @@ int main(int argc, char* argv[]) {
     } else {
         if (argc < 2) {
             log(eLog::info, "You can drag & drop the GAMEDATA/SAVEGAME/.dat/.bin on the executable or pass as arguments.\n");
-
-
-            auto readExistingPath = [&](const std::string& prompt) -> std::string {
-                for (;;) {
-                    std::string pathIn;
-                    if (!getline_prompt(pathIn, prompt)) std::exit(1);
-                    std::string s(trim(pathIn));
-                    // strip paired surrounding quotes if present
-                    if (s.size() >= 2 && s.front() == '"' && s.back() == '"') {
-                        s = s.substr(1, s.size() - 2);
-                    }
-                    // empty path
-                    if (s.empty()) {
-                        log(eLog::error, "Empty path. Try again.\n");
-                        continue;
-                    }
-                    // file does not exist
-                    if (!fs::exists(s)) {
-                        log(eLog::error, "File does not exist:\n{}\n", fs::path(s).make_preferred().string());
-                        continue;
-                    }
-                    return s;
-                }
-            };
-            saveFileArgs.emplace_back(readExistingPath("File Path:"));
+            auto arg = readExistingPath("File Path:");
+            if (!arg.empty())
+                saveFileArgs.emplace_back(arg);
 
         } else {
             for (int i = 1; i < argc; i++) {
@@ -260,9 +285,6 @@ int main(int argc, char* argv[]) {
 
     if (config.conversionOutput.autoOutput) {
 
-        // schema
-        log(eLog::input, "Using default schema (AquaticTU69) from config.\n");
-
         // console
         consoleOutput = lce::strToConsole(config.conversionOutput.autoConsole);
         if (consoleOutput == lce::CONSOLE::NONE) {
@@ -271,6 +293,9 @@ int main(int argc, char* argv[]) {
         }
         log(eLog::input, "Using auto output: console = \"{}\"\n", config.conversionOutput.autoConsole);
 
+        // schema
+        chosenSchema = selectSchemaVersionAuto(config.conversionOutput.autoVersion);
+        log (eLog::input, "Using auto schema: \"{}\"\n", chosenSchema.get().display_name);
 
         // console specific questions
         if (consoleOutput == lce::CONSOLE::RPCS3 || consoleOutput == lce::CONSOLE::PS3) {
@@ -502,6 +527,41 @@ int main(int argc, char* argv[]) {
             std::cout << "Error: " << e.what() << "\n";
             break;
         }
+
+        if (config.addFileQuestion) {
+            bool addFiles = false;
+            handleRemovalOption("Would you like to add any files?", addFiles);
+            if (addFiles) {
+                int added = 0;
+                log(eLog::info, "Type \"DONE\" to finish uploading files.\n");
+                std::string input;
+                do {
+                    input = readExistingPath("File: ");
+                    if (input.empty()) {
+                        break;
+                    }
+                    if (!fs::exists(input)) {
+                        log(eLog::error, "File does not exist, try again.");
+                        continue;
+                    }
+                    fs::path inputPath = fs::path(input);
+                    using namespace std::chrono;
+                    uint64_t now = duration_cast<seconds>(
+                                           system_clock::now().time_since_epoch()
+                                                   ).count();
+                    saveProject.m_allFiles.emplace_back(
+                        writeSettings.m_schematic.save_console, now,
+                        inputPath.parent_path(),
+                        saveProject.m_tempFolder, inputPath.filename().string()
+                    );
+                    ++added;
+                } while (input != "DONE");
+                log(eLog::info, "Added {} files.", added);
+            }
+
+        }
+
+
 
         saveProject.printDetails();
 

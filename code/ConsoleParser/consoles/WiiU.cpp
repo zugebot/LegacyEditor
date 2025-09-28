@@ -76,7 +76,7 @@ namespace editor {
                     &outLen,
                     reader.data() + 8,
                     static_cast<unsigned int>(compLen));
-            if (status != TINF_OK) {
+            if (status != TINF_OK && status != TINF_ADLER_ERROR) {
                 return DECOMPRESS;
             }
         }

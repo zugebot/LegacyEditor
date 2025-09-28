@@ -120,11 +120,12 @@ namespace editor {
                    lce::is_switch_family(c) ||
                    lce::is_newgen_family(c) ||
                    lce::is_xbox1_family(c)) {
-            int result = tinf_zlib_uncompress(
+            int status = tinf_zlib_uncompress(
                     decZip.data(), decZip.size_ptr(),
                     buffer.data(), buffer.size());
-            if (result != SUCCESS)
+            if (status != TINF_OK && status != TINF_ADLER_ERROR) {
                 return STATUS::DECOMPRESS;
+            }
         } else {
             throw std::runtime_error("Chunk uncompress pipeline received unhandled console case!");
         }

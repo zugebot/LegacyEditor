@@ -19,7 +19,8 @@ public:
         std::string conversionPath;
     };
 
-    bool debug;
+    bool debug{};
+    bool addFileQuestion{};
 
     struct {
         bool autoInput;
@@ -32,6 +33,7 @@ public:
     struct {
         bool autoOutput;
         std::string autoConsole;
+        std::string autoVersion;
         std::string autoPsVProductCode;
         std::string autoPs3ProductCode;
         std::string autoPs4ProductCode;
@@ -69,6 +71,8 @@ public:
         }
 
         debug = jsonConfig["debug"].get<bool>();
+        addFileQuestion = jsonConfig["addFileQuestion"].get<bool>();
+
         const auto& input = jsonConfig["conversionInput"];
         const auto& output = jsonConfig["conversionOutput"];
 
@@ -108,6 +112,7 @@ public:
         // Load output section
         conversionOutput.autoOutput         = output.value("autoOutput", false);
         conversionOutput.autoConsole        = output.value("autoConsole", "");
+        conversionOutput.autoVersion        = output.value("autoVersion", "");
         conversionOutput.autoPsVProductCode = output.value("autoPsVProductCode", "");
         conversionOutput.autoPs3ProductCode = output.value("autoPs3ProductCode", "");
         conversionOutput.autoPs4ProductCode = output.value("autoPs4ProductCode", "");
@@ -140,6 +145,7 @@ public:
         nlohmann::json jsonConfig;
 
         jsonConfig["debug"] = false;
+        jsonConfig["addFileQuestion"] = false;
 
         jsonConfig["conversionInput"] = {
                 {"autoInput", false},
