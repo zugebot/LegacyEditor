@@ -13,22 +13,22 @@ It helps me develop faster 🙂
 
 ## Consoles Supported
 
-| **Console**                  | **Reading From** | **Writing To**                           |
-|------------------------------|------------------|------------------------------------------|
-| **Xbox 360 (.dat)**          | ✔️               | ❌                                        |
-| **Xbox 360 (.bin)**          | ✔️               | ❌                                        |
-| \>\> **Xenia Emulator**      | ✔️               | ❌                                        |
-| **WiiU**                     | ✔️               | ✔️                                       |
-| \>\> **Cemu Emulator**       | ✔️               | ✔️                                       |
-| **PS Vita**                  | ✔️               | ✔️                                       |
-| \>\> **Vita3K Emulator**     | ✔️               | ✔️                                       |
-| **PS3**                      | ✔️               | ⚠️ *(Partial - cannot resign PARAM.PFD)* |
-| \>\> **RPCS3 Emulator**      | ✔️               | ✔️                                       |
-| **Xbox One**                 | ❌                | ❌                                        |
-| \>\> **Xbox1 Emulator** | ✔️               | ❌                                        |
-| **Switch**                   | ✔️               | ✔️                                       |
-| **PS4**                      | ✔️               | ✔️                                       |
-| \>\> **ShadPS4 Emulator**    | ✔️               | ✔️                                       |
+| **Console**               | **Reading From** | **Writing To**                           |
+|---------------------------|------------------|------------------------------------------|
+| **Xbox 360 (.dat)**       | ✔️               | ❌                                        |
+| **Xbox 360 (.bin)**       | ✔️               | ❌                                        |
+| \>\> **Xenia Emulator**   | ✔️               | ❌                                        |
+| **WiiU**                  | ✔️               | ✔️                                       |
+| \>\> **Cemu Emulator**    | ✔️               | ✔️                                       |
+| **PS Vita**               | ✔️               | ✔️                                       |
+| \>\> **Vita3K Emulator**  | ✔️               | ✔️                                       |
+| **PS3**                   | ✔️               | ⚠️ *(Partial - cannot resign PARAM.PFD)* |
+| \>\> **RPCS3 Emulator**   | ✔️               | ✔️                                       |
+| **Xbox One**              | ❌                | ❌                                        |
+| \>\> **Xbox1 Emulator**   | ✔️               | ❌                                        |
+| **Switch**                | ✔️               | ✔️                                       |
+| **PS4**                   | ✔️               | ✔️                                       |
+| \>\> **ShadPS4 Emulator** | ✔️               | ✔️                                       |
 
 ## Versions Support
 

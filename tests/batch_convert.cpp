@@ -193,7 +193,7 @@ int main(int argc, char* argv[]) {
         "More information can be found here: jerrin.org/links/lceditdoc/\n");
 
     log(eLog::detail,
-        "Version: 1.4.1\n");
+        "Version: 1.4.2\n");
     log(eLog::detail,
         "Supports reading  [ Xbox360, PS3, RPCS3, PSVITA, PS4, ShadPs4, WiiU/Cemu, Switch, Windurango ]\n");
     log(eLog::detail,
@@ -254,7 +254,7 @@ int main(int argc, char* argv[]) {
 
     lce::CONSOLE consoleOutput;
     std::reference_wrapper<const editor::sch::Schematic>
-            chosenSchema = std::cref(editor::sch::ElytraLatest);
+            chosenSchema = std::cref(editor::sch::AquaticTU69);
     editor::WriteSettings writeSettings(chosenSchema);
 
 
@@ -317,13 +317,15 @@ int main(int argc, char* argv[]) {
 
         // assign variables
         const auto& vars = config.conversionOutput.variables;
+        writeSettings.removeDataMapping = vars.removeDataMapping;
+        writeSettings.removeGRF = vars.removeGRF;
         writeSettings.removePlayers = vars.removePlayers;
         writeSettings.removeMaps = vars.removeMaps;
         writeSettings.removeStructures = vars.removeStructures;
         writeSettings.removeRegionsOverworld = vars.removeRegionsOverworld;
         writeSettings.removeRegionsNether = vars.removeRegionsNether;
         writeSettings.removeRegionsEnd = vars.removeRegionsEnd;
-        writeSettings.removeEntities = vars.removeEntitiesDat;
+        writeSettings.removeEntities = vars.removeEntities;
 
         // user input
     } else {
@@ -378,30 +380,29 @@ int main(int argc, char* argv[]) {
             editor::ePS4ProductCode code = selectProductCode(editor::PS4Mapper, "PS4");
             writeSettings.m_productCodes.setPS4(code);
 
-
-            if (consoleOutput == lce::CONSOLE::PS4) {
-                auto readExistingPath = [&](const std::string& prompt) -> std::string {
-                    for (;;) {
-                        std::string pathIn;
-                        if (!getline_prompt(pathIn, prompt)) std::exit(1);
-                        std::string s(trim(pathIn));
-                        // strip paired surrounding quotes if present
-                        if (s.size() >= 2 && s.front() == '"' && s.back() == '"') {
-                            s = s.substr(1, s.size() - 2);
-                        }
-                        // empty path
-                        if (s.empty()) {
-                            log(eLog::error, "Empty path. Try again.\n");
-                            continue;
-                        }
-                        // file does not exist
-                        if (!fs::exists(s)) {
-                            log(eLog::error, "File does not exist:\n{}\n", fs::path(s).make_preferred().string());
-                            continue;
-                        }
-                        // sfo does not have a "PARAMS" attribute
-                        try {
-                            SFOManager sfo(s);
+            auto readExistingPath = [&](const std::string& prompt) -> std::string {
+                for (;;) {
+                    std::string pathIn;
+                    if (!getline_prompt(pathIn, prompt)) std::exit(1);
+                    std::string s(trim(pathIn));
+                    // strip paired surrounding quotes if present
+                    if (s.size() >= 2 && s.front() == '"' && s.back() == '"') {
+                        s = s.substr(1, s.size() - 2);
+                    }
+                    // empty path
+                    if (s.empty()) {
+                        log(eLog::error, "Empty path. Try again.\n");
+                        continue;
+                    }
+                    // file does not exist
+                    if (!fs::exists(s)) {
+                        log(eLog::error, "File does not exist:\n{}\n", fs::path(s).make_preferred().string());
+                        continue;
+                    }
+                    // sfo does not have a "PARAMS" attribute
+                    try {
+                        SFOManager sfo(s);
+                        if (consoleOutput == lce::CONSOLE::PS4) {
                             auto attr = sfo.getAttribute("PARAMS");
                             if (!attr.has_value()) {
                                 log(eLog::error, "File does not contain the \"PARAMS\" attribute:\n{}\n",
@@ -409,35 +410,36 @@ int main(int argc, char* argv[]) {
                                 continue;
                             }
                         }
-                        // catch (const SFOManager::parse_error& e) {
-                        //     log(eLog::error, "param.sfo parse error:\n{}\nReason: {}\n",
-                        //         fs::path(s).make_preferred().string(), e.what());
-                        //     continue;
-                        // }
-                        catch (const std::exception& e) { // fallback for anything std::exception-based
-                            log(eLog::error, "Failed to read param.sfo:\n{}\nReason: {}\n",
-                                fs::path(s).make_preferred().string(), e.what());
-                            continue;
-                        }
-
-                        return s;
                     }
-                };
+                    // catch (const SFOManager::parse_error& e) {
+                    //     log(eLog::error, "param.sfo parse error:\n{}\nReason: {}\n",
+                    //         fs::path(s).make_preferred().string(), e.what());
+                    //     continue;
+                    // }
+                    catch (const std::exception& e) { // fallback for anything std::exception-based
+                        log(eLog::error, "Failed to read param.sfo:\n{}\nReason: {}\n",
+                            fs::path(s).make_preferred().string(), e.what());
+                        continue;
+                    }
 
-                std::cout << "\n";
-                log("You must provide the file path to a PARAM.SFO file that comes from a save file,\n"
-                    "    from BOTH the same console AND account. You can find it any \"sce_sys\" folder.\n"
-                    "    Please enter the full path to that file here. Don't put \" in it.\n");
-                log("Example:\n"
-                    "C:\\Users\\jerrin\\jerrins_and_tiaras\\PS4-CUSA00744-1CUSA00744-210322225338.1\\savedata0\\sce_sys\\param.sfo\n\n");
+                    return s;
+                }
+            };
 
-                writeSettings.m_paramSfoToReplace = readExistingPath("Path: ");
-                std::cout << "\n";
-            }
+            std::cout << "\n";
+            log("You must provide the file path to a PARAM.SFO file that comes from a save file,\n"
+                "    from BOTH the same console AND account. You can find it any \"sce_sys\" folder.\n"
+                "    Please enter the full path to that file here. Don't put \" in it.\n");
+            log("Example:\n"
+                "C:\\Users\\jerrin\\jerrins_and_tiaras\\PS4-CUSA00744-1CUSA00744-210322225338.1\\savedata0\\sce_sys\\param.sfo\n\n");
+
+            writeSettings.m_paramSfoToReplace = readExistingPath("Path: ");
+            std::cout << "\n";
         }
 
         // assign variables
         log("Some conversion questions:\n");
+        // handleRemovalOption("Do you want to remove all [grf       ] data   ", writeSettings.removeGRF);
         handleRemovalOption("Do you want to remove all [map (item)] data   ", writeSettings.removeMaps);
         handleRemovalOption("Do you want to remove all [player    ] data   ", writeSettings.removePlayers);
         handleRemovalOption("Do you want to remove all [structure ] data   ", writeSettings.removeStructures);

@@ -38,7 +38,7 @@ NBTBase::value<editor::enums::Difficulty>(const std::string& key) const {
             Diff::hard,
     };
 
-    auto idxOpt = this->value<int>(key);
+    auto idxOpt = this->value<u8>(key);
     if (!idxOpt) return std::nullopt;
 
     auto idx = static_cast<std::size_t>(idxOpt.value());
@@ -220,6 +220,14 @@ namespace editor {
         grab(m_clearWeatherTime, "clearWeatherTime");
         grab(m_generatorName, "generatorName");
         grab(m_generatorOptions, "generatorOptions");
+
+        // if (m_generatorOptions.has_value()) {
+        //     Buffer buf(m_generatorOptions.value().size());
+        //     memcpy(buf.data(), m_generatorOptions.value().data(), buf.size());
+        //     DataReader optionReader(buf);
+        //     NBTBase optionData = NBTBase::read(reader);
+        // }
+
         grab(m_generatorVersion, "generatorVersion");
         grab(m_hardcore, "hardcore");
         grab(m_hasBeenInCreative, "hasBeenInCreative");
@@ -239,6 +247,7 @@ namespace editor {
     }
 
 
+    // TODO:
     MU void LevelFile::write(LCEFile& levelFile, const lce::CONSOLE console, const TU& tu) {
         NBTCompound data;
         // data["cloudHeight"] = makeInt(65);
@@ -272,13 +281,20 @@ namespace editor {
             data["generatorName"] = makeString(m_generatorName.value_or("default"));
             data["generatorVersion"] = makeInt(m_generatorVersion.value_or(1));
 
-            if (tu >= TU19 && tu <= TU23) {
-                // these 4 updates write empty strings if it has no value, later on it doesn't.
-                data["generatorOptions"] = makeString(m_generatorOptions.value_or(""));
-            } else {
-                if (m_generatorOptions.has_value()) {
-                    data["generatorOptions"] = makeString(m_generatorOptions.value());
-                }
+            // if (tu >= TU19 && tu <= TU23) {
+            //     these 4 updates write empty strings if it has no value, later on it doesn't.
+            //     data["generatorOptions"] = makeString(m_generatorOptions.value_or(""));
+            // } else {
+            //     if (m_generatorOptions.has_value()) {
+            //         data["generatorOptions"] = makeString(m_generatorOptions.value());
+            //     }
+            // }
+
+            if (m_generatorOptions.has_value()) {
+                data["generatorOptions"] = makeByteArray(NBTByteArray(
+                        m_generatorOptions.value().begin(),
+                        m_generatorOptions.value().end()
+                ));
             }
         }
 
@@ -334,7 +350,7 @@ namespace editor {
             if (tu <= TU53) {
                 data["DataVersion"] = makeInt(510);
             } else {
-                data["DataVersion"] = makeInt(922);
+                data["DataVersion"] = makeInt(1024);
             }
         }
 

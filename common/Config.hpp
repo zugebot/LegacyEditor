@@ -36,13 +36,15 @@ public:
         std::string autoPs3ProductCode;
         std::string autoPs4ProductCode;
         struct {
+            bool removeDataMapping;
             bool removePlayers;
             bool removeMaps;
+            bool removeGRF;
             bool removeStructures;
             bool removeRegionsOverworld;
             bool removeRegionsNether;
             bool removeRegionsEnd;
-            bool removeEntitiesDat;
+            bool removeEntities;
         } variables;
         std::map<std::string, OutPath> paths;
     } conversionOutput;
@@ -104,21 +106,23 @@ public:
         }
 
         // Load output section
-        conversionOutput.autoOutput        = output.value("autoOutput", false);
-        conversionOutput.autoConsole       = output.value("autoConsole", "");
+        conversionOutput.autoOutput         = output.value("autoOutput", false);
+        conversionOutput.autoConsole        = output.value("autoConsole", "");
         conversionOutput.autoPsVProductCode = output.value("autoPsVProductCode", "");
         conversionOutput.autoPs3ProductCode = output.value("autoPs3ProductCode", "");
         conversionOutput.autoPs4ProductCode = output.value("autoPs4ProductCode", "");
 
         // Load variables
         const auto& vars = output["variables"];
-        conversionOutput.variables.removePlayers        = vars.value("removePlayers", false);
-        conversionOutput.variables.removeMaps           = vars.value("removeMaps", false);
-        conversionOutput.variables.removeStructures     = vars.value("removeStructures", false);
+        conversionOutput.variables.removeDataMapping      = vars.value("removeDataMapping",      true);
+        conversionOutput.variables.removeGRF              = vars.value("removeGRF",              true);
+        conversionOutput.variables.removePlayers          = vars.value("removePlayers",          true);
+        conversionOutput.variables.removeMaps             = vars.value("removeMaps",             false);
+        conversionOutput.variables.removeStructures       = vars.value("removeStructures",       false);
         conversionOutput.variables.removeRegionsOverworld = vars.value("removeRegionsOverworld", false);
-        conversionOutput.variables.removeRegionsNether  = vars.value("removeRegionsNether", false);
-        conversionOutput.variables.removeRegionsEnd     = vars.value("removeRegionsEnd", false);
-        conversionOutput.variables.removeEntitiesDat    = vars.value("removeEntitiesDat", false);
+        conversionOutput.variables.removeRegionsNether    = vars.value("removeRegionsNether",    false);
+        conversionOutput.variables.removeRegionsEnd       = vars.value("removeRegionsEnd",       false);
+        conversionOutput.variables.removeEntities         = vars.value("removeEntities",         false);
 
         // Load conversion paths
         if (output.contains("path")) {
@@ -135,8 +139,10 @@ public:
     static void createDefaultConfigFile(const fs::path& configPath) {
         nlohmann::json jsonConfig;
 
+        jsonConfig["debug"] = false;
+
         jsonConfig["conversionInput"] = {
-                {"autoInput", true},
+                {"autoInput", false},
                 {"autoKey", "pirates"},
                 {"autoSampleParamSFO", ""},
                 {"autoShortener", nlohmann::json::object()},
@@ -144,30 +150,32 @@ public:
         };
 
         jsonConfig["conversionOutput"] = {
-                {"autoOutput", true},
-                {"autoConsole", "switch"},
-                {"autoPsVProductCode", "PCSB00560"},
-                {"autoPs3ProductCode", "NPUB31419"},
-                {"autoPs4ProductCode", "CUSA00744"},
-                {"variables", {
-                                 {"removePlayers", true},
-                                 {"removeMaps", true},
-                                 {"removeStructures", true},
-                                 {"removeRegionsOverworld", false},
-                                 {"removeRegionsNether", true},
-                                 {"removeRegionsEnd", true},
-                                 {"removeEntitiesDat", true}
-                              }},
-                {"path", {
-                                 {"xbox360", {{"useDefaultPath", true},  {"conversionPath", ""}}},
-                                 {"ps3",     {{"useDefaultPath", true},  {"conversionPath", ""}}},
-                                 {"rpcs3",   {{"useDefaultPath", true},  {"conversionPath", ""}}},
-                                 {"vita",    {{"useDefaultPath", true},  {"conversionPath", ""}}},
-                                 {"ps4",     {{"useDefaultPath", true},  {"conversionPath", ""}}},
-                                 {"shadps4", {{"useDefaultPath", true},  {"conversionPath", ""}}},
-                                 {"wiiu",    {{"useDefaultPath", false}, {"conversionPath", "{cemu_ely_}"}}},
-                                 {"switch",  {{"useDefaultPath", false}, {"conversionPath", "{yuzu}"}}}
-                         }}
+            {"autoOutput", false},
+            {"autoConsole", "switch"},
+            {"autoPsVProductCode", "PCSB00560"},
+            {"autoPs3ProductCode", "NPUB31419"},
+            {"autoPs4ProductCode", "CUSA00744"},
+            {"variables", {
+                {"removeDataMapping", true},
+                {"removePlayers", true},
+                {"removeGRF", true},
+                {"removeMaps", false},
+                {"removeStructures", false},
+                {"removeRegionsOverworld", false},
+                {"removeRegionsNether", false},
+                {"removeRegionsEnd", false},
+                {"removeEntities", false}
+            }},
+            {"path", {
+                {"xbox360", {{"useCustomPath", false}, {"conversionPath", ""}}},
+                {"ps3",     {{"useCustomPath", false}, {"conversionPath", ""}}},
+                {"rpcs3",   {{"useCustomPath", false}, {"conversionPath", ""}}},
+                {"vita",    {{"useCustomPath", false}, {"conversionPath", ""}}},
+                {"ps4",     {{"useCustomPath", false}, {"conversionPath", ""}}},
+                {"shadps4", {{"useCustomPath", false}, {"conversionPath", ""}}},
+                {"wiiu",    {{"useCustomPath", false}, {"conversionPath", ""}}},
+                {"switch",  {{"useCustomPath", false}, {"conversionPath", ""}}}
+            }}
         };
 
         std::ofstream out(configPath);

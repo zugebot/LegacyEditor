@@ -13,12 +13,12 @@ BEGIN
     BLOCK "040904B0"
     BEGIN
       VALUE "CompanyName",      "jerrinth\0"
-      VALUE "FileDescription",  "LegacyEditor\0"
-      VALUE "FileVersion",      "1.0.0\0"
-      VALUE "InternalName",     "LegacyEditor\0"
-      VALUE "OriginalFilename", "LegacyEditor.exe\0"
-      VALUE "ProductName",      "LegacyEditor\0"
-      VALUE "ProductVersion",   "1.0.0\0"
+      VALUE "FileDescription",  "BatchConverter\0"
+      VALUE "FileVersion",      "1.4.2\0"
+      VALUE "InternalName",     "BatchConverter\0"
+      VALUE "OriginalFilename", "BatchConverter.exe\0"
+      VALUE "ProductName",      "BatchConverter\0"
+      VALUE "ProductVersion",   "1.4.2\0"
     END
   END
   BLOCK "VarFileInfo"

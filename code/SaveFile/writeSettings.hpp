@@ -31,14 +31,15 @@ namespace editor {
         sch::Schematic m_schematic;
         fs::path m_paramSfoToReplace;
 
-        bool removePlayers = true;
         bool removeDataMapping = true;
-        bool removeMaps = true;
-        bool removeStructures = true;
+        bool removeGRF = true;
+        bool removePlayers = true;
+        bool removeMaps = false;
+        bool removeStructures = false;
         bool removeRegionsOverworld = false;
         bool removeRegionsNether = false;
         bool removeRegionsEnd = false;
-        bool removeEntities = true;
+        bool removeEntities = false;
 
         WriteSettings() = delete;
 

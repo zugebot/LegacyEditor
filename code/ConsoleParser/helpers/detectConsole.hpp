@@ -57,7 +57,7 @@ namespace editor {
             if (short4_big == ZLIB_MAGIC) {
 
 
-                if (int0_big < int0_little) { // file is most likely big endian
+                if (int1_big < int1_little) { // file is most likely big endian
                     //  4. (mcs   ) wiiu
                     // 14. (normal) wiiu
                     stateSettings.setConsole(lce::CONSOLE::WIIU);

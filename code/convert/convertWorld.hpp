@@ -174,7 +174,7 @@ namespace editor {
 
 
             // save entities
-            if (!entityList.empty() && !settings.removeEntities) {
+            if (!settings.removeEntities) {
 
                 constexpr u32 timestamp = 0;
                 auto& entityFile = convertedFiles.emplace_back(
@@ -196,14 +196,14 @@ namespace editor {
         saveProject.addFiles(std::move(convertedFiles));
 
         // remove region files we created that are completely empty
-        // for (auto it = saveProject.m_allFiles.begin(); it != saveProject.m_allFiles.end(); ) {
-        //     const bool kill = it->isTinyRegionType() && it->detectSize() == 4;
-        //     if (kill) {
-        //         it = saveProject.m_allFiles.erase(it);
-        //     } else {
-        //         ++it;
-        //     }
-        // }
+        for (auto it = saveProject.m_allFiles.begin(); it != saveProject.m_allFiles.end(); ) {
+            const bool kill = it->isTinyRegionType() && it->detectSize() == 4;
+            if (kill) {
+                it = saveProject.m_allFiles.erase(it);
+            } else {
+                ++it;
+            }
+        }
     }
 
 
@@ -231,9 +231,6 @@ namespace editor {
         addDimension(ft::NEW_REGION_OVERWORLD, ft::OLD_REGION_OVERWORLD, ft::ENTITY_OVERWORLD);
         addDimension(ft::NEW_REGION_NETHER,    ft::OLD_REGION_NETHER,    ft::ENTITY_NETHER);
         addDimension(ft::NEW_REGION_END,       ft::OLD_REGION_END,       ft::ENTITY_END);
-
-
-        saveProject.removeFileTypes({lce::FILETYPE::NEW_REGION_NETHER, lce::FILETYPE::NEW_REGION_NETHER});
 
         for (auto& [newFmt, oldFmt, entityFmt, regionScale, regionMap] : dimensions) {
 
@@ -438,14 +435,15 @@ namespace editor {
 
         tryRemove("[!] Config: removing files: GRF",
                   "",
-                  diffConsoles, {lce::FILETYPE::GRF});
+                  theWriteSettings.removeGRF,
+                  {lce::FILETYPE::GRF});
         tryRemove("[!] Config: removing files: players",
                   "",
-                  theWriteSettings.removePlayers     || diffConsoles,
+                  theWriteSettings.removePlayers    ,
                   {FILETYPE::PLAYER});
         tryRemove("[!] Config: removing files: dataMapping",
                   "",
-                  theWriteSettings.removeDataMapping || diffConsoles,
+                  theWriteSettings.removeDataMapping,
                   {FILETYPE::DATA_MAPPING});
         tryRemove("[!] Config: removing files: Maps",
                   "",

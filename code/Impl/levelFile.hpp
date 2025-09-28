@@ -18,7 +18,7 @@ namespace editor {
             adventure
         };
 
-        enum class Difficulty : i32 {
+        enum class Difficulty : u8 {
             peaceful,
             easy,
             medium,
@@ -69,7 +69,8 @@ namespace editor {
         /* TU14 */ std::optional<u8> m_initialized;
         /* TU17 */ std::optional<i32> m_HellScale;
         /* TU19 */ std::optional<i64> m_DayTime;
-        /*19-23 */ std::optional<std::string> m_generatorOptions;
+        // TODO: used to be "std::optional<std::string>" (?) but latest versions use a std::vector<u8>
+        /*19-23 */ std::optional<NBTByteArray> m_generatorOptions;
         /* TU25 */ std::optional<enums::Difficulty> m_Difficulty;
         /* TU25 */ std::optional<i32> m_clearWeatherTime;
         /* TU31 */ std::optional<u8> m_DifficultyLocked;
