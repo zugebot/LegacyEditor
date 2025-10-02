@@ -46,7 +46,7 @@ namespace editor {
         if (!buffer.allocate(buffer.size(), true))
             return STATUS::MALLOC_FAILED;
 
-        if (lce::is_ps3_family(c)/*c == lce::CONSOLE::PS3 || c == lce::CONSOLE::RPCS3*/) {
+        if (lce::is_ps3_family(c)) {
             header.setDecSize(rdr.read<u32>());
             header.setRLESize(rdr.read<u32>());
         } else {
@@ -70,7 +70,7 @@ namespace editor {
 
         wtr.write<u32>(packSizeFlags());
 
-        if (lce::is_ps3_family(c)/*c == lce::CONSOLE::PS3 || c == lce::CONSOLE::RPCS3*/) {
+        if (lce::is_ps3_family(c)) {
             wtr.write<u32>(header.getDecSize());
             wtr.write<u32>(header.getRLESize());
         } else {

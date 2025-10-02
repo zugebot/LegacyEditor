@@ -9,7 +9,7 @@
 
 #include "code/convert/convertWorld.hpp"
 #include "code/include.hpp"
-#include "common/Config.hpp"
+#include "common/ConverterConfig.hpp"
 
 std::string EXE_CURRENT_PATH;
 using namespace cmn;
