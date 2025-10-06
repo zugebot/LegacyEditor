@@ -103,7 +103,7 @@ namespace editor {
     void convertReadChunkToElytra(ChunkHandle& handle, WriteSettings& settings) {
         auto chunkData = handle.data.get();
 
-        // downdateBlocks(handle, settings);
+        downdateBlocks(handle, settings);
 
         // if (chunkData->lastVersion == 7) {
         // } else if (chunkData->lastVersion == 8 ||
@@ -122,13 +122,13 @@ namespace editor {
         //     }
         // }
 
-        for (int i = 0; i < 65536; i++) {
-            u16 block = chunkData->blocks[i];
-            if (((block & 0x1FF0) >> 4) > 100) {
-                block = lce::blocks::COBBLESTONE_ID << 4;
-            }
-            chunkData->blocks[i] = block;
-        }
+//        for (int i = 0; i < 65536; i++) {
+//            u16 block = chunkData->blocks[i];
+//            if (((block & 0x1FF0) >> 4) > 100) {
+//                block = lce::blocks::COBBLESTONE_ID << 4;
+//            }
+//            chunkData->blocks[i] = block;
+//        }
 
 
         handle.header.setNewSave((bool)settings.m_schematic.chunk_isNewSave);
