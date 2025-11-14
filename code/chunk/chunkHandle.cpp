@@ -1,6 +1,8 @@
 #include "chunkHandle.hpp"
 
+#ifdef SUPPORT_XBOX360
 #include <xdecompress.h>
+#endif
 
 #include "include/lce/processor.hpp"
 
@@ -100,12 +102,16 @@ namespace editor {
             return SUCCESS;
 
         if (lce::is_xbox360_family(c)) {
+#ifdef SUPPORT_XBOX360
             int error = xdecompress(
                     decZip.data(), decZip.size_ptr(),
                     buffer.data(), buffer.size());
             if (error) {
                 return DECOMPRESS;
             }
+#else
+            throw std::runtime_error("Xbox360 support is turned off, yet code attempted to decompress xbox360 save");
+#endif
 
         } else if (lce::is_ps3_family(c)) {
             int result = tinf_uncompress(

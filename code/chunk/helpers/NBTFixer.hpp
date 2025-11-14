@@ -3,7 +3,7 @@
 #include <string>
 #include <unordered_set>
 
-#include "code/Chunk/chunkData.hpp"
+#include "code/chunk/chunkData.hpp"
 #include "common/nbt.hpp"
 #include "jimmiebergmann/Yaml.hpp"
 #include "lce/registry/itemRegistry.hpp"

@@ -1,6 +1,6 @@
 #include "chunkFormatGridPalettedSubmerged.hpp"
 
-#include "code/Chunk/helpers/helpers.hpp"
+#include "code/chunk/helpers/helpers.hpp"
 #include "common/fixedVector.hpp"
 #include "common/fmt.hpp"
 #include "common/nbt.hpp"

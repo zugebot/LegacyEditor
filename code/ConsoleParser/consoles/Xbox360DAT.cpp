@@ -1,5 +1,8 @@
 #include "Xbox360DAT.hpp"
+
+#ifdef SUPPORT_XBOX360
 #include "include/xcompress/include/xdecompress.h"
+#endif
 
 #include "code/SaveFile/stateSettings.hpp"
 #include "code/SaveFile/SaveProject.hpp"
@@ -60,14 +63,16 @@ namespace editor {
             if (!dest.allocate(dest_size)) {
                 return printf_err(MALLOC_FAILED, ERROR_1, dest_size);
             }
-
+#ifdef SUPPORT_XBOX360
             int error = xdecompress(
                     dest.data(), dest.size_ptr(),
                     const_cast<u8*>(reader.ptr()), src_size);
             if (error) {
                 return printf_err(DECOMPRESS, "%s (%s)", ERROR_3, error);
             }
-
+#else
+            throw std::runtime_error("Xbox360 support is turned off, yet code attempted to decompress xbox360 save");
+#endif
             if (dest.empty()) {
                 return printf_err(DECOMPRESS, "%s", ERROR_3);
             }

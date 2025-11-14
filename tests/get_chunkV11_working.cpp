@@ -1,7 +1,7 @@
 
 #include "include/lce/processor.hpp"
 
-#include "code/Chunk/formats/chunkFormatGridPaletted.hpp"
+#include "code/chunk/formats/chunkFormatGridPaletted.hpp"
 
 
 int main(int argc, char* argv[]) {

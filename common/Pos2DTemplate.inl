@@ -101,8 +101,5 @@ void Pos2DTemplate<T>::setPos(T xIn, T zIn) {
     this->z = zIn;
 }
 
-template
-class Pos2DTemplate<int>;
-
-template
-class Pos2DTemplate<double>;
+template class Pos2DTemplate<int>;
+template class Pos2DTemplate<double>;

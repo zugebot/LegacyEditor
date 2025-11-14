@@ -11,7 +11,6 @@
 #include "code/include.hpp"
 #include "common/ConverterConfig.hpp"
 
-std::string EXE_CURRENT_PATH;
 using namespace cmn;
 
 
@@ -100,7 +99,6 @@ void handleRemovalOption(const std::string& prompt, bool& setting) {
 
 
 int main(int argc, char* argv[]) {
-    EXE_CURRENT_PATH = fs::path(argv[0]).parent_path().string();
 #ifdef _WIN32
     force_utf8_console();
 #endif

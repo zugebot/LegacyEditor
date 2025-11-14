@@ -1,6 +1,7 @@
 #include "Xbox360BIN.hpp"
+#ifdef SUPPORT_XBOX360
 #include "include/xcompress/include/xdecompress.h"
-
+#endif
 #include "common/binfile/BINSupport.hpp"
 #include "common/utils.hpp"
 
@@ -71,6 +72,7 @@ namespace editor {
             return MALLOC_FAILED;
         }
 
+#ifdef SUPPORT_XBOX360
         int error = xdecompress(
                 dest.data(), dest.size_ptr(),
                 const_cast<u8*>(reader.ptr()), srcSize);
@@ -83,6 +85,11 @@ namespace editor {
         }
 
         return SUCCESS;
+
+#else
+        throw std::runtime_error("Xbox360 support is turned off, yet code attempted to decompress xbox360 save");
+#endif
+
     }
 
 

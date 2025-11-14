@@ -1,7 +1,7 @@
 #pragma once
 
 #include "chunkFormatBase.hpp"
-#include "code/Chunk/chunkData.hpp"
+#include "code/chunk/chunkData.hpp"
 
 
 namespace editor {

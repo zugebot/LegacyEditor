@@ -16,10 +16,7 @@ void enableAnsiColors() {
     SetConsoleMode(hOut, dwMode);
 }
 
-std::string EXE_CURRENT_PATH;
-
 int main(int argc, char* argv[]) {
-    EXE_CURRENT_PATH = fs::path(argv[0]).parent_path().string();
     enableAnsiColors();
 
 

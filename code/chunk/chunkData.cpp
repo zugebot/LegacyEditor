@@ -1,6 +1,6 @@
 #include "chunkData.hpp"
 
-#include "code/Chunk/helpers/helpers.hpp"
+#include "code/chunk/helpers/helpers.hpp"
 #include "common/nbt.hpp"
 #include "include/lce/blocks/blockID.hpp"
 

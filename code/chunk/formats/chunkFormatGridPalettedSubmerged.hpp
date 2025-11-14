@@ -1,7 +1,7 @@
 #pragma once
 
 #include "chunkFormatBase.hpp"
-#include "code/Chunk/chunkData.hpp"
+#include "code/chunk/chunkData.hpp"
 #include "common/error_status.hpp"
 #include "common/fixedVector.hpp"
 

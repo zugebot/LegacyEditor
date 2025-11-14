@@ -1,7 +1,7 @@
 #include "Rpcs3.hpp"
 
 #include "include/sfo/sfo.hpp"
-#include "common/RLE/rle_vita.hpp"
+#include "common/rle/rle_vita.hpp"
 #include "common/utils.hpp"
 #include "include/png/crc.hpp"
 

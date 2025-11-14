@@ -2,7 +2,7 @@
 
 #include "include/sfo/sfo.hpp"
 #include "common/utils.hpp"
-#include "common/RLE/rle_vita.hpp"
+#include "common/rle/rle_vita.hpp"
 
 #include "code/SaveFile/stateSettings.hpp"
 #include "code/SaveFile/SaveProject.hpp"

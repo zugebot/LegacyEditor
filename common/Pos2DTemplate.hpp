@@ -1,9 +1,13 @@
+// common/Pos2DTemplate.hpp
 #pragma once
 
 #include <cmath>
 #include <iostream>
 #include <string>
 #include <vector>
+#include <type_traits>
+#include <cstdint>
+#include <functional>
 #ifdef INCLUDE_QT
     #include <QDebug>
 #endif

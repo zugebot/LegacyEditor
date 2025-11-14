@@ -1,7 +1,7 @@
 #pragma once
 
-#include "code/Chunk/chunkData.hpp"
-#include "code/Chunk/helpers/NBTFixer.hpp"
+#include "code/chunk/chunkData.hpp"
+#include "code/chunk/helpers/NBTFixer.hpp"
 
 #include "code/SaveFile/writeSettings.hpp"
 #include "common/data/DataReader.hpp"

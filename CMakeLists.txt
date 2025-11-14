@@ -17,15 +17,38 @@ unset(LC_BUILD_EXECUTABLES CACHE)
 unset(USE_LLD_LINKING CACHE)
 unset(STATIC_GNU_RUNTIME CACHE)
 unset(USE_STATIC_LZX CACHE)
+unset(SUPPORT_XBOX360 CACHE)
 
 add_compile_definitions(MEMSET_ZERO)
-option(INCLUDE_OPENSSL "include openssl" OFF)
-option(STATIC_GNU_RUNTIME "Statically link libstdc++/libgcc on MinGW/Clang" ON)
-option(LC_BUILD_EXECUTABLES "Build LegacyEditor standalone executable" ON)
-option(USE_LLD_LINKING "fortnite" OFF)
+option(INCLUDE_OPENSSL      "include openssl"                                   OFF)
+option(STATIC_GNU_RUNTIME   "Statically link libstdc++/libgcc on MinGW/Clang"   ON)
+option(LC_BUILD_EXECUTABLES "Build LegacyEditor standalone executable"          ON)
+option(USE_LLD_LINKING      "Use lld linker"                                    OFF)
+option(SUPPORT_XBOX360      "Enable Xbox 360 platform support"                  OFF)
+option(USE_STATIC_LZX       "Link xcompress statically"                         OFF)
+option(STRICT_WARNINGS      "Enable extra compiler warnings and debug flags"    ON)
 
-# Match subdir option name
-option(USE_STATIC_LZX "Link xcompress statically" OFF)
+
+# -------------------------------
+# Developer options
+# -------------------------------
+if (ENABLE_STRICT_WARNINGS)
+    message(STATUS "✔ STRICT_WARNINGS=ON")
+
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+        add_compile_options(-Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion)
+        add_compile_options(-g -O0)
+    elseif (MSVC)
+        add_compile_options(/W4 /permissive- /Zc:__cplusplus)
+        add_compile_options(/Zi)
+    else()
+        add_compile_options(-Wall -Wextra)
+        add_compile_options(-g -O0)
+    endif()
+else()
+    message(STATUS "STRICT_WARNINGS=OFF (default)")
+endif()
+
 
 # -------------------------------
 # C/C++ cache (ccache/sccache)
@@ -45,11 +68,29 @@ endif()
 # -------------------------------
 # Windows resource (version info)
 # -------------------------------
-if (WIN32)
+if (APPLE)
+    message(STATUS "🍎 Building for macOS")
+    # Enable RPATH relative to binary
+    set(CMAKE_MACOSX_RPATH ON)
+    set(CMAKE_INSTALL_RPATH "@executable_path")
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+
+    # Universal binary support (Intel + ARM)
+    if (CMAKE_OSX_ARCHITECTURES STREQUAL "")
+        set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "macOS architectures" FORCE)
+    endif()
+
+    add_compile_definitions(MACOS_BUILD=1)
+elseif (WIN32)
     enable_language(RC)
     set(LE_VERSION_RC "${CMAKE_SOURCE_DIR}/res/version.rc")
+elseif (UNIX)
+    add_compile_definitions(LINUX_BUILD=1)
 endif()
 
+# -------------------------------
+# Shared lib staging helper
+# -------------------------------
 function(lc_stage_shared target)
     if (UNIX)
         set_target_properties(${target} PROPERTIES BUILD_RPATH "$ORIGIN")
@@ -72,9 +113,7 @@ set(CMAKE_C_FLAGS_RELEASE   "-O3 -DNDEBUG" CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG" CACHE STRING "" FORCE)
 
 if (WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
-    find_program(LLD_EXE ld.lld
-            PATHS "C:/msys64/mingw64/bin"
-            NO_DEFAULT_PATH)
+    find_program(LLD_EXE ld.lld PATHS "C:/mingw64/bin" NO_DEFAULT_PATH)
     if (LLD_EXE AND USE_LLD_LINKING)
         message(STATUS "✔ Using lld via -fuse-ld=lld (${LLD_EXE})")
         add_link_options(-fuse-ld=lld)
@@ -84,6 +123,8 @@ if (WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
         message(WARNING "Linking libstdc++/libgcc statically (can increase AV false-positives).")
         add_link_options(-static-libgcc -static-libstdc++)
     endif()
+elseif (APPLE)
+    add_link_options(-Wl,-rpath,@executable_path)
 endif()
 
 if (MSVC)
@@ -118,10 +159,18 @@ include_directories(${CMAKE_SOURCE_DIR}/)
 include_directories(${CMAKE_SOURCE_DIR}/include/)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
 
+if (SUPPORT_XBOX360)
+    message(STATUS "✔ Xbox360 support enabled")
+    add_compile_definitions(SUPPORT_XBOX360=1)
+else()
+    message(STATUS "❌ Xbox360 support disabled")
+    add_compile_definitions(NO_XBOX360=1)
+endif()
+
 if (INCLUDE_OPENSSL)
-    set(OPENSSL_ROOT_DIR       "C:/msys64/mingw64")
-    set(OPENSSL_INCLUDE_DIR    "C:/msys64/mingw64/include")
-    set(OPENSSL_CRYPTO_LIBRARY "C:/msys64/mingw64/lib/libcrypto.a")
+    set(OPENSSL_ROOT_DIR       "C:/mingw64")
+    set(OPENSSL_INCLUDE_DIR    "C:/mingw64/include")
+    set(OPENSSL_CRYPTO_LIBRARY "C:/mingw64/lib/libcrypto.a")
     find_package(OpenSSL REQUIRED)
 endif()
 
@@ -139,10 +188,10 @@ file(GLOB_RECURSE LEGACY_EDITOR_SOURCES
         "${CMAKE_SOURCE_DIR}/include/*.h"
 )
 
-# Subdirs
 add_subdirectory(include/lce)
-add_subdirectory("${CMAKE_SOURCE_DIR}/include/xcompress")
-
+if (SUPPORT_XBOX360)
+    add_subdirectory("${CMAKE_SOURCE_DIR}/include/xcompress")
+endif()
 set(ALL_SOURCES ${LEGACY_EDITOR_SOURCES} ${LCE_SOURCES})
 
 # -------------------------------
@@ -159,10 +208,20 @@ function(add_cli NAME SRC)
     target_compile_options(${NAME} PRIVATE ${LCE_COMPILE_OPTIONS})
     target_compile_definitions(${NAME} PRIVATE ${LCE_COMPILE_DEFINITIONS})
 
-    # Link xcompress BEFORE PCH so INTERFACE defs apply to the PCH compile
-    target_link_libraries(${NAME} PRIVATE XCOMPRESS::XCOMPRESS)
 
-    # Belt-and-suspenders: ensure headers see LZX_STATIC when statically linking on Windows
+    # Conditionally link Xbox360 library
+    if (SUPPORT_XBOX360)
+        target_link_libraries(${NAME} PRIVATE XCOMPRESS::XCOMPRESS)
+        find_library(XBOX360_LIB NAMES xbox360 PATHS "${CMAKE_SOURCE_DIR}/lib" NO_DEFAULT_PATH)
+        if (XBOX360_LIB)
+            message(STATUS "Linking against Xbox360 library: ${XBOX360_LIB}")
+            target_link_libraries(${NAME} PRIVATE "${XBOX360_LIB}")
+        else()
+            message(WARNING "Xbox360 library not found, but SUPPORT_XBOX360=ON")
+        endif()
+    endif()
+
+    # Static LZX header define
     target_compile_definitions(${NAME} PRIVATE
             $<$<AND:$<BOOL:${WIN32}>,$<BOOL:${USE_STATIC_LZX}>>:LZX_STATIC=1>
     )

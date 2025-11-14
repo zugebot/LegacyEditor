@@ -7,7 +7,7 @@
 
 #include "common/data/DataReader.hpp"
 #include "common/data/DataWriter.hpp"
-#include "common/RLE/rle_nsxps4.hpp"
+#include "common/rle/rle_nsxps4.hpp"
 
 
 namespace {
