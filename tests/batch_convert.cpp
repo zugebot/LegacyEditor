@@ -483,6 +483,8 @@ int main(int argc, char* argv[]) {
         handleRemovalOption("Do you want to remove all [overworld ] regions", writeSettings.removeRegionsOverworld);
         handleRemovalOption("Do you want to remove all [nether    ] regions", writeSettings.removeRegionsNether);
         handleRemovalOption("Do you want to remove all [end       ] regions", writeSettings.removeRegionsEnd);
+        handleRemovalOption("[Level.dat] hasBeenInCreative (achievements)  ", writeSettings.hasBeenInCreative);
+        writeSettings.hasBeenInCreative = !writeSettings.hasBeenInCreative;
     }
 
 
