@@ -40,6 +40,7 @@ namespace editor {
         bool removeRegionsNether = false;
         bool removeRegionsEnd = false;
         bool removeEntities = false;
+        bool hasBeenInCreative = false;
 
         WriteSettings() = delete;
 

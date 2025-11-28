@@ -548,6 +548,9 @@ namespace editor {
                 }
             }
 
+            lvl.m_hasBeenInCreative = settings.hasBeenInCreative;
+
+
             lvl.write(file, outConsole, settings.m_schematic.save_tu);
 
             file.m_console = outConsole;
