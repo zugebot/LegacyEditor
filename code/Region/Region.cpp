@@ -184,7 +184,7 @@ namespace editor {
         for (u32 x = 0; x < 32; x++) {
             for (u32 z = 0; z < 32; z++) {
                 u32 chunkIndex = z * 32 + x;
-                if (ChunkHandle& chunk = m_handles[chunkIndex]; !chunk.buffer.empty()) {
+                if (ChunkHandle& chunk = m_handles[chunkIndex]; !chunk.buffer.empty() && chunk.data->validChunk) {
                     chunk.encodeChunk(settings);
                     sectors[chunkIndex] = (chunk.buffer.size() + CHUNK_HEADER_SIZE) / SECTOR_BYTES + 1;
                     locations[chunkIndex] = total_sectors;

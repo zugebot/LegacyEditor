@@ -80,8 +80,8 @@ namespace editor {
             DataWriter::writeFile(fileInfoPath, fileInfoData.span());
         } catch (const std::exception& e) {
             return printf_err(status,
-                              "failed to write fileInfo to \"%s\"\n",
-                              fileInfoPath.string().c_str());
+                              "failed to write fileInfo to \"{}\"\n",
+                              fileInfoPath.string());
         }
 
 
