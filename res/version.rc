@@ -1,7 +1,7 @@
 #include <winver.h>
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION     1,0,0,0
- PRODUCTVERSION  1,0,0,0
+ FILEVERSION     1,4,4,0
+ PRODUCTVERSION  1,4,4,0
  FILEFLAGSMASK   0x3fL
  FILEFLAGS       0
  FILEOS          0x40004L
@@ -14,11 +14,11 @@ BEGIN
     BEGIN
       VALUE "CompanyName",      "jerrinth\0"
       VALUE "FileDescription",  "BatchConverter\0"
-      VALUE "FileVersion",      "1.4.2\0"
+      VALUE "FileVersion",      "1.4.4\0"
       VALUE "InternalName",     "BatchConverter\0"
       VALUE "OriginalFilename", "BatchConverter.exe\0"
       VALUE "ProductName",      "BatchConverter\0"
-      VALUE "ProductVersion",   "1.4.2\0"
+      VALUE "ProductVersion",   "1.4.4\0"
     END
   END
   BLOCK "VarFileInfo"
