@@ -1,6 +1,6 @@
 #pragma once
 
-#include "code/Chunk/chunkData.hpp"
+#include "code/chunk/chunkData.hpp"
 
 
 namespace editor {

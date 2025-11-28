@@ -11,7 +11,8 @@
 #include "code/include.hpp"
 #include "common/ConverterConfig.hpp"
 
-std::string EXE_CURRENT_PATH;
+#include <codecvt>
+
 using namespace cmn;
 
 
@@ -226,7 +227,6 @@ static const editor::sch::Schematic& selectSchemaVersionAuto(std::string input) 
 
 
 int main(int argc, char* argv[]) {
-    EXE_CURRENT_PATH = fs::path(argv[0]).parent_path().string();
 #ifdef _WIN32
     force_utf8_console();
 #endif
@@ -240,13 +240,25 @@ int main(int argc, char* argv[]) {
         "More information can be found here: jerrin.org/links/lceditdoc/\n");
 
     log(eLog::detail,
-        "Version: 1.4.2\n");
+        "Version: 1.4.3\n");
+#ifdef SUPPORT_XBOX360
     log(eLog::detail,
         "Supports reading  [ Xbox360, PS3, RPCS3, PSVITA, PS4, ShadPs4, WiiU/Cemu, Switch, Windurango ]\n");
     log(eLog::detail,
         "Supports writing  [ -------  ---  RPCS3, PSVITA, PS4, ShadPs4, WiiU/Cemu  Switch, ---------- ]\n\n");
     log(eLog::info,
         "Note: Saves *MADE* by ShadPS4 are very corrupt, you cannot convert them until that emulator is fixed.\n\n");
+#else
+    log(eLog::detail,
+        "Supports reading  [ -------, PS3, RPCS3, PSVITA, PS4, ShadPs4, WiiU/Cemu, Switch, Windurango ]\n");
+    log(eLog::detail,
+        "Supports writing  [ -------  ---  RPCS3, PSVITA, PS4, ShadPs4, WiiU/Cemu  Switch, ---------- ]\n\n");
+    log(eLog::info,
+        "Note: XBOX360 is currently not supported for this build of LegacyEditor.\n");
+    log(eLog::info,
+        "Note: Saves *MADE* by ShadPS4 are very corrupt, you cannot convert them until that emulator is fixed.\n\n");
+#endif
+
 
     ConverterConfig config;
     config.read("conversion.json");

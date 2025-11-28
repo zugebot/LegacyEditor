@@ -1,7 +1,7 @@
 #include "chunkFormatGridPaletted.hpp"
 
-#include "code/Chunk/chunkData.hpp"
-#include "code/Chunk/helpers/helpers.hpp"
+#include "code/chunk/chunkData.hpp"
+#include "code/chunk/helpers/helpers.hpp"
 #include "common/nbt.hpp"
 
 

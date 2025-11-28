@@ -2,7 +2,7 @@
 
 #include "include/lce/processor.hpp"
 
-#include "code/Chunk/helpers/bitChecking.hpp"
+#include "code/chunk/helpers/bitChecking.hpp"
 #include "common/data/DataReader.hpp"
 
 

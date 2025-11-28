@@ -9,7 +9,7 @@
 #include "code/include.hpp"
 #include "common/timer.hpp"
 
-#include "code/Chunk/helpers/scoring.hpp"
+#include "code/chunk/helpers/scoring.hpp"
 #include "code/SaveFile/helpers/summary.hpp"
 
 #include <algorithm>
@@ -37,14 +37,7 @@ static auto WiiUParseLabel(std::string_view s) -> std::pair<int, int> {
     return {number, 0};
 }
 
-
-
-std::string EXE_CURRENT_PATH;
-
 int main(MU int argc, char* argv[]) {
-
-    EXE_CURRENT_PATH = fs::path(argv[0]).parent_path().string();
-
 
     const lce::CONSOLE CONSOLE = lce::CONSOLE::XBOX360;
 

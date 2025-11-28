@@ -53,9 +53,10 @@ namespace editor {
 
     void ConsoleParser::defaultFileInfo(SaveProject& saveProject) {
         if (!saveProject.m_displayMetadata.isLoaded) {
+            const fs::path exe_path = ExecutablePath::getExecutableDir();
             saveProject.m_displayMetadata.defaultSettings();
             saveProject.m_displayMetadata.loadFileAsThumbnail(
-                    fs::path(EXE_CURRENT_PATH) / "assets/LegacyEditor/world-icon.png");
+                    exe_path / "assets/LegacyEditor/world-icon.png");
         }
 
         if (saveProject.m_displayMetadata.worldName.empty()) {

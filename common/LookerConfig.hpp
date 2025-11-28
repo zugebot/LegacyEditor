@@ -1,8 +1,9 @@
 #pragma once
 
 
-#include "fmt.hpp"
 #include "common/data/ghc/fs_std.hpp"
+#include "data/GetExecutablePath.hpp"
+#include "fmt.hpp"
 #include "nlohmann/json.hpp"
 #include <fstream>
 
@@ -41,7 +42,8 @@ public:
 
 
     void read(const std::string& fileName) {
-        const fs::path configPath = fs::path(EXE_CURRENT_PATH) / fileName;
+        const fs::path exe_path = ExecutablePath::getExecutableDir();
+        const fs::path configPath = exe_path / fileName;
 
         nlohmann::json jsonConfig;
 
@@ -151,7 +153,8 @@ public:
 
 
     ND fs::path getOutputPath(const std::string& consoleStr) const {
-        fs::path defaultPath = fs::path(EXE_CURRENT_PATH) / "out";
+        const fs::path exe_path = ExecutablePath::getExecutableDir();
+        fs::path defaultPath = exe_path / "out";
 
         auto it = conversionOutput.paths.find(consoleStr);
         if (it != conversionOutput.paths.end()) {

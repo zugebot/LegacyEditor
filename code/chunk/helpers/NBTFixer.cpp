@@ -1,5 +1,7 @@
 #include "NBTFixer.hpp"
 
+#include "common/data/GetExecutablePath.hpp"
+
 namespace editor {
 
     std::unordered_set<std::string> NBTFixer::s_crashItems;
@@ -12,7 +14,8 @@ namespace editor {
         if (!s_configLoaded) {
             try {
                 Yaml::Node root;
-                Yaml::Parse(root, (fs::path(EXE_CURRENT_PATH) / "replace_ids.yaml").string());
+                const fs::path exe_path = ExecutablePath::getExecutableDir();
+                Yaml::Parse(root, (exe_path / "replace_ids.yaml").string());
 
                 // std::cout << root["replace_ids"][0].As<std::string>() << std::endl;
 

@@ -3,10 +3,7 @@
 #include "common/rle/rle_nsxps4.hpp"
 
 
-std::string EXE_CURRENT_PATH;
-
 int main(int argc, char* argv[]) {
-    EXE_CURRENT_PATH = fs::path(argv[0]).parent_path().string();
 
     std::vector<fs::path> files;
 

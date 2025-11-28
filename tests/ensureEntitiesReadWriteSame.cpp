@@ -7,11 +7,7 @@
 #include "code/LCEFile/LCEFile.hpp"
 #include "common/windows/force_utf8.hpp"
 
-
-std::string EXE_CURRENT_PATH;
-
 int main(int argc, char* argv[]) {
-    EXE_CURRENT_PATH = fs::path(argv[0]).parent_path().string();
 
     fs::path folder = R"(C:\Users\jerrin\CLionProjects\LegacyEditor\build\dump)";
     fs::path temp = R"(C:\Users\jerrin\CLionProjects\LegacyEditor\build\dump\temp)";

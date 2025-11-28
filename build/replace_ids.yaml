@@ -1,0 +1,62 @@
+replace_ids:
+  # - "minecraft:double_stone_slab"          # NO CRASH
+  # - "minecraft:pumpkin_stem"               # NO CRASH
+  # - "minecraft:melon_stem"                 # NO CRASH
+  # - "minecraft:command_block_minecart"     # NO CRASH
+  # - "minecraft:water"                      # NO CRASH
+  # - "minecraft:lava"                       # NO CRASH
+  # - "minecraft:barrier"                    # NO CRASH
+  # - "minecraft:beetroots"                  # NO CRASH
+  # - "minecraft:wheat"                      # NO CRASH
+  # - "minecraft:carrots"                    # NO CRASH
+  # - "minecraft:potatoes"                   # NO CRASH
+  # - "minecraft:tripwire"                   # NO CRASH
+  # - "minecraft:flower_pot"                 # NO CRASH
+  # - "minecraft:skull"                      # NO CRASH
+  # - "minecraft:unpowered_comparator"       # NO CRASH
+  # - "minecraft:powered_comparator"         # NO CRASH
+  # - "minecraft:unpowered_repeater"         # NO CRASH
+  # - "minecraft:powered_repeater"           # NO CRASH
+  # - "minecraft:nether_wart"                # NO CRASH
+  # - "minecraft:brewing_stand"              # NO CRASH
+  # - "minecraft:cauldron"                   # NO CRASH
+  # - "minecraft:cocoa"                      # NO CRASH
+  # - "minecraft:mob_spawner"                # NO CRASH
+  # - "minecraft:redstone_wire"              # NO CRASH
+  # - "minecraft:wooden_door"                # NO CRASH
+  # - "minecraft:iron_door"                  # NO CRASH
+  # - "minecraft:lit_redstone_ore"           # NO CRASH
+  # - "minecraft:unlit_redstone_torch"       # NO CRASH
+  # - "minecraft:spruce_door"                # NO CRASH
+  # - "minecraft:birch_door"                 # NO CRASH
+  # - "minecraft:jungle_door"                # NO CRASH
+  # - "minecraft:acacia_door"                # NO CRASH
+  # - "minecraft:dark_oak_door"              # NO CRASH
+  # - "minecraft:lit_furnace"                # NO CRASH
+  # - "minecraft:reeds"                      # NO CRASH
+  # - "minecraft:frosted_ice"                # NO CRASH
+  # - "minecraft:standing_sign"              # NO CRASH
+  # - "minecraft:wall_sign"                  # NO CRASH
+  # - "minecraft:piston_head"                # NO CRASH
+  # - "minecraft:cake"                       # NO CRASH
+  # - "minecraft:bed"                        # NO CRASH
+  # - "minecraft:double_stone_slab2"         # NO CRASH
+
+  - "minecraft:end_portal"                 # crash
+  - "minecraft:portal"                     # crash
+  - "minecraft:structure_block"            # crash
+  - "minecraft:piston_extension"           # crash
+  - "minecraft:wall_banner"                # crash
+  - "minecraft:structure_void"             # crash
+  - "minecraft:standing_banner"            # crash
+  - "minecraft:end_gateway"                # crash
+  - "minecraft:flowing_water"              # crash
+  - "minecraft:flowing_lava"               # crash
+  - "minecraft:fire"                       # crash
+  - "minecraft:purpur_double_slab"         # crash
+  - "minecraft:daylight_detector_inverted" # crash
+  - "minecraft:double_wooden_slab"         # crash
+
+
+
+

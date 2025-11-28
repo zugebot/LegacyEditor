@@ -1,6 +1,15 @@
+// common/fmt.hpp
 #pragma once
 
 #include <format>
+#include <string>
+#include <string_view>
+#include <array>
+#include <sstream>
+#include <charconv>
+#include <type_traits>
+#include <utility>
+#include <iostream>
 
 #include "include/lce/processor.hpp"
 

@@ -10,18 +10,20 @@
 #include "crc.hpp"
 
 #include "DecompressionHelpers.hpp"
-#include "common/RLE/rle.hpp"
+#include "common/rle/rle.hpp"
 #include "include/tinf/tinf.h"
 #include "include/zlib-1.2.12/zconf.h"
 #include "include/zlib-1.2.12/zlib.h"
 
 #include <span>
 #include <stdexcept>
+#ifdef SUPPORT_XBOX360
 #include <xdecompress.h>
+#endif
 #include <zlib.h>
 
 
-#include "common/RLE/rle_grf.hpp"
+#include "common/rle/rle_grf.hpp"
 
 
 
@@ -203,11 +205,15 @@ inline Buffer GameRuleFileReader::DecompressStream(std::span<const u8> src, u32 
         case CompressionType::XMem: {
             Buffer dest(expectedSize);
 
+#ifdef SUPPORT_XBOX360
             int error = xdecompress(
                     dest.data(), dest.size_ptr(), const_cast<u8*>(src.data()), src.size());
             if (error) {
                 return {};
             }
+#else
+            throw std::runtime_error("xdecompress not supported on this platform");
+#endif
 
             return dest;
         }
