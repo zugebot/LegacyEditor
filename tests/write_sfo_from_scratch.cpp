@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
 
 
 
-    fs::path sfoOriginalPath1 = "C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\sfos\\PS4_SFO_User1.sfo";
+    fs::path sfoOriginalPath1 = R"(C:\Users\Jerrin\Downloads\Rush No Lag 1.13 PS3 & RPCS3 ALL REGIONS\NPUB31419--113-11-3\PARAM.SFO)";
     SFOManager sfoOriginal1(sfoOriginalPath1.string());
 
 
@@ -36,6 +36,7 @@ int main(int argc, char* argv[]) {
 
     std::cout << "\n\n";
 
+    /*
     fs::path sfoOriginalPath2 = "C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\out\\CUSA00744-250928014616.0\\sce_sys\\param.sfo";
     // fs::path sfoOriginalPath3 = "C:\\Users\\jerrin\\Desktop\\hysick\\9_6_2025\\PS4_CUSA00265CUSA00265-250906185921.1\\savedata0\\sce_sys\\param.sfo";
     SFOManager sfoOriginal2(sfoOriginalPath2.string());
@@ -53,7 +54,7 @@ int main(int argc, char* argv[]) {
     std::cout << "\n\n";
 
     printAttributeHexSideBySideColored(sfoOriginal1, sfoOriginal2);
-
+    */
     int x = 0;
     std::cin >> x;
 
