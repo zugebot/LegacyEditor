@@ -207,6 +207,9 @@ namespace editor {
 
         reader.seek(0);
         ListingHeader header(reader);
+        saveProject.setOldestVersion(header.oldestVersion);
+        saveProject.setLatestVersion(header.latestVersion);
+
         std::vector<ListingFile> files = createListItems(reader, header);
 
 

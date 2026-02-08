@@ -50,7 +50,7 @@ namespace editor {
     }
 
 
-    MU u8 ChunkData::setSkyLight(i32 xIn, i32 yIn, i32 zIn) const {
+    MU u8 ChunkData::getSkyLight(i32 xIn, i32 yIn, i32 zIn) const {
         c_i32 offset = toIndex<CANONICAL_LIGHT_ORDER>(xIn, yIn, zIn);
         return getNibble(skyLight, offset);
     }

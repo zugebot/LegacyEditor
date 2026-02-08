@@ -17,6 +17,10 @@ namespace editor {
         bool m_isMCS = false;
         bool m_newGen = false;
 
+        std::optional<eVITAProductCode> m_psv_pc = std::nullopt;
+        std::optional<ePS3ProductCode> m_ps3_pc = std::nullopt;
+        std::optional<ePS4ProductCode> m_ps4_pc = std::nullopt;
+
     public:
         StateSettings() = default;
         MU explicit StateSettings(fs::path theFilePath)
@@ -37,6 +41,10 @@ namespace editor {
         MU ND bool isCompressed() const { return m_isCompressed; }
         MU ND bool isMCS() const { return m_isMCS; }
 
+        MU ND std::optional<eVITAProductCode> getPC_VITA() { return m_psv_pc; }
+        MU ND std::optional<ePS3ProductCode> getPC_PS3() { return m_ps3_pc; }
+        MU ND std::optional<ePS4ProductCode> getPC_PS4() { return m_ps4_pc; }
+
 
         MU void setConsole(const lce::CONSOLE theConsole) { m_console = theConsole; }
         MU void setFilePath(fs::path theFilePath) { m_filePath = std::move(theFilePath); }
@@ -45,7 +53,9 @@ namespace editor {
         MU void setCompressed(c_bool theBool) { m_isCompressed = theBool; }
         MU void setMCS(c_bool theBool) { m_isMCS = theBool; }
 
-
+        MU void setPC_VITA(const eVITAProductCode pc) { m_psv_pc = pc; }
+        MU void setPC_PS3(const ePS3ProductCode pc) { m_ps3_pc = pc; }
+        MU void setPC_PS4(const ePS4ProductCode pc) { m_ps4_pc = pc; }
     };
 
 }

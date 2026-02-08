@@ -5,51 +5,89 @@
 #include "include/lce/processor.hpp"
 #include "include/lce/blocks/blockID.hpp"
 
+#include "code/SaveFile/World.hpp"
 #include "code/include.hpp"
-#include "unit_tests.hpp"
+#include "common/fmt.hpp"
+
+static inline void setBlockIfInBounds(editor::World& world, int x, int y, int z, u16 rawBlock) {
+    // If you have world bounds checks, put them here. Otherwise just set.
+    world.setBlock(x, y, z, rawBlock);
+}
+
+void createSphere(editor::World& world, int cx, int cy, int cz, int r) {
+    int r2 = r * r;
+
+    // Thickness 1-ish: keep blocks whose distance^2 is within [r^2 - t, r^2 + t]
+    // Using a slightly larger band reduces holes caused by integer grid sampling.
+    int band = 2 * r; // about 1 block thick
+
+    u16 block = static_cast<u16>(lce::blocks::DIAMOND_BLOCK_ID << 4);
+
+    for (int y = cy - r; y <= cy + r; ++y) {
+        for (int z = cz - r; z <= cz + r; ++z) {
+            for (int x = cx - r; x <= cx + r; ++x) {
+                const int dx = x - cx;
+                const int dy = y - cy;
+                const int dz = z - cz;
+
+                const int d2 = dx * dx + dy * dy + dz * dz;
+
+                if (d2 >= (r2 - band) && d2 <= (r2 + band)) {
+                    if (x < 0 && z < 0) block = lce::blocks::REDSTONE_BLOCK_ID << 4;
+                    else if (x < 0 && z >= 0) block = lce::blocks::DIAMOND_BLOCK_ID << 4;
+                    else if (x >= 0 && z < 0) block = lce::blocks::GOLD_BLOCK_ID << 4;
+                    else if (x >= 0 && z >= 0) block = lce::blocks::EMERALD_BLOCK_ID << 4;
+
+                    if (x >= 32 && x < 40+16 && z >= 16 && z < 24+16) block = lce::blocks::IRON_ORE_ID << 4;
+
+                    setBlockIfInBounds(world, x, y, z, block);
+                }
+            }
+        }
+    }
+}
+
+
+
+
+
 
 
 int main() {
-    PREPARE_UNIT_TESTS();
+    const std::string wiiu = R"(E:\Emulators\cemu_1.27.1\mlc01\usr\save\00050000\101d9d00\user\80000001\)";
 
-    const std::string TEST_IN  = wiiu + R"(230918230206)";
-    const std::string TEST_OUT = wiiu + R"(230918230207)";
+    const std::string TEST_IN  = wiiu + "260104235224";
+
     constexpr auto consoleOut = lce::CONSOLE::WIIU;
+    const std::string TEST_OUT = wiiu;
+    editor::WriteSettings settings(editor::sch::AquaticTU69, consoleOut, TEST_OUT);
 
-    editor::FileListing::AUTO_REMOVE_PLAYERS = false;
+    editor::World world;
 
-    editor::FileListing fileListing;
-    int status = fileListing.read(TEST_IN);
-    if (status != 0) {
-        return printf_err(status, "failed to load file '%s'\n", TEST_IN.c_str());
+    if (world.read(TEST_IN) != 0) {
+        cmn::log(cmn::eLog::error, "Failed to load file: {}\n", TEST_IN);
+        return -1;
     }
-    c_auto consoleIn = fileListing.myReadSettings.getConsole();
-    fileListing.fileInfo.baseSaveName = L"Fortnite";
 
+    world.setWorldName(L"Test World Edit");
 
-    fileListing.printDetails();
+    world.setBlock( 0, 8,  0, lce::blocks::GOLD_BLOCK_ID << 4);
+    world.setBlock( 16, 8,  0, lce::blocks::IRON_BLOCK_ID << 4);
+    world.setBlock( 20, 8,  0, lce::blocks::BLOCK_OF_COAL_ID << 4);
+    world.setBlock( 24, 8,  0, lce::blocks::REDSTONE_BLOCK_ID << 4);
 
-    editor::RegionManager region;
-    region.read(fileListing.ptrs.region_overworld[2]);
-    editor::ChunkManager *chunk = region.getChunk(0, 0);
+    world.setBlock(-1, 8,  0, lce::blocks::EMERALD_BLOCK_ID << 4);
+    world.setBlock( 0, 8, -1, lce::blocks::DIAMOND_BLOCK_ID << 4);
+    world.setBlock(-1, 8, -1, lce::blocks::LAPIS_LAZULI_BLOCK_ID << 4);
 
-    chunk->ensureDecompress(consoleIn);
-    chunk->readChunk(consoleIn);
+    createSphere(world, 0, 128, 0, 100);
 
-    chunk->chunkData->setBlock(7, 64, 7, lce::blocks::DRIED_KELP_BLOCK_ID, 0, false);
-
-    chunk->chunkData->defaultNBT();
-    chunk->writeChunk(consoleOut);
-    chunk->ensureCompressed(consoleOut);
-
-    fileListing.replaceRegionOW(2, region, consoleOut);
-
-    editor::WriteSettings settings(consoleOut, TEST_OUT);
-    const int statusOut = fileListing.write(settings);
+    const int statusOut = world.write(settings);
     if (statusOut != 0) {
-        return printf_err(statusOut, "converting to %s failed...\n", consoleToCStr(consoleOut));
+        printf("converting to %s failed...\n", consoleToCStr(consoleOut));
+        return statusOut;
     }
-    printf("Finished!\nFile Out: %s", TEST_OUT.c_str());
 
+    printf("Finished!\nFile Out: %s", TEST_OUT.c_str());
     return 0;
 }
