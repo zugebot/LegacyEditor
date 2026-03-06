@@ -7,7 +7,7 @@
  *
  * Layout (top-down, z increases southward):
  *   z = GROUP_Z:        version-label sign ("ELYTRA" / "AQUATIC")
- *   z = GROUP_Z + 2:    row 0  — chest at (col*2, 64, z+1), weight sign at (col*2, 64, z)
+ *   z = GROUP_Z + 2:    row 0  — chest at (col*2, 64, z), weight sign at (col*2, 64, z+1)
  *   z = GROUP_Z + 5:    row 1
  *   ...  (row pitch = 3)
  *   [5-block gap between the two groups]
@@ -170,8 +170,8 @@ static void addTileEntity(Region& region, int wx, int wz, NBTBase te) {
 
 /// Place a chest at (wx, CHEST_Y, wz) with a stronghold-library loot table.
 static void placeChest(Region& region, int wx, int wz, long long lootSeed) {
-    // Chest facing north (data = 2); the player opens it from the south.
-    constexpr u16 CHEST_BLOCK = static_cast<u16>((lce::blocks::CHEST_ID << 4) | 2);
+    constexpr u16 CHEST_FACING_NORTH = 2;  // data=2: chest opens from the south
+    constexpr u16 CHEST_BLOCK = static_cast<u16>((lce::blocks::CHEST_ID << 4) | CHEST_FACING_NORTH);
     constexpr u16 STONE_BLOCK = static_cast<u16>(lce::blocks::STONE_ID << 4);
 
     placeBlock(region, wx, CHEST_Y,  wz, CHEST_BLOCK);
@@ -189,12 +189,12 @@ static void placeChest(Region& region, int wx, int wz, long long lootSeed) {
 }
 
 /// Place a standing sign (weight label) at (wx, CHEST_Y, wz).
-/// data = 0 → the sign face points south (readable from the south).
+/// SIGN_FACING_SOUTH (data=0): face points south, readable from the south.
 static void placeWeightSign(Region& region, int wx, int wz, int weight) {
+    constexpr u16 SIGN_FACING_SOUTH = 0;
     constexpr u16 STONE_BLOCK = static_cast<u16>(lce::blocks::STONE_ID << 4);
-    // Standing sign, facing south (data = 0)
-    const u16 SIGN_BLOCK =
-        static_cast<u16>((lce::blocks::STANDING_SIGN_BLOCK_ID << 4) | 0);
+    constexpr u16 SIGN_BLOCK  =
+        static_cast<u16>((lce::blocks::STANDING_SIGN_BLOCK_ID << 4) | SIGN_FACING_SOUTH);
 
     placeBlock(region, wx, CHEST_Y, wz, SIGN_BLOCK);
     placeBlock(region, wx, FLOOR_Y, wz, STONE_BLOCK);
@@ -213,12 +213,13 @@ static void placeWeightSign(Region& region, int wx, int wz, int weight) {
 }
 
 /// Place a version-label standing sign at (wx, CHEST_Y, wz).
-/// data = 0 → face points south (readable when approaching from the south).
+/// SIGN_FACING_SOUTH (data=0): face points south, readable when approaching from the south.
 static void placeVersionSign(Region& region, int wx, int wz,
                               const std::string& label) {
+    constexpr u16 SIGN_FACING_SOUTH = 0;
     constexpr u16 STONE_BLOCK = static_cast<u16>(lce::blocks::STONE_ID << 4);
-    const u16 SIGN_BLOCK =
-        static_cast<u16>((lce::blocks::STANDING_SIGN_BLOCK_ID << 4) | 0);
+    constexpr u16 SIGN_BLOCK  =
+        static_cast<u16>((lce::blocks::STANDING_SIGN_BLOCK_ID << 4) | SIGN_FACING_SOUTH);
 
     placeBlock(region, wx, CHEST_Y, wz, SIGN_BLOCK);
     placeBlock(region, wx, FLOOR_Y, wz, STONE_BLOCK);
