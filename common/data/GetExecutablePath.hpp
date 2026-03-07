@@ -17,14 +17,23 @@
 #include <mach-o/dyld.h>
 #endif
 
+#ifdef __EMSCRIPTEN__
+    // optional, only if you want to allow compile-time override
+    #ifndef LEGACYEDITOR_EM_FS_ROOT
+        #define LEGACYEDITOR_EM_FS_ROOT "/persist"
+    #endif
+#endif
+
 class ExecutablePath {
 public:
     static fs::path getExecutableDir() {
-#ifdef _WIN32
+#ifdef __EMSCRIPTEN__
+        return fs::path(LEGACYEDITOR_EM_FS_ROOT);
+#elif defined(_WIN32)
         return getWindowsExeDir();
-#elif __APPLE__
+#elif defined(__APPLE__)
         return getMacExeDir();
-#elif __linux__
+#elif defined(__linux__)
         return getLinuxExeDir();
 #else
         static_assert(false, "Unsupported platform");
@@ -32,7 +41,7 @@ public:
     }
 
 private:
-#ifdef _WIN32
+#ifdef defined(_WIN32)
     static fs::path getWindowsExeDir() {
         char buffer[MAX_PATH];
         DWORD length = GetModuleFileNameA(NULL, buffer, MAX_PATH);
@@ -41,7 +50,7 @@ private:
     }
 #endif
 
-#ifdef __linux__
+#ifdef defined(__linux__)
     static fs::path getLinuxExeDir() {
         char buffer[PATH_MAX];
         ssize_t length = readlink("/proc/self/exe", buffer, sizeof(buffer)-1);
@@ -51,7 +60,7 @@ private:
     }
 #endif
 
-#ifdef __APPLE__
+#ifdef defined(__APPLE__)
     static fs::path getMacExeDir() {
         char buffer[PATH_MAX];
         uint32_t size = sizeof(buffer);
