@@ -61,6 +61,7 @@ namespace editor {
 
         MU ChunkHandle* getChunk(int xIn, int zIn);
         MU ChunkHandle* getNonEmptyChunk();
+        MU ChunkHandle* ensureChunk(int xIn, int zIn, eChunkVersion defaultChunkVersion);
 
         bool extractChunk(i32 x, i32 z, ChunkHandle& out);
 

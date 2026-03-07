@@ -233,6 +233,35 @@ namespace editor {
         return SUCCESS;
     }
 
+
+    void ChunkHandle::createNewChunk(int xIn, int zIn, eChunkVersion chunkVersion) {
+        m_decoded = std::make_unique<ChunkData>();
+        switch (chunkVersion) {
+            case eChunkVersion::V_NBT:
+                ChunkFormatNBT::initChunk(m_decoded.get());
+                break;
+            case eChunkVersion::V_8:
+            case eChunkVersion::V_9:
+            case eChunkVersion::V_10:
+            case eChunkVersion::V_11:
+                ChunkFormatGridPaletted::initChunk(m_decoded.get());
+                break;
+            case eChunkVersion::V_12:
+            case eChunkVersion::V_13:
+                ChunkFormatGridPalettedSubmerged::initChunk(m_decoded.get());
+                m_decoded->lastVersion = 12;
+                break;
+            default:
+                break;
+        }
+        m_state = ChunkState::DECODED;
+        m_decoded->chunkX = xIn;
+        m_decoded->chunkZ = xIn;
+        m_decoded->validChunk = true;
+        m_decoded->terrainPopulatedFlags = 2046;
+    }
+
+
     int ChunkHandle::encodeChunk(WriteSettings& settings) {
         if (lce::is_console_none(settings.m_schematic.save_console)) {
             throw std::runtime_error("ChunkHandle::encodeChunk refuses to take lce::CONSOLE::NONE");

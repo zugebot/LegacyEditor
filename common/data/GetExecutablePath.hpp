@@ -41,7 +41,7 @@ public:
     }
 
 private:
-#ifdef defined(_WIN32)
+#ifdef _WIN32
     static fs::path getWindowsExeDir() {
         char buffer[MAX_PATH];
         DWORD length = GetModuleFileNameA(NULL, buffer, MAX_PATH);
@@ -50,7 +50,7 @@ private:
     }
 #endif
 
-#ifdef defined(__linux__)
+#ifdef __linux__
     static fs::path getLinuxExeDir() {
         char buffer[PATH_MAX];
         ssize_t length = readlink("/proc/self/exe", buffer, sizeof(buffer)-1);
@@ -60,7 +60,7 @@ private:
     }
 #endif
 
-#ifdef defined(__APPLE__)
+#ifdef __APPLE__
     static fs::path getMacExeDir() {
         char buffer[PATH_MAX];
         uint32_t size = sizeof(buffer);

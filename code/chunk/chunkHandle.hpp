@@ -98,6 +98,8 @@ namespace editor {
         MU int decodeChunk(lce::CONSOLE c);          // COMPRESSED -> DECODED (buffer cleared)
         MU int encodeChunk(WriteSettings& settings); // DECODED -> COMPRESSED (decoded cleared)
 
+        void createNewChunk(int xIn, int zIn, eChunkVersion chunkVersion);
+
         void setEmpty();
 
         void unpackSizeFlags(u32 word);

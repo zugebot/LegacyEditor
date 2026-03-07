@@ -6,8 +6,20 @@
 
 namespace editor {
 
+    void ChunkFormatNBT::initChunk(ChunkData* chunkData) {
+        chunkData->blocks = u16_vec(65536);
+
+        chunkData->heightMap = u8_vec(256);
+        chunkData->biomes = u8_vec(256);
+
+        chunkData->skyLight = u8_vec(32768);
+        chunkData->blockLight = u8_vec(32768);
+    }
+
 
     void ChunkFormatNBT::readChunk(ChunkData* chunkData, DataReader& reader) {
+        initChunk(chunkData);
+
         chunkData->intel.wasNBTChunk = true;
 
         NBTBase root = NBTBase::read(reader);
@@ -38,7 +50,7 @@ namespace editor {
         if (oldBlocks.size() == 32768) {
             chunkData->chunkHeight = 128;
         }
-        chunkData->blocks = u16_vec(65536);
+
         for (i32 z = 0; z < 16; z++) {
             for (i32 x = 0; x < 16; x++) {
                 for (i32 y = 0; y < chunkData->chunkHeight; y++) {
@@ -49,13 +61,10 @@ namespace editor {
             }
         }
 
-
-        chunkData->heightMap = u8_vec(256);
         if (auto heightMap = level.extract("HeightMap")) {
             chunkData->heightMap = std::move(heightMap->get<NBTByteArray>());
         }
 
-        chunkData->biomes = u8_vec(256);
         if (auto biomes = level.extract("Biomes")) {
             chunkData->intel.hasBiomes = true;
             chunkData->biomes = std::move(biomes->get<NBTByteArray>());
@@ -63,9 +72,6 @@ namespace editor {
             chunkData->intel.hasBiomes = false;
         }
 
-
-        chunkData->skyLight = u8_vec(32768);
-        chunkData->blockLight = u8_vec(32768);
         auto skyLight = level.extract("SkyLight")->get<NBTByteArray>();
         auto blockLight = level.extract("BlockLight")->get<NBTByteArray>();
         for (i32 z = 0; z < 16; z++) {

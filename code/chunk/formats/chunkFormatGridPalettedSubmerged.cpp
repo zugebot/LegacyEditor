@@ -8,12 +8,25 @@
 
 namespace editor {
 
+    void ChunkFormatGridPalettedSubmerged::initChunk(ChunkData* chunkData) {
+        chunkData->blocks = u16_vec(65536);
+        chunkData->submerged = u16_vec(65536);
+
+        chunkData->skyLight = u8_vec(32768);
+        chunkData->blockLight = u8_vec(32768);
+
+        chunkData->heightMap = u8_vec(256);
+        chunkData->biomes = u8_vec(256);
+    }
+
     // #####################################################
     // #               Read Section
     // #####################################################
 
 
     void ChunkFormatGridPalettedSubmerged::readChunk(ChunkData* chunkData, DataReader& reader) {
+        initChunk(chunkData);
+
         try {
             if (chunkData->lastVersion == 13) {
                 chunkData->maxGridCount = reader.read<u16>();
@@ -23,27 +36,20 @@ namespace editor {
             chunkData->lastUpdate = reader.read<i64>();
             chunkData->inhabitedTime = reader.read<i64>();
 
-
-            chunkData->blocks = u16_vec(65536);
-            chunkData->submerged = u16_vec(65536);
             readBlockData(chunkData, reader);
 
             {
                 c_auto dataArray = fetchSections<4>(chunkData, reader);
-                chunkData->skyLight = u8_vec(32768);
                 readSection(dataArray[0], &chunkData->skyLight[0]);
                 readSection(dataArray[1], &chunkData->skyLight[16384]);
-                chunkData->blockLight = u8_vec(32768);
                 readSection(dataArray[2], &chunkData->blockLight[0]);
                 readSection(dataArray[3], &chunkData->blockLight[16384]);
             }
 
-            chunkData->heightMap = u8_vec(256);
             reader.readBytes(256, chunkData->heightMap.data());
 
             chunkData->terrainPopulatedFlags = reader.read<i16>();
 
-            chunkData->biomes = u8_vec(256);
             reader.readBytes(256, chunkData->biomes.data());
 
             readNBT(chunkData, reader);
@@ -457,7 +463,7 @@ namespace editor {
 
             // write grid header in subsection and
             // write section size to section size table
-            if (!is_zero_128(reinterpret_cast<u8*>(gridHeader))) {
+            if (!is_zero_128_slow(reinterpret_cast<u8*>(gridHeader))) {
                 writer.setEndian(Endian::Little);
                 for (size_t index = 0; index < GRID_COUNT; index++) {
                     writer.writeAtOffset<u16>(CURRENT_SECTION_START + 2 * index, gridHeader[index]);

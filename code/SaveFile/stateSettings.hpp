@@ -1,9 +1,11 @@
 #pragma once
 
-#include "common/data/ghc/fs_std.hpp"
+#include <optional>
 
+#include "common/data/ghc/fs_std.hpp"
 #include "include/lce/enums.hpp"
 #include "include/lce/processor.hpp"
+#include "code/ConsoleParser/productcodes.hpp"
 
 
 namespace editor {

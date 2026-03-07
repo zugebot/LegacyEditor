@@ -89,7 +89,15 @@ namespace editor {
         return nullptr;
     }
 
+    MU ChunkHandle* Region::ensureChunk(c_int xIn, c_int zIn, eChunkVersion defaultChunkVersion) {
+        ChunkHandle* chunk = getChunk(xIn, zIn);
+        if (!chunk) { return nullptr; } // attempted to index out of bounds
 
+        if (!(chunk->state() != editor::ChunkState::EMPTY)) {
+            chunk->createNewChunk(xIn, zIn, defaultChunkVersion);
+        }
+        return chunk;
+    }
 
 
     MU bool Region::moveChunkTo(Region& dst,
@@ -109,8 +117,9 @@ namespace editor {
 
 
     MU ChunkHandle* Region::getChunk(c_int xIn, c_int zIn) {
+        if (!inRange(xIn, zIn, m_regScale)) return nullptr;
         c_u32 index = xIn + zIn * m_regScale;
-        if (index > CHUNK_COUNT) { return nullptr; }
+        if (index >= m_handles.size()) return nullptr;
         return &m_handles[index];
     }
 
@@ -215,14 +224,14 @@ namespace editor {
                 u32 chunkIndex = z * 32 + x;
                 ChunkHandle& chunk = m_handles[chunkIndex];
 
-                if (chunk.header.getDecSize() == 0) {
+                if (chunk.state() == editor::ChunkState::EMPTY) {
                     continue;
                 }
-
                 // If written, buffer already has compressed chunk bytes.
-                if (chunk.state() == editor::ChunkState::DECODED) {
+                else if (chunk.state() == editor::ChunkState::DECODED) {
                     chunk.encodeChunk(settings);
                 }
+                // otherwise, it is editor::ChunkState::COMPRESSED
 
                 // Now we must have a buffer to write.
                 if (chunk.buffer.empty()) {

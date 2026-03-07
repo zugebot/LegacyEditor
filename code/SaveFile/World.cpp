@@ -33,9 +33,30 @@ namespace {
         return false;
     }
 
+    inline std::optional<lce::FILETYPE> dimensionToRegionFileType(const bool isNewGen, const lce::DIMENSION dim) {
+        switch (dim) {
+            case lce::DIMENSION::OVERWORLD:
+                return isNewGen ? lce::FILETYPE::NEW_REGION_OVERWORLD
+                                : lce::FILETYPE::OLD_REGION_OVERWORLD;
+            case lce::DIMENSION::NETHER:
+                return isNewGen ? lce::FILETYPE::NEW_REGION_NETHER
+                                : lce::FILETYPE::OLD_REGION_NETHER;
+            case lce::DIMENSION::END:
+                return isNewGen ? lce::FILETYPE::NEW_REGION_END
+                                : lce::FILETYPE::OLD_REGION_END;
+            default:
+                return std::nullopt;
+        }
+    }
+
 } // namespace
 
 namespace editor {
+
+    void World::newWorld() {
+        m_sp.m_stateSettings.setFilePath("");
+        void newWorld();
+    }
 
     int World::read(const fs::path& theFilePath) {
         m_regions.clear();
@@ -44,6 +65,15 @@ namespace editor {
 
     int World::write(WriteSettings& theWriteSettings) {
         flushOpenRegions(theWriteSettings);
+        m_sp.m_stateSettings.setConsole(theWriteSettings.m_schematic.save_console);
+        // TODO: this will not work for xbox360 bin for now
+        auto it = makeParserForConsole(
+                m_sp.m_stateSettings.console(),
+                m_sp.m_stateSettings.isXbox360Bin()
+        );
+        it->m_filePath = m_sp.m_stateSettings.filePath();
+        it->readFileInfo(m_sp);
+
         return m_sp.write(theWriteSettings);
     }
 
@@ -61,11 +91,11 @@ namespace editor {
 
 
         if (lce::is_ps3_family(c)) {
-            settings = WriteSettings(*sch, getConsole(), m_sp.m_stateSettings.getPC_PS3(), "out");
+            settings = WriteSettings(*sch, getConsole(), m_sp.m_stateSettings.getPC_PS3().value_or(editor::ePS3ProductCode::NONE), fs::path("out"));
         } else if (lce::is_psvita_family(c)) {
-            settings = WriteSettings(*sch, getConsole(), m_sp.m_stateSettings.getPC_VITA(), "out");
+            settings = WriteSettings(*sch, getConsole(), m_sp.m_stateSettings.getPC_VITA().value_or(editor::eVITAProductCode::NONE), fs::path("out"));
         } else if (lce::is_ps4_family(c)) {
-            settings = WriteSettings(*sch, getConsole(), m_sp.m_stateSettings.getPC_PS4(), "out");
+            settings = WriteSettings(*sch, getConsole(), m_sp.m_stateSettings.getPC_PS4().value_or(editor::ePS4ProductCode::NONE), fs::path("out"));
         }
 
         write(settings);
@@ -137,7 +167,25 @@ namespace editor {
             }
         }
 
-        return std::nullopt;
+        const auto fileTypeOpt = dimensionToRegionFileType(m_sp.m_stateSettings.isNewGen(), dim);
+        if (!fileTypeOpt) return std::nullopt;
+
+        LCEFile& file = m_sp.emplaceFile(
+                getConsole(),
+                static_cast<u64>(std::time(nullptr)),
+                m_sp.m_tempFolder,
+                m_sp.m_tempFolder,
+                ""
+        );
+        file.setType(fileTypeOpt.value());
+        file.setRegionX(static_cast<i16>(rPos.x));
+        file.setRegionZ(static_cast<i16>(rPos.z));
+        file.setFileName(file.constructFileName());
+
+        Region region(rPos.x, rPos.z, getConsole());
+        auto [it, inserted] = m_regions.emplace(key, RegionFilePair{&file, std::move(region), true});
+        (void)inserted;
+        return &it->second;
     }
 
     std::optional<ChunkHandle*> World::getChunkByChunkCoord(const int cx, const int cz, const lce::DIMENSION dim) {
@@ -155,15 +203,13 @@ namespace editor {
         if (!pairOpt) return std::nullopt;
 
         RegionFilePair* pair = pairOpt.value();
-        ChunkHandle* handle = pair->m_region.getChunk(cx_local, cz_local);
+        ChunkHandle* handle = pair->m_region.ensureChunk(cx_local, cz_local, m_defaultChunkVersion);
         if (!handle) return std::nullopt;
-
-        if (handle->state() == ChunkState::EMPTY) return std::nullopt;
 
         return handle;
     }
 
-    MU void World::setSubmerged(c_i32 xIn, c_i32 yIn, c_i32 zIn, c_u16 block, lce::DIMENSION dim = lce::DIMENSION::OVERWORLD) {
+    MU void World::setSubmerged(c_i32 xIn, c_i32 yIn, c_i32 zIn, c_u16 block, lce::DIMENSION dim) {
         if (m_sp.latestVersion() < 12) {
             throw std::runtime_error("Error: Attempted to set submerged block in version below aquatic");
         }
@@ -175,7 +221,7 @@ namespace editor {
         }
     }
 
-    MU u16 World::getSubmerged(c_i32 xIn, c_i32 yIn, c_i32 zIn, lce::DIMENSION dim = lce::DIMENSION::OVERWORLD) {
+    MU u16 World::getSubmerged(c_i32 xIn, c_i32 yIn, c_i32 zIn, lce::DIMENSION dim) {
         if (m_sp.latestVersion() < 12) {
             throw std::runtime_error("Error: Attempted to get submerged block in version below aquatic");
         }
@@ -187,7 +233,7 @@ namespace editor {
         return 0;
     }
 
-    MU void World::setBlock(c_i32 xIn, c_i32 yIn, c_i32 zIn, c_u16 block, lce::DIMENSION dim = lce::DIMENSION::OVERWORLD) {
+    MU void World::setBlock(c_i32 xIn, c_i32 yIn, c_i32 zIn, c_u16 block, lce::DIMENSION dim) {
         auto [cx, cz, bx, bz] = block_to_chunk_and_local(xIn, zIn);
         if (const auto handleOpt = getChunkByChunkCoord(cx, cz, dim)) {
             ChunkHandle* h = handleOpt.value();
@@ -196,7 +242,7 @@ namespace editor {
         }
     }
 
-    MU u16 World::getBlock(c_i32 xIn, c_i32 yIn, c_i32 zIn, lce::DIMENSION dim = lce::DIMENSION::OVERWORLD) {
+    MU u16 World::getBlock(c_i32 xIn, c_i32 yIn, c_i32 zIn, lce::DIMENSION dim) {
         auto [cx, cz, bx, bz] = block_to_chunk_and_local(xIn, zIn);
         if (const auto handleOpt = getChunkByChunkCoord(cx, cz, dim)) {
             ChunkHandle* h = handleOpt.value();
@@ -205,7 +251,7 @@ namespace editor {
         return 0;
     }
 
-    MU void World::setBlockLight(c_i32 xIn, c_i32 yIn, c_i32 zIn, c_u8 light, lce::DIMENSION dim = lce::DIMENSION::OVERWORLD) {
+    MU void World::setBlockLight(c_i32 xIn, c_i32 yIn, c_i32 zIn, c_u8 light, lce::DIMENSION dim) {
         auto [cx, cz, bx, bz] = block_to_chunk_and_local(xIn, zIn);
         if (const auto handleOpt = getChunkByChunkCoord(cx, cz, dim)) {
             ChunkHandle* h = handleOpt.value();
@@ -214,7 +260,7 @@ namespace editor {
         }
     }
 
-    MU u8 World::getBlockLight(c_i32 xIn, c_i32 yIn, c_i32 zIn, lce::DIMENSION dim = lce::DIMENSION::OVERWORLD) {
+    MU u8 World::getBlockLight(c_i32 xIn, c_i32 yIn, c_i32 zIn, lce::DIMENSION dim) {
         auto [cx, cz, bx, bz] = block_to_chunk_and_local(xIn, zIn);
         if (const auto handleOpt = getChunkByChunkCoord(cx, cz, dim)) {
             ChunkHandle* h = handleOpt.value();
@@ -223,7 +269,7 @@ namespace editor {
         return 0;
     }
 
-    MU void World::setSkyLight(c_i32 xIn, c_i32 yIn, c_i32 zIn, c_u8 light, lce::DIMENSION dim = lce::DIMENSION::OVERWORLD) {
+    MU void World::setSkyLight(c_i32 xIn, c_i32 yIn, c_i32 zIn, c_u8 light, lce::DIMENSION dim) {
         auto [cx, cz, bx, bz] = block_to_chunk_and_local(xIn, zIn);
         if (const auto handleOpt = getChunkByChunkCoord(cx, cz, dim)) {
             ChunkHandle* h = handleOpt.value();
@@ -232,13 +278,30 @@ namespace editor {
         }
     }
 
-    MU u8 World::getSkyLight(c_i32 xIn, c_i32 yIn, c_i32 zIn, lce::DIMENSION dim = lce::DIMENSION::OVERWORLD) {
+    MU u8 World::getSkyLight(c_i32 xIn, c_i32 yIn, c_i32 zIn, lce::DIMENSION dim) {
         auto [cx, cz, bx, bz] = block_to_chunk_and_local(xIn, zIn);
         if (const auto handleOpt = getChunkByChunkCoord(cx, cz, dim)) {
             ChunkHandle* h = handleOpt.value();
             return h->data->getSkyLight(bx, yIn, bz);
         }
         return 0;
+    }
+
+    MU void World::addTileEntity(i32 xIn, i32 yIn, i32 zIn, NBTBase te, lce::DIMENSION dim) {
+        auto [cx, cz, bx, bz] = block_to_chunk_and_local(xIn, zIn);
+        if (const auto handleOpt = getChunkByChunkCoord(cx, cz, dim)) {
+            ChunkHandle* h = handleOpt.value();
+            h->data->tileEntities.push_back(std::move(te));
+        }
+    }
+
+    MU std::optional<NBTBase> World::getTileEntity(i32 xIn, i32 yIn, i32 zIn, lce::DIMENSION dim) {
+        auto [cx, cz, bx, bz] = block_to_chunk_and_local(xIn, zIn);
+        if (const auto handleOpt = getChunkByChunkCoord(cx, cz, dim)) {
+            ChunkHandle* h = handleOpt.value();
+            std::cerr << "World::getTileEntity is not yet implemented\n";
+        }
+        return std::nullopt;
     }
 
 } // namespace editor

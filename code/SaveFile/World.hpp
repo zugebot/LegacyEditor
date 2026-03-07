@@ -1,4 +1,4 @@
-// World.h
+// World.hpp
 #pragma once
 
 #include <map>
@@ -32,13 +32,15 @@ namespace editor {
         };
 
     private:
-        SaveProject m_sp;
+        SaveProject m_sp{};
         std::map<RegionKey, RegionFilePair> m_regions;
+        eChunkVersion m_defaultChunkVersion = V_NONE;
 
     public:
-        World() = default;
+        explicit World(eChunkVersion defaultChunkVersion) : m_defaultChunkVersion(defaultChunkVersion) {}
         ~World() = default;
 
+        void newWorld();
         int read(const fs::path& theFilePath);
         int write(WriteSettings& theWriteSettings);
         WriteSettings write();
@@ -49,17 +51,20 @@ namespace editor {
         MU void setWorldName(std::wstring worldNameIn) { m_sp.m_displayMetadata.worldName = std::move(worldNameIn); }
         MU ND std::wstring getWorldName() const { return m_sp.m_displayMetadata.worldName; }
 
-        MU void setSubmerged(i32 xIn, i32 yIn, i32 zIn, u16 block, lce::DIMENSION dim);
-        MU u16  getSubmerged(i32 xIn, i32 yIn, i32 zIn, lce::DIMENSION dim);
+        MU void setSubmerged(i32 xIn, i32 yIn, i32 zIn, u16 block, lce::DIMENSION dim = lce::DIMENSION::OVERWORLD);
+        MU u16  getSubmerged(i32 xIn, i32 yIn, i32 zIn, lce::DIMENSION dim = lce::DIMENSION::OVERWORLD);
 
-        MU void setBlock(i32 xIn, i32 yIn, i32 zIn, u16 block, lce::DIMENSION dim);
-        MU u16  getBlock(i32 xIn, i32 yIn, i32 zIn, lce::DIMENSION dim);
+        MU void setBlock(i32 xIn, i32 yIn, i32 zIn, u16 block, lce::DIMENSION dim = lce::DIMENSION::OVERWORLD);
+        MU u16  getBlock(i32 xIn, i32 yIn, i32 zIn, lce::DIMENSION dim = lce::DIMENSION::OVERWORLD);
 
-        MU void setBlockLight(i32 xIn, i32 yIn, i32 zIn, u8 light, lce::DIMENSION dim);
-        MU u8   getBlockLight(i32 xIn, i32 yIn, i32 zIn, lce::DIMENSION dim);
+        MU void setBlockLight(i32 xIn, i32 yIn, i32 zIn, u8 light, lce::DIMENSION dim = lce::DIMENSION::OVERWORLD);
+        MU u8   getBlockLight(i32 xIn, i32 yIn, i32 zIn, lce::DIMENSION dim = lce::DIMENSION::OVERWORLD);
 
-        MU void setSkyLight(i32 xIn, i32 yIn, i32 zIn, u8 light, lce::DIMENSION dim);
-        MU u8   getSkyLight(i32 xIn, i32 yIn, i32 zIn, lce::DIMENSION dim);
+        MU void setSkyLight(i32 xIn, i32 yIn, i32 zIn, u8 light, lce::DIMENSION dim = lce::DIMENSION::OVERWORLD);
+        MU u8   getSkyLight(i32 xIn, i32 yIn, i32 zIn, lce::DIMENSION dim = lce::DIMENSION::OVERWORLD);
+
+        MU void addTileEntity(i32 xIn, i32 yIn, i32 zIn, NBTBase te, lce::DIMENSION dim = lce::DIMENSION::OVERWORLD);
+        MU std::optional<NBTBase> getTileEntity(i32 xIn, i32 yIn, i32 zIn, lce::DIMENSION dim = lce::DIMENSION::OVERWORLD);
 
     private:
         void flushOpenRegions(WriteSettings& settings);

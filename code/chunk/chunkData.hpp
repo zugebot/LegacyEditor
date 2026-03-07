@@ -6,6 +6,7 @@
 namespace editor {
 
     enum eChunkVersion : i16 {
+        V_NONE= 0x0000,
         V_NBT = 0x0007,
         V_8   = 0x0008,
         V_9   = 0x0009,

@@ -23,6 +23,8 @@ namespace editor {
         ND virtual int deflateToSave(SaveProject& saveProject, WriteSettings& theSettings) const = 0;
         virtual void supplyRequiredDefaults(SaveProject& saveProject) const = 0;
 
+        // TODO: public for World for now
+        void readFileInfo(SaveProject& saveProject) const;
     protected:
         static Buffer readRaw(fs::path& inFilePath);
 
@@ -30,7 +32,6 @@ namespace editor {
         ND virtual int deflateListing(const fs::path& gameDataPath, Buffer& inflatedData, Buffer& deflatedData) const = 0;
 
         ND virtual std::optional<fs::path> getFileInfoPath(SaveProject& saveProject) const = 0;
-        void readFileInfo(SaveProject& saveProject) const;
         static void defaultFileInfo(SaveProject& saveProject);
     };
 }
