@@ -16,6 +16,10 @@ namespace editor {
 
         ChunkFormatBase() = delete;
 
+        static void initChunk(ChunkData* chunkData) {
+            Derived::readChunk(chunkData);
+        }
+
         static void readChunk(ChunkData* chunkData, DataReader& reader) {
             Derived::readChunk(chunkData, reader);
         }

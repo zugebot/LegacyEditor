@@ -87,9 +87,9 @@ namespace editor {
         c_u8* ptr = dataIn + readOffset;
         for (int i = 0; i < DATA_SECTION_SIZE; i++) {
             bool allowFlatten = flatten || (isLight && (i == DATA_SECTION_SIZE - 1));
-            if (is_zero_128(ptr) && allowFlatten) {
+            if (is_zero_128_slow(ptr) && allowFlatten) {
                 writer.write<u8>(DATA_SECTION_SIZE);
-            } else if (is_ff_128(ptr) && allowFlatten) {
+            } else if (is_ff_128_slow(ptr) && allowFlatten) {
                 writer.write<u8>(DATA_SECTION_SIZE + 1);
             } else {
                 sectionOffsets.push_back(readOffset);

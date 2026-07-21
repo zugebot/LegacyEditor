@@ -17,14 +17,23 @@
 #include <mach-o/dyld.h>
 #endif
 
+#ifdef __EMSCRIPTEN__
+    // optional, only if you want to allow compile-time override
+    #ifndef LEGACYEDITOR_EM_FS_ROOT
+        #define LEGACYEDITOR_EM_FS_ROOT "/persist"
+    #endif
+#endif
+
 class ExecutablePath {
 public:
     static fs::path getExecutableDir() {
-#ifdef _WIN32
+#ifdef __EMSCRIPTEN__
+        return fs::path(LEGACYEDITOR_EM_FS_ROOT);
+#elif defined(_WIN32)
         return getWindowsExeDir();
-#elif __APPLE__
+#elif defined(__APPLE__)
         return getMacExeDir();
-#elif __linux__
+#elif defined(__linux__)
         return getLinuxExeDir();
 #else
         static_assert(false, "Unsupported platform");

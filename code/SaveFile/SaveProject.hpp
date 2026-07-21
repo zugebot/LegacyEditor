@@ -18,11 +18,7 @@ namespace editor {
         static const std::set<lce::FILETYPE> s_ENTITY_ANY;
 
 
-        SaveProject() {
-            if (s_TEMP_FOLDER_BASE == fs::path()) {
-                s_TEMP_FOLDER_BASE = fs::temp_directory_path() / "lcedit";
-            }
-        }
+        SaveProject();
 
         fs::path m_tempFolder;
 

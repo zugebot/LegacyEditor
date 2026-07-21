@@ -199,14 +199,21 @@ namespace editor {
                     return INVALID_SAVE;
                 }
 
+                reader.seek(0);
                 ListingHeader header(reader);
                 c_auto items = FileListing::createListItems(reader, header);
 
                 if (isValidBig && header.latestVersion <= 1) {
                     stateSettings.setConsole(lce::CONSOLE::XBOX360);
                     stateSettings.setXbox360Bin(false);
+                } else if (isValidBig) {
+                    // ... Lot's of code TODO here, for now just stub it with PS3,
+                    // for that seems to be what reaches this else if most often.
+
+                    stateSettings.setConsole(lce::CONSOLE::PS3);
+                    stateSettings.setCompressed(false);
                 } else {
-                    // ... Lot's of code TODO here, for now just stub it.
+                    std::cout << "[!] Save file is a decompressed filelisting, in small endian. This flow has not yet been implemented.\n";
                     return INVALID_SAVE;
                 }
 

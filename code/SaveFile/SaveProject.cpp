@@ -68,7 +68,13 @@ namespace editor {
             lce::FILETYPE::ENTITY_END
     };
 
-    fs::path SaveProject::s_TEMP_FOLDER_BASE;
+    fs::path SaveProject::s_TEMP_FOLDER_BASE = fs::temp_directory_path() / "lcedit";
+
+
+    SaveProject::SaveProject() {
+        fs::path safe_base   = s_TEMP_FOLDER_BASE;
+        m_tempFolder = safe_base / getCurrentDateTimeString();
+    }
 
 
     MU std::list<LCEFile> SaveProject::collectFiles(lce::FILETYPE fileType) {
@@ -123,8 +129,6 @@ namespace editor {
     int SaveProject::read(const fs::path& theFilePath) {
         m_stateSettings.setFilePath(theFilePath);
 
-        fs::path safe_base   = s_TEMP_FOLDER_BASE;
-        m_tempFolder = safe_base / getCurrentDateTimeString();
         if (!m_tempFolder.empty() && !fs::exists(m_tempFolder)) {
             fs::create_directories(m_tempFolder);
         }

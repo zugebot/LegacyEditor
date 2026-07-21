@@ -33,18 +33,18 @@ namespace editor::sch {
 
     class Schematic {
     public:
-        std::string_view           display_name;
-        lce::CONSOLE               save_console;
-        TU                         save_tu;
-        const i32                  fileListing_oldestVersion;
-        const i32                  fileListing_latestVersion;
-        const i32                  chunk_yHeight;
-        const eChunkVersion        chunk_lastVersion;
-        const eIsNewSave           chunk_isNewSave;
-        const eIsTerrainFlagNormal chunk_isTerrainFlagNormal;
-        const eIsMissingBiomes     chunk_isMissingBiomes;
+        std::string_view             display_name;
+        lce::CONSOLE                 save_console;
+        TU                           save_tu;
+        mutable i32                  fileListing_oldestVersion;
+        mutable i32                  fileListing_latestVersion;
+        mutable i32                  chunk_yHeight;
+        mutable eChunkVersion        chunk_lastVersion;
+        mutable eIsNewSave           chunk_isNewSave;
+        mutable eIsTerrainFlagNormal chunk_isTerrainFlagNormal;
+        mutable eIsMissingBiomes     chunk_isMissingBiomes;
 
-        const ChunkConverterFn     func_chunk_convert;
+        mutable ChunkConverterFn     func_chunk_convert;
 
 
         constexpr Schematic(

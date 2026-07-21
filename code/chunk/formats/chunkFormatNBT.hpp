@@ -10,6 +10,7 @@ namespace editor {
     class ChunkFormatNBT : public ChunkFormatBase<ChunkFormatNBT> {
     public:
 
+        MU static void initChunk(ChunkData* chunkData);
         MU static void readChunk(ChunkData* chunkData, DataReader& reader);
         MU static void writeChunkInternal(ChunkData* chunkData, WriteSettings& settings, DataWriter& writer, bool fastMode);
     };

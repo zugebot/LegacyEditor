@@ -46,6 +46,14 @@ namespace editor {
 
         ~Region() = default;
 
+        // prohibit copy
+        Region(const Region&)            = delete;
+        Region& operator=(const Region&) = delete;
+
+        // allow move
+        Region(Region&&) noexcept;
+        Region& operator=(Region&&) noexcept;
+
         ND i32 x() const { return m_regX; }
         ND i32 z() const { return m_regZ; }
 
@@ -53,6 +61,7 @@ namespace editor {
 
         MU ChunkHandle* getChunk(int xIn, int zIn);
         MU ChunkHandle* getNonEmptyChunk();
+        MU ChunkHandle* ensureChunk(int xIn, int zIn, eChunkVersion defaultChunkVersion);
 
         bool extractChunk(i32 x, i32 z, ChunkHandle& out);
 

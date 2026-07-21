@@ -122,7 +122,7 @@ namespace editor {
                         handle.decodeChunk(saveProject.m_stateSettings.console());
                         if (!handle.data->validChunk) continue;
 
-                        ChunkData* data = handle.data.get();
+                        ChunkData* data = handle.data.operator->();
                         settings.m_schematic.func_chunk_convert(handle, settings);
 
                         // move entities from the chunk, into the ``entityList``
@@ -217,7 +217,7 @@ namespace editor {
         // IN:  -4 -3 -2 -1  0  1  2  3  4  5
         // OUT: -2 -2 -1 -1  0  0  1  1  2  2
         auto makeSmaller = [](int v) {
-            return (v >= 0) ? v / 2 : (v - 1) / 2;
+            return (v >= 0) ? v / 2 : (v - (2 - 1)) / 2;
         };
 
         using ft = lce::FILETYPE;

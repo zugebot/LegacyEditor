@@ -8,12 +8,25 @@
 namespace editor {
 
 
+    void ChunkFormatGridPaletted::initChunk(ChunkData* chunkData) {
+
+        chunkData->blocks = u16_vec(65536);
+
+        chunkData->skyLight = u8_vec(32768);
+        chunkData->blockLight = u8_vec(32768);
+
+        chunkData->heightMap = u8_vec(256);
+        chunkData->biomes = u8_vec(256);
+    }
+
+
     // #####################################################
     // #               Read Section
     // #####################################################
 
 
     void ChunkFormatGridPaletted::readChunk(ChunkData* chunkData, DataReader& reader) {
+        initChunk(chunkData);
 
         chunkData->chunkX = reader.read<i32>();
         chunkData->chunkZ = reader.read<i32>();
@@ -26,8 +39,7 @@ namespace editor {
 
         auto oldBlocks = u8_vec(65536);
         auto blockData = u8_vec(32768);
-        chunkData->skyLight = u8_vec(32768);
-        chunkData->blockLight = u8_vec(32768);
+
 
         c_auto dataArray = fetchSections<8, true>(chunkData, reader);
         readBlocks(dataArray[0], &oldBlocks[0]);
@@ -40,7 +52,6 @@ namespace editor {
         readSection(dataArray[7], &chunkData->blockLight[16384]);
 
         chunkData->chunkHeight = 256;
-        chunkData->blocks = u16_vec(65536);
         // for (i32 z = 0; z < 16; z++) {
         //     for (i32 x = 0; x < 16; x++) {
         //         for (i32 y = 0; y < chunkData->chunkHeight; y++) {
@@ -55,12 +66,10 @@ namespace editor {
             chunkData->blocks[i] = ((u16)oldBlocks[i]) << 4 | ((u16)getNibble(blockData, i));
         }
 
-        chunkData->heightMap = u8_vec(256);
         reader.readBytes(256, chunkData->heightMap.data());
 
         chunkData->terrainPopulatedFlags = reader.read<i16>();
 
-        chunkData->biomes = u8_vec(256);
         reader.readBytes(256, chunkData->biomes.data());
 
         readNBT(chunkData, reader);

@@ -1,8 +1,7 @@
+// convertChunk.cpp
 #include "convertChunk.hpp"
 
-
 #include "include/lce/processor.hpp"
-
 #include "include/lce/blocks/blockID.hpp"
 
 #include "code/SaveFile/writeSettings.hpp"
@@ -17,48 +16,42 @@
 #include "lce/blocks/downgrade.hpp"
 #include "lce/registry/blockRegistry.hpp"
 
-
 namespace editor {
 
+    static inline ChunkData* touchData(ChunkHandle& handle) {
+        if (handle.state() == ChunkState::EMPTY) return nullptr;
+        return handle.data.operator->(); // auto-decodes and marks dirty
+    }
 
     void downdateBlocks(ChunkHandle& handle, WriteSettings& settings) {
-        auto* chunkData = handle.data.get();
+        ChunkData* chunkData = touchData(handle);
+        if (!chunkData) return;
 
-        // Build the one-shot (id,data) -> final (id,data) map for this target TU.
-        // TODO: cache result of this
         const int tu = settings.m_schematic.save_tu.value();
         const lce::compat::FinalMap& finalMap = lce::compat::final_map(tu);
 
         for (int i = 0; i < 65536; ++i) {
-            u16 raw   = chunkData->blocks[i];
-            u16 id    = static_cast<u16>((raw & 0x1FF0) >> 4); // 9-bit ID
-            u8  meta  = static_cast<u8 >(raw & 0x0F);          // 4-bit data
+            u16 raw  = chunkData->blocks[i];
+            u16 id   = static_cast<u16>((raw & 0x1FF0) >> 4);
+            u8  meta = static_cast<u8>(raw & 0x0F);
 
             if (id < lce::compat::FinalMap::MAX_ID) {
                 lce::BlockState in{ id, meta };
                 lce::BlockState out = lce::compat::map_state(finalMap, in);
 
-                // if (out == lce::BlocksInit::AIR.getState()) {
-                //     out = { lce::blocks::COBBLESTONE_ID, 0 };
-                // }
-
                 raw = static_cast<u16>((out.getID() << 4) | (out.getDataTag() & 0x0F));
                 chunkData->blocks[i] = raw;
             } else {
-                // ID outside table range - force fallback (cobble)
                 chunkData->blocks[i] = static_cast<u16>(lce::blocks::COBBLESTONE_ID << 4);
             }
         }
     }
 
-
-
-
-
     void convertReadChunkToAquatic(ChunkHandle& handle, WriteSettings& settings) {
-        ChunkData* chunkData = handle.data.get();
+        ChunkData* chunkData = touchData(handle);
+        if (!chunkData) return;
+
         if (chunkData->lastVersion == 7) {
-            // fix shit old xbox NBT
             if (chunkData->entities.subType() != eNBT::COMPOUND)
                 chunkData->entities = NBTList(eNBT::COMPOUND);
 
@@ -78,67 +71,27 @@ namespace editor {
                    chunkData->lastVersion == 11) {
 
         } else if (chunkData->lastVersion == 12 ||
-                chunkData->lastVersion == 13) {
-
-            // for (int i = 0; i < 65536; i++) {
-            //     c_u16 id1 = chunkData->blocks[i] >> 4 & 1023;
-            //     if ((id1 > 259 && id1 < 263) || id1 > 318) {
-            //         chunkData->blocks[i] = lce::blocks::COBBLESTONE_ID << 4;
-            //     }
-            //     continue;
-            //     c_u16 id2 = chunkData->submerged[i] >> 4 & 1023;
-            //     if (id2 > 250) {
-            //         chunkData->submerged[i] = lce::blocks::COBBLESTONE_ID << 4;
-            //     }
-            // }
-
+                   chunkData->lastVersion == 13) {
             downdateBlocks(handle, settings);
         }
 
-        handle.header.setNewSave((bool)settings.m_schematic.chunk_isNewSave);
+        handle.header.setNewSave(static_cast<bool>(settings.m_schematic.chunk_isNewSave));
         chunkData->lastVersion = settings.m_schematic.chunk_lastVersion;
     }
 
-
     void convertReadChunkToElytra(ChunkHandle& handle, WriteSettings& settings) {
-        auto chunkData = handle.data.get();
+        ChunkData* chunkData = touchData(handle);
+        if (!chunkData) return;
 
         downdateBlocks(handle, settings);
 
-        // if (chunkData->lastVersion == 7) {
-        // } else if (chunkData->lastVersion == 8 ||
-        //            chunkData->lastVersion == 9 ||
-        //            chunkData->lastVersion == 10 ||
-        //            chunkData->lastVersion == 11) {
-        // }
-        // else if (chunkData->lastVersion == 12 ||
-        //          chunkData->lastVersion == 13) {
-        //     for (int i = 0; i < 65536; i++) {
-        //         u16 block = chunkData->blocks[i];
-        //         if (((block & 0x1FF0) >> 4) > 255) {
-        //             block = lce::blocks::COBBLESTONE_ID << 4;
-        //         }
-        //         chunkData->blocks[i] = block;
-        //     }
-        // }
-
-//        for (int i = 0; i < 65536; i++) {
-//            u16 block = chunkData->blocks[i];
-//            if (((block & 0x1FF0) >> 4) > 100) {
-//                block = lce::blocks::COBBLESTONE_ID << 4;
-//            }
-//            chunkData->blocks[i] = block;
-//        }
-
-
-        handle.header.setNewSave((bool)settings.m_schematic.chunk_isNewSave);
+        handle.header.setNewSave(static_cast<bool>(settings.m_schematic.chunk_isNewSave));
         chunkData->lastVersion = settings.m_schematic.chunk_lastVersion;
     }
 
-
-
     void convertReadChunkToPotions(ChunkHandle& handle, WriteSettings& settings) {
-        auto* chunkData = handle.data.get();
+        ChunkData* chunkData = touchData(handle);
+        if (!chunkData) return;
 
         downdateBlocks(handle, settings);
 
@@ -146,48 +99,8 @@ namespace editor {
         chunkData->tileEntities.clear();
         chunkData->tileTicks.clear();
 
-        // chunkData->terrainPopulatedFlags = 2046;
         handle.header.setNewSave(static_cast<bool>(settings.m_schematic.chunk_isNewSave));
         chunkData->lastVersion = settings.m_schematic.chunk_lastVersion;
     }
 
-
-
-    /*
-    void convertReadChunkToPotions(ChunkHandle& handle, WriteSettings& settings) {
-        auto chunkData = handle.data.get();
-
-        bool allowed[512];
-        std::fill(std::begin(allowed), std::end(allowed), false);
-
-        lce::registry::BlockRegistry::forEachBlock([&allowed, settings](const lce::Block* b){
-            if (b->getTU() <= settings.m_schematic.save_tu.value()) {
-                int id = b->getID();
-                if (id >= 0 && id < 512) {
-                    allowed[id] = true;
-                }
-            }
-        });
-
-        for (int i = 0; i < 65536; i++) {
-            u16 block = chunkData->blocks[i];
-            if ( !allowed[(block & 0x1FF0) >> 4] ) {
-                block = lce::blocks::COBBLESTONE_ID << 4;
-            }
-
-            chunkData->blocks[i] = block;
-        }
-
-        chunkData->entities.clear();
-        chunkData->tileEntities.clear();
-        chunkData->entities.clear();
-
-
-        handle.header.setNewSave((bool)settings.m_schematic.chunk_isNewSave);
-        chunkData->lastVersion = settings.m_schematic.chunk_lastVersion;
-    }*/
-
-
-
-
-}
+} // namespace editor

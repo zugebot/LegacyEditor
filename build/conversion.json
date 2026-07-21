@@ -1,0 +1,156 @@
+{
+  "debug": true,
+  "addFileQuestion": false,
+
+
+  "conversionInput": {
+    "autoInput": false,
+
+    "autoSampleParamSFO": "C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\sfos\\shadps4.sfo",
+
+    "autoShortener": {
+      "proj": "C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\savefiles",
+      "yuzu": "C:\\Users\\jerrin\\AppData\\Roaming\\yuzu\\nand\\user\\save\\0000000000000000\\D5FA36C00E9BAF9DB378592F82847B9E\\01006BD001E06000",
+      "cemu_ely_": "E:\\Emulators\\cemu_1.27.1\\mlc01\\usr\\save\\00050000\\101dbe00\\user\\80000001",
+      "cemu_aqua": "E:\\Emulators\\cemu_1.27.1\\mlc01\\usr\\save\\00050000\\101d9d00\\user\\80000001",
+      "xbox_360_": "E:\\Xbox360\\Minecraft-Xbox360-Worlds",
+      "rpcs3": "E:\\Emulators\\rpcs3-v0.0.18-12904-12efd291_win64\\dev_hdd0\\home\\00000001\\savedata"
+    },
+
+    "autoKey": "fix_broken_chunks",
+
+    "autoPath": {
+
+      "xbox360dat": "E:\\Emulators\\xenia_canary_windows\\content\\E030000016F2A740\\584111F7\\00000001\\Save20250928220455.bin\\savegame.dat",
+      "fix_broken_chunks": "C:\\Users\\jerrin\\Downloads\\250927234809",
+
+
+      "mcs_ps3_mass_effect": "{proj}\\ALL\\(mcs   ) ps3\\masseffect.mcs",
+      "mcs_ps4_mass_effect": "{proj}\\ALL\\(mcs   ) ps4\\masseffect.mcs",
+      "mcs_ps4_toy_story": "{proj}\\ALL\\(mcs   ) ps4\\ToyStory.mcs",
+      "mcs_switch_tutorial": "{proj}\\ALL\\(mcs   ) switch\\Tutorial.mcs",
+      "mcs_vita_tutorial": "{proj}\\ALL\\(mcs   ) vita\\Tutorial.mcs",
+      "mcs_wiiu_mass_effect": "{proj}\\ALL\\(mcs   ) wiiu\\masseffect.mcs",
+      "mcs_xbox1_tutorial": "{proj}\\ALL\\(mcs   ) xbox1\\Tutorial.mcs",
+      "mcs_xbox360_halloweenLarge_MG01": "{proj}\\ALL\\(mcs   ) xbox360 (.dat)\\HalloweenLarge_MG01.mcs",
+      "mcs_xbox360_halloweenSmall_MG01": "{proj}\\ALL\\(mcs   ) xbox360 (.dat)\\HalloweenSmall_MG01.mcs",
+      "mcs_xbox360_mass_effect": "{proj}\\ALL\\(mcs   ) xbox360 (.dat)\\masseffect.mcs",
+
+      "gamedata_ps3_npub31419_250821235201_rust": "{proj}\\ALL\\(normal) ps3\\NPUB31419--250821235201_RUST\\GAMEDATA",
+      "gamedata_ps4_ps4_cusa00744_4cusa00744_191008224442_0": "{proj}\\ALL\\(normal) ps4\\PS4-CUSA00744-4CUSA00744-191008224442.0\\savedata0\\GAMEDATA",
+      "gamedata_rpcs3_npub31419_140708222339": "{proj}\\ALL\\(normal) rpcs3\\NPUB31419--140708222339\\GAMEDATA",
+      "dat_switch_180809114549": "{proj}\\ALL\\(normal) switch\\180809114549.dat",
+      "bin_vita_pcsb00560_23100563_0840": "{proj}\\ALL\\(normal) vita\\PCSB00560-231005063840\\GAMEDATA.bin",
+      "wiiu_231008144148": "{proj}\\ALL\\(normal) wiiu\\231008144148",
+      "gamedata_xbox1_windurango": "{proj}\\ALL\\(normal) windurango\\LCE-XB1-Conversion-Test-World-main\\GAMEDATA",
+      "gamedata_xbox1_20140914004320": "{proj}\\ALL\\(normal) xbox1\\20140914004320\\GAMEDATA",
+      "bin_xbox360_xbox360_tu69": "{proj}\\ALL\\(normal) xbox360 (.bin)\\XBOX360_TU69.bin",
+      "dat_xbox360_savegame": "{proj}\\ALL\\(normal) xbox360 (.dat)\\savegame.dat",
+
+      "ps4_4_villagers": "C:\\Users\\jerrin\\Downloads\\Decrypted-Saves_O8YeII2B91\\CUSA00744-250928000640.0\\GAMEDATA",
+      "wiiu_4_villagers": "E:\\Emulators\\cemu_1.27.1\\mlc01\\usr\\save\\00050000\\101d9d00\\user\\80000001\\250928004609",
+      "shad_4_villagers": "C:\\Users\\jerrin\\AppData\\Roaming\\shadPS4\\savedata\\1\\CUSA00265\\CUSA00265-250928003959.0\\GAMEDATA",
+
+
+
+      "ps4_shit_entity_dog": "{proj}\\PS4\\Decrypted-Saves_hFlu2VJjZ5_Shit\\dec_CUSA00744-191008224442.0_CUSA00744\\GAMEDATA",
+      "yeah22": "E:\\Emulators\\cemu_1.27.1\\mlc01\\usr\\save\\00050000\\101d9d00\\user\\80000001\\250827122656",
+
+      "switchTest": "C:\\Users\\jerrin\\Downloads\\NPEB01899--240613170640\\GAMEDATA",
+      "xbox360test": "C:\\Users\\jerrin\\Downloads\\LastGenConvertTest.bin",
+
+      "mmc_boxing": "C:\\Users\\jerrin\\Downloads\\MMC Boxing [15 Maps](1)\\MMC Boxing [15 Maps]\\250317161508",
+
+      "real": "C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\build\\out\\CUSA00265-250907211724.0\\GAMEDATA",
+
+      "ps3_rust": "{proj}\\PS3\\NPUB31419--250821235201_RUST\\GAMEDATA",
+
+      "toy_story": "C:\\Users\\jerrin\\CLionProjects\\LegacyEditor\\PS4\\toy_story\\00000004\\savedata0\\GAMEDATA",
+
+      "switch_entities": "C:\\Users\\jerrin\\AppData\\Roaming\\yuzu\\nand\\user\\save\\0000000000000000\\D5FA36C00E9BAF9DB378592F82847B9E\\01006BD001E06000\\250803111523.dat",
+      "desurui": "{proj}\\WIIU\\MMC Boxing [15 Maps]\\250317161508",
+
+      "killMyself": "{yuzu}\\250703144057.dat",
+
+      "aquatic_tutorial": "{proj}\\WIIU\\aquatic_tutorial",
+      "xbox360save": "{proj}\\XBOX360\\savegame (2).dat",
+      "pirates": "{proj}\\WIIU\\Pirates.wii",
+      "wierdOneChunk": "{proj}\\WIIU\\231008144148",
+      "vita": "{proj}\\VITA\\save\\PCSB00560-231005063840\\GAMEDATA.bin",
+      "rpcs3": "{proj}\\RPCS3\\v1.0.0\\BLUS31426--240731172234\\GAMEDATA",
+      "SIDD_5_20_25": "{proj}\\RPCS3\\NPUB31419--140708222339\\GAMEDATA",
+      "JerrinsAndTiaras": "{proj}\\PS4\\jerrins_and_tiaras\\PS4-CUSA00744-2CUSA00744-210322225338.0\\savedata0\\GAMEDATA",
+      "windurango": "{proj}\\WINDURANGO\\LCE-XB1-Conversion-Test-World-main\\GAMEDATA",
+      "oldGenSaveDec": "{proj}\\XBOX360\\savegame-decompressed_original.dat",
+      "oldGenSave": "{proj}\\XBOX360\\savegame_original.dat",
+      "PS3_TUTORIAL_TU46": "{proj}\\PS3\\TU46 Elytra\\NPUB31419--200515085441\\GAMEDATA",
+      "PS3_TUTORIAL_TU39": "{proj}\\PS3\\TU39 Bountiful\\NPUB31419--200227173801\\GAMEDATA",
+      "c": "{proj}\\PS3\\TU30 Horse\\NPUB31419--200225115103\\GAMEDATA",
+      "WIIU_ELYTRA_TUTORIAL": "E:\\Emulators\\cemu_1.27.1\\mlc01\\usr\\title\\0005000e\\101d9d00\\content\\WiiU\\Tutorial\\Tutorial.mcs",
+      "all_loot_chests": "{cemu_ely_}\\all_loot_chests",
+
+      "switch1": "{yuzu}\\250703144057.dat",
+      "wiiu1": "E:\\Emulators\\cemu_1.27.1\\mlc01\\usr\\save\\00050000\\101dbe00\\user\\80000001\\250624025119.dat",
+
+      "11": "{xbox_360_}\\TU68 1.12.1944.0\\Save20250429232425.bin\\savegame.dat",
+      "TU0_Xbox360": "{xbox_360_}\\TU0 0.66.0062.0\\Save2025 429 52031.bin\\savegame.dat",
+      "TU13_Xbox360": "{xbox_360_}\\TU13 1.2.0231.0\\Save20250429062424.bin\\savegame.dat",
+      "TU46_Xbox360": "{xbox_360_}\\TU46 1.8.1231.0\\Save20250429205337.bin\\savegame.dat"
+    }
+  },
+
+  "conversionOutput": {
+    "autoOutput": false,
+    "autoConsole": "xbox360",
+    "autoVersion": "AquaticTU69",
+    "autoPsVProductCode": "PCSB00560",
+    "autoPs3ProductCode": "NPJB00549",
+    "autoPs4ProductCode": "CUSA00265",
+    "variables" : {
+      "removeDataMapping": true,
+      "removePlayers": true,
+      "removeGRF": true,
+      "removeMaps": false,
+      "removeStructures": true,
+      "removeRegionsOverworld": false,
+      "removeRegionsNether": false,
+      "removeRegionsEnd": false,
+      "removeEntities": false
+    },
+
+    "path": {
+      "xbox360": {
+        "useCustomPath": false,
+        "conversionPath": ""
+      },
+      "ps3": {
+        "useCustomPath": false,
+        "conversionPath": ""
+      },
+      "rpcs3": {
+        "useCustomPath": true,
+        "conversionPath": "{rpcs3}"
+      },
+      "vita": {
+        "useCustomPath": false,
+        "conversionPath": ""
+      },
+      "ps4": {
+        "useCustomPath": false,
+        "conversionPath": ""
+      },
+      "shadps4": {
+        "useCustomPath": true,
+        "conversionPath": "C:\\Users\\jerrin\\AppData\\Roaming\\shadPS4\\savedata\\1\\CUSA00265"
+      },
+      "wiiu": {
+        "useCustomPath": true,
+        "conversionPath": "{cemu_aqua}"
+      },
+      "switch": {
+        "useCustomPath": true,
+        "conversionPath": "{yuzu}"
+      }
+    }
+  }
+}

@@ -240,7 +240,7 @@ int main(int argc, char* argv[]) {
         "More information can be found here: jerrin.org/links/lceditdoc/\n");
 
     log(eLog::detail,
-        "Version: 1.4.3\n");
+        "Version: 1.4.4\n");
 #ifdef SUPPORT_XBOX360
     log(eLog::detail,
         "Supports reading  [ Xbox360, PS3, RPCS3, PSVITA, PS4, ShadPs4, WiiU/Cemu, Switch, Windurango ]\n");

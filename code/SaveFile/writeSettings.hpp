@@ -52,8 +52,8 @@ namespace editor {
 
         MU WriteSettings(const sch::Schematic& sch,
                          const lce::CONSOLE theConsole,
-                         fs::path theFilePath)
-            : m_schematic(sch), m_inFolderPath(std::move(theFilePath)) {
+                         fs::path theFolderPath)
+            : m_schematic(sch), m_inFolderPath(std::move(theFolderPath)) {
             m_schematic.setConsole(theConsole);
         }
         
@@ -61,8 +61,8 @@ namespace editor {
         MU WriteSettings(const sch::Schematic& sch,
                          const lce::CONSOLE theConsole,
                          const ePS3ProductCode thePCode,
-                         fs::path theFilePath)
-            : m_schematic(sch), m_inFolderPath(std::move(theFilePath)) {
+                         fs::path theFolderPath)
+            : m_schematic(sch), m_inFolderPath(std::move(theFolderPath)) {
             m_productCodes.setPS3(thePCode);
             m_schematic.setConsole(theConsole);
         }
@@ -70,8 +70,8 @@ namespace editor {
         MU WriteSettings(const sch::Schematic& sch,
                          const lce::CONSOLE theConsole,
                          const eVITAProductCode thePCode,
-                         fs::path theFilePath)
-            : m_schematic(sch), m_inFolderPath(std::move(theFilePath)) {
+                         fs::path theFolderPath)
+            : m_schematic(sch), m_inFolderPath(std::move(theFolderPath)) {
             m_productCodes.setVITA(thePCode);
             m_schematic.setConsole(theConsole);
         }
@@ -79,8 +79,8 @@ namespace editor {
         MU WriteSettings(const sch::Schematic& sch,
                          const lce::CONSOLE theConsole,
                          const ePS4ProductCode thePCode,
-                         fs::path theFilePath)
-            : m_schematic(sch), m_inFolderPath(std::move(theFilePath)) {
+                         fs::path theFolderPath)
+            : m_schematic(sch), m_inFolderPath(std::move(theFolderPath)) {
             m_productCodes.setPS4(thePCode);
             m_schematic.setConsole(theConsole);
         }
